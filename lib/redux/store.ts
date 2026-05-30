@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { auth } from '../api/auth';
+import { catalog } from '../api/catalog';
 import { products } from '../api/products';
 // import { settings } from '../api/settings';
 import sessionSlice from './sessionSlice';
@@ -7,6 +8,7 @@ import sessionSlice from './sessionSlice';
 export const store = configureStore({
   reducer: {
     [auth.reducerPath]: auth.reducer,
+    [catalog.reducerPath]: catalog.reducer,
     [products.reducerPath]: products.reducer,
     // settings: settings.reducer,
     session: sessionSlice,
@@ -14,6 +16,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat([
       auth.middleware,
+      catalog.middleware,
       products.middleware,
       // settings.middleware
     ]),

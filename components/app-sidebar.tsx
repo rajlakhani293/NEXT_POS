@@ -11,7 +11,6 @@ import {
   LayoutGridIcon,
   ReceiptTextIcon,
   Settings2Icon,
-  ShoppingBagIcon,
   UsersIcon,
 } from "lucide-react"
 
@@ -27,14 +26,31 @@ export const dashboardNavSections = [
     icon: <ReceiptTextIcon />,
   },
   {
-    title: "Products",
-    url: "/products",
-    icon: <ShoppingBagIcon />,
-  },
-  {
     title: "Inventory",
     url: "/inventory",
     icon: <BoxesIcon />,
+    items: [
+      {
+        title: "Products",
+        url: "/inventory/products",
+      },
+      {
+        title: "Categories",
+        url: "/inventory/categories",
+      },
+      {
+        title: "Brands",
+        url: "/inventory/brands",
+      },
+      {
+        title: "Unit Groups",
+        url: "/inventory/unit-groups",
+      },
+      {
+        title: "Units",
+        url: "/inventory/units",
+      },
+    ],
   },
   {
     title: "Customers",
@@ -50,6 +66,16 @@ export const dashboardNavSections = [
     title: "Settings",
     url: "/settings",
     icon: <Settings2Icon />,
+    items: [
+      {
+        title: "Tax Groups",
+        url: "/settings/tax-groups",
+      },
+      {
+        title: "Taxes",
+        url: "/settings/taxes",
+      },
+    ],
   },
 ]
 
@@ -61,6 +87,10 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
   const navMain = dashboardNavSections.map((item) => ({
     ...item,
     isActive: pathname === item.url || pathname.startsWith(`${item.url}/`),
+    items: item.items?.map((subItem) => ({
+      ...subItem,
+      isActive: pathname === subItem.url || pathname.startsWith(`${subItem.url}/`),
+    })),
   }))
 
   return (

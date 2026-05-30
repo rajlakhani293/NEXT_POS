@@ -1,11 +1,20 @@
 "use client"
 
+import { useEffect, useState } from "react"
+
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Spinner } from "@/components/ui/spinner"
 import { useSession } from "@/lib/redux/session-provider"
 import { useAppSelector } from "@/lib/redux/hooks"
 
@@ -22,27 +31,83 @@ export default function DashboardLayout({
   const user = useAppSelector((state) => state.session.user)
   const branch = useAppSelector((state) => state.session.branch)
   const company = useAppSelector((state) => state.session.company)
+  const [isOffline, setIsOffline] = useState(
+    typeof navigator !== "undefined" ? !navigator.onLine : false,
+  )
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false)
+    const handleOffline = () => setIsOffline(true)
+
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
+
+    return () => {
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+    }
+  }, [])
 
   return (
-    <div className="[--header-height:calc(--spacing(14))]">
-      <SidebarProvider className="flex flex-col">
-        <SiteHeader
-          companyName={company?.name}
-          branchName={branch?.name}
-          userName={user?.full_name}
-          userContact={user?.phone || user?.email}
-          userImage={user?.profile_image}
-          onLogout={clearSession}
-        />
-        <div className="flex flex-1 bg-[#F9F9F9]">
-          <AppSidebar />
-          <SidebarInset className="bg-[#F9F9F9]">
-            <div className="flex min-h-0 flex-1 flex-col px-4 py-5 md:px-6 md:py-6 bg-white border border-gray-100 m-2 rounded-lg">
-              {children}
+    <>
+      <div className="[--header-height:calc(--spacing(14))]">
+        <SidebarProvider className="flex flex-col">
+          <SiteHeader
+            companyName={company?.name}
+            branchName={branch?.name}
+            userName={user?.full_name}
+            userContact={user?.phone || user?.email}
+            userImage={user?.profile_image}
+            onLogout={clearSession}
+          />
+          <div className="flex flex-1 bg-[#F9F9F9]">
+            <AppSidebar />
+            <SidebarInset className="bg-[#F9F9F9]">
+              <div className="flex h-full flex-1 flex-col p-3 bg-white border border-gray-100 m-2 rounded-lg">
+                {children}
+              </div>
+            </SidebarInset>
+          </div>
+        </SidebarProvider>
+      </div>
+
+      <Dialog open={isOffline}>
+        <DialogContent
+          showCloseButton={false}
+          className="gap-0 overflow-hidden border-none p-0 shadow-2xl"
+        >
+          <div className="bg-white p-6">
+            <div className="flex flex-col items-center space-y-4 text-center">
+              <div>
+                <DialogTitle className="text-xl font-medium tracking-tight text-slate-900">
+                  Connection Lost
+                </DialogTitle>
+                <DialogDescription className="text-sm leading-relaxed text-slate-500">
+                  We&apos;re having trouble reaching the server. Please check
+                  your internet connection and try again.
+                </DialogDescription>
+              </div>
+
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full border-4 border-gray-100" />
+                <Spinner className="size-12 text-slate-800" />
+              </div>
             </div>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
-    </div>
+          </div>
+
+          <div className="flex justify-center border-t border-slate-100 bg-slate-50 px-6 py-4">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+              </span>
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                Attempting to reconnect
+              </span>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

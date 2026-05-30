@@ -134,3 +134,37 @@
 iframe[src^="https://accounts.google.com/gsi/"] {
   width: 100% !important;
 }
+
+.sidebar-submenu-collapsible {
+  overflow: hidden;
+}
+
+.sidebar-submenu-collapsible[data-state="open"] {
+  animation: sidebar-submenu-down 180ms ease-out;
+}
+
+.sidebar-submenu-collapsible[data-state="closed"] {
+  animation: sidebar-submenu-up 180ms ease-out;
+}
+
+@keyframes sidebar-submenu-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes sidebar-submenu-up {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
