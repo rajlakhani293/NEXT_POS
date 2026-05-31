@@ -6,7 +6,7 @@ import { TaxForm } from "./createUpdate";
 
 const columns = [
   { key: "name", title: "Name" },
-  { key: "tax_group_id", title: "Tax Group" },
+  { key: "tax_group__name", title: "Tax Group" },
   { key: "rate", title: "Rate (%)" },
   {
     key: "is_inclusive",

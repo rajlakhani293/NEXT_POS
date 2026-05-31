@@ -70,6 +70,7 @@ export function NavMain({
                   asChild
                   tooltip={item.title}
                   isActive={item.isActive}
+                  className="data-[active=true]:bg-gray-200/60 hover:bg-gray-200/60"
                 >
                   <Link
                     href={item.items?.[0]?.url || item.url}

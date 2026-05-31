@@ -63,7 +63,7 @@ export default function DashboardLayout({
           <div className="flex flex-1 bg-[#F9F9F9]">
             <AppSidebar />
             <SidebarInset className="bg-[#F9F9F9]">
-              <div className="flex h-full flex-1 flex-col p-3 bg-white border border-gray-100 m-2 rounded-lg">
+              <div className="flex h-full flex-1 flex-col p-6 bg-white border border-gray-100 m-2 rounded-lg">
                 {children}
               </div>
             </SidebarInset>
