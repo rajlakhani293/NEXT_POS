@@ -51,7 +51,7 @@ export default function DashboardLayout({
   return (
     <>
       <div className="[--header-height:calc(--spacing(14))]">
-        <SidebarProvider className="flex flex-col">
+        <SidebarProvider defaultOpen={false} className="flex flex-col">
           <SiteHeader
             companyName={company?.name}
             branchName={branch?.name}
