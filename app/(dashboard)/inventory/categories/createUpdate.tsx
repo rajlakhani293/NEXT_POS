@@ -15,13 +15,11 @@ type CategoryFormProps = {
 
 type CategoryFormValues = {
   name: string;
-  code: string;
   description: string;
 };
 
 const initialValues: CategoryFormValues = {
   name: "",
-  code: "",
   description: "",
 };
 
@@ -32,12 +30,6 @@ const categoryFields = [
     type: "text",
     placeholder: "Enter category name",
     required: true,
-  },
-  {
-    name: "code",
-    label: "Code",
-    type: "text",
-    placeholder: "Auto generate if blank",
   },
   {
     name: "description",
@@ -66,9 +58,8 @@ export function CategoryForm({
 
   const record = data?.data;
   const formValues: CategoryFormValues = editId && record
-    ? {
+      ? {
         name: record.name || "",
-        code: record.code || "",
         description: record.description || "",
       }
     : initialValues;
@@ -76,7 +67,6 @@ export function CategoryForm({
   const handleSubmit = async (values: CategoryFormValues) => {
     const payLoad = {
       name: values.name,
-      code: values.code || undefined,
       description: values.description || "",
     };
 

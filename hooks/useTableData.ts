@@ -74,6 +74,7 @@ export const useTableData = ({
   const { sortConfig, handleSort } = useTableSorting("createdAt");
 
   const prevQueryRef = useRef<any>(null);
+  const prevRefreshVersionRef = useRef(refreshVersion);
 
   // Debounce the search term to prevent excessive API calls
   const debouncedSearchTerm = useDebounce(searchTerm, 400);
@@ -98,8 +99,11 @@ export const useTableData = ({
     JSON.stringify(prev) !== JSON.stringify(next);
 
   useEffect(() => {
-    if (isQueryChanged(prevQueryRef.current, queryBody)) {
+    const isManualRefresh = prevRefreshVersionRef.current !== refreshVersion;
+
+    if (isManualRefresh || isQueryChanged(prevQueryRef.current, queryBody)) {
       prevQueryRef.current = queryBody;
+      prevRefreshVersionRef.current = refreshVersion;
       trigger(queryBody);
     }
   }, [queryBody, trigger, refreshVersion]);

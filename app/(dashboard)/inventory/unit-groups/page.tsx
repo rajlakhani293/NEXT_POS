@@ -6,7 +6,6 @@ import { UnitGroupForm } from "./createUpdate";
 
 const columns = [
   { key: "name", title: "Name" },
-  { key: "code", title: "Code" },
   { key: "description", title: "Description" },
 ];
 

@@ -9,7 +9,6 @@ import { useTableData } from "@/hooks/useTableData";
 
 const columns = [
   { key: "name", title: "Name" },
-  { key: "code", title: "Code" },
   { key: "description", title: "Description" },
 ];
 
