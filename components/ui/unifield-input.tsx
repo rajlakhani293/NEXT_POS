@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Textarea } from "./textarea"
 import { Field, FieldError, FieldLabel } from "./field"
 import { Input } from "./input"
+import { ButtonGroup } from "./button-group"
 
 interface UniFieldInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'prefix' | 'suffix'> {
   label?: string
@@ -12,6 +13,8 @@ interface UniFieldInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEle
   containerClassName?: string
   prefix?: React.ReactNode
   suffix?: React.ReactNode
+  addonBefore?: React.ReactNode
+  addonAfter?: React.ReactNode
   as?: 'input' | 'textarea'
   rows?: number
   min?: number | string
@@ -28,6 +31,8 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
     id,
     prefix,
     suffix,
+    addonBefore,
+    addonAfter,
     as = 'input',
     rows = 3,
     min,
@@ -96,7 +101,7 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
         )}
         <div className="relative">
           {prefix && (
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-black text-[15px] font-medium z-10">
+            <div className="absolute left-4 top-1/2 z-10 -translate-y-1/2 text-sm font-medium text-muted-foreground">
               {prefix}
             </div>
           )}
@@ -106,30 +111,56 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
               id={inputId}
               rows={rows}
               className={cn(
+                "text-sm font-normal text-foreground placeholder:text-muted-foreground",
                 error && "border-red-500 focus:border-red-500 focus:ring-red-500",
                 className
               )}
               aria-invalid={error ? true : undefined}
-              value={props.value}
+              value={props.value ?? ''}
               placeholder={props.placeholder}
               disabled={props.disabled}
               required={props.required}
               onChange={onChange as any}
             />
+          ) : addonBefore || addonAfter ? (
+            <ButtonGroup className="w-full">
+              {addonBefore}
+              <Input
+                ref={ref}
+                id={inputId}
+                className={cn(
+                  "h-10 border-2 bg-white text-sm font-normal text-foreground placeholder:text-muted-foreground",
+                  error && "border-red-500 focus:border-red-500 focus:ring-red-500",
+                  prefix && "pl-10",
+                  props.type === 'number' && "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
+                  className
+                )}
+                aria-invalid={error ? true : undefined}
+                {...props}
+                value={props.type === 'file' ? undefined : props.value ?? ''}
+                min={min}
+                max={max}
+                maxLength={maxLength}
+                onChange={handleChange as any}
+                onWheel={handleWheel}
+              />
+              {addonAfter}
+            </ButtonGroup>
           ) : (
             <Input
               ref={ref}
               id={inputId}
               className={cn(
-                "h-10 border-2 bg-white",
+                "h-10 border-2 bg-white text-sm font-normal text-foreground placeholder:text-muted-foreground",
                 error && "border-red-500 focus:border-red-500 focus:ring-red-500",
-                prefix && "pl-12",
+                prefix && "pl-10",
                 suffix && "pr-16",
                 props.type === 'number' && "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
                 className
               )}
               aria-invalid={error ? true : undefined}
               {...props}
+              value={props.type === 'file' ? undefined : props.value ?? ''}
               min={min}
               max={max}
               maxLength={maxLength}

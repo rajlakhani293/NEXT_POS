@@ -1,8 +1,10 @@
 "use client";
 
-import { CatalogPageShell } from "@/components/catalog/catalog-page-shell";
+import { useRouter } from "next/navigation";
+
+import DynamicTable from "@/components/DynamicTable";
+import { useTableData } from "@/hooks/useTableData";
 import { catalog } from "@/lib/api/catalog";
-import { ProductForm } from "./createUpdate";
 
 const money = (value: any) => `₹${Number(value || 0).toFixed(2)}`;
 
@@ -17,17 +19,59 @@ const columns = [
 ];
 
 export default function ProductsPage() {
+  const router = useRouter();
+  const [deleteProduct] = (catalog as any).useDeleteProductMutation();
+  const [updateProductStatus] = (catalog as any).useUpdateProductStatusMutation();
+
+  const {
+    orders,
+    totalItems,
+    isLoading,
+    currentPage,
+    setCurrentPage,
+    sortConfig,
+    handleSort,
+    sortableFields,
+    handleFilterChange,
+    searchTerm,
+    itemsPerPage,
+    triggerRefresh,
+  } = useTableData({
+    getMaster: (catalog as any).useGetProductsDataMutation,
+    itemsPerPage: 10,
+  });
+
   return (
-    <CatalogPageShell
-      tableTitle="Products"
-      addTitle="Add Product"
-      columns={columns}
-      getDataHook={(catalog as any).useGetProductsDataMutation}
-      deleteHook={(catalog as any).useDeleteProductMutation}
-      statusHook={(catalog as any).useUpdateProductStatusMutation}
-      FormComponent={ProductForm}
-      deleteTitle="Delete Product"
-      deleteDescription="Are you sure you want to delete this product?"
-    />
+    <div className="h-full space-y-4">
+      <DynamicTable
+        data={orders}
+        columns={columns}
+        tableTitle="Products"
+        title="Add Product"
+        showSearch
+        searchTerm={searchTerm}
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+        totalItems={totalItems}
+        onPageChange={setCurrentPage}
+        onFilterChange={handleFilterChange}
+        sortConfig={sortConfig}
+        onSort={handleSort}
+        sortableFields={sortableFields}
+        isLoading={isLoading}
+        setAddEntityOpen={() => router.push("/inventory/products/create")}
+        showEdit
+        onEdit={(record: any) => router.push(`/inventory/products/${record.id}`)}
+        showDelete
+        deleteMutation={deleteProduct}
+        showStatus
+        statusChangeMutation={({ ids, status }: any) =>
+          updateProductStatus({ payLoad: { ids, status } })
+        }
+        triggerRefresh={triggerRefresh}
+        deleteModalTitle="Delete Product"
+        deleteModalDescription="Are you sure you want to delete this product?"
+      />
+    </div>
   );
 }

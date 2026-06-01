@@ -17,11 +17,11 @@ import {
   BoxesIcon,
   FileBarChart2Icon,
   LayoutGridIcon,
-  PanelLeftCloseIcon,
   ReceiptTextIcon,
   Settings2Icon,
   UsersIcon,
 } from "lucide-react"
+import { MdOutlineArrowCircleLeft, MdOutlineArrowCircleRight } from "react-icons/md"
 
 type DashboardNavSection = {
   title: string
@@ -104,16 +104,21 @@ const settingsNavSections: DashboardNavSection[] = [
 type AppSidebarProps = React.ComponentProps<typeof Sidebar>
 
 function SidebarCollapseButton() {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, state } = useSidebar()
+  const isCollapsed = state === "collapsed"
 
   return (
     <button
       type="button"
       onClick={toggleSidebar}
-      className="flex h-8 w-full items-center gap-2 rounded-sm border border-sidebar-border bg-white px-2 text-sm font-semibold text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-3"
+      className="flex h-8 w-full items-center gap-2 rounded-sm border border-sidebar-border bg-white px-2 text-sm font-semibold text-sidebar-foreground transition-colors hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-3"
       title="Toggle Sidebar"
     >
-      <PanelLeftCloseIcon className="size-4 shrink-0" />
+      {isCollapsed ? (
+        <MdOutlineArrowCircleRight className="size-4 shrink-0" />
+      ) : (
+        <MdOutlineArrowCircleLeft className="size-4 shrink-0" />
+      )}
       <span className="truncate group-data-[collapsible=icon]:hidden">
         Collapse
       </span>

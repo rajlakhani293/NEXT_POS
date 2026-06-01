@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
@@ -27,6 +28,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const pathname = usePathname()
   const { clearSession } = useSession()
   const user = useAppSelector((state) => state.session.user)
   const branch = useAppSelector((state) => state.session.branch)
@@ -34,6 +36,7 @@ export default function DashboardLayout({
   const [isOffline, setIsOffline] = useState(
     typeof navigator !== "undefined" ? !navigator.onLine : false,
   )
+  const isProductFormPage = /^\/inventory\/products\/[^/]+$/.test(pathname)
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false)
@@ -50,8 +53,8 @@ export default function DashboardLayout({
 
   return (
     <>
-      <div className="[--header-height:calc(--spacing(12))]">
-        <SidebarProvider defaultOpen={false} className="flex flex-col">
+      <div className="h-svh overflow-hidden [--header-height:calc(--spacing(12))]">
+        <SidebarProvider defaultOpen={false} className="flex h-full min-h-0 flex-col">
           <SiteHeader
             companyName={company?.name}
             branchName={branch?.name}
@@ -60,10 +63,15 @@ export default function DashboardLayout({
             userImage={user?.profile_image}
             onLogout={clearSession}
           />
-          <div className="flex flex-1 bg-[#F9F9F9]">
+          <div className="flex min-h-0 flex-1 bg-[#F9F9F9]">
             <AppSidebar />
-            <SidebarInset className="bg-[#F9F9F9]">
-              <div className="flex h-full flex-1 flex-col p-6 bg-white border border-gray-100 m-2 rounded-lg">
+            <SidebarInset className="min-h-0 overflow-hidden bg-[#F9F9F9]">
+              <div
+                className={[
+                  "m-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-100 bg-white",
+                  isProductFormPage ? "p-0" : "p-6",
+                ].join(" ")}
+              >
                 {children}
               </div>
             </SidebarInset>
