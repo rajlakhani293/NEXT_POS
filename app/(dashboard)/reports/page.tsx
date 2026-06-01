@@ -1,6 +1,11 @@
 
+import { PermissionGuard } from "@/components/permission-guard"
+import { PERMISSIONS } from "@/lib/permissions"
+
 export default function ReportsPage() {
   return (
-    <>Report</>
+    <PermissionGuard permission={PERMISSIONS.reports.view}>
+      Report
+    </PermissionGuard>
   )
 }

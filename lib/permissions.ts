@@ -1,0 +1,101 @@
+export const PERMISSIONS = {
+  users: {
+    view: "users_view",
+    create: "users_create",
+    update: "users_update",
+    delete: "users_delete",
+  },
+  roles: {
+    view: "roles_view",
+    create: "roles_create",
+    update: "roles_update",
+    delete: "roles_delete",
+  },
+  settings: {
+    view: "settings_view",
+    update: "settings_update",
+  },
+  branches: {
+    view: "branches_view",
+    create: "branches_create",
+    update: "branches_update",
+    delete: "branches_delete",
+  },
+  customers: {
+    view: "customers_view",
+    create: "customers_create",
+    update: "customers_update",
+    delete: "customers_delete",
+  },
+  products: {
+    view: "products_view",
+    create: "products_create",
+    update: "products_update",
+    delete: "products_delete",
+  },
+  inventory: {
+    view: "inventory_view",
+    adjust: "inventory_adjust",
+    transfer: "inventory_transfer",
+    count: "inventory_count",
+  },
+  purchases: {
+    view: "purchases_view",
+    create: "purchases_create",
+    update: "purchases_update",
+    receive: "purchases_receive",
+    pay: "purchases_pay",
+  },
+  sales: {
+    view: "sales_view",
+    create: "sales_create",
+    update: "sales_update",
+    void: "sales_void",
+  },
+  reports: {
+    view: "reports_view",
+    export: "reports_export",
+  },
+} as const;
+
+export type PermissionRequirement = string | string[] | undefined;
+
+export function normalizePermissionCodes(permissions: unknown): string[] {
+  if (!Array.isArray(permissions)) return [];
+
+  return permissions
+    .map((permission) => {
+      if (typeof permission === "string") return permission;
+      if (
+        permission &&
+        typeof permission === "object" &&
+        "codename" in permission &&
+        typeof permission.codename === "string"
+      ) {
+        return permission.codename;
+      }
+      return null;
+    })
+    .filter((permission): permission is string => Boolean(permission));
+}
+
+export function userHasPermission(
+  user: any,
+  required: PermissionRequirement,
+  match: "all" | "any" = "all",
+) {
+  if (!required || (Array.isArray(required) && required.length === 0)) return true;
+  if (!user) return false;
+  if (user.is_superuser) return true;
+
+  const permissions = new Set(
+    normalizePermissionCodes(user.permissions || user.user_permissions),
+  );
+
+  if (permissions.has("*")) return true;
+
+  const requiredPermissions = Array.isArray(required) ? required : [required];
+  return match === "any"
+    ? requiredPermissions.some((permission) => permissions.has(permission))
+    : requiredPermissions.every((permission) => permissions.has(permission));
+}

@@ -210,6 +210,7 @@ const DynamicTable = ({
   const paginationSentinelRef = useRef<HTMLDivElement | null>(null);
   const [isFooterStuck, setIsFooterStuck] = useState(false);
   const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState<boolean>(false);
+  const hasRowActions = !hideActions && (showEdit || showDelete || Boolean(rowActions));
 
   // Handle single item deletion
   const handleDeleteConfirm = async () => {
@@ -651,7 +652,7 @@ const DynamicTable = ({
                       </div>
                     </th>
                   ))}
-                  {!hideActions && (
+                  {hasRowActions && (
                     <th className="text-right px-4 h-10 align-middle font-medium whitespace-nowrap">Actions</th>
                   )}
                 </tr>
@@ -660,7 +661,7 @@ const DynamicTable = ({
                 {isLoading ? (
                   <tr key="loading">
                     <td
-                      colSpan={columns.length + (hideActions ? 0 : 1) + 1}
+                      colSpan={columns.length + (hasRowActions ? 1 : 0) + 1}
                       className="p-2 h-24 text-center align-middle"
                     >
                       <div className="flex items-center justify-center space-x-2">
@@ -712,7 +713,7 @@ const DynamicTable = ({
                             </td>
                           );
                         })}
-                        {!hideActions && (
+                        {hasRowActions && (
                           <td className="px-4 py-3 p-2 align-middle whitespace-nowrap">
                             <div className="flex items-center justify-end gap-2 relative">
                               {visibleActions.map(({ key, icon, labelText, onClick, render }) => (
@@ -775,7 +776,7 @@ const DynamicTable = ({
                 ) : (
                   <tr key="no-data" className="h-full">
                     <td
-                      colSpan={columns.length + (hideActions ? 0 : 1) + 1}
+                      colSpan={columns.length + (hasRowActions ? 1 : 0) + 1}
                       className="p-2 h-full text-center align-middle"
                     >
                       No Data available

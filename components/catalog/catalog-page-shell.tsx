@@ -3,6 +3,9 @@
 import { useState } from "react";
 
 import DynamicTable from "@/components/DynamicTable";
+import { PermissionGuard } from "@/components/permission-guard";
+import { usePermissions } from "@/hooks/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { useTableData } from "@/hooks/useTableData";
 
 type CatalogPageShellProps = {
@@ -20,6 +23,12 @@ type CatalogPageShellProps = {
   }>;
   deleteTitle: string;
   deleteDescription: string;
+  permissions?: {
+    view?: string;
+    create?: string;
+    update?: string;
+    delete?: string;
+  };
 };
 
 export function CatalogPageShell({
@@ -32,11 +41,16 @@ export function CatalogPageShell({
   FormComponent,
   deleteTitle,
   deleteDescription,
+  permissions = PERMISSIONS.products,
 }: CatalogPageShellProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editId, setEditId] = useState<number | string | null>(null);
   const [deleteRecord] = deleteHook();
   const [updateStatus] = statusHook();
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission(permissions.create);
+  const canUpdate = hasPermission(permissions.update);
+  const canDelete = hasPermission(permissions.delete);
 
   const {
     orders,
@@ -72,12 +86,13 @@ export function CatalogPageShell({
   };
 
   return (
-    <div className="h-full space-y-4">
+    <PermissionGuard permission={permissions.view}>
+      <div className="h-full space-y-4">
       <DynamicTable
         data={orders}
         columns={columns}
         tableTitle={tableTitle}
-        title={addTitle}
+        title={canCreate ? addTitle : undefined}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}
@@ -89,12 +104,12 @@ export function CatalogPageShell({
         onSort={handleSort}
         sortableFields={sortableFields}
         isLoading={isLoading}
-        setAddEntityOpen={handleAdd}
-        showEdit
+        setAddEntityOpen={canCreate ? handleAdd : undefined}
+        showEdit={canUpdate}
         onEdit={handleEdit}
-        showDelete
+        showDelete={canDelete}
         deleteMutation={deleteRecord}
-        showStatus
+        showStatus={canUpdate}
         statusChangeMutation={({ ids, status }: any) =>
           updateStatus({ payLoad: { ids, status } })
         }
@@ -109,6 +124,7 @@ export function CatalogPageShell({
         onSuccess={triggerRefresh}
         editId={editId}
       />
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

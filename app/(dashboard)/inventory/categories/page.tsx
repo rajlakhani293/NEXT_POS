@@ -3,8 +3,11 @@
 import { useState } from "react";
 
 import DynamicTable from "@/components/DynamicTable";
+import { PermissionGuard } from "@/components/permission-guard";
 import { CategoryForm } from "@/app/(dashboard)/inventory/categories/createUpdate";
 import { catalog } from "@/lib/api/catalog";
+import { PERMISSIONS } from "@/lib/permissions";
+import { usePermissions } from "@/hooks/use-permissions";
 import { useTableData } from "@/hooks/useTableData";
 
 const columns = [
@@ -17,6 +20,10 @@ export default function CategoriesPage() {
   const [editId, setEditId] = useState<number | string | null>(null);
   const [deleteCategory] = (catalog as any).useDeleteCategoryMutation();
   const [updateCategoryStatus] = (catalog as any).useUpdateCategoryStatusMutation();
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission(PERMISSIONS.products.create);
+  const canUpdate = hasPermission(PERMISSIONS.products.update);
+  const canDelete = hasPermission(PERMISSIONS.products.delete);
 
   const {
     orders,
@@ -52,12 +59,13 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div className="h-full space-y-4">
+    <PermissionGuard permission={PERMISSIONS.products.view}>
+      <div className="h-full space-y-4">
       <DynamicTable
         data={orders}
         columns={columns}
         tableTitle="Categories"
-        title="Add Category"
+        title={canCreate ? "Add Category" : undefined}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}
@@ -69,12 +77,12 @@ export default function CategoriesPage() {
         onSort={handleSort}
         sortableFields={sortableFields}
         isLoading={isLoading}
-        setAddEntityOpen={handleAdd}
-        showEdit
+        setAddEntityOpen={canCreate ? handleAdd : undefined}
+        showEdit={canUpdate}
         onEdit={handleEdit}
-        showDelete
+        showDelete={canDelete}
         deleteMutation={deleteCategory}
-        showStatus
+        showStatus={canUpdate}
         statusChangeMutation={({ ids, status }: any) =>
           updateCategoryStatus({ payLoad: { ids, status } })
         }
@@ -89,6 +97,7 @@ export default function CategoriesPage() {
         onSuccess={triggerRefresh}
         editId={editId}
       />
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

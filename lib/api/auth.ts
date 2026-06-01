@@ -19,6 +19,9 @@ export type AuthUser = {
   auth_provider?: string | null
   onboarding_completed?: boolean
   profile_image?: string | null
+  permissions?: string[]
+  role?: unknown
+  is_superuser?: boolean
 }
 
 export type LoginResponse = {

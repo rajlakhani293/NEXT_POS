@@ -3,8 +3,11 @@
 import { useRouter } from "next/navigation";
 
 import DynamicTable from "@/components/DynamicTable";
+import { PermissionGuard } from "@/components/permission-guard";
+import { usePermissions } from "@/hooks/use-permissions";
 import { useTableData } from "@/hooks/useTableData";
 import { catalog } from "@/lib/api/catalog";
+import { PERMISSIONS } from "@/lib/permissions";
 
 const money = (value: any) => `₹${Number(value || 0).toFixed(2)}`;
 
@@ -22,6 +25,10 @@ export default function ProductsPage() {
   const router = useRouter();
   const [deleteProduct] = (catalog as any).useDeleteProductMutation();
   const [updateProductStatus] = (catalog as any).useUpdateProductStatusMutation();
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission(PERMISSIONS.products.create);
+  const canUpdate = hasPermission(PERMISSIONS.products.update);
+  const canDelete = hasPermission(PERMISSIONS.products.delete);
 
   const {
     orders,
@@ -42,12 +49,13 @@ export default function ProductsPage() {
   });
 
   return (
-    <div className="h-full space-y-4">
+    <PermissionGuard permission={PERMISSIONS.products.view}>
+      <div className="h-full space-y-4">
       <DynamicTable
         data={orders}
         columns={columns}
         tableTitle="Products"
-        title="Add Product"
+        title={canCreate ? "Add Product" : undefined}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}
@@ -59,12 +67,12 @@ export default function ProductsPage() {
         onSort={handleSort}
         sortableFields={sortableFields}
         isLoading={isLoading}
-        setAddEntityOpen={() => router.push("/inventory/products/create")}
-        showEdit
+        setAddEntityOpen={canCreate ? () => router.push("/inventory/products/create") : undefined}
+        showEdit={canUpdate}
         onEdit={(record: any) => router.push(`/inventory/products/${record.id}`)}
-        showDelete
+        showDelete={canDelete}
         deleteMutation={deleteProduct}
-        showStatus
+        showStatus={canUpdate}
         statusChangeMutation={({ ids, status }: any) =>
           updateProductStatus({ payLoad: { ids, status } })
         }
@@ -72,6 +80,7 @@ export default function ProductsPage() {
         deleteModalTitle="Delete Product"
         deleteModalDescription="Are you sure you want to delete this product?"
       />
-    </div>
+      </div>
+    </PermissionGuard>
   );
 }

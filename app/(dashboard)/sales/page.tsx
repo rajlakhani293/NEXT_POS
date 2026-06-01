@@ -1,6 +1,11 @@
 
+import { PermissionGuard } from "@/components/permission-guard"
+import { PERMISSIONS } from "@/lib/permissions"
+
 export default function SalesPage() {
   return (
-    <><h1>Sales</h1></>
+    <PermissionGuard permission={PERMISSIONS.sales.view}>
+      <h1>Sales</h1>
+    </PermissionGuard>
   )
 }

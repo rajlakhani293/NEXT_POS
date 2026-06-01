@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 
 import { NavMain } from "@/components/nav-main"
+import { usePermissions } from "@/hooks/use-permissions"
+import { PERMISSIONS, type PermissionRequirement } from "@/lib/permissions"
 import {
   Sidebar,
   SidebarContent,
@@ -27,9 +29,13 @@ type DashboardNavSection = {
   title: string
   url: string
   icon: React.ReactNode
+  permission?: PermissionRequirement
+  permissionMatch?: "all" | "any"
   items?: {
     title: string
     url: string
+    permission?: PermissionRequirement
+    permissionMatch?: "all" | "any"
   }[]
 }
 
@@ -43,31 +49,38 @@ const mainNavSections: DashboardNavSection[] = [
     title: "Sales",
     url: "/sales",
     icon: <ReceiptTextIcon />,
+    permission: PERMISSIONS.sales.view,
   },
   {
     title: "Inventory",
     url: "/inventory",
     icon: <BoxesIcon />,
+    permission: PERMISSIONS.products.view,
     items: [
       {
         title: "Products",
         url: "/inventory/products",
+        permission: PERMISSIONS.products.view,
       },
       {
         title: "Categories",
         url: "/inventory/categories",
+        permission: PERMISSIONS.products.view,
       },
       {
         title: "Brands",
         url: "/inventory/brands",
+        permission: PERMISSIONS.products.view,
       },
       {
         title: "Unit Groups",
         url: "/inventory/unit-groups",
+        permission: PERMISSIONS.products.view,
       },
       {
         title: "Units",
         url: "/inventory/units",
+        permission: PERMISSIONS.products.view,
       },
     ],
   },
@@ -75,16 +88,20 @@ const mainNavSections: DashboardNavSection[] = [
     title: "Customers",
     url: "/customers",
     icon: <UsersIcon />,
+    permission: PERMISSIONS.customers.view,
   },
   {
     title: "Reports",
     url: "/reports",
     icon: <FileBarChart2Icon />,
+    permission: PERMISSIONS.reports.view,
   },
   {
     title: "Settings",
     url: "/settings/tax-groups",
     icon: <Settings2Icon />,
+    permission: [PERMISSIONS.settings.view, PERMISSIONS.products.view],
+    permissionMatch: "any",
   },
 ]
 
@@ -93,11 +110,13 @@ const settingsNavSections: DashboardNavSection[] = [
     title: "Tax Groups",
     url: "/settings/tax-groups",
     icon: <Settings2Icon />,
+    permission: PERMISSIONS.products.view,
   },
   {
     title: "Taxes",
     url: "/settings/taxes",
     icon: <ReceiptTextIcon />,
+    permission: PERMISSIONS.products.view,
   },
 ]
 
@@ -129,6 +148,24 @@ function SidebarCollapseButton() {
 export function AppSidebar({ ...props }: AppSidebarProps) {
   const pathname = usePathname()
   const isSettingsMode = pathname.startsWith("/settings")
+  const { hasPermission } = usePermissions()
+
+  const filterNavItems = (sections: DashboardNavSection[]) =>
+    sections.reduce<DashboardNavSection[]>((visibleItems, item) => {
+        const visibleSubItems = item.items?.filter((subItem) =>
+          hasPermission(subItem.permission, subItem.permissionMatch),
+        )
+
+        const canViewItem = hasPermission(item.permission, item.permissionMatch)
+        if (!canViewItem && !visibleSubItems?.length) return visibleItems
+
+        visibleItems.push({
+          ...item,
+          items: visibleSubItems,
+        })
+
+        return visibleItems
+      }, [])
 
   const buildNavItems = (sections: DashboardNavSection[]) => sections.map((item) => ({
     ...item,
@@ -138,8 +175,8 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       isActive: pathname === subItem.url || pathname.startsWith(`${subItem.url}/`),
     })),
   }))
-  const mainNavItems = buildNavItems(mainNavSections)
-  const settingsNavItems = buildNavItems(settingsNavSections)
+  const mainNavItems = buildNavItems(filterNavItems(mainNavSections))
+  const settingsNavItems = buildNavItems(filterNavItems(settingsNavSections))
 
   return (
     <Sidebar

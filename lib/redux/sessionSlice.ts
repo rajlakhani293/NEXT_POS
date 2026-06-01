@@ -20,7 +20,9 @@ interface User {
   branch_id?: number;
   branch_access?: number[];
   groups?: any[];
+  permissions?: string[];
   user_permissions?: any[];
+  role?: any;
 }
 
 interface Company {
