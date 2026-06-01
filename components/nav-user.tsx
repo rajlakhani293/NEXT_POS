@@ -44,6 +44,7 @@ export function NavUser({
   onLogout,
   dropdownSide,
   dropdownAlign,
+  iconOnly = false,
 }: {
   user: {
     name: string
@@ -53,6 +54,7 @@ export function NavUser({
   onLogout?: () => void
   dropdownSide?: "top" | "right" | "bottom" | "left"
   dropdownAlign?: "start" | "center" | "end"
+  iconOnly?: boolean
 }) {
   const { isMobile } = useSidebar()
 
@@ -66,19 +68,27 @@ export function NavUser({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className={
+                iconOnly
+                  ? "h-9 w-9 justify-center rounded-md p-0 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  : "data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              }
             >
-              <Avatar className="h-8 w-8 rounded-lg">
+              <Avatar>
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">
+                <AvatarFallback className={iconOnly ? "rounded-md" : "rounded-md"}>
                   {getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
-              </div>
-              <ChevronsUpDownIcon className="ml-auto size-4" />
+              {!iconOnly ? (
+                <>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-medium">{user.name}</span>
+                    <span className="truncate text-xs">{user.email}</span>
+                  </div>
+                  <ChevronsUpDownIcon className="ml-auto size-4" />
+                </>
+              ) : null}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent

@@ -26,20 +26,20 @@ export function SiteHeader({
 
   return (
     <header className="sticky top-0 z-50 flex w-full items-center border-b bg-white">
-      <div className="flex h-(--header-height) w-full items-center justify-between gap-4 px-4">
+      <div className="flex h-(--header-height) w-full items-center justify-between gap-3 px-3">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Image
             src="/next.svg"
             alt="Next.js"
             width={100}
             height={100}
-            className="w-30"
+            className="w-24"
           />
 
-          <div className="hidden h-8 w-px bg-slate-200 sm:block" />
+          <div className="hidden h-7 w-px bg-slate-200 sm:block" />
 
           <div className="flex min-w-0 items-center gap-2">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
               <Building2 className="h-4 w-4" />
             </div>
             <div className="min-w-0">
@@ -52,10 +52,10 @@ export function SiteHeader({
             </div>
           </div>
 
-          <div className="hidden h-8 w-px bg-slate-200 md:block" />
+          <div className="hidden h-7 w-px bg-slate-200 md:block" />
 
           <div className="hidden min-w-0 items-center gap-2 md:flex">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
               <MapPin className="h-4 w-4" />
             </div>
             <div className="min-w-0">
@@ -81,6 +81,7 @@ export function SiteHeader({
               onLogout={onLogout}
               dropdownSide="bottom"
               dropdownAlign="end"
+              iconOnly
             />
           </div>
         </div>
