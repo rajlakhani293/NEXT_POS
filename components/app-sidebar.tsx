@@ -19,8 +19,11 @@ import {
   BoxesIcon,
   FileBarChart2Icon,
   LayoutGridIcon,
+  LandmarkIcon,
   ReceiptTextIcon,
+  ShieldCheckIcon,
   Settings2Icon,
+  StoreIcon,
   UsersIcon,
 } from "lucide-react"
 import { MdOutlineArrowCircleLeft, MdOutlineArrowCircleRight } from "react-icons/md"
@@ -98,14 +101,38 @@ const mainNavSections: DashboardNavSection[] = [
   },
   {
     title: "Settings",
-    url: "/settings/tax-groups",
+    url: "/settings/company",
     icon: <Settings2Icon />,
-    permission: [PERMISSIONS.settings.view, PERMISSIONS.products.view],
+    permission: [PERMISSIONS.settings.view, PERMISSIONS.branches.view],
     permissionMatch: "any",
   },
 ]
 
 const settingsNavSections: DashboardNavSection[] = [
+  {
+    title: "Company",
+    url: "/settings/company",
+    icon: <LandmarkIcon />,
+    permission: PERMISSIONS.settings.view,
+  },
+  {
+    title: "Branches",
+    url: "/settings/branches",
+    icon: <StoreIcon />,
+    permission: PERMISSIONS.branches.view,
+  },
+  {
+    title: "Users",
+    url: "/settings/users",
+    icon: <UsersIcon />,
+    permission: PERMISSIONS.users.view,
+  },
+  {
+    title: "Roles",
+    url: "/settings/roles",
+    icon: <ShieldCheckIcon />,
+    permission: PERMISSIONS.roles.view,
+  },
   {
     title: "Tax Groups",
     url: "/settings/tax-groups",
@@ -152,20 +179,20 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
 
   const filterNavItems = (sections: DashboardNavSection[]) =>
     sections.reduce<DashboardNavSection[]>((visibleItems, item) => {
-        const visibleSubItems = item.items?.filter((subItem) =>
-          hasPermission(subItem.permission, subItem.permissionMatch),
-        )
+      const visibleSubItems = item.items?.filter((subItem) =>
+        hasPermission(subItem.permission, subItem.permissionMatch),
+      )
 
-        const canViewItem = hasPermission(item.permission, item.permissionMatch)
-        if (!canViewItem && !visibleSubItems?.length) return visibleItems
+      const canViewItem = hasPermission(item.permission, item.permissionMatch)
+      if (!canViewItem && !visibleSubItems?.length) return visibleItems
 
-        visibleItems.push({
-          ...item,
-          items: visibleSubItems,
-        })
+      visibleItems.push({
+        ...item,
+        items: visibleSubItems,
+      })
 
-        return visibleItems
-      }, [])
+      return visibleItems
+    }, [])
 
   const buildNavItems = (sections: DashboardNavSection[]) => sections.map((item) => ({
     ...item,

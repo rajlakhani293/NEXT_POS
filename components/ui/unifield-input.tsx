@@ -100,7 +100,7 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
           </FieldLabel>
         )}
         <div className="relative">
-          {prefix && (
+          {prefix && !(addonBefore || addonAfter) && (
             <div className="absolute left-4 top-1/2 z-10 -translate-y-1/2 text-sm font-medium text-muted-foreground">
               {prefix}
             </div>
@@ -125,25 +125,34 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
           ) : addonBefore || addonAfter ? (
             <ButtonGroup className="w-full">
               {addonBefore}
-              <Input
-                ref={ref}
-                id={inputId}
-                className={cn(
-                  "h-10 border-2 bg-white text-sm font-normal text-foreground placeholder:text-muted-foreground",
-                  error && "border-red-500 focus:border-red-500 focus:ring-red-500",
-                  prefix && "pl-10",
-                  props.type === 'number' && "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
-                  className
+              <div className="relative flex flex-1">
+                {prefix && (
+                  <div className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+                    {prefix}
+                  </div>
                 )}
-                aria-invalid={error ? true : undefined}
-                {...props}
-                value={props.type === 'file' ? undefined : props.value ?? ''}
-                min={min}
-                max={max}
-                maxLength={maxLength}
-                onChange={handleChange as any}
-                onWheel={handleWheel}
-              />
+                <Input
+                  ref={ref}
+                  id={inputId}
+                  className={cn(
+                    "h-10 flex-1 border-2 bg-white text-sm font-normal text-foreground placeholder:text-muted-foreground",
+                    addonBefore && "rounded-l-none",
+                    addonAfter && "rounded-r-none",
+                    error && "border-red-500 focus:border-red-500 focus:ring-red-500",
+                    prefix && "pl-10",
+                    props.type === 'number' && "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
+                    className
+                  )}
+                  aria-invalid={error ? true : undefined}
+                  {...props}
+                  value={props.type === 'file' ? undefined : props.value ?? ''}
+                  min={min}
+                  max={max}
+                  maxLength={maxLength}
+                  onChange={handleChange as any}
+                  onWheel={handleWheel}
+                />
+              </div>
               {addonAfter}
             </ButtonGroup>
           ) : (

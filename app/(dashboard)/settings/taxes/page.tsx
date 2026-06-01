@@ -8,11 +8,6 @@ const columns = [
   { key: "name", title: "Name" },
   { key: "tax_group__name", title: "Tax Group" },
   { key: "rate", title: "Rate (%)" },
-  {
-    key: "is_inclusive",
-    title: "Inclusive",
-    render: (value: boolean) => (value ? "Yes" : "No"),
-  },
 ];
 
 export default function TaxesPage() {

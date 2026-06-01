@@ -9,7 +9,6 @@ const initialValues = {
   tax_group_id: "",
   name: "",
   rate: "",
-  is_inclusive: false,
 };
 
 export function TaxForm(props: any) {
@@ -37,12 +36,6 @@ export function TaxForm(props: any) {
     },
     { name: "name", label: "Name", type: "text", placeholder: "Enter tax name", required: true },
     { name: "rate", label: "Rate (%)", type: "number", placeholder: "18", required: true },
-    {
-      name: "is_inclusive",
-      label: "Inclusive Tax",
-      type: "switch",
-      note: "Use this when tax is already included in the product price.",
-    },
   ];
 
   return (
@@ -58,7 +51,6 @@ export function TaxForm(props: any) {
         tax_group_id: Number(values.tax_group_id),
         name: values.name,
         rate: values.rate || "0",
-        is_inclusive: Boolean(values.is_inclusive),
       })}
     />
   );
