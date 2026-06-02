@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import { CatalogPageShell } from "@/components/catalog/catalog-page-shell";
-import { catalog } from "@/lib/api/catalog";
-import { UnitGroupForm } from "./createUpdate";
+import { CatalogPageShell } from "@/components/catalog/catalog-page-shell"
+import { catalog } from "@/lib/api/catalog"
+import { UnitGroupForm } from "./createUpdate"
 
 const columns = [
   { key: "name", title: "Name" },
   { key: "description", title: "Description" },
-];
+]
 
 export default function UnitGroupsPage() {
   return (
@@ -22,5 +22,5 @@ export default function UnitGroupsPage() {
       deleteTitle="Delete Unit Group"
       deleteDescription="Are you sure you want to delete this unit group?"
     />
-  );
+  )
 }

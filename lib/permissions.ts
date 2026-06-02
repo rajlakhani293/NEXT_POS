@@ -56,46 +56,47 @@ export const PERMISSIONS = {
     view: "reports_view",
     export: "reports_export",
   },
-} as const;
+} as const
 
-export type PermissionRequirement = string | string[] | undefined;
+export type PermissionRequirement = string | string[] | undefined
 
 export function normalizePermissionCodes(permissions: unknown): string[] {
-  if (!Array.isArray(permissions)) return [];
+  if (!Array.isArray(permissions)) return []
 
   return permissions
     .map((permission) => {
-      if (typeof permission === "string") return permission;
+      if (typeof permission === "string") return permission
       if (
         permission &&
         typeof permission === "object" &&
         "codename" in permission &&
         typeof permission.codename === "string"
       ) {
-        return permission.codename;
+        return permission.codename
       }
-      return null;
+      return null
     })
-    .filter((permission): permission is string => Boolean(permission));
+    .filter((permission): permission is string => Boolean(permission))
 }
 
 export function userHasPermission(
   user: any,
   required: PermissionRequirement,
-  match: "all" | "any" = "all",
+  match: "all" | "any" = "all"
 ) {
-  if (!required || (Array.isArray(required) && required.length === 0)) return true;
-  if (!user) return false;
-  if (user.is_superuser) return true;
+  if (!required || (Array.isArray(required) && required.length === 0))
+    return true
+  if (!user) return false
+  if (user.is_superuser) return true
 
   const permissions = new Set(
-    normalizePermissionCodes(user.permissions || user.user_permissions),
-  );
+    normalizePermissionCodes(user.permissions || user.user_permissions)
+  )
 
-  if (permissions.has("*")) return true;
+  if (permissions.has("*")) return true
 
-  const requiredPermissions = Array.isArray(required) ? required : [required];
+  const requiredPermissions = Array.isArray(required) ? required : [required]
   return match === "any"
     ? requiredPermissions.some((permission) => permissions.has(permission))
-    : requiredPermissions.every((permission) => permissions.has(permission));
+    : requiredPermissions.every((permission) => permissions.has(permission))
 }

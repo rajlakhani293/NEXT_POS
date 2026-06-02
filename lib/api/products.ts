@@ -94,7 +94,9 @@ function buildEnvelope<T>(message: string, data: T): ApiEnvelope<T> {
   }
 }
 
-function deriveStatus(payload: Pick<ProductPayload, "productType" | "currentStock" | "minStock">) {
+function deriveStatus(
+  payload: Pick<ProductPayload, "productType" | "currentStock" | "minStock">
+) {
   if (payload.productType === "service") return "draft"
   if (payload.currentStock <= payload.minStock) return "low_stock"
   return "active"
@@ -105,7 +107,10 @@ export const products = createApi({
   baseQuery: fakeBaseQuery(),
   tagTypes: ["Products"],
   endpoints: (builder) => ({
-    getProducts: builder.query<ApiEnvelope<ProductRecord[]>, { search?: string } | void>({
+    getProducts: builder.query<
+      ApiEnvelope<ProductRecord[]>,
+      { search?: string } | void
+    >({
       queryFn: async (arg) => {
         const search = arg?.search?.trim().toLowerCase()
         const filtered = search
@@ -113,15 +118,20 @@ export const products = createApi({
               [product.name, product.sku, product.category, product.brand]
                 .join(" ")
                 .toLowerCase()
-                .includes(search),
+                .includes(search)
             )
           : mockProducts
 
-        return { data: buildEnvelope("Products fetched successfully.", filtered) }
+        return {
+          data: buildEnvelope("Products fetched successfully.", filtered),
+        }
       },
       providesTags: ["Products"],
     }),
-    createProduct: builder.mutation<ApiEnvelope<ProductRecord>, { payLoad: ProductPayload }>({
+    createProduct: builder.mutation<
+      ApiEnvelope<ProductRecord>,
+      { payLoad: ProductPayload }
+    >({
       queryFn: async ({ payLoad }) => {
         const newProduct: ProductRecord = {
           id: productSequence++,
@@ -129,7 +139,9 @@ export const products = createApi({
           status: deriveStatus(payLoad),
         }
         mockProducts = [newProduct, ...mockProducts]
-        return { data: buildEnvelope("Product created successfully.", newProduct) }
+        return {
+          data: buildEnvelope("Product created successfully.", newProduct),
+        }
       },
       invalidatesTags: ["Products"],
     }),
@@ -161,14 +173,17 @@ export const products = createApi({
         }
 
         mockProducts = mockProducts.map((product) =>
-          product.id === id ? updated : product,
+          product.id === id ? updated : product
         )
 
         return { data: buildEnvelope("Product updated successfully.", updated) }
       },
       invalidatesTags: ["Products"],
     }),
-    deleteProduct: builder.mutation<ApiEnvelope<{ id: number }>, { id: number }>({
+    deleteProduct: builder.mutation<
+      ApiEnvelope<{ id: number }>,
+      { id: number }
+    >({
       queryFn: async ({ id }) => {
         mockProducts = mockProducts.filter((product) => product.id !== id)
         return { data: buildEnvelope("Product deleted successfully.", { id }) }

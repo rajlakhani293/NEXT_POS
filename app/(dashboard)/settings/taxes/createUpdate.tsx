@@ -1,29 +1,31 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
+import { useEffect } from "react"
 
-import { CatalogMasterForm } from "@/components/catalog/catalog-master-form";
-import { catalog } from "@/lib/api/catalog";
+import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
+import { catalog } from "@/lib/api/catalog"
 
 const initialValues = {
   tax_group_id: "",
   name: "",
   rate: "",
-};
+}
 
 export function TaxForm(props: any) {
-  const [getTaxGroupsDropdown, { data }] = (catalog as any).useGetTaxGroupsDropdownMutation();
+  const [getTaxGroupsDropdown, { data }] = (
+    catalog as any
+  ).useGetTaxGroupsDropdownMutation()
 
   useEffect(() => {
     if (props.isOpen) {
-      getTaxGroupsDropdown();
+      getTaxGroupsDropdown()
     }
-  }, [getTaxGroupsDropdown, props.isOpen]);
+  }, [getTaxGroupsDropdown, props.isOpen])
 
   const taxGroupOptions = (data?.data || []).map((item: any) => ({
     label: item.name,
     value: item.id,
-  }));
+  }))
 
   const fields = [
     {
@@ -34,9 +36,21 @@ export function TaxForm(props: any) {
       required: true,
       options: taxGroupOptions,
     },
-    { name: "name", label: "Name", type: "text", placeholder: "Enter tax name", required: true },
-    { name: "rate", label: "Rate (%)", type: "number", placeholder: "18", required: true },
-  ];
+    {
+      name: "name",
+      label: "Name",
+      type: "text",
+      placeholder: "Enter tax name",
+      required: true,
+    },
+    {
+      name: "rate",
+      label: "Rate (%)",
+      type: "number",
+      placeholder: "18",
+      required: true,
+    },
+  ]
 
   return (
     <CatalogMasterForm
@@ -53,5 +67,5 @@ export function TaxForm(props: any) {
         rate: values.rate || "0",
       })}
     />
-  );
+  )
 }

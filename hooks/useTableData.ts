@@ -1,29 +1,29 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import { useTableSorting } from "./useTableSorting";
-import { getDateRange } from "@/lib/utils";
-import { useDebounce } from "./useDebounce";
+import { useState, useEffect, useRef, useMemo } from "react"
+import { useTableSorting } from "./useTableSorting"
+import { getDateRange } from "@/lib/utils"
+import { useDebounce } from "./useDebounce"
 
 // Generate current financial year
 const getCurrentFinancialYear = () => {
-  const currentYear = new Date().getFullYear();
-  const currentFY = currentYear % 100;
-  const nextFY = (currentFY + 1) % 100;
-  return `FY ${currentFY}-${nextFY.toString().padStart(2, '0')}`;
-};
+  const currentYear = new Date().getFullYear()
+  const currentFY = currentYear % 100
+  const nextFY = (currentFY + 1) % 100
+  return `FY ${currentFY}-${nextFY.toString().padStart(2, "0")}`
+}
 
 interface UseTableDataProps {
-  getMaster: any;
-  itemsPerPage?: number;
-  searchTerm?: string;
-  advancedFilters?: { status: string | number };
-  dateFilters?: { startDate: any; endDate: any };
-  selectedFilters?: Record<string, any>;
-  moduleId?: string | number;
-  entityId?: string | number;
-  tabList?: string[];
-  extraOptions?: any;
-  statusMap?: Record<string, number>; // Custom mapping from tab name to status value
-  disableDateFilter?: boolean; // Flag to disable date filtering
+  getMaster: any
+  itemsPerPage?: number
+  searchTerm?: string
+  advancedFilters?: { status: string | number }
+  dateFilters?: { startDate: any; endDate: any }
+  selectedFilters?: Record<string, any>
+  moduleId?: string | number
+  entityId?: string | number
+  tabList?: string[]
+  extraOptions?: any
+  statusMap?: Record<string, number> // Custom mapping from tab name to status value
+  disableDateFilter?: boolean // Flag to disable date filtering
 }
 
 export const useTableData = ({
@@ -38,170 +38,177 @@ export const useTableData = ({
   extraOptions,
   disableDateFilter = false,
 }: UseTableDataProps) => {
+  const defaultTab = useMemo(() => ["All", "Active", "Deactive"], [])
 
-  const defaultTab = useMemo(() => [
-    "All",
-    "Active",
-    "Deactive"
-  ], []);
-
-  const currentTabList = tabList && tabList.length > 0 ? tabList : defaultTab;
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(initialItemsPerPage);
-  const [searchTerm, setSearchTerm] = useState(initialSearchTerm || "");
-  const allLabel = "All";
+  const currentTabList = tabList && tabList.length > 0 ? tabList : defaultTab
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(initialItemsPerPage)
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm || "")
+  const allLabel = "All"
 
   const [advancedFilters, setAdvancedFilters] = useState(
     initialAdvancedFilters || { status: allLabel }
-  );
+  )
   const [dateFilters, setDateFilters] = useState(
     disableDateFilter
       ? { startDate: undefined, endDate: undefined }
-      : initialDateFilters || (() => {
-        const currentFY = getCurrentFinancialYear();
-        return getDateRange(currentFY);
-      })()
-  );
-  const [activeTab, setActiveTab] = useState<string>(allLabel);
+      : initialDateFilters ||
+          (() => {
+            const currentFY = getCurrentFinancialYear()
+            return getDateRange(currentFY)
+          })()
+  )
+  const [activeTab, setActiveTab] = useState<string>(allLabel)
   const [selectedDateRange, setSelectedDateRange] = useState<string | null>(
     getCurrentFinancialYear()
-  );
-  const [periodType, setPeriodType] = useState<string | null>(null);
-  const [refreshVersion, setRefreshVersion] = useState(0);
-  const [trigger, { data, isLoading, isFetching }] = getMaster();
+  )
+  const [periodType, setPeriodType] = useState<string | null>(null)
+  const [refreshVersion, setRefreshVersion] = useState(0)
+  const [trigger, { data, isLoading, isFetching }] = getMaster()
 
   // Use the sorting hook internally
-  const { sortConfig, handleSort } = useTableSorting("createdAt");
+  const { sortConfig, handleSort } = useTableSorting("createdAt")
 
-  const prevQueryRef = useRef<any>(null);
-  const prevRefreshVersionRef = useRef(refreshVersion);
+  const prevQueryRef = useRef<any>(null)
+  const prevRefreshVersionRef = useRef(refreshVersion)
 
   // Debounce the search term to prevent excessive API calls
-  const debouncedSearchTerm = useDebounce(searchTerm, 400);
+  const debouncedSearchTerm = useDebounce(searchTerm, 400)
 
   const queryBody = {
     page: currentPage,
     limit: itemsPerPage,
     search: debouncedSearchTerm || undefined,
-    status: (advancedFilters?.status !== "All" && advancedFilters?.status !== allLabel) ? advancedFilters?.status : undefined,
-    ...(disableDateFilter ? {} : {
-      startDate: dateFilters.startDate,
-      endDate: dateFilters.endDate,
-    }),
+    status:
+      advancedFilters?.status !== "All" && advancedFilters?.status !== allLabel
+        ? advancedFilters?.status
+        : undefined,
+    ...(disableDateFilter
+      ? {}
+      : {
+          startDate: dateFilters.startDate,
+          endDate: dateFilters.endDate,
+        }),
     sortBy: sortConfig?.key || undefined,
     sortDirection: sortConfig?.direction || undefined,
     filter: Object.keys(selectedFilters).length ? selectedFilters : undefined,
     ...(periodType === "CUSTOM" ? { periodType: "CUSTOM" } : {}),
     ...extraOptions,
-  };
+  }
 
   const isQueryChanged = (prev: any, next: any): boolean =>
-    JSON.stringify(prev) !== JSON.stringify(next);
+    JSON.stringify(prev) !== JSON.stringify(next)
 
   useEffect(() => {
-    const isManualRefresh = prevRefreshVersionRef.current !== refreshVersion;
+    const isManualRefresh = prevRefreshVersionRef.current !== refreshVersion
 
     if (isManualRefresh || isQueryChanged(prevQueryRef.current, queryBody)) {
-      prevQueryRef.current = queryBody;
-      prevRefreshVersionRef.current = refreshVersion;
-      trigger(queryBody);
+      prevQueryRef.current = queryBody
+      prevRefreshVersionRef.current = refreshVersion
+      trigger(queryBody)
     }
-  }, [queryBody, trigger, refreshVersion]);
+  }, [queryBody, trigger, refreshVersion])
 
   // Watch for changes to update Active Tab label visually
   useEffect(() => {
-    if (advancedFilters.status === allLabel || advancedFilters.status === "All") {
-      setActiveTab(currentTabList[0]);
+    if (
+      advancedFilters.status === allLabel ||
+      advancedFilters.status === "All"
+    ) {
+      setActiveTab(currentTabList[0])
     }
-  }, [allLabel, currentTabList, advancedFilters.status]);
+  }, [allLabel, currentTabList, advancedFilters.status])
 
   useEffect(() => {
     if (initialSearchTerm !== undefined) {
-      setSearchTerm(initialSearchTerm);
-      setCurrentPage(1); // Reset to page 1 when search changes
+      setSearchTerm(initialSearchTerm)
+      setCurrentPage(1) // Reset to page 1 when search changes
     }
-  }, [initialSearchTerm]);
+  }, [initialSearchTerm])
 
   const handleFilterChange = (action: string, payload?: any) => {
     switch (action) {
       case "statusFilter":
         if (typeof payload === "string") {
-          setActiveTab(payload);
-          let statusValue: string | number = allLabel;
+          setActiveTab(payload)
+          let statusValue: string | number = allLabel
 
           if (payload !== allLabel) {
             // If statusMap is provided, use it for custom mapping
             if (statusMap && statusMap[payload] !== undefined) {
-              statusValue = statusMap[payload];
+              statusValue = statusMap[payload]
             } else {
               // Otherwise, use default index-based calculation
-              const index = currentTabList.indexOf(payload);
+              const index = currentTabList.indexOf(payload)
               if (index > 0) {
-                statusValue = index - 1;
+                statusValue = index - 1
               }
             }
           }
           setAdvancedFilters({
             status: statusValue, // Use the calculated statusValue
-          });
-          setCurrentPage(1);
+          })
+          setCurrentPage(1)
         }
-        break;
+        break
       case "search":
         if (typeof payload === "string") {
-          setSearchTerm(payload);
-          setCurrentPage(1);
+          setSearchTerm(payload)
+          setCurrentPage(1)
         }
-        break;
+        break
       case "dateRange":
         if (typeof payload === "string") {
-          setSelectedDateRange(payload);
-          const { startDate, endDate } = getDateRange(payload);
-          setDateFilters({ startDate, endDate });
-          setCurrentPage(1);
+          setSelectedDateRange(payload)
+          const { startDate, endDate } = getDateRange(payload)
+          setDateFilters({ startDate, endDate })
+          setCurrentPage(1)
         }
-        break;
+        break
       case "customDate":
-        let start = null;
-        let end = null;
-        if (payload) [start, end] = payload;
-        setDateFilters({ startDate: start, endDate: end });
-        setCurrentPage(1);
-        setPeriodType("CUSTOM");
-        break;
+        let start = null
+        let end = null
+        if (payload) [start, end] = payload
+        setDateFilters({ startDate: start, endDate: end })
+        setCurrentPage(1)
+        setPeriodType("CUSTOM")
+        break
       case "itemsPerPage":
         if (typeof payload === "number") {
-          setItemsPerPage(payload);
-          setCurrentPage(1);
+          setItemsPerPage(payload)
+          setCurrentPage(1)
         }
-        break;
+        break
       default:
-        break;
+        break
     }
-  };
+  }
 
-  const responseData = (data as any)?.data;
+  const responseData = (data as any)?.data
 
-  const isArrayResponse = Array.isArray(responseData);
+  const isArrayResponse = Array.isArray(responseData)
 
-  const serverItems = isArrayResponse ? responseData : responseData?.items;
-  const allOrders = Array.isArray(serverItems) ? serverItems : [];
+  const serverItems = isArrayResponse ? responseData : responseData?.items
+  const allOrders = Array.isArray(serverItems) ? serverItems : []
 
   const orders = isArrayResponse
     ? allOrders.slice(
-      (currentPage - 1) * itemsPerPage,
-      (currentPage - 1) * itemsPerPage + itemsPerPage
-    )
-    : allOrders;
+        (currentPage - 1) * itemsPerPage,
+        (currentPage - 1) * itemsPerPage + itemsPerPage
+      )
+    : allOrders
 
-  const otherData = responseData || [];
+  const otherData = responseData || []
   const totalItems = isArrayResponse
     ? allOrders.length
-    : responseData?.items?.count || responseData?.total || responseData?.count || 0;
+    : responseData?.items?.count ||
+      responseData?.total ||
+      responseData?.count ||
+      0
   const totalPages = isArrayResponse
     ? Math.ceil(allOrders.length / itemsPerPage)
-    : responseData?.totalPages || 0;
-  const sortableFields = responseData?.appliedFilters?.sortableFields || [];
+    : responseData?.totalPages || 0
+  const sortableFields = responseData?.appliedFilters?.sortableFields || []
 
   return {
     orders,
@@ -221,5 +228,5 @@ export const useTableData = ({
     dateFilters,
     itemsPerPage,
     triggerRefresh: () => setRefreshVersion((version) => version + 1),
-  };
-};
+  }
+}

@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import { CatalogPageShell } from "@/components/catalog/catalog-page-shell";
-import { catalog } from "@/lib/api/catalog";
-import { UnitForm } from "./createUpdate";
+import { CatalogPageShell } from "@/components/catalog/catalog-page-shell"
+import { catalog } from "@/lib/api/catalog"
+import { UnitForm } from "./createUpdate"
 
 const columns = [
   { key: "name", title: "Name" },
@@ -14,7 +14,7 @@ const columns = [
     title: "Base Unit",
     render: (value: boolean) => (value ? "Yes" : "No"),
   },
-];
+]
 
 export default function UnitsPage() {
   return (
@@ -29,5 +29,5 @@ export default function UnitsPage() {
       deleteTitle="Delete Unit"
       deleteDescription="Are you sure you want to delete this unit?"
     />
-  );
+  )
 }

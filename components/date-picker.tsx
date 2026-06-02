@@ -2,14 +2,17 @@
 
 import { useState } from "react"
 import { format } from "date-fns"
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
 import { type DateRange } from "react-day-picker"
 import { cn } from "@/lib/utils"
 import { FieldLabel } from "./ui/field"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Button } from "./ui/button"
 import { Calendar } from "./ui/calendar"
-
 
 interface DatePickerProps {
   value?: Date
@@ -20,8 +23,15 @@ interface DatePickerProps {
   required?: boolean
 }
 
-export function DatePicker({ value, onChange, placeholder = "Pick a date", className, label, required }: DatePickerProps) {
-  const inputId = label?.toLowerCase().replace(/\s+/g, '-')
+export function DatePicker({
+  value,
+  onChange,
+  placeholder = "Pick a date",
+  className,
+  label,
+  required,
+}: DatePickerProps) {
+  const inputId = label?.toLowerCase().replace(/\s+/g, "-")
 
   return (
     <div className="space-y-1">
@@ -37,14 +47,22 @@ export function DatePicker({ value, onChange, placeholder = "Pick a date", class
             variant="outline"
             data-empty={!value}
             id={inputId}
-            className={cn("w-full h-10 justify-start text-left font-normal data-[empty=true]:text-muted-foreground", className)}
+            className={cn(
+              "h-10 w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground",
+              className
+            )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {value ? format(value, "PPP") : <span>{placeholder}</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0">
-          <Calendar mode="single" selected={value} onSelect={onChange} initialFocus />
+          <Calendar
+            mode="single"
+            selected={value}
+            onSelect={onChange}
+            initialFocus
+          />
         </PopoverContent>
       </Popover>
     </div>
@@ -57,14 +75,34 @@ interface MonthYearPickerProps {
   className?: string
 }
 
-export function MonthYearPicker({ value = new Date(), onChange, className }: MonthYearPickerProps) {
+export function MonthYearPicker({
+  value = new Date(),
+  onChange,
+  className,
+}: MonthYearPickerProps) {
   const [isPickerOpen, setIsPickerOpen] = useState(false)
   const [pickerView, setPickerView] = useState<"month" | "year">("month")
   const [displayYear, setDisplayYear] = useState(value.getFullYear())
 
   const decadeStart = Math.floor(displayYear / 10) * 10
-  const yearGrid = Array.from({ length: 12 }, (_, index) => decadeStart - 1 + index)
-  const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  const yearGrid = Array.from(
+    { length: 12 },
+    (_, index) => decadeStart - 1 + index
+  )
+  const monthLabels = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ]
 
   return (
     <Popover
@@ -80,15 +118,18 @@ export function MonthYearPicker({ value = new Date(), onChange, className }: Mon
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className={cn("h-9 justify-start gap-2 px-3 text-left font-normal bg-white text-gray-950", className)}
+          className={cn(
+            "h-9 justify-start gap-2 bg-white px-3 text-left font-normal text-gray-950",
+            className
+          )}
         >
           <CalendarIcon className="h-4 w-4" />
           {format(value, "MMM yyyy")}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0 rounded-3xl" align="end">
+      <PopoverContent className="w-72 rounded-3xl p-0" align="end">
         {pickerView === "month" ? (
-          <div className="bg-background rounded-3xl">
+          <div className="rounded-3xl bg-background">
             <div className="flex items-center justify-between border-b border-border px-3 py-2">
               <Button
                 variant="ghost"
@@ -135,7 +176,7 @@ export function MonthYearPicker({ value = new Date(), onChange, className }: Mon
             </div>
           </div>
         ) : (
-          <div className="bg-background rounded-3xl">
+          <div className="rounded-3xl bg-background">
             <div className="flex items-center justify-between border-b border-border px-3 py-2">
               <Button
                 variant="ghost"
@@ -144,7 +185,9 @@ export function MonthYearPicker({ value = new Date(), onChange, className }: Mon
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <div className="text-sm font-semibold">{decadeStart}-{decadeStart + 9}</div>
+              <div className="text-sm font-semibold">
+                {decadeStart}-{decadeStart + 9}
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
@@ -188,19 +231,29 @@ interface DateRangePickerProps {
   className?: string
 }
 
-export function DateRangePicker({ value, onChange, placeholder = "Pick a date range", className }: DateRangePickerProps) {
+export function DateRangePicker({
+  value,
+  onChange,
+  placeholder = "Pick a date range",
+  className,
+}: DateRangePickerProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className={cn("w-full h-10 justify-start text-left font-normal", !value?.from && "text-muted-foreground", className)}
+          className={cn(
+            "h-10 w-full justify-start text-left font-normal",
+            !value?.from && "text-muted-foreground",
+            className
+          )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {value?.from ? (
             value.to ? (
               <>
-                {format(value.from, "LLL dd, y")} - {format(value.to, "LLL dd, y")}
+                {format(value.from, "LLL dd, y")} -{" "}
+                {format(value.to, "LLL dd, y")}
               </>
             ) : (
               format(value.from, "LLL dd, y")

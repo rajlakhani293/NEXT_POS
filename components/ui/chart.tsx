@@ -42,7 +42,13 @@ export function ChartContainer({
 }
 
 export function ChartTooltip(props: TooltipProps<number, string>) {
-  return <Tooltip {...props} cursor={{ stroke: "#e5e7eb", strokeDasharray: "3 3" }} wrapperStyle={{ outline: "none" }} />
+  return (
+    <Tooltip
+      {...props}
+      cursor={{ stroke: "#e5e7eb", strokeDasharray: "3 3" }}
+      wrapperStyle={{ outline: "none" }}
+    />
+  )
 }
 
 export function ChartTooltipContent({
@@ -56,25 +62,21 @@ export function ChartTooltipContent({
   indicator?: "dot" | "line"
 }) {
   if (!active || !payload?.length) return null
-  const labelText = labelFormatter
-    ? labelFormatter(label, payload)
-    : label
+  const labelText = labelFormatter ? labelFormatter(label, payload) : label
 
   return (
     <div className="rounded-md border bg-white px-3 py-2 text-xs shadow-sm">
-      {labelText ? <div className="mb-1 font-medium text-gray-900">{labelText as string}</div> : null}
+      {labelText ? (
+        <div className="mb-1 font-medium text-gray-900">
+          {labelText as string}
+        </div>
+      ) : null}
       <div className="space-y-1">
         {payload.map((entry, index) => {
           const name = entry.name || entry.dataKey || ""
           const nameText = String(name)
           const value = formatter
-            ? formatter(
-                entry.value as number,
-                nameText,
-                entry,
-                index,
-                payload,
-              )
+            ? formatter(entry.value as number, nameText, entry, index, payload)
             : entry.value
           const color = (entry.color || entry.fill) as string | undefined
           return (
@@ -87,7 +89,9 @@ export function ChartTooltipContent({
                 style={{ backgroundColor: color }}
               />
               <span className="capitalize">{nameText}</span>
-              <span className="ml-auto font-medium text-gray-900">{value as any}</span>
+              <span className="ml-auto font-medium text-gray-900">
+                {value as any}
+              </span>
             </div>
           )
         })}
@@ -100,15 +104,16 @@ export function ChartLegend(props: LegendProps) {
   return <Legend {...(props as any)} />
 }
 
-export function ChartLegendContent({
-  payload,
-}: LegendProps) {
+export function ChartLegendContent({ payload }: LegendProps) {
   if (!payload?.length) return null
   return (
     <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
       {payload.map((entry, index) => (
         <div key={index} className="flex items-center gap-2">
-          <span className="inline-block size-2 rounded-full" style={{ backgroundColor: entry.color }} />
+          <span
+            className="inline-block size-2 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
           <span className="capitalize">{entry.value}</span>
         </div>
       ))}

@@ -24,7 +24,10 @@ import {
   StoreIcon,
   UsersIcon,
 } from "lucide-react"
-import { MdOutlineArrowCircleLeft, MdOutlineArrowCircleRight } from "react-icons/md"
+import {
+  MdOutlineArrowCircleLeft,
+  MdOutlineArrowCircleRight,
+} from "react-icons/md"
 import { IoSettingsOutline } from "react-icons/io5"
 import { HiReceiptTax } from "react-icons/hi"
 
@@ -157,7 +160,7 @@ function SidebarCollapseButton() {
     <button
       type="button"
       onClick={toggleSidebar}
-      className="flex h-8 w-full items-center gap-2 rounded-sm border border-sidebar-border bg-white px-2 text-sm font-semibold text-sidebar-foreground transition-colors hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-3"
+      className="flex h-8 w-full items-center gap-2 rounded-sm border border-sidebar-border bg-white px-2 text-sm font-semibold text-sidebar-foreground transition-colors group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-3 hover:text-sidebar-accent-foreground"
       title="Toggle Sidebar"
     >
       {isCollapsed ? (
@@ -180,7 +183,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
   const filterNavItems = (sections: DashboardNavSection[]) =>
     sections.reduce<DashboardNavSection[]>((visibleItems, item) => {
       const visibleSubItems = item.items?.filter((subItem) =>
-        hasPermission(subItem.permission, subItem.permissionMatch),
+        hasPermission(subItem.permission, subItem.permissionMatch)
       )
 
       const canViewItem = hasPermission(item.permission, item.permissionMatch)
@@ -194,14 +197,16 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       return visibleItems
     }, [])
 
-  const buildNavItems = (sections: DashboardNavSection[]) => sections.map((item) => ({
-    ...item,
-    isActive: pathname === item.url || pathname.startsWith(`${item.url}/`),
-    items: item.items?.map((subItem) => ({
-      ...subItem,
-      isActive: pathname === subItem.url || pathname.startsWith(`${subItem.url}/`),
-    })),
-  }))
+  const buildNavItems = (sections: DashboardNavSection[]) =>
+    sections.map((item) => ({
+      ...item,
+      isActive: pathname === item.url || pathname.startsWith(`${item.url}/`),
+      items: item.items?.map((subItem) => ({
+        ...subItem,
+        isActive:
+          pathname === subItem.url || pathname.startsWith(`${subItem.url}/`),
+      })),
+    }))
   const mainNavItems = buildNavItems(filterNavItems(mainNavSections))
   const settingsNavItems = buildNavItems(filterNavItems(settingsNavSections))
 
@@ -216,7 +221,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
           <div className="flex items-center">
             <Link
               href="/dashboard"
-              className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-sm font-semibold text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+              className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-sm font-semibold text-sidebar-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             >
               <ArrowLeftIcon className="size-4 shrink-0" />
               <span className="truncate group-data-[collapsible=icon]:hidden">

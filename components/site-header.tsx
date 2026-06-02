@@ -23,7 +23,6 @@ export function SiteHeader({
   userImage,
   onLogout,
 }: SiteHeaderProps) {
-
   return (
     <header className="sticky top-0 z-50 flex w-full items-center border-b bg-white">
       <div className="flex h-(--header-height) w-full items-center justify-between gap-3 px-3">
@@ -47,9 +46,7 @@ export function SiteHeader({
               <p className="truncate text-sm font-semibold text-slate-900">
                 {companyName || "Enter your company name"}
               </p>
-              <p className="text-[10px] font-medium text-slate-500">
-                Company
-              </p>
+              <p className="text-[10px] font-medium text-slate-500">Company</p>
             </div>
           </div>
 

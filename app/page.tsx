@@ -1,19 +1,19 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Cookies from "js-cookie"
 
 export default function Home() {
-  const router = useRouter();
+  const router = useRouter()
 
   useEffect(() => {
-    const token = Cookies.get("token");
+    const token = Cookies.get("token")
     if (token) {
-      router.replace("/dashboard");
+      router.replace("/dashboard")
     } else {
-      router.replace("/login");
+      router.replace("/login")
     }
-  }, [router]);
-  return null;
+  }, [router])
+  return null
 }

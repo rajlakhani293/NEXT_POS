@@ -72,16 +72,16 @@ export const auth = createApi({
   baseQuery: createBaseQueryWithInterceptor(""),
   endpoints: (builder) => ({
     sendOtp: builder.mutation<ApiEnvelope<SendOtpResponse>, any>(
-      endpointsConfig.sendOtp,
+      endpointsConfig.sendOtp
     ),
     verifyOtp: builder.mutation<ApiEnvelope<LoginResponse>, any>(
-      endpointsConfig.verifyOtp,
+      endpointsConfig.verifyOtp
     ),
     googleLogin: builder.mutation<ApiEnvelope<LoginResponse>, any>(
-      endpointsConfig.googleLogin,
+      endpointsConfig.googleLogin
     ),
     getSessionData: builder.mutation<ApiEnvelope<AuthUser>, void>(
-      endpointsConfig.getSessionData,
+      endpointsConfig.getSessionData
     ),
   }),
 })

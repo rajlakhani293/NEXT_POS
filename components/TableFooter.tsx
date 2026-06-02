@@ -1,23 +1,28 @@
-"use client";
+"use client"
 
-import { cn } from "@/lib/utils";
-import { FooterSummaryItem } from "./DynamicTable";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
-import { UniFieldSelect } from "./ui/unifield-select";
-import { SelectItem } from "./ui/select";
-import { Button } from "./ui/button";
-import { ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { cn } from "@/lib/utils"
+import { FooterSummaryItem } from "./DynamicTable"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip"
+import { UniFieldSelect } from "./ui/unifield-select"
+import { SelectItem } from "./ui/select"
+import { Button } from "./ui/button"
+import { ChevronLeft, ChevronRight, Info } from "lucide-react"
 
 interface TableFooterProps {
-  totalItems: number;
-  itemsPerPage: number;
-  currentPage: number;
-  onPageChange: (page: number, pageSize?: number) => void;
-  onChange: (action: string, payload?: any) => void;
-  footerSummary?: FooterSummaryItem[];
-  isFooterStuck: boolean;
-  totalPages: number;
-  getPageNumbers: () => (number | string)[];
+  totalItems: number
+  itemsPerPage: number
+  currentPage: number
+  onPageChange: (page: number, pageSize?: number) => void
+  onChange: (action: string, payload?: any) => void
+  footerSummary?: FooterSummaryItem[]
+  isFooterStuck: boolean
+  totalPages: number
+  getPageNumbers: () => (number | string)[]
 }
 
 const TableFooter = ({
@@ -36,36 +41,48 @@ const TableFooter = ({
       {/* Footer / Pagination */}
       {totalItems > 10 && (
         <div
-          className={cn("sticky z-50 transition-all duration-300 ease-in-out rounded-xl", isFooterStuck ? "mx-6 bottom-5" : "mx-0 bottom-0")}
+          className={cn(
+            "sticky z-50 rounded-xl transition-all duration-300 ease-in-out",
+            isFooterStuck ? "bottom-5 mx-6" : "bottom-0 mx-0"
+          )}
         >
-          <div className={cn(
-            "flex flex-col sm:flex-row items-center justify-between gap-4 p-3 rounded-lg bg-white border",
-            isFooterStuck && "border-primary/20"
-          )}>
-
+          <div
+            className={cn(
+              "flex flex-col items-center justify-between gap-4 rounded-lg border bg-white p-3 sm:flex-row",
+              isFooterStuck && "border-primary/20"
+            )}
+          >
             <div className="flex flex-wrap items-center gap-3">
               {footerSummary?.map((item, index) => (
                 <TooltipProvider key={index}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className={cn(
-                        "inline-flex items-center gap-2 px-3 py-1.5 rounded-md border bg-muted/50 text-sm font-medium",
-                        item.className
-                      )}>
-                        <span className="text-muted-foreground text-xs">{item.label}</span>
+                      <div
+                        className={cn(
+                          "inline-flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-sm font-medium",
+                          item.className
+                        )}
+                      >
+                        <span className="text-xs text-muted-foreground">
+                          {item.label}
+                        </span>
                         <span className="flex items-center gap-1">
                           {item.prefix} {item.value}
-                          {item.tooltip && <Info className="h-3.5 w-3.5 text-muted-foreground" />}
+                          {item.tooltip && (
+                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                          )}
                         </span>
                       </div>
                     </TooltipTrigger>
-                    {item.tooltip && <TooltipContent>{item.tooltip}</TooltipContent>}
+                    {item.tooltip && (
+                      <TooltipContent>{item.tooltip}</TooltipContent>
+                    )}
                   </Tooltip>
                 </TooltipProvider>
               ))}
             </div>
 
-            <div className="flex items-center gap-4 ml-auto">
+            <div className="ml-auto flex items-center gap-4">
               <UniFieldSelect
                 value={String(itemsPerPage)}
                 onValueChange={(val) => onChange("itemsPerPage", Number(val))}
@@ -89,9 +106,11 @@ const TableFooter = ({
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
 
-                {getPageNumbers().map((page, i) => (
-                  page === '...' ? (
-                    <span key={i} className="px-2 text-muted-foreground">...</span>
+                {getPageNumbers().map((page, i) =>
+                  page === "..." ? (
+                    <span key={i} className="px-2 text-muted-foreground">
+                      ...
+                    </span>
                   ) : (
                     <Button
                       key={i}
@@ -103,7 +122,7 @@ const TableFooter = ({
                       {page}
                     </Button>
                   )
-                ))}
+                )}
 
                 <Button
                   variant="outline"
@@ -120,7 +139,7 @@ const TableFooter = ({
         </div>
       )}
     </>
-  );
-};
+  )
+}
 
-export default TableFooter;
+export default TableFooter

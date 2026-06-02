@@ -1,10 +1,6 @@
 "use client"
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,7 +72,9 @@ export function NavUser({
             >
               <Avatar>
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className={iconOnly ? "rounded-md" : "rounded-md"}>
+                <AvatarFallback
+                  className={iconOnly ? "rounded-md" : "rounded-md"}
+                >
                   {getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>

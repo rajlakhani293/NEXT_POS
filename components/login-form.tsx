@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils"
 import { Card, CardContent } from "./ui/card"
 import { Field, FieldDescription, FieldGroup, FieldSeparator } from "./ui/field"
 import { GalleryVerticalEnd } from "lucide-react"
-import { BiLoaderCircle } from "react-icons/bi";
-import { MdEdit } from "react-icons/md";
+import { BiLoaderCircle } from "react-icons/bi"
+import { MdEdit } from "react-icons/md"
 import { UniFieldInput } from "./ui/unifield-input"
 import { Button } from "./ui/button"
 import { useRouter } from "next/navigation"
@@ -57,27 +57,33 @@ export function LoginForm({
   const [devOtp, setDevOtp] = useState("")
   const [sendOtp, { isLoading: isSendingOtp }] = auth.useSendOtpMutation()
   const [verifyOtp, { isLoading: isVerifyingOtp }] = auth.useVerifyOtpMutation()
-  const [googleLogin, { isLoading: isGoogleLoading }] = auth.useGoogleLoginMutation()
+  const [googleLogin, { isLoading: isGoogleLoading }] =
+    auth.useGoogleLoginMutation()
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
 
-  const completeLogin = useCallback(async (token: string, user: AuthUser) => {
-    Cookies.set("token", token, { expires: 1, path: "/" })
-    dispatch(setSessionData({ user }))
-    await refreshSession()
-    router.replace("/dashboard")
-  }, [dispatch, refreshSession, router])
+  const completeLogin = useCallback(
+    async (token: string, user: AuthUser) => {
+      Cookies.set("token", token, { expires: 1, path: "/" })
+      dispatch(setSessionData({ user }))
+      await refreshSession()
+      router.replace("/dashboard")
+    },
+    [dispatch, refreshSession, router]
+  )
 
-  const handleGoogleCredential = useCallback(async (credential: string) => {
-    try {
-      const response = await googleLogin({
-        provider: "google",
-        id_token: credential,
-        device_name: defaultDeviceName,
-      }).unwrap()
-      await completeLogin(response.data.token, response.data.user)
-    } catch {
-    }
-  }, [googleLogin, completeLogin])
+  const handleGoogleCredential = useCallback(
+    async (credential: string) => {
+      try {
+        const response = await googleLogin({
+          provider: "google",
+          id_token: credential,
+          device_name: defaultDeviceName,
+        }).unwrap()
+        await completeLogin(response.data.token, response.data.user)
+      } catch {}
+    },
+    [googleLogin, completeLogin]
+  )
 
   useEffect(() => {
     if (!googleClientId) {
@@ -115,14 +121,17 @@ export function LoginForm({
           size: "large",
           text: "continue_with",
           shape: "rectangular",
-          width: width
+          width: width,
         })
       }
 
       renderButton()
       googleInitializedRef.current = true
 
-      if (googleButtonRef.current.parentElement && typeof ResizeObserver !== "undefined") {
+      if (
+        googleButtonRef.current.parentElement &&
+        typeof ResizeObserver !== "undefined"
+      ) {
         observer = new ResizeObserver(() => {
           renderButton()
         })
@@ -134,7 +143,7 @@ export function LoginForm({
       initializeGoogle()
     } else {
       const existingScript = document.querySelector<HTMLScriptElement>(
-        'script[src="https://accounts.google.com/gsi/client"]',
+        'script[src="https://accounts.google.com/gsi/client"]'
       )
 
       if (existingScript) {
@@ -163,7 +172,9 @@ export function LoginForm({
       return
     }
     if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
-      setPhoneError("Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9")
+      setPhoneError(
+        "Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9"
+      )
       return
     }
     setPhoneError("")
@@ -172,8 +183,7 @@ export function LoginForm({
       setDevOtp(response.data.otp_code)
       setStep("otp")
       showToast.success(response.data.message || "OTP sent successfully.")
-    } catch {
-    }
+    } catch {}
   }
 
   const handleVerifyOtp = async () => {
@@ -194,12 +204,14 @@ export function LoginForm({
         device_name: defaultDeviceName,
       }).unwrap()
       await completeLogin(response.data.token, response.data.user)
-    } catch {
-    }
+    } catch {}
   }
 
   return (
-    <div className={cn("flex flex-col gap-6 w-full max-w-lg px-4", className)} {...props}>
+    <div
+      className={cn("flex w-full max-w-lg flex-col gap-6 px-4", className)}
+      {...props}
+    >
       <Card className="w-full">
         <CardContent>
           <form
@@ -232,7 +244,7 @@ export function LoginForm({
                     value={phone}
                     maxLength={10}
                     prefix="+91"
-                    className="h-12 rounded-xl text-gray-800 text-lg md:text-lg font-semibold"
+                    className="h-12 rounded-xl text-lg font-semibold text-gray-800 md:text-lg"
                     onChange={(event) => {
                       setPhone(event.target.value)
                       setPhoneError("")
@@ -251,7 +263,7 @@ export function LoginForm({
                     placeholder="6 digit OTP"
                     value={otpCode}
                     maxLength={6}
-                    className="h-12 rounded-xl text-gray-800 text-lg md:text-lg font-semibold"
+                    className="h-12 rounded-xl text-lg font-semibold text-gray-800 md:text-lg"
                     onChange={(event) => {
                       setOtpCode(event.target.value)
                       setOtpError("")
@@ -263,7 +275,7 @@ export function LoginForm({
                     <span>Verification code sent to {phone}.</span>
                     <button
                       type="button"
-                      className="inline-flex items-center justify-center text-[#3155f6] hover:bg-[#3155f6]/10 rounded-md transition-colors"
+                      className="inline-flex items-center justify-center rounded-md text-[#3155f6] transition-colors hover:bg-[#3155f6]/10"
                       onClick={() => {
                         setStep("phone")
                         setOtpCode("")
@@ -287,16 +299,12 @@ export function LoginForm({
                   type="submit"
                   variant="blue"
                   size="lg"
-                  disabled={
-                    step === "phone"
-                      ? isSendingOtp
-                      : isVerifyingOtp
-                  }
+                  disabled={step === "phone" ? isSendingOtp : isVerifyingOtp}
                   className="text-base font-semibold hover:scale-105"
                 >
                   {step === "phone" ? (
                     isSendingOtp ? (
-                      <BiLoaderCircle className="animate-spin size-5" />
+                      <BiLoaderCircle className="size-5 animate-spin" />
                     ) : (
                       <>
                         Continue with Mobile Number
@@ -304,7 +312,7 @@ export function LoginForm({
                       </>
                     )
                   ) : isVerifyingOtp ? (
-                    <BiLoaderCircle className="animate-spin size-5" />
+                    <BiLoaderCircle className="size-5 animate-spin" />
                   ) : (
                     "Confirm OTP"
                   )}

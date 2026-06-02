@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
+import { useEffect } from "react"
 
-import DynamicForm from "@/components/DynamicForm";
-import { showToast } from "@/lib/toast";
+import DynamicForm from "@/components/DynamicForm"
+import { showToast } from "@/lib/toast"
 
 type CatalogMasterFormProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  editId?: number | string | null;
-  entityName: string;
-  fields: any[];
-  initialValues: Record<string, any>;
-  createHook: any;
-  editHook: any;
-  getByIdHook: any;
-  formWidth?: string;
-  buildPayload?: (values: Record<string, any>) => Record<string, any>;
-};
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+  editId?: number | string | null
+  entityName: string
+  fields: any[]
+  initialValues: Record<string, any>
+  createHook: any
+  editHook: any
+  getByIdHook: any
+  formWidth?: string
+  buildPayload?: (values: Record<string, any>) => Record<string, any>
+}
 
 export function CatalogMasterForm({
   isOpen,
@@ -34,45 +34,55 @@ export function CatalogMasterForm({
   formWidth = "w-[520px]",
   buildPayload,
 }: CatalogMasterFormProps) {
-  const [createRecord] = createHook();
-  const [editRecord] = editHook();
-  const [getRecordById, { data, isLoading }] = getByIdHook();
+  const [createRecord] = createHook()
+  const [editRecord] = editHook()
+  const [getRecordById, { data, isLoading }] = getByIdHook()
 
   useEffect(() => {
     if (isOpen && editId) {
-      getRecordById({ id: editId });
+      getRecordById({ id: editId })
     }
-  }, [editId, getRecordById, isOpen]);
+  }, [editId, getRecordById, isOpen])
 
-  const record = data?.data;
+  const record = data?.data
   const normalizeValues = (values: Record<string, any>) => {
     return fields.reduce(
       (current, field) => {
-        if (field.type === "select" && current[field.name] !== undefined && current[field.name] !== null) {
-          current[field.name] = String(current[field.name]);
+        if (
+          field.type === "select" &&
+          current[field.name] !== undefined &&
+          current[field.name] !== null
+        ) {
+          current[field.name] = String(current[field.name])
         }
-        return current;
+        return current
       },
-      { ...values },
-    );
-  };
+      { ...values }
+    )
+  }
 
-  const formValues = normalizeValues(editId && record ? { ...initialValues, ...record } : initialValues);
+  const formValues = normalizeValues(
+    editId && record ? { ...initialValues, ...record } : initialValues
+  )
 
   const handleSubmit = async (values: Record<string, any>) => {
-    const payLoad = buildPayload ? buildPayload(values) : values;
+    const payLoad = buildPayload ? buildPayload(values) : values
 
     if (editId) {
-      const response = await editRecord({ id: editId, payLoad }).unwrap();
-      showToast.success(response?.message || `${entityName} updated successfully.`);
+      const response = await editRecord({ id: editId, payLoad }).unwrap()
+      showToast.success(
+        response?.message || `${entityName} updated successfully.`
+      )
     } else {
-      const response = await createRecord(payLoad).unwrap();
-      showToast.success(response?.message || `${entityName} created successfully.`);
+      const response = await createRecord(payLoad).unwrap()
+      showToast.success(
+        response?.message || `${entityName} created successfully.`
+      )
     }
 
-    onSuccess();
-    onClose();
-  };
+    onSuccess()
+    onClose()
+  }
 
   return (
     <DynamicForm
@@ -87,5 +97,5 @@ export function CatalogMasterForm({
       formWidth={formWidth}
       isLoading={Boolean(editId) && isLoading}
     />
-  );
+  )
 }

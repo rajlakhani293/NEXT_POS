@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { CatalogMasterForm } from "@/components/catalog/catalog-master-form";
-import { CatalogPageShell } from "@/components/catalog/catalog-page-shell";
-import { settings } from "@/lib/api/settings";
-import { PERMISSIONS } from "@/lib/permissions";
+import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
+import { CatalogPageShell } from "@/components/catalog/catalog-page-shell"
+import { settings } from "@/lib/api/settings"
+import { PERMISSIONS } from "@/lib/permissions"
 
 const columns = [
   { key: "name", title: "Name" },
@@ -11,7 +11,7 @@ const columns = [
   { key: "phone", title: "Phone" },
   { key: "city", title: "City" },
   { key: "state__name", title: "State" },
-];
+]
 
 const initialValues = {
   name: "",
@@ -21,40 +21,49 @@ const initialValues = {
   city: "",
   state_id: "",
   postal_code: "",
-};
+}
 
 const onlyDigits = (value: any, maxLength: number) =>
-  String(value || "").replace(/\D/g, "").slice(0, maxLength);
+  String(value || "")
+    .replace(/\D/g, "")
+    .slice(0, maxLength)
 
 const formatIndianMobile = (value: any) => {
-  const digits = onlyDigits(value, 10);
-  return digits.length > 5 ? `${digits.slice(0, 5)} ${digits.slice(5)}` : digits;
-};
+  const digits = onlyDigits(value, 10)
+  return digits.length > 5 ? `${digits.slice(0, 5)} ${digits.slice(5)}` : digits
+}
 
 const validateIndianMobile = (value: any) => {
-  if (!value) return "";
-  const digits = onlyDigits(value, 10);
-  if (digits.length !== 10) return "Phone number must be 10 digits";
-  if (!/^[6-9]/.test(digits)) return "Phone number must start with 6, 7, 8, or 9";
-  return "";
-};
+  if (!value) return ""
+  const digits = onlyDigits(value, 10)
+  if (digits.length !== 10) return "Phone number must be 10 digits"
+  if (!/^[6-9]/.test(digits))
+    return "Phone number must start with 6, 7, 8, or 9"
+  return ""
+}
 
 function BranchForm(props: any) {
   const states = (settings as any).useGetStatesDropdownQuery(undefined, {
     skip: !props.isOpen,
-  });
+  })
 
   const stateOptions = (states.data?.data || []).map((state: any) => ({
     label: state.name,
     value: state.id,
-  }));
+  }))
 
   return (
     <CatalogMasterForm
       {...props}
       entityName="Branch"
       fields={[
-        { name: "name", label: "Branch Name", placeholder: "Enter branch name", type: "text", required: true },
+        {
+          name: "name",
+          label: "Branch Name",
+          placeholder: "Enter branch name",
+          type: "text",
+          required: true,
+        },
         {
           name: "phone",
           label: "Phone",
@@ -66,9 +75,26 @@ function BranchForm(props: any) {
           sanitize: formatIndianMobile,
           validate: validateIndianMobile,
         },
-        { name: "address", label: "Address", placeholder: "Enter address", type: "textarea", rows: 3 },
-        { name: "city", label: "City", placeholder: "Enter city", type: "text" },
-        { name: "state_id", label: "State", placeholder: "Select state", type: "select", options: stateOptions },
+        {
+          name: "address",
+          label: "Address",
+          placeholder: "Enter address",
+          type: "textarea",
+          rows: 3,
+        },
+        {
+          name: "city",
+          label: "City",
+          placeholder: "Enter city",
+          type: "text",
+        },
+        {
+          name: "state_id",
+          label: "State",
+          placeholder: "Select state",
+          type: "select",
+          options: stateOptions,
+        },
         {
           name: "postal_code",
           label: "Postal Code",
@@ -78,7 +104,9 @@ function BranchForm(props: any) {
           maxLength: 6,
           sanitize: (value: any) => onlyDigits(value, 6),
           validate: (value: any) =>
-            value && String(value).length !== 6 ? "Postal code must be 6 digits" : "",
+            value && String(value).length !== 6
+              ? "Postal code must be 6 digits"
+              : "",
         },
       ]}
       initialValues={initialValues}
@@ -91,7 +119,7 @@ function BranchForm(props: any) {
         state_id: values.state_id ? Number(values.state_id) : undefined,
       })}
     />
-  );
+  )
 }
 
 export default function BranchesPage() {
@@ -108,5 +136,5 @@ export default function BranchesPage() {
       deleteDescription="Are you sure you want to delete this branch?"
       permissions={PERMISSIONS.branches}
     />
-  );
+  )
 }

@@ -84,11 +84,12 @@ function statusBadge(status: ProductRecord["status"]) {
 export function ProductsPageClient() {
   const [search, setSearch] = React.useState("")
   const [isOpen, setIsOpen] = React.useState(false)
-  const [editingProduct, setEditingProduct] = React.useState<ProductRecord | null>(null)
+  const [editingProduct, setEditingProduct] =
+    React.useState<ProductRecord | null>(null)
   const [form, setForm] = React.useState<ProductPayload>(defaultForm)
 
   const { data, isLoading } = useGetProductsQuery(
-    search ? { search } : undefined,
+    search ? { search } : undefined
   )
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation()
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation()
@@ -96,7 +97,9 @@ export function ProductsPageClient() {
 
   const products = data?.data ?? []
 
-  const lowStockCount = products.filter((product) => product.status === "low_stock").length
+  const lowStockCount = products.filter(
+    (product) => product.status === "low_stock"
+  ).length
 
   const openCreateDialog = () => {
     setEditingProduct(null)
@@ -122,7 +125,7 @@ export function ProductsPageClient() {
 
   const onFieldChange = <K extends keyof ProductPayload>(
     key: K,
-    value: ProductPayload[K],
+    value: ProductPayload[K]
   ) => {
     setForm((current) => ({ ...current, [key]: value }))
   }
@@ -174,7 +177,11 @@ export function ProductsPageClient() {
             <Button variant="outline" className="rounded-2xl border-slate-200">
               Total products: {products.length}
             </Button>
-            <Button variant="blue" className="rounded-2xl px-5" onClick={openCreateDialog}>
+            <Button
+              variant="blue"
+              className="rounded-2xl px-5"
+              onClick={openCreateDialog}
+            >
               <PlusIcon className="size-4" />
               Add product
             </Button>
@@ -217,7 +224,8 @@ export function ProductsPageClient() {
           <div>
             <CardTitle className="text-lg">Products list</CardTitle>
             <CardDescription>
-              This table is ready to swap from local RTK Query data to backend APIs.
+              This table is ready to swap from local RTK Query data to backend
+              APIs.
             </CardDescription>
           </div>
           <div className="relative w-full sm:w-80">
@@ -246,14 +254,21 @@ export function ProductsPageClient() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="px-6 py-8 text-center text-slate-500">
+                  <TableCell
+                    colSpan={7}
+                    className="px-6 py-8 text-center text-slate-500"
+                  >
                     Loading products...
                   </TableCell>
                 </TableRow>
               ) : products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="px-6 py-8 text-center text-slate-500">
-                    No products found. Add your first item to start building the catalog.
+                  <TableCell
+                    colSpan={7}
+                    className="px-6 py-8 text-center text-slate-500"
+                  >
+                    No products found. Add your first item to start building the
+                    catalog.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -261,7 +276,9 @@ export function ProductsPageClient() {
                   <TableRow key={product.id}>
                     <TableCell className="px-6">
                       <div className="space-y-1">
-                        <p className="font-medium text-slate-900">{product.name}</p>
+                        <p className="font-medium text-slate-900">
+                          {product.name}
+                        </p>
                         <p className="text-xs text-slate-500">
                           {product.brand} · {product.productType}
                         </p>
@@ -308,8 +325,9 @@ export function ProductsPageClient() {
               {editingProduct ? "Edit product" : "Create product"}
             </DialogTitle>
             <DialogDescription>
-              Add the core catalog information now. We can extend this later with
-              variants, barcode, tax group, and inventory details from the backend.
+              Add the core catalog information now. We can extend this later
+              with variants, barcode, tax group, and inventory details from the
+              backend.
             </DialogDescription>
           </DialogHeader>
 
@@ -327,7 +345,9 @@ export function ProductsPageClient() {
             <Input
               placeholder="Category"
               value={form.category}
-              onChange={(event) => onFieldChange("category", event.target.value)}
+              onChange={(event) =>
+                onFieldChange("category", event.target.value)
+              }
             />
             <Input
               placeholder="Brand"
@@ -340,7 +360,7 @@ export function ProductsPageClient() {
               onChange={(event) =>
                 onFieldChange(
                   "productType",
-                  event.target.value as ProductPayload["productType"],
+                  event.target.value as ProductPayload["productType"]
                 )
               }
             />
@@ -382,7 +402,11 @@ export function ProductsPageClient() {
             <Button variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button variant="blue" onClick={onSave} disabled={isCreating || isUpdating}>
+            <Button
+              variant="blue"
+              onClick={onSave}
+              disabled={isCreating || isUpdating}
+            >
               {editingProduct ? "Update product" : "Create product"}
             </Button>
           </DialogFooter>

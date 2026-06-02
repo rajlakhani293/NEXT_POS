@@ -44,10 +44,10 @@ export function NavMain({
   const { state, isMobile } = useSidebar()
   const activeMenuTitle = useMemo(
     () => items.find((item) => item.isActive)?.title,
-    [items],
+    [items]
   )
   const [openMenuTitle, setOpenMenuTitle] = useState<string | undefined>(
-    activeMenuTitle,
+    activeMenuTitle
   )
   const [activeFloatingTitle, setActiveFloatingTitle] = useState<
     string | undefined
@@ -66,14 +66,13 @@ export function NavMain({
           const hasSubmenu = Boolean(item.items?.length)
           const isOpen = hasSubmenu && openMenuTitle === item.title
           const isCollapsedDesktop = state === "collapsed" && !isMobile
-          const showSubmenuFlyout =
-            hasSubmenu && isCollapsedDesktop
+          const showSubmenuFlyout = hasSubmenu && isCollapsedDesktop
           const showSingleTooltip = !hasSubmenu && isCollapsedDesktop
           const menuButton = showSubmenuFlyout ? (
             <SidebarMenuButton
               tooltip={undefined}
               isActive={item.isActive}
-              className="data-[active=true]:bg-gray-200/60 hover:bg-gray-200/60"
+              className="hover:bg-gray-200/60 data-[active=true]:bg-gray-200/60"
             >
               {item.icon}
               <span>{item.title}</span>
@@ -83,7 +82,7 @@ export function NavMain({
               asChild
               tooltip={undefined}
               isActive={item.isActive}
-              className="data-[active=true]:bg-gray-200/60 hover:bg-gray-200/60"
+              className="hover:bg-gray-200/60 data-[active=true]:bg-gray-200/60"
             >
               <Link
                 href={item.items?.[0]?.url || item.url}
@@ -119,13 +118,11 @@ export function NavMain({
                       }
 
                       setActiveFloatingTitle((currentTitle) =>
-                        currentTitle === item.title ? undefined : currentTitle,
+                        currentTitle === item.title ? undefined : currentTitle
                       )
                     }}
                   >
-                    <HoverCardTrigger asChild>
-                      {menuButton}
-                    </HoverCardTrigger>
+                    <HoverCardTrigger asChild>{menuButton}</HoverCardTrigger>
                     <HoverCardContent
                       side="right"
                       align="start"
@@ -140,7 +137,7 @@ export function NavMain({
                         <Link
                           key={subItem.title}
                           className={[
-                            "flex h-8 items-center rounded-sm px-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground hover:bg-gray-200/60",
+                            "flex h-8 items-center rounded-sm px-2 text-sm transition-colors outline-none hover:bg-gray-200/60 focus:bg-accent focus:text-accent-foreground",
                             subItem.isActive
                               ? "font-black text-sidebar-foreground"
                               : "font-semibold text-sidebar-foreground/75",
@@ -165,18 +162,16 @@ export function NavMain({
                       }
 
                       setActiveFloatingTitle((currentTitle) =>
-                        currentTitle === item.title ? undefined : currentTitle,
+                        currentTitle === item.title ? undefined : currentTitle
                       )
                     }}
                   >
-                    <HoverCardTrigger asChild>
-                      {menuButton}
-                    </HoverCardTrigger>
+                    <HoverCardTrigger asChild>{menuButton}</HoverCardTrigger>
                     <HoverCardContent
                       side="right"
                       align="center"
                       sideOffset={10}
-                      className="relative w-auto rounded-md border-0 bg-foreground px-3 py-1.5 text-xs font-semibold text-background shadow-md before:absolute before:left-0 before:top-1/2 before:size-2 before:-translate-x-1/2 before:-translate-y-1/2 before:rotate-45 before:rounded-[1px] before:bg-foreground before:content-['']"
+                      className="relative w-auto rounded-md border-0 bg-foreground px-3 py-1.5 text-xs font-semibold text-background shadow-md before:absolute before:top-1/2 before:left-0 before:size-2 before:-translate-x-1/2 before:-translate-y-1/2 before:rotate-45 before:rounded-[1px] before:bg-foreground before:content-['']"
                     >
                       {item.title}
                     </HoverCardContent>

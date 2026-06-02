@@ -1,6 +1,6 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react"
 
-import { createBaseQueryWithInterceptor } from "@/lib/api/base";
+import { createBaseQueryWithInterceptor } from "@/lib/api/base"
 import {
   createMutation,
   deleteMutation,
@@ -8,81 +8,141 @@ import {
   patchMutation,
   postMutation,
   putMutation,
-} from "@/lib/api/apiUtils";
+} from "@/lib/api/apiUtils"
 
 const endpointsConfig = {
   // Categories
-  getCategoriesDropdown: { query: () => getMutation("categories/dropdown-list") },
+  getCategoriesDropdown: {
+    query: () => getMutation("categories/dropdown-list"),
+  },
   getCategoriesData: { query: postMutation("categories/get-transactions") },
   createCategory: { query: createMutation("categories/") },
-  editCategory: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`categories/${id}`, payLoad) },
+  editCategory: {
+    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
+      putMutation(`categories/${id}`, payLoad),
+  },
   deleteCategory: { query: deleteMutation("categories/delete") },
-  updateCategoryStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("categories/status", payLoad) },
-  getCategoryById: { query: ({ id }: { id: number }) => getMutation(`categories/${id}`) },
+  updateCategoryStatus: {
+    query: ({ payLoad }: { payLoad: any }) =>
+      patchMutation("categories/status", payLoad),
+  },
+  getCategoryById: {
+    query: ({ id }: { id: number }) => getMutation(`categories/${id}`),
+  },
 
   // Brands
   getBrandsDropdown: { query: () => getMutation("brands/dropdown-list") },
   getBrandsData: { query: postMutation("brands/get-transactions") },
   createBrand: { query: createMutation("brands/") },
-  editBrand: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`brands/${id}`, payLoad) },
+  editBrand: {
+    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
+      putMutation(`brands/${id}`, payLoad),
+  },
   deleteBrand: { query: deleteMutation("brands/delete") },
-  updateBrandStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("brands/status", payLoad) },
-  getBrandById: { query: ({ id }: { id: number }) => getMutation(`brands/${id}`) },
+  updateBrandStatus: {
+    query: ({ payLoad }: { payLoad: any }) =>
+      patchMutation("brands/status", payLoad),
+  },
+  getBrandById: {
+    query: ({ id }: { id: number }) => getMutation(`brands/${id}`),
+  },
 
   // Unit groups
-  getUnitGroupsDropdown: { query: () => getMutation("unit-groups/dropdown-list") },
+  getUnitGroupsDropdown: {
+    query: () => getMutation("unit-groups/dropdown-list"),
+  },
   getUnitGroupsData: { query: postMutation("unit-groups/get-transactions") },
   createUnitGroup: { query: createMutation("unit-groups/") },
-  editUnitGroup: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`unit-groups/${id}`, payLoad) },
+  editUnitGroup: {
+    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
+      putMutation(`unit-groups/${id}`, payLoad),
+  },
   deleteUnitGroup: { query: deleteMutation("unit-groups/delete") },
-  updateUnitGroupStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("unit-groups/status", payLoad) },
-  getUnitGroupById: { query: ({ id }: { id: number }) => getMutation(`unit-groups/${id}`) },
+  updateUnitGroupStatus: {
+    query: ({ payLoad }: { payLoad: any }) =>
+      patchMutation("unit-groups/status", payLoad),
+  },
+  getUnitGroupById: {
+    query: ({ id }: { id: number }) => getMutation(`unit-groups/${id}`),
+  },
 
   // Units
   getUnitsDropdown: { query: () => getMutation("units/dropdown-list") },
   getUnitsData: { query: postMutation("units/get-transactions") },
   createUnit: { query: createMutation("units/") },
-  editUnit: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`units/${id}`, payLoad) },
+  editUnit: {
+    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
+      putMutation(`units/${id}`, payLoad),
+  },
   deleteUnit: { query: deleteMutation("units/delete") },
-  updateUnitStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("units/status", payLoad) },
-  getUnitById: { query: ({ id }: { id: number }) => getMutation(`units/${id}`) },
+  updateUnitStatus: {
+    query: ({ payLoad }: { payLoad: any }) =>
+      patchMutation("units/status", payLoad),
+  },
+  getUnitById: {
+    query: ({ id }: { id: number }) => getMutation(`units/${id}`),
+  },
 
   // Tax groups
-  getTaxGroupsDropdown: { query: () => getMutation("tax-groups/dropdown-list") },
+  getTaxGroupsDropdown: {
+    query: () => getMutation("tax-groups/dropdown-list"),
+  },
   getTaxGroupsData: { query: postMutation("tax-groups/get-transactions") },
   createTaxGroup: { query: createMutation("tax-groups/") },
-  editTaxGroup: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`tax-groups/${id}`, payLoad) },
+  editTaxGroup: {
+    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
+      putMutation(`tax-groups/${id}`, payLoad),
+  },
   deleteTaxGroup: { query: deleteMutation("tax-groups/delete") },
-  updateTaxGroupStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("tax-groups/status", payLoad) },
-  getTaxGroupById: { query: ({ id }: { id: number }) => getMutation(`tax-groups/${id}`) },
+  updateTaxGroupStatus: {
+    query: ({ payLoad }: { payLoad: any }) =>
+      patchMutation("tax-groups/status", payLoad),
+  },
+  getTaxGroupById: {
+    query: ({ id }: { id: number }) => getMutation(`tax-groups/${id}`),
+  },
 
   // Taxes
   getTaxesDropdown: { query: () => getMutation("taxes/dropdown-list") },
   getTaxesData: { query: postMutation("taxes/get-transactions") },
   createTax: { query: createMutation("taxes/") },
-  editTax: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`taxes/${id}`, payLoad) },
+  editTax: {
+    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
+      putMutation(`taxes/${id}`, payLoad),
+  },
   deleteTax: { query: deleteMutation("taxes/delete") },
-  updateTaxStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("taxes/status", payLoad) },
+  updateTaxStatus: {
+    query: ({ payLoad }: { payLoad: any }) =>
+      patchMutation("taxes/status", payLoad),
+  },
   getTaxById: { query: ({ id }: { id: number }) => getMutation(`taxes/${id}`) },
 
   // Products
   getProductsDropdown: { query: () => getMutation("products/dropdown-list") },
   getProductsData: { query: postMutation("products/get-transactions") },
   createProduct: { query: createMutation("products/") },
-  editProduct: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`products/${id}`, payLoad) },
+  editProduct: {
+    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
+      putMutation(`products/${id}`, payLoad),
+  },
   deleteProduct: { query: deleteMutation("products/delete") },
-  updateProductStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("products/status", payLoad) },
-  getProductById: { query: ({ id }: { id: number }) => getMutation(`products/${id}`) },
-};
+  updateProductStatus: {
+    query: ({ payLoad }: { payLoad: any }) =>
+      patchMutation("products/status", payLoad),
+  },
+  getProductById: {
+    query: ({ id }: { id: number }) => getMutation(`products/${id}`),
+  },
+}
 
 export const catalog = createApi({
   reducerPath: "catalog",
   baseQuery: createBaseQueryWithInterceptor("catalog"),
   endpoints: (builder) => {
-    const finalEndpoints: Record<string, any> = {};
+    const finalEndpoints: Record<string, any> = {}
     for (const [name, config] of Object.entries(endpointsConfig)) {
-      finalEndpoints[name] = builder.mutation(config as any);
+      finalEndpoints[name] = builder.mutation(config as any)
     }
-    return finalEndpoints;
+    return finalEndpoints
   },
-});
+})

@@ -1,4 +1,3 @@
-
 import { PermissionGuard } from "@/components/permission-guard"
 import { PERMISSIONS } from "@/lib/permissions"
 

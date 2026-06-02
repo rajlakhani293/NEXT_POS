@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
+import { useEffect } from "react"
 
-import { CatalogMasterForm } from "@/components/catalog/catalog-master-form";
-import { catalog } from "@/lib/api/catalog";
+import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
+import { catalog } from "@/lib/api/catalog"
 
 const initialValues = {
   unit_group_id: "",
@@ -11,21 +11,23 @@ const initialValues = {
   short_name: "",
   factor: "1",
   is_base_unit: false,
-};
+}
 
 export function UnitForm(props: any) {
-  const [getUnitGroupsDropdown, { data }] = (catalog as any).useGetUnitGroupsDropdownMutation();
+  const [getUnitGroupsDropdown, { data }] = (
+    catalog as any
+  ).useGetUnitGroupsDropdownMutation()
 
   useEffect(() => {
     if (props.isOpen) {
-      getUnitGroupsDropdown();
+      getUnitGroupsDropdown()
     }
-  }, [getUnitGroupsDropdown, props.isOpen]);
+  }, [getUnitGroupsDropdown, props.isOpen])
 
   const unitGroupOptions = (data?.data || []).map((item: any) => ({
     label: item.name,
     value: item.id,
-  }));
+  }))
 
   const fields = [
     {
@@ -36,16 +38,34 @@ export function UnitForm(props: any) {
       required: true,
       options: unitGroupOptions,
     },
-    { name: "name", label: "Name", type: "text", placeholder: "Enter unit name", required: true },
-    { name: "short_name", label: "Short Name", type: "text", placeholder: "e.g. kg, pc, ltr", required: true },
-    { name: "factor", label: "Factor", type: "number", placeholder: "1", required: true },
+    {
+      name: "name",
+      label: "Name",
+      type: "text",
+      placeholder: "Enter unit name",
+      required: true,
+    },
+    {
+      name: "short_name",
+      label: "Short Name",
+      type: "text",
+      placeholder: "e.g. kg, pc, ltr",
+      required: true,
+    },
+    {
+      name: "factor",
+      label: "Factor",
+      type: "number",
+      placeholder: "1",
+      required: true,
+    },
     {
       name: "is_base_unit",
       label: "Base Unit",
       type: "switch",
       note: "Only one base unit is allowed inside one unit group.",
     },
-  ];
+  ]
 
   return (
     <CatalogMasterForm
@@ -64,5 +84,5 @@ export function UnitForm(props: any) {
         is_base_unit: Boolean(values.is_base_unit),
       })}
     />
-  );
+  )
 }

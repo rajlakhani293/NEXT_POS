@@ -5,10 +5,7 @@ import { usePathname } from "next/navigation"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import {
   Dialog,
   DialogContent,
@@ -34,7 +31,7 @@ export default function DashboardLayout({
   const branch = useAppSelector((state) => state.session.branch)
   const company = useAppSelector((state) => state.session.company)
   const [isOffline, setIsOffline] = useState(
-    typeof navigator !== "undefined" ? !navigator.onLine : false,
+    typeof navigator !== "undefined" ? !navigator.onLine : false
   )
   const isProductFormPage = /^\/inventory\/products\/[^/]+$/.test(pathname)
 
@@ -54,7 +51,10 @@ export default function DashboardLayout({
   return (
     <>
       <div className="h-svh overflow-hidden [--header-height:calc(--spacing(12))]">
-        <SidebarProvider defaultOpen={false} className="flex h-full min-h-0 flex-col">
+        <SidebarProvider
+          defaultOpen={false}
+          className="flex h-full min-h-0 flex-col"
+        >
           <SiteHeader
             companyName={company?.name}
             branchName={branch?.name}
@@ -109,7 +109,7 @@ export default function DashboardLayout({
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
               </span>
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+              <span className="text-[11px] font-semibold tracking-widest text-slate-400 uppercase">
                 Attempting to reconnect
               </span>
             </div>

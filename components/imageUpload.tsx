@@ -1,26 +1,32 @@
-"use client";
+"use client"
 
-import { EyeIcon, ImageIcon, Trash2Icon, UploadCloudIcon, XIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  EyeIcon,
+  ImageIcon,
+  Trash2Icon,
+  UploadCloudIcon,
+  XIcon,
+} from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { IoAddCircleOutline } from "react-icons/io5";
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+import { IoAddCircleOutline } from "react-icons/io5"
 
-const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
-const maxImageSizeInBytes = 2 * 1024 * 1024;
+const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"]
+const maxImageSizeInBytes = 2 * 1024 * 1024
 
 type ImageUploadProps = {
-  value?: File | null;
-  initialUrl?: string | null;
-  onChange: (file: File | null) => void;
-  label?: string;
-  error?: string;
-  onError?: (message: string) => void;
-  className?: string;
-};
+  value?: File | null
+  initialUrl?: string | null
+  onChange: (file: File | null) => void
+  label?: string
+  error?: string
+  onError?: (message: string) => void
+  className?: string
+}
 
-const formatSize = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(0)} MB`;
+const formatSize = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(0)} MB`
 
 export function ImageUpload({
   value,
@@ -31,48 +37,53 @@ export function ImageUpload({
   onError,
   className,
 }: ImageUploadProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [objectUrl, setObjectUrl] = useState<string | null>(null)
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 
   useEffect(() => {
     if (!value) {
-      setObjectUrl(null);
-      return;
+      setObjectUrl(null)
+      return
     }
 
-    const nextUrl = URL.createObjectURL(value);
-    setObjectUrl(nextUrl);
+    const nextUrl = URL.createObjectURL(value)
+    setObjectUrl(nextUrl)
 
-    return () => URL.revokeObjectURL(nextUrl);
-  }, [value]);
+    return () => URL.revokeObjectURL(nextUrl)
+  }, [value])
 
-  const previewUrl = useMemo(() => objectUrl || initialUrl || "", [initialUrl, objectUrl]);
+  const previewUrl = useMemo(
+    () => objectUrl || initialUrl || "",
+    [initialUrl, objectUrl]
+  )
 
   const handleFile = (file?: File) => {
-    if (!file) return;
+    if (!file) return
 
     if (!allowedImageTypes.includes(file.type)) {
-      onError?.("Only JPG, PNG, or WEBP images are allowed.");
-      inputRef.current && (inputRef.current.value = "");
-      return;
+      onError?.("Only JPG, PNG, or WEBP images are allowed.")
+      inputRef.current && (inputRef.current.value = "")
+      return
     }
 
     if (file.size > maxImageSizeInBytes) {
-      onError?.(`Image size must be less than ${formatSize(maxImageSizeInBytes)}.`);
-      inputRef.current && (inputRef.current.value = "");
-      return;
+      onError?.(
+        `Image size must be less than ${formatSize(maxImageSizeInBytes)}.`
+      )
+      inputRef.current && (inputRef.current.value = "")
+      return
     }
 
-    onError?.("");
-    onChange(file);
-  };
+    onError?.("")
+    onChange(file)
+  }
 
   const clearImage = () => {
-    inputRef.current && (inputRef.current.value = "");
-    onError?.("");
-    onChange(null);
-  };
+    inputRef.current && (inputRef.current.value = "")
+    onError?.("")
+    onChange(null)
+  }
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -84,8 +95,8 @@ export function ImageUpload({
 
       <div
         className={cn(
-          "group relative flex aspect-square w-36 h-36 overflow-hidden rounded-lg border-2 border-dashed border-input bg-white text-left transition hover:border-ring",
-          error && "border-red-500",
+          "group relative flex aspect-square h-36 w-36 overflow-hidden rounded-lg border-2 border-dashed border-input bg-white text-left transition hover:border-ring",
+          error && "border-red-500"
         )}
       >
         {previewUrl ? (
@@ -98,7 +109,7 @@ export function ImageUpload({
             <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/45 opacity-0 transition group-hover:opacity-100">
               <Button
                 type="button"
-                className="rounded-full size-8"
+                className="size-8 rounded-full"
                 variant="secondary"
                 onClick={() => setIsPreviewOpen(true)}
               >
@@ -106,7 +117,7 @@ export function ImageUpload({
               </Button>
               <Button
                 type="button"
-                className="rounded-full size-8"
+                className="size-8 rounded-full"
                 variant="destructive"
                 onClick={clearImage}
               >
@@ -146,7 +157,7 @@ export function ImageUpload({
             type="button"
             aria-label="Close image preview"
             onClick={() => setIsPreviewOpen(false)}
-            className="absolute right-5 top-5 flex size-9 items-center justify-center rounded-full bg-white text-foreground shadow-lg hover:bg-muted"
+            className="absolute top-5 right-5 flex size-9 items-center justify-center rounded-full bg-white text-foreground shadow-lg hover:bg-muted"
           >
             <XIcon className="size-5" />
           </button>
@@ -158,5 +169,5 @@ export function ImageUpload({
         </div>
       ) : null}
     </div>
-  );
+  )
 }

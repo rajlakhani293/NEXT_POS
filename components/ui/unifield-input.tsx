@@ -7,7 +7,10 @@ import { Field, FieldError, FieldLabel } from "./field"
 import { Input } from "./input"
 import { ButtonGroup } from "./button-group"
 
-interface UniFieldInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'prefix' | 'suffix'> {
+interface UniFieldInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "prefix" | "suffix"
+> {
   label?: string
   error?: string
   containerClassName?: string
@@ -15,84 +18,104 @@ interface UniFieldInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEle
   suffix?: React.ReactNode
   addonBefore?: React.ReactNode
   addonAfter?: React.ReactNode
-  as?: 'input' | 'textarea'
+  as?: "input" | "textarea"
   rows?: number
   min?: number | string
   max?: number | string
   maxLength?: number
 }
 
-export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputProps>(
-  ({
-    label,
-    error,
-    containerClassName,
-    className,
-    id,
-    prefix,
-    suffix,
-    addonBefore,
-    addonAfter,
-    as = 'input',
-    rows = 3,
-    min,
-    max,
-    maxLength,
-    onChange,
-    ...props
-  }, ref) => {
-    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
+export const UniFieldInput = React.forwardRef<
+  HTMLInputElement,
+  UniFieldInputProps
+>(
+  (
+    {
+      label,
+      error,
+      containerClassName,
+      className,
+      id,
+      prefix,
+      suffix,
+      addonBefore,
+      addonAfter,
+      as = "input",
+      rows = 3,
+      min,
+      max,
+      maxLength,
+      onChange,
+      ...props
+    },
+    ref
+  ) => {
+    const inputId = id || label?.toLowerCase().replace(/\s+/g, "-")
 
     const handleWheel = (e: React.WheelEvent<HTMLInputElement>) => {
-      if (props.type === 'number') {
+      if (props.type === "number") {
         e.currentTarget.blur()
       }
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (props.type === 'number' && (min !== undefined || max !== undefined || maxLength !== undefined)) {
-        const valueStr = e.target.value;
-        let validatedValueStr = valueStr;
+      if (
+        props.type === "number" &&
+        (min !== undefined || max !== undefined || maxLength !== undefined)
+      ) {
+        const valueStr = e.target.value
+        let validatedValueStr = valueStr
 
         // Apply maxLength validation
         if (maxLength !== undefined && valueStr.length > maxLength) {
-          validatedValueStr = valueStr.slice(0, maxLength);
+          validatedValueStr = valueStr.slice(0, maxLength)
         }
 
-        const value = parseFloat(validatedValueStr);
-        let validatedValue = value;
+        const value = parseFloat(validatedValueStr)
+        let validatedValue = value
 
         // Apply min validation (only if value is a valid number)
-        if (!isNaN(value) && min !== undefined && value < parseFloat(min.toString())) {
-          validatedValue = parseFloat(min.toString());
+        if (
+          !isNaN(value) &&
+          min !== undefined &&
+          value < parseFloat(min.toString())
+        ) {
+          validatedValue = parseFloat(min.toString())
         }
 
         // Apply max validation (only if value is a valid number)
-        if (!isNaN(value) && max !== undefined && value > parseFloat(max.toString())) {
-          validatedValue = parseFloat(max.toString());
+        if (
+          !isNaN(value) &&
+          max !== undefined &&
+          value > parseFloat(max.toString())
+        ) {
+          validatedValue = parseFloat(max.toString())
         }
 
         // Update input value to show validated value
         if (!isNaN(validatedValue)) {
-          e.target.value = validatedValue.toString();
+          e.target.value = validatedValue.toString()
         } else {
-          e.target.value = validatedValueStr;
+          e.target.value = validatedValueStr
         }
 
         // Call original onChange with validated value
         if (onChange) {
-          onChange(e);
+          onChange(e)
         }
       } else {
         // For non-number inputs, just call original onChange
         if (onChange) {
-          onChange(e);
+          onChange(e)
         }
       }
     }
 
     return (
-      <Field data-invalid={error ? true : undefined} className={cn("gap-1", containerClassName)}>
+      <Field
+        data-invalid={error ? true : undefined}
+        className={cn("gap-1", containerClassName)}
+      >
         {label && (
           <FieldLabel htmlFor={inputId} className="font-semibold text-gray-700">
             {label}
@@ -101,22 +124,23 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
         )}
         <div className="relative">
           {prefix && !(addonBefore || addonAfter) && (
-            <div className="absolute left-4 top-1/2 z-10 -translate-y-1/2 text-sm font-semibold text-gray-900">
+            <div className="absolute top-1/2 left-4 z-10 -translate-y-1/2 text-sm font-semibold text-gray-900">
               {prefix}
             </div>
           )}
-          {as === 'textarea' ? (
+          {as === "textarea" ? (
             <Textarea
               ref={ref as React.Ref<HTMLTextAreaElement>}
               id={inputId}
               rows={rows}
               className={cn(
-                "text-sm font-semibold text-gray-900 placeholder:text-muted-foreground placeholder:font-medium",
-                error && "border-red-500 focus:border-red-500 focus:ring-red-500",
+                "text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:text-muted-foreground",
+                error &&
+                  "border-red-500 focus:border-red-500 focus:ring-red-500",
                 className
               )}
               aria-invalid={error ? true : undefined}
-              value={props.value ?? ''}
+              value={props.value ?? ""}
               placeholder={props.placeholder}
               disabled={props.disabled}
               required={props.required}
@@ -127,7 +151,7 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
               {addonBefore}
               <div className="relative flex flex-1">
                 {prefix && (
-                  <div className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+                  <div className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-sm font-medium text-muted-foreground">
                     {prefix}
                   </div>
                 )}
@@ -135,17 +159,21 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
                   ref={ref}
                   id={inputId}
                   className={cn(
-                    "h-10 flex-1 border-2 bg-white text-sm font-semibold text-gray-900 placeholder:text-muted-foreground placeholder:font-semibold",
+                    "h-10 flex-1 border-2 bg-white text-sm font-semibold text-gray-900 placeholder:font-semibold placeholder:text-muted-foreground",
                     addonBefore && "rounded-l-none",
                     addonAfter && "rounded-r-none",
-                    error && "border-red-500 focus:border-red-500 focus:ring-red-500",
+                    error &&
+                      "border-red-500 focus:border-red-500 focus:ring-red-500",
                     prefix && "pl-10",
-                    props.type === 'number' && "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
+                    props.type === "number" &&
+                      "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
                     className
                   )}
                   aria-invalid={error ? true : undefined}
                   {...props}
-                  value={props.type === 'file' ? undefined : props.value ?? ''}
+                  value={
+                    props.type === "file" ? undefined : (props.value ?? "")
+                  }
                   min={min}
                   max={max}
                   maxLength={maxLength}
@@ -160,16 +188,18 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
               ref={ref}
               id={inputId}
               className={cn(
-                "h-10 border-2 bg-white text-sm font-semibold text-gray-900 placeholder:text-muted-foreground placeholder:font-semibold",
-                error && "border-red-500 focus:border-red-500 focus:ring-red-500",
+                "h-10 border-2 bg-white text-sm font-semibold text-gray-900 placeholder:font-semibold placeholder:text-muted-foreground",
+                error &&
+                  "border-red-500 focus:border-red-500 focus:ring-red-500",
                 prefix && "pl-10",
                 suffix && "pr-16",
-                props.type === 'number' && "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
+                props.type === "number" &&
+                  "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
                 className
               )}
               aria-invalid={error ? true : undefined}
               {...props}
-              value={props.type === 'file' ? undefined : props.value ?? ''}
+              value={props.type === "file" ? undefined : (props.value ?? "")}
               min={min}
               max={max}
               maxLength={maxLength}
@@ -178,7 +208,7 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
             />
           )}
           {suffix && (
-            <div className="absolute right-[2px] top-[2px] bottom-[2px] flex items-center justify-center px-3 text-sm text-muted-foreground z-10 border-l bg-muted/30 rounded-r-[calc(var(--radius)-2px)]">
+            <div className="absolute top-[2px] right-[2px] bottom-[2px] z-10 flex items-center justify-center rounded-r-[calc(var(--radius)-2px)] border-l bg-muted/30 px-3 text-sm text-muted-foreground">
               {suffix}
             </div>
           )}

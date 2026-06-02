@@ -1,6 +1,12 @@
 "use client"
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
 import Cookies from "js-cookie"
 import { usePathname, useRouter } from "next/navigation"
 
@@ -79,7 +85,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       refreshSession,
       clearSession,
     }),
-    [isLoading],
+    [isLoading]
   )
 
   return (

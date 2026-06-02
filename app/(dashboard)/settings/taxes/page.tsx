@@ -1,14 +1,14 @@
-"use client";
+"use client"
 
-import { CatalogPageShell } from "@/components/catalog/catalog-page-shell";
-import { catalog } from "@/lib/api/catalog";
-import { TaxForm } from "./createUpdate";
+import { CatalogPageShell } from "@/components/catalog/catalog-page-shell"
+import { catalog } from "@/lib/api/catalog"
+import { TaxForm } from "./createUpdate"
 
 const columns = [
   { key: "name", title: "Name" },
   { key: "tax_group__name", title: "Tax Group" },
   { key: "rate", title: "Rate (%)" },
-];
+]
 
 export default function TaxesPage() {
   return (
@@ -23,5 +23,5 @@ export default function TaxesPage() {
       deleteTitle="Delete Tax"
       deleteDescription="Are you sure you want to delete this tax?"
     />
-  );
+  )
 }

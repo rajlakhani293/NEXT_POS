@@ -1,29 +1,29 @@
-"use client";
+"use client"
 
-import { ShieldAlertIcon } from "lucide-react";
+import { ShieldAlertIcon } from "lucide-react"
 
-import { usePermissions } from "@/hooks/use-permissions";
-import type { PermissionRequirement } from "@/lib/permissions";
+import { usePermissions } from "@/hooks/use-permissions"
+import type { PermissionRequirement } from "@/lib/permissions"
 
 type PermissionGuardProps = {
-  permission: PermissionRequirement;
-  match?: "all" | "any";
-  children: React.ReactNode;
-};
+  permission: PermissionRequirement
+  match?: "all" | "any"
+  children: React.ReactNode
+}
 
 export function PermissionGuard({
   permission,
   match = "all",
   children,
 }: PermissionGuardProps) {
-  const { hasPermission, isSessionLoaded } = usePermissions();
+  const { hasPermission, isSessionLoaded } = usePermissions()
 
   if (!isSessionLoaded) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
         Checking access...
       </div>
-    );
+    )
   }
 
   if (!hasPermission(permission, match)) {
@@ -43,8 +43,8 @@ export function PermissionGuard({
           </div>
         </div>
       </div>
-    );
+    )
   }
 
-  return <>{children}</>;
+  return <>{children}</>
 }
