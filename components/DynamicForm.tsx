@@ -37,6 +37,11 @@ interface FormField {
   addNewLabel?: string;
   checkedValue?: any;
   unCheckedValue?: any;
+  prefix?: React.ReactNode;
+  inputMode?: React.InputHTMLAttributes<HTMLInputElement>["inputMode"];
+  pattern?: string;
+  sanitize?: (value: any) => any;
+  validate?: (value: any, values: Record<string, any>) => string;
 }
 
 interface DynamicFormProps<T> {
@@ -124,6 +129,10 @@ const DynamicForm = <T extends Record<string, any>>({
       return field.custom_msg || `${field.label} is required`;
     }
 
+    if (field.validate) {
+      return field.validate(value, formData);
+    }
+
     if (field.type === 'number' && value && isNaN(Number(value))) {
       return `${field.label} must be a valid number`;
     }
@@ -132,11 +141,14 @@ const DynamicForm = <T extends Record<string, any>>({
   };
 
   const handleChange = (name: string, value: any) => {
-    const newFormData = { ...formData, [name]: value } as T;
+    const field = fields.find(f => f.name === name);
+    const nextValue = field?.sanitize ? field.sanitize(value) : value;
+    const newFormData = { ...formData, [name]: nextValue } as T;
     setFormData(newFormData);
 
-    const error = validateField(name, value);
-    setErrors((prev: Record<string, string>) => ({ ...prev, [name]: error }));
+    if (errors[name]) {
+      setErrors((prev: Record<string, string>) => ({ ...prev, [name]: "" }));
+    }
 
     if (onFieldChange) {
       const updatedValues = onFieldChange(name, value, newFormData);
@@ -270,6 +282,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     onChange={(e) => handleChange(field.name, e.target.value)}
                     required={field.required}
                     placeholder={field.placeholder}
+                    prefix={field.prefix}
                     rows={field.rows || 3}
                     maxLength={field.maxLength}
                     error={errors[field.name]}
@@ -289,6 +302,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     }}
                     required={field.required}
                     placeholder={field.placeholder}
+                    prefix={field.prefix}
                     min="0"
                     step="0.01"
                     maxLength={field.maxLength}
@@ -301,6 +315,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     value={formData[field.name] || ''}
                     readOnly
                     placeholder={field.placeholder}
+                    prefix={field.prefix}
                     error={errors[field.name]}
                   />
                 ) : field.type === "file" ? (
@@ -310,6 +325,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     onChange={(e) => handleChange(field.name, e.target.files?.[0] || null)}
                     required={field.required}
                     placeholder={field.placeholder}
+                    prefix={field.prefix}
                     error={errors[field.name]}
                   />
                 ) : field.type === "switch" ? (
@@ -359,6 +375,9 @@ const DynamicForm = <T extends Record<string, any>>({
                     onChange={(e) => handleChange(field.name, e.target.value)}
                     required={field.required}
                     placeholder={field.placeholder}
+                    prefix={field.prefix}
+                    inputMode={field.inputMode}
+                    pattern={field.pattern}
                     maxLength={field.maxLength}
                     error={errors[field.name]}
                   />

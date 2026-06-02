@@ -600,13 +600,13 @@ const DynamicTable = ({
         </div>
 
         <div className="w-full overflow-hidden border border-gray-200 rounded-xl">
-          <div className={`custom-scrollbar ${data?.length > 0 ? "max-h-[calc(100vh-300px)] overflow-y-auto" : "h-[calc(100vh-300px)]"}`}>
+          <div className={`${data?.length > 0 ? "max-h-[calc(100vh-300px)] overflow-y-auto no-scrollbar" : "h-[calc(100vh-300px)] no-scrollbar"}`}>
             <table className={cn("w-full caption-bottom text-sm", data?.length === 0 && "h-full")}>
-              <thead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm rounded-t-3xl">
+              <thead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-sm rounded-t-3xl text-gray-700 font-semibold">
                 <tr className="hover:bg-muted/90 border-b">
-                  <th className="w-16 text-center px-2 h-10 align-middle font-medium whitespace-nowrap">
+                  <th className="w-16 text-center px-2 h-10 align-middle whitespace-nowrap">
                     <div className="flex flex-col py-2">
-                      <span className="font-medium">Sr No</span>
+                      <span className="font-semibold">Sr No</span>
                     </div>
                   </th>
                   {columns.map((col) => (
@@ -618,7 +618,7 @@ const DynamicTable = ({
                           : undefined
                       }
                       className={cn(
-                        "px-2 h-10 text-left align-middle font-medium whitespace-nowrap transition-colors",
+                        "px-2 h-10 text-left align-middle whitespace-nowrap transition-colors",
                         sortableFields.includes(col.key)
                           ? "cursor-pointer hover:bg-muted/50 text-foreground"
                           : "cursor-default"
@@ -627,13 +627,13 @@ const DynamicTable = ({
                       <div className={cn("flex items-center gap-1", col.key === "sr_no" && "justify-center")}>
                         <div className="flex flex-col py-2">
                           <span className={cn(
-                            "font-medium",
+                            "font-semibold text-gray-700",
                             sortConfig.key === col.key && "text-primary"
                           )}>
                             {col.title}
                           </span>
                           {col.subtitle && (
-                            <span className="text-[10px] leading-3 text-muted-foreground font-medium normal-case">
+                            <span className="text-[10px] leading-3 normal-case">
                               {col.subtitle}
                             </span>
                           )}
@@ -653,11 +653,11 @@ const DynamicTable = ({
                     </th>
                   ))}
                   {hasRowActions && (
-                    <th className="text-right px-4 h-10 align-middle font-medium whitespace-nowrap">Actions</th>
+                    <th className="text-right px-4 h-10 align-middle whitespace-nowrap">Actions</th>
                   )}
                 </tr>
               </thead>
-              <tbody className={cn("bg-white [&_tr:last-child]:border-0", data?.length === 0 && "h-full")}>
+              <tbody className={cn("bg-white [&_tr:last-child]:border-0 text-gray-900 font-semibold", data?.length === 0 && "h-full")}>
                 {isLoading ? (
                   <tr key="loading">
                     <td

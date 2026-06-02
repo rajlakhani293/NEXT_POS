@@ -94,14 +94,14 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
     return (
       <Field data-invalid={error ? true : undefined} className={cn("gap-1", containerClassName)}>
         {label && (
-          <FieldLabel htmlFor={inputId}>
+          <FieldLabel htmlFor={inputId} className="font-semibold text-gray-700">
             {label}
             {props.required && <span className="text-red-500">*</span>}
           </FieldLabel>
         )}
         <div className="relative">
           {prefix && !(addonBefore || addonAfter) && (
-            <div className="absolute left-4 top-1/2 z-10 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+            <div className="absolute left-4 top-1/2 z-10 -translate-y-1/2 text-sm font-semibold text-gray-900">
               {prefix}
             </div>
           )}
@@ -111,7 +111,7 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
               id={inputId}
               rows={rows}
               className={cn(
-                "text-sm font-normal text-foreground placeholder:text-muted-foreground",
+                "text-sm font-semibold text-gray-900 placeholder:text-muted-foreground placeholder:font-medium",
                 error && "border-red-500 focus:border-red-500 focus:ring-red-500",
                 className
               )}
@@ -135,7 +135,7 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
                   ref={ref}
                   id={inputId}
                   className={cn(
-                    "h-10 flex-1 border-2 bg-white text-sm font-normal text-foreground placeholder:text-muted-foreground",
+                    "h-10 flex-1 border-2 bg-white text-sm font-semibold text-gray-900 placeholder:text-muted-foreground placeholder:font-semibold",
                     addonBefore && "rounded-l-none",
                     addonAfter && "rounded-r-none",
                     error && "border-red-500 focus:border-red-500 focus:ring-red-500",
@@ -160,7 +160,7 @@ export const UniFieldInput = React.forwardRef<HTMLInputElement, UniFieldInputPro
               ref={ref}
               id={inputId}
               className={cn(
-                "h-10 border-2 bg-white text-sm font-normal text-foreground placeholder:text-muted-foreground",
+                "h-10 border-2 bg-white text-sm font-semibold text-gray-900 placeholder:text-muted-foreground placeholder:font-semibold",
                 error && "border-red-500 focus:border-red-500 focus:ring-red-500",
                 prefix && "pl-10",
                 suffix && "pr-16",

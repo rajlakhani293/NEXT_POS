@@ -576,6 +576,7 @@ export default function ProductFormPage() {
               <aside className="w-full space-y-5 xl:w-[30%]">
                 <section className="rounded-lg border border-gray-200 bg-white p-4">
                   <ImageUpload
+                    label="Product Image"
                     value={formData.image}
                     initialUrl={initialImageUrl}
                     error={imageError || errors.image}

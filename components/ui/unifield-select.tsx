@@ -50,14 +50,14 @@ export const UniFieldSelect = ({
 
   return (
     <Field data-invalid={error ? true : undefined} className={cn("w-full gap-1 bg-white", containerClassName)}>
-      {label && <FieldLabel>{label} {required && <span className="text-red-500">*</span>}</FieldLabel>}
+      {label && <FieldLabel className="font-semibold text-gray-700">{label} {required && <span className="text-red-500">*</span>}</FieldLabel>}
       <Select value={value} onValueChange={handleValueChange}>
         <div className="group/select relative">
           <SelectTrigger
             aria-invalid={error ? true : undefined}
             size={size}
             className={cn(
-              "bg-white text-sm font-normal text-foreground",
+              "bg-white text-sm font-semibold text-gray-900 placeholder:text-muted-foreground placeholder:font-medium",
               allowClear &&
               value &&
               "[&_svg]:transition-opacity group-hover/select:[&_svg]:opacity-0 group-focus-within/select:[&_svg]:opacity-0",
@@ -85,7 +85,7 @@ export const UniFieldSelect = ({
           ) : null}
         </div>
         <SelectContent>
-          <SelectGroup>
+          <SelectGroup className="font-semibold text-gray-900">
             {children}
             {onAddNew && (
               <div className="border-t">

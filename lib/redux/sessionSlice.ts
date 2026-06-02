@@ -104,8 +104,8 @@ const sessionSlice = createSlice({
     setUnauthorized: (state, action: PayloadAction<boolean>) => {
       state.isUnauthorized = action.payload;
     },
-    setPermissionError: (state, action: PayloadAction<SessionState['permissionError']>) => { 
-      state.permissionError = action.payload; 
+    setPermissionError: (state, action: PayloadAction<SessionState['permissionError']>) => {
+      state.permissionError = action.payload;
     },
     setSessionUpdate: (state, action: PayloadAction<string | null>) => {
       state.sessionUpdateMessage = action.payload;
@@ -136,8 +136,8 @@ const sessionSlice = createSlice({
   },
 });
 
-export const { 
-  setUnauthorized, 
+export const {
+  setUnauthorized,
   setPermissionError,
   setSessionUpdate,
   setServerError,

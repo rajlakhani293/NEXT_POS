@@ -3,7 +3,6 @@
 import * as React from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-
 import { NavMain } from "@/components/nav-main"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS, type PermissionRequirement } from "@/lib/permissions"
@@ -22,11 +21,12 @@ import {
   LandmarkIcon,
   ReceiptTextIcon,
   ShieldCheckIcon,
-  Settings2Icon,
   StoreIcon,
   UsersIcon,
 } from "lucide-react"
 import { MdOutlineArrowCircleLeft, MdOutlineArrowCircleRight } from "react-icons/md"
+import { IoSettingsOutline } from "react-icons/io5"
+import { HiReceiptTax } from "react-icons/hi"
 
 type DashboardNavSection = {
   title: string
@@ -102,7 +102,7 @@ const mainNavSections: DashboardNavSection[] = [
   {
     title: "Settings",
     url: "/settings/company",
-    icon: <Settings2Icon />,
+    icon: <IoSettingsOutline />,
     permission: [PERMISSIONS.settings.view, PERMISSIONS.branches.view],
     permissionMatch: "any",
   },
@@ -136,7 +136,7 @@ const settingsNavSections: DashboardNavSection[] = [
   {
     title: "Tax Groups",
     url: "/settings/tax-groups",
-    icon: <Settings2Icon />,
+    icon: <HiReceiptTax />,
     permission: PERMISSIONS.products.view,
   },
   {
@@ -212,7 +212,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       {...props}
     >
       {isSettingsMode ? (
-        <SidebarHeader className="gap-2 px-2 py-2">
+        <SidebarHeader className="gap-2 px-2 pt-2 pb-0">
           <div className="flex items-center">
             <Link
               href="/dashboard"

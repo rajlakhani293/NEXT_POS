@@ -30,7 +30,7 @@ function UserForm(props: any) {
   useEffect(() => {
     if (props.isOpen) {
       getBranchesDropdown();
-      getRoles();
+      getRoles({});
     }
   }, [getBranchesDropdown, getRoles, props.isOpen]);
 

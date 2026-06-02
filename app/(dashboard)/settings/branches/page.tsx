@@ -10,7 +10,7 @@ const columns = [
   { key: "code", title: "Code" },
   { key: "phone", title: "Phone" },
   { key: "city", title: "City" },
-  { key: "state", title: "State" },
+  { key: "state__name", title: "State" },
 ];
 
 const initialValues = {
@@ -19,30 +19,77 @@ const initialValues = {
   phone: "",
   address: "",
   city: "",
-  state: "",
-  country: "India",
+  state_id: "",
   postal_code: "",
 };
 
+const onlyDigits = (value: any, maxLength: number) =>
+  String(value || "").replace(/\D/g, "").slice(0, maxLength);
+
+const formatIndianMobile = (value: any) => {
+  const digits = onlyDigits(value, 10);
+  return digits.length > 5 ? `${digits.slice(0, 5)} ${digits.slice(5)}` : digits;
+};
+
+const validateIndianMobile = (value: any) => {
+  if (!value) return "";
+  const digits = onlyDigits(value, 10);
+  if (digits.length !== 10) return "Phone number must be 10 digits";
+  if (!/^[6-9]/.test(digits)) return "Phone number must start with 6, 7, 8, or 9";
+  return "";
+};
+
 function BranchForm(props: any) {
+  const states = (settings as any).useGetStatesDropdownQuery(undefined, {
+    skip: !props.isOpen,
+  });
+
+  const stateOptions = (states.data?.data || []).map((state: any) => ({
+    label: state.name,
+    value: state.id,
+  }));
+
   return (
     <CatalogMasterForm
       {...props}
       entityName="Branch"
       fields={[
-        { name: "name", label: "Branch Name", type: "text", required: true },
-        { name: "code", label: "Code", type: "text", placeholder: "Auto generate if blank" },
-        { name: "phone", label: "Phone", type: "text" },
-        { name: "address", label: "Address", type: "textarea", rows: 3 },
-        { name: "city", label: "City", type: "text" },
-        { name: "state", label: "State", type: "text" },
-        { name: "country", label: "Country", type: "text" },
-        { name: "postal_code", label: "Postal Code", type: "text" },
+        { name: "name", label: "Branch Name", placeholder: "Enter branch name", type: "text", required: true },
+        {
+          name: "phone",
+          label: "Phone",
+          placeholder: "98765 43210",
+          type: "text",
+          prefix: "+91",
+          inputMode: "numeric",
+          maxLength: 11,
+          sanitize: formatIndianMobile,
+          validate: validateIndianMobile,
+        },
+        { name: "address", label: "Address", placeholder: "Enter address", type: "textarea", rows: 3 },
+        { name: "city", label: "City", placeholder: "Enter city", type: "text" },
+        { name: "state_id", label: "State", placeholder: "Select state", type: "select", options: stateOptions },
+        {
+          name: "postal_code",
+          label: "Postal Code",
+          placeholder: "6 digit postal code",
+          type: "text",
+          inputMode: "numeric",
+          maxLength: 6,
+          sanitize: (value: any) => onlyDigits(value, 6),
+          validate: (value: any) =>
+            value && String(value).length !== 6 ? "Postal code must be 6 digits" : "",
+        },
       ]}
       initialValues={initialValues}
       createHook={(settings as any).useCreateBranchMutation}
       editHook={(settings as any).useEditBranchMutation}
       getByIdHook={(settings as any).useGetBranchByIdMutation}
+      buildPayload={(values) => ({
+        ...values,
+        phone: values.phone ? onlyDigits(values.phone, 10) : "",
+        state_id: values.state_id ? Number(values.state_id) : undefined,
+      })}
     />
   );
 }

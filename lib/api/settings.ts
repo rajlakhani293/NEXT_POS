@@ -12,8 +12,9 @@ import {
 
 const endpointsConfig = {
   // Company profile
-  getOrganizationProfile: { query: () => getMutation("organizations/me") },
-  updateOrganizationProfile: { query: ({ payLoad }: { payLoad: any }) => putMutation("organizations/me", payLoad) },
+  getStatesDropdown: { type: "query", query: () => getMutation("organizations/states/dropdown-list") },
+  getCompany: { type: "query", query: () => getMutation("organizations/company") },
+  updateCompany: { query: ({ payLoad }: { payLoad: any }) => putMutation("organizations/company", payLoad) },
 
   // Branches
   getBranchesDropdown: { query: () => getMutation("organizations/branches/dropdown-list") },
@@ -25,7 +26,7 @@ const endpointsConfig = {
   getBranchById: { query: ({ id }: { id: number }) => getMutation(`organizations/branches/${id}`) },
 
   // Roles
-  getPermissions: { query: () => getMutation("accounts/permissions") },
+  getPermissions: { type: "query", query: () => getMutation("accounts/permissions") },
   getRoles: { query: () => getMutation("accounts/roles") },
   createRole: { query: createMutation("accounts/roles") },
   editRole: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`accounts/roles/${id}`, payLoad) },
@@ -48,7 +49,11 @@ export const settings = createApi({
   endpoints: (builder) => {
     const finalEndpoints: Record<string, any> = {};
     for (const [name, config] of Object.entries(endpointsConfig)) {
-      finalEndpoints[name] = builder.mutation(config as any);
+      if ((config as any).type === "query") {
+        finalEndpoints[name] = builder.query(config as any);
+      } else {
+        finalEndpoints[name] = builder.mutation(config as any);
+      }
     }
     return finalEndpoints;
   },

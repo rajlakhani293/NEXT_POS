@@ -61,7 +61,7 @@ const endpointsConfig = {
   },
   getSessionData: {
     query: () => ({
-      url: "accounts/me",
+      url: "accounts/session-data",
       method: "GET",
     }),
   },

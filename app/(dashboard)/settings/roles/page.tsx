@@ -35,29 +35,37 @@ export default function RolesPage() {
   const { hasPermission } = usePermissions();
   const [isOpen, setIsOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<any | null>(null);
-  const [getRoles, roles] = (settings as any).useGetRolesMutation();
-  const [getPermissions, permissions] = (settings as any).useGetPermissionsMutation();
+  const [roleRows, setRoleRows] = useState<any[]>([]);
+  const [getRoles] = (settings as any).useGetRolesMutation();
+  const permissions = (settings as any).useGetPermissionsQuery();
   const [createRole] = (settings as any).useCreateRoleMutation();
   const [editRole] = (settings as any).useEditRoleMutation();
   const [deleteRole] = (settings as any).useDeleteRoleMutation();
+
+  const fetchRoles = async () => {
+    try {
+      const res = await getRoles({}).unwrap();
+      setRoleRows(res?.data || []);
+    } catch (err) {
+      console.error("Failed to fetch roles:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
   const canCreate = hasPermission(PERMISSIONS.roles.create);
   const canUpdate = hasPermission(PERMISSIONS.roles.update);
   const canDelete = hasPermission(PERMISSIONS.roles.delete);
 
-  useEffect(() => {
-    getRoles();
-    getPermissions();
-  }, [getPermissions, getRoles]);
-
-  const roleRows = roles.data?.data || [];
   const permissionRows = permissions.data?.data || [];
   const formValues = editRecord
     ? {
-        ...initialValues,
-        ...editRecord,
-        permission_codenames: editRecord.permissions || [],
-      }
+      ...initialValues,
+      ...editRecord,
+      permission_codenames: editRecord.permissions || [],
+    }
     : initialValues;
 
   const groupedPermissions = useMemo(() => {
@@ -74,7 +82,7 @@ export default function RolesPage() {
     setEditRecord(null);
   };
 
-  const refresh = () => getRoles();
+  // const refresh = () => fetchRoles();
 
   return (
     <PermissionGuard permission={PERMISSIONS.roles.view}>
@@ -93,7 +101,7 @@ export default function RolesPage() {
           }}
           showDelete={canDelete}
           deleteMutation={async ({ ids }: any) => deleteRole({ id: ids[0] })}
-          triggerRefresh={refresh}
+          // triggerRefresh={refresh}
           deleteModalTitle="Delete Role"
           deleteModalDescription="Are you sure you want to delete this role?"
           currentPage={1}
@@ -122,7 +130,7 @@ export default function RolesPage() {
               const response = await createRole(values).unwrap();
               showToast.success(response?.message || "Role created successfully.");
             }
-            refresh();
+            // refresh();
             handleClose();
           }}
         >

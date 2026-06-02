@@ -14,6 +14,7 @@ type ImageUploadProps = {
   value?: File | null;
   initialUrl?: string | null;
   onChange: (file: File | null) => void;
+  label?: string;
   error?: string;
   onError?: (message: string) => void;
   className?: string;
@@ -25,6 +26,7 @@ export function ImageUpload({
   value,
   initialUrl,
   onChange,
+  label,
   error,
   onError,
   className,
@@ -74,9 +76,11 @@ export function ImageUpload({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-foreground">Product Image</label>
-      </div>
+      {label ? (
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-foreground">{label}</label>
+        </div>
+      ) : null}
 
       <div
         className={cn(
@@ -88,7 +92,7 @@ export function ImageUpload({
           <>
             <img
               src={previewUrl}
-              alt="Product preview"
+              alt={`${label} preview`}
               className="h-full w-full object-contain"
             />
             <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/45 opacity-0 transition group-hover:opacity-100">
@@ -148,7 +152,7 @@ export function ImageUpload({
           </button>
           <img
             src={previewUrl}
-            alt="Product full preview"
+            alt={`${label} full preview`}
             className="max-h-[88vh] max-w-[88vw] rounded-lg bg-white object-contain shadow-2xl"
           />
         </div>
