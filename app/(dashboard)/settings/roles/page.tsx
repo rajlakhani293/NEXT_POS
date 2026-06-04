@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
@@ -22,8 +23,15 @@ const columns = [
 export default function RolesPage() {
   const router = useRouter()
   const { hasPermission } = usePermissions()
-  const roles = (settings as any).useGetRolesQuery()
+  const hasLoadedRolesRef = useRef(false)
+  const [getRoles, roles] = (settings as any).useGetRolesMutation()
   const [deleteRole] = (settings as any).useDeleteRoleMutation()
+
+  useEffect(() => {
+    if (hasLoadedRolesRef.current) return
+    hasLoadedRolesRef.current = true
+    getRoles()
+  }, [getRoles])
 
   const roleRows = roles.data?.data || []
   const canCreate = hasPermission(PERMISSIONS.roles.create)
@@ -44,7 +52,7 @@ export default function RolesPage() {
           onEdit={(record: any) => router.push(`/settings/roles/${record.id}`)}
           showDelete={canDelete}
           deleteMutation={async ({ ids }: any) => deleteRole({ id: ids[0] })}
-          triggerRefresh={() => roles.refetch()}
+          triggerRefresh={() => getRoles()}
           deleteModalTitle="Delete Role"
           deleteModalDescription="Are you sure you want to delete this role?"
           currentPage={1}

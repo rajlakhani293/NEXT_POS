@@ -12,7 +12,7 @@ import {
 import {
   useCreateProductMutation,
   useDeleteProductMutation,
-  useGetProductsQuery,
+  useGetProductsMutation,
   useUpdateProductMutation,
   type ProductPayload,
   type ProductRecord,
@@ -87,15 +87,22 @@ export function ProductsPageClient() {
   const [editingProduct, setEditingProduct] =
     React.useState<ProductRecord | null>(null)
   const [form, setForm] = React.useState<ProductPayload>(defaultForm)
+  const lastSearchRef = React.useRef<string | null>(null)
 
-  const { data, isLoading } = useGetProductsQuery(
-    search ? { search } : undefined
-  )
+  const [getProducts, { data, isLoading }] = useGetProductsMutation()
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation()
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation()
   const [deleteProduct] = useDeleteProductMutation()
 
-  const products = data?.data ?? []
+  React.useEffect(() => {
+    const key = search.trim()
+    if (lastSearchRef.current === key) return
+    lastSearchRef.current = key
+    getProducts(key ? { search: key } : undefined)
+  }, [getProducts, search])
+
+  const products = ((data as { data?: ProductRecord[] } | undefined)?.data ??
+    []) as ProductRecord[]
 
   const lowStockCount = products.filter(
     (product) => product.status === "low_stock"
@@ -142,6 +149,7 @@ export function ProductsPageClient() {
       } else {
         await createProduct({ payLoad: form }).unwrap()
       }
+      await getProducts(search ? { search } : undefined)
       setIsOpen(false)
       setEditingProduct(null)
       setForm(defaultForm)
@@ -151,6 +159,7 @@ export function ProductsPageClient() {
   const onDelete = async (product: ProductRecord) => {
     try {
       await deleteProduct({ id: product.id }).unwrap()
+      await getProducts(search ? { search } : undefined)
     } catch {}
   }
 

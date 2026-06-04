@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useRef } from "react"
+
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { CatalogPageShell } from "@/components/catalog/catalog-page-shell"
 import { settings } from "@/lib/api/settings"
@@ -43,9 +45,16 @@ const validateIndianMobile = (value: any) => {
 }
 
 function BranchForm(props: any) {
-  const states = (settings as any).useGetStatesDropdownQuery(undefined, {
-    skip: !props.isOpen,
-  })
+  const hasLoadedStatesRef = useRef(false)
+  const [getStatesDropdown, states] = (
+    settings as any
+  ).useGetStatesDropdownMutation()
+
+  useEffect(() => {
+    if (!props.isOpen || hasLoadedStatesRef.current) return
+    hasLoadedStatesRef.current = true
+    getStatesDropdown()
+  }, [getStatesDropdown, props.isOpen])
 
   const stateOptions = (states.data?.data || []).map((state: any) => ({
     label: state.name,

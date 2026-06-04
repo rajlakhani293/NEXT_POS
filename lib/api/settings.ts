@@ -12,82 +12,36 @@ import {
 
 const endpointsConfig = {
   // Company profile
-  getStatesDropdown: {
-    type: "query",
-    query: () => getMutation("organizations/states/dropdown-list"),
-  },
-  getCompany: {
-    type: "query",
-    query: () => getMutation("organizations/company"),
-  },
-  updateCompany: {
-    query: ({ payLoad }: { payLoad: any }) =>
-      putMutation("organizations/company", payLoad),
-  },
+  getStatesDropdown: { query: () => getMutation("organizations/states/dropdown-list") },
+  getCompany: { query: () => getMutation("organizations/company") },
+  updateCompany: { query: ({ payLoad }: { payLoad: any }) => putMutation("organizations/company", payLoad) },
 
   // Branches
-  getBranchesDropdown: {
-    query: () => getMutation("organizations/branches/dropdown-list"),
-  },
-  getBranchesData: {
-    query: postMutation("organizations/branches/get-transactions"),
-  },
+  getBranchesDropdown: { query: () => getMutation("organizations/branches/dropdown-list") },
+  getBranchesData: { query: postMutation("organizations/branches/get-transactions") },
   createBranch: { query: createMutation("organizations/branches/") },
-  editBranch: {
-    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
-      putMutation(`organizations/branches/${id}`, payLoad),
-  },
+  editBranch: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`organizations/branches/${id}`, payLoad) },
   deleteBranch: { query: deleteMutation("organizations/branches/delete") },
-  updateBranchStatus: {
-    query: ({ payLoad }: { payLoad: any }) =>
-      patchMutation("organizations/branches/status", payLoad),
-  },
-  getBranchById: {
-    query: ({ id }: { id: number }) =>
-      getMutation(`organizations/branches/${id}`),
-  },
+  updateBranchStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("organizations/branches/status", payLoad) },
+  getBranchById: { query: ({ id }: { id: number }) => getMutation(`organizations/branches/${id}`) },
 
   // Roles
-  getPermissions: { type: "query", query: () => getMutation("accounts/permissions") },
-  getRoles: { type: "query", query: () => getMutation("accounts/roles") },
-  getRoleById: {
-    type: "query",
-    query: ({ id }: { id: number | string }) => getMutation(`accounts/roles/${id}`),
-  },
+  getPermissions: { query: () => getMutation("accounts/permissions") },
+  getRoles: { query: () => getMutation("accounts/roles") },
+  getRoleById: { query: ({ id }: { id: number | string }) => getMutation(`accounts/roles/${id}`) },
   createRole: { query: createMutation("accounts/roles") },
-  editRole: {
-    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
-      putMutation(`accounts/roles/${id}`, payLoad),
-  },
-  deleteRole: {
-    query: ({ id }: { id: number }) => ({
-      url: `accounts/roles/${id}`,
-      method: "DELETE",
-    }),
-  },
+  editRole: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`accounts/roles/${id}`, payLoad) },
+  deleteRole: { query: ({ id }: { id: number }) => ({ url: `accounts/roles/${id}`, method: "DELETE" }) },
 
   // Users
-  getUsersDropdown: {
-    query: () => getMutation("accounts/users/dropdown-list"),
-  },
+  getUsersDropdown: { query: () => getMutation("accounts/users/dropdown-list") },
   getUsersData: { query: postMutation("accounts/users/get-transactions") },
   createUser: { query: createMutation("accounts/users/") },
-  editUser: {
-    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
-      putMutation(`accounts/users/${id}`, payLoad),
-  },
+  editUser: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`accounts/users/${id}`, payLoad) },
   deleteUser: { query: deleteMutation("accounts/users/delete") },
-  updateUserStatus: {
-    query: ({ payLoad }: { payLoad: any }) =>
-      patchMutation("accounts/users/status", payLoad),
-  },
-  getUserById: {
-    query: ({ id }: { id: number }) => getMutation(`accounts/users/${id}`),
-  },
-  assignRole: {
-    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
-      postMutation(`accounts/users/${id}/assign-role`)(payLoad),
-  },
+  updateUserStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("accounts/users/status", payLoad) },
+  getUserById: { query: ({ id }: { id: number }) => getMutation(`accounts/users/${id}`) },
+  assignRole: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`accounts/users/${id}/assign-role`)(payLoad) },
 }
 
 export const settings = createApi({
@@ -96,11 +50,7 @@ export const settings = createApi({
   endpoints: (builder) => {
     const finalEndpoints: Record<string, any> = {}
     for (const [name, config] of Object.entries(endpointsConfig)) {
-      if ((config as any).type === "query") {
-        finalEndpoints[name] = builder.query(config as any)
-      } else {
-        finalEndpoints[name] = builder.mutation(config as any)
-      }
+      finalEndpoints[name] = builder.mutation(config as any)
     }
     return finalEndpoints
   },

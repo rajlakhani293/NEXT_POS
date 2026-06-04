@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 
@@ -43,26 +43,40 @@ export default function RoleFormPage() {
   const [values, setValues] = useState<RoleFormValues>(initialValues)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const loadKeyRef = useRef("")
 
-  const permissions = (settings as any).useGetPermissionsQuery()
-  const role = (settings as any).useGetRoleByIdQuery(
-    { id },
-    { skip: !isEdit },
-  )
+  const [getPermissions, permissions] = (settings as any).useGetPermissionsMutation()
+  const [getRoleById, role] = (settings as any).useGetRoleByIdMutation()
   const [createRole] = (settings as any).useCreateRoleMutation()
   const [editRole] = (settings as any).useEditRoleMutation()
 
   useEffect(() => {
-    const record = role.data?.data
-    if (!record || !isEdit) return
+    const loadKey = `${id}:${isEdit ? "edit" : "create"}`
+    if (loadKeyRef.current === loadKey) return
+    loadKeyRef.current = loadKey
 
-    setValues({
-      ...initialValues,
-      ...record,
-      permission_codenames: record.permissions || [],
-    })
-    setErrors({})
-  }, [isEdit, role.data])
+    const load = async () => {
+      await getPermissions()
+      if (!isEdit) {
+        setValues(initialValues)
+        setErrors({})
+        return
+      }
+
+      const result = await getRoleById({ id }).unwrap()
+      const record = result?.data
+      if (!record) return
+
+      setValues({
+        ...initialValues,
+        ...record,
+        permission_codenames: record.permissions || [],
+      })
+      setErrors({})
+    }
+
+    load()
+  }, [getPermissions, getRoleById, id, isEdit])
 
   const permissionRows = permissions.data?.data || []
   const groupedPermissions = useMemo(() => {

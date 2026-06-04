@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { ImageUpload } from "@/components/imageUpload"
 import { PermissionGuard } from "@/components/permission-guard"
@@ -78,11 +78,21 @@ export default function CompanySettingsPage() {
   const [values, setValues] = useState(initialValues)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoError, setLogoError] = useState("")
-  const company = (settings as any).useGetCompanyQuery()
-  const states = (settings as any).useGetStatesDropdownQuery()
+  const hasLoadedRef = useRef(false)
+  const [getCompany, company] = (settings as any).useGetCompanyMutation()
+  const [getStatesDropdown, states] = (
+    settings as any
+  ).useGetStatesDropdownMutation()
   const [updateCompany, updateState] = (
     settings as any
   ).useUpdateCompanyMutation()
+
+  useEffect(() => {
+    if (hasLoadedRef.current) return
+    hasLoadedRef.current = true
+    getCompany()
+    getStatesDropdown()
+  }, [getCompany, getStatesDropdown])
 
   useEffect(() => {
     const data = company.data?.data
@@ -120,7 +130,7 @@ export default function CompanySettingsPage() {
     const logo = response?.data?.company?.logo || values.logo
     setValues((current) => ({ ...current, logo }))
     setLogoFile(null)
-    await Promise.all([refreshSession(), company.refetch()])
+    await Promise.all([refreshSession(), getCompany()])
     showToast.success(
       response?.message || "Company profile updated successfully."
     )

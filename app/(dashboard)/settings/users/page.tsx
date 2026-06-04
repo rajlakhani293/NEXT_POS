@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useRef } from "react"
+
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { CatalogPageShell } from "@/components/catalog/catalog-page-shell"
 import { settings } from "@/lib/api/settings"
@@ -21,9 +23,14 @@ const initialValues = {
 }
 
 function UserForm(props: any) {
-  const roles = (settings as any).useGetRolesQuery(undefined, {
-    skip: !props.isOpen,
-  })
+  const hasLoadedRolesRef = useRef(false)
+  const [getRoles, roles] = (settings as any).useGetRolesMutation()
+
+  useEffect(() => {
+    if (!props.isOpen || hasLoadedRolesRef.current) return
+    hasLoadedRolesRef.current = true
+    getRoles()
+  }, [getRoles, props.isOpen])
 
   const roleOptions = (roles.data?.data || []).map((item: any) => ({
     label: item.name,

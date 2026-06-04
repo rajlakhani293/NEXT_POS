@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Cookies from "js-cookie"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { NavUser } from "@/components/nav-user"
@@ -18,7 +19,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { auth } from "@/lib/api/auth"
 import { catalog } from "@/lib/api/catalog"
-import { products } from "@/lib/api/products"
 import { settings } from "@/lib/api/settings"
 import { useAppDispatch } from "@/lib/redux/hooks"
 import { useSession } from "@/lib/redux/session-provider"
@@ -83,9 +83,16 @@ function BranchQuickForm({
   onClose: () => void
   onSuccess: () => void
 }) {
-  const states = (settings as any).useGetStatesDropdownQuery(undefined, {
-    skip: !isOpen,
-  })
+  const hasLoadedStatesRef = useRef(false)
+  const [getStatesDropdown, states] = (
+    settings as any
+  ).useGetStatesDropdownMutation()
+
+  useEffect(() => {
+    if (!isOpen || hasLoadedStatesRef.current) return
+    hasLoadedStatesRef.current = true
+    getStatesDropdown()
+  }, [getStatesDropdown, isOpen])
 
   const stateOptions = (states.data?.data || []).map((state: any) => ({
     label: state.name,
@@ -159,6 +166,7 @@ export function SiteHeader({
   onLogout,
 }: SiteHeaderProps) {
   const { refreshSession } = useSession()
+  const router = useRouter()
   const dispatch = useAppDispatch()
   const [isBranchFormOpen, setIsBranchFormOpen] = useState(false)
   const [switchBranch, switchState] = auth.useSwitchBranchMutation()
@@ -170,9 +178,9 @@ export function SiteHeader({
       Cookies.set("token", response.data.token, { expires: 1, path: "/" })
     }
     dispatch(catalog.util.resetApiState())
-    dispatch(products.util.resetApiState())
     dispatch(settings.util.resetApiState())
     await refreshSession()
+    router.push("/dashboard")
     showToast.success(response?.message || "Branch switched successfully.")
   }
 

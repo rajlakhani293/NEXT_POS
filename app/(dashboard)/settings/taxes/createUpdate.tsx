@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { catalog } from "@/lib/api/catalog"
@@ -12,17 +12,18 @@ const initialValues = {
 }
 
 export function TaxForm(props: any) {
-  const [getTaxGroupsDropdown, { data }] = (
+  const hasLoadedTaxGroupsRef = useRef(false)
+  const [getTaxGroupsDropdown, taxGroups] = (
     catalog as any
   ).useGetTaxGroupsDropdownMutation()
 
   useEffect(() => {
-    if (props.isOpen) {
-      getTaxGroupsDropdown()
-    }
+    if (!props.isOpen || hasLoadedTaxGroupsRef.current) return
+    hasLoadedTaxGroupsRef.current = true
+    getTaxGroupsDropdown()
   }, [getTaxGroupsDropdown, props.isOpen])
 
-  const taxGroupOptions = (data?.data || []).map((item: any) => ({
+  const taxGroupOptions = (taxGroups.data?.data || []).map((item: any) => ({
     label: item.name,
     value: item.id,
   }))

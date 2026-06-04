@@ -212,7 +212,6 @@ export default function ProductFormPage() {
   const [formData, setFormData] = useState<ProductFormValues>(initialValues)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isLoading, setIsLoading] = useState(isEdit)
   const [isFooterStuck, setIsFooterStuck] = useState(false)
   const [imageError, setImageError] = useState("")
   const [initialImageUrl, setInitialImageUrl] = useState("")
@@ -222,10 +221,11 @@ export default function ProductFormPage() {
 
   const contentRef = useRef<HTMLDivElement>(null)
   const paginationSentinelRef = useRef<HTMLDivElement>(null)
+  const loadKeyRef = useRef("")
 
   const [createProduct] = (catalog as any).useCreateProductMutation()
   const [editProduct] = (catalog as any).useEditProductMutation()
-  const [getProductById] = (catalog as any).useGetProductByIdMutation()
+  const [getProductById, product] = (catalog as any).useGetProductByIdMutation()
   const [getCategoriesDropdown, categories] = (
     catalog as any
   ).useGetCategoriesDropdownMutation()
@@ -235,13 +235,14 @@ export default function ProductFormPage() {
   const [getTaxGroupsDropdown, taxGroups] = (
     catalog as any
   ).useGetTaxGroupsDropdownMutation()
-  const [getUnitsDropdown, units] = (
-    catalog as any
-  ).useGetUnitsDropdownMutation()
+  const [getUnitsDropdown, units] = (catalog as any).useGetUnitsDropdownMutation()
 
   useEffect(() => {
+    const loadKey = `${id}:${isEdit ? "edit" : "create"}`
+    if (loadKeyRef.current === loadKey) return
+    loadKeyRef.current = loadKey
+
     const load = async () => {
-      setIsLoading(isEdit)
       await Promise.all([
         getCategoriesDropdown(),
         getBrandsDropdown(),
@@ -253,28 +254,26 @@ export default function ProductFormPage() {
         setFormData(initialValues)
         setInitialImageUrl("")
         setImageError("")
-        setIsLoading(false)
         return
       }
 
       const result = await getProductById({ id }).unwrap()
       const record = result?.data
-      if (record) {
-        setInitialImageUrl(record.image || "")
-        setImageError("")
-        setFormData({
-          ...initialValues,
-          ...record,
-          image: null,
-          product_type: record.product_type || "stock",
-          category_id: record.category_id ? String(record.category_id) : "",
-          brand_id: record.brand_id ? String(record.brand_id) : "",
-          tax_group_id: record.tax_group_id ? String(record.tax_group_id) : "",
-          unit_id: record.unit_id ? String(record.unit_id) : "",
-          is_tax_inclusive: Boolean(record.is_tax_inclusive),
-        })
-      }
-      setIsLoading(false)
+      if (!record) return
+
+      setInitialImageUrl(record.image || "")
+      setImageError("")
+      setFormData({
+        ...initialValues,
+        ...record,
+        image: null,
+        product_type: record.product_type || "stock",
+        category_id: record.category_id ? String(record.category_id) : "",
+        brand_id: record.brand_id ? String(record.brand_id) : "",
+        tax_group_id: record.tax_group_id ? String(record.tax_group_id) : "",
+        unit_id: record.unit_id ? String(record.unit_id) : "",
+        is_tax_inclusive: Boolean(record.is_tax_inclusive),
+      })
     }
 
     load()
@@ -287,6 +286,14 @@ export default function ProductFormPage() {
     id,
     isEdit,
   ])
+
+  const isStockProduct = formData.product_type === "stock"
+  const isLoading =
+    categories.isLoading ||
+    brands.isLoading ||
+    taxGroups.isLoading ||
+    units.isLoading ||
+    (isEdit && product.isLoading)
 
   useEffect(() => {
     const sentinel = paginationSentinelRef.current
@@ -357,8 +364,6 @@ export default function ProductFormPage() {
       setIsSubmitting(false)
     }
   }
-
-  const isStockProduct = formData.product_type === "stock"
 
   if (isLoading) {
     return (
