@@ -12,7 +12,6 @@ import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { promotions } from "@/lib/api/promotions"
 import { rewards } from "@/lib/api/rewards"
 import { showToast } from "@/lib/toast"
-import { cn } from "@/lib/utils"
 
 type RewardRuleForm = {
   from_amount: string
@@ -22,7 +21,6 @@ type RewardRuleForm = {
 
 type RewardFormValues = {
   name: string
-  code: string
   coupon_id: string
   target: string
   description: string
@@ -37,7 +35,6 @@ const emptyRule = (): RewardRuleForm => ({
 
 const initialValues: RewardFormValues = {
   name: "",
-  code: "",
   coupon_id: "",
   target: "",
   description: "",
@@ -53,9 +50,7 @@ export default function RewardSystemFormPage() {
   const [values, setValues] = useState<RewardFormValues>(initialValues)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isFooterStuck, setIsFooterStuck] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
-  const paginationSentinelRef = useRef<HTMLDivElement>(null)
   const loadKeyRef = useRef("")
 
   const [createRewardSystem] = (rewards as any).useCreateRewardSystemMutation()
@@ -94,7 +89,6 @@ export default function RewardSystemFormPage() {
 
       setValues({
         name: record.name || "",
-        code: record.code || "",
         coupon_id: record.coupon_id ? String(record.coupon_id) : "",
         target: record.target ? String(record.target) : "",
         description: record.description || "",
@@ -105,23 +99,6 @@ export default function RewardSystemFormPage() {
 
     load()
   }, [getCouponsDropdown, getRewardSystemById, id, isEdit])
-
-  useEffect(() => {
-    const sentinel = paginationSentinelRef.current
-    if (!sentinel) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsFooterStuck(!entry.isIntersecting),
-      {
-        threshold: 0.01,
-        rootMargin: "0px 0px -80px 0px",
-        root: contentRef.current,
-      }
-    )
-
-    observer.observe(sentinel)
-    return () => observer.disconnect()
-  }, [rewardSystem.isLoading])
 
   const updateField = (name: keyof RewardFormValues, value: any) => {
     setValues((current) => ({ ...current, [name]: value }))
@@ -160,6 +137,7 @@ export default function RewardSystemFormPage() {
   const validate = () => {
     const nextErrors: Record<string, string> = {}
     if (!values.name.trim()) nextErrors.name = "Reward system name is required"
+    if (!values.coupon_id) nextErrors.coupon_id = "Coupon is required"
     if (!values.target) nextErrors.target = "Target is required"
     const hasValidRule = values.rules.some((rule) => Number(rule.reward || 0) > 0)
     if (!hasValidRule) nextErrors.rules = "At least one reward rule is required"
@@ -175,8 +153,7 @@ export default function RewardSystemFormPage() {
 
     const payLoad = {
       name: values.name,
-      code: values.code || undefined,
-      coupon_id: values.coupon_id ? Number(values.coupon_id) : undefined,
+      coupon_id: Number(values.coupon_id),
       target: values.target || "0",
       description: values.description || "",
       rules: values.rules
@@ -239,15 +216,12 @@ export default function RewardSystemFormPage() {
               </p>
             </div>
           </div>
-          <Button type="button" variant="ghost" onClick={goBack}>
-            Return
-          </Button>
         </div>
       </div>
 
       <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto">
-        <form onSubmit={handleSubmit} noValidate className="space-y-5">
-          <div className="px-4 pt-4">
+        <form onSubmit={handleSubmit} noValidate className="flex min-h-full flex-col">
+          <div className="flex-1 space-y-5 px-4 pt-4">
             <div className="rounded-lg border border-gray-200 bg-white p-4">
               <UniFieldInput
                 label="Reward System Name"
@@ -257,13 +231,9 @@ export default function RewardSystemFormPage() {
                 error={errors.name}
                 onChange={(event) => updateField("name", event.target.value)}
               />
-              <p className="mt-1 text-xs font-medium text-gray-500">
-                Provide a name to the resource.
-              </p>
             </div>
-          </div>
 
-          <div className="grid gap-5 px-4 xl:grid-cols-[minmax(420px,560px)_minmax(560px,1fr)]">
+            <div className="grid gap-5 xl:grid-cols-[minmax(420px,560px)_minmax(560px,1fr)]">
             <section className="rounded-lg border border-gray-200 bg-white p-4">
               <div className="mb-4 border-b pb-3">
                 <h2 className="text-base font-bold text-gray-900">
@@ -273,9 +243,11 @@ export default function RewardSystemFormPage() {
               <div className="space-y-4">
                 <UniFieldSelect
                   label="Coupon"
+                  required
                   value={values.coupon_id}
                   onValueChange={(value) => updateField("coupon_id", value)}
                   placeholder="Choose coupon"
+                  error={errors.coupon_id}
                   allowClear
                 >
                   {(coupons.data?.data || []).map((coupon: any) => (
@@ -422,23 +394,12 @@ export default function RewardSystemFormPage() {
                 </p>
               ) : null}
             </section>
+            </div>
           </div>
 
-          <div ref={paginationSentinelRef} className="h-px w-full" />
-
-          <footer
-            className={cn(
-              "sticky z-50 transition-all duration-300 ease-in-out",
-              isFooterStuck ? "bottom-2 mx-3" : "bottom-0 mx-0"
-            )}
-          >
+          <div>
             <div
-              className={cn(
-                "flex items-center justify-end gap-x-2 rounded-b-xl bg-white/90 p-3 backdrop-blur-md transition-shadow duration-200",
-                isFooterStuck
-                  ? "rounded-t-xl border border-gray-200"
-                  : "rounded-t-none border-t-2 border-gray-100"
-              )}
+              className="flex items-center justify-end gap-x-2 border-t-2 border-gray-100 bg-white p-3"
             >
               <Button
                 type="button"
@@ -465,7 +426,7 @@ export default function RewardSystemFormPage() {
                 )}
               </Button>
             </div>
-          </footer>
+          </div>
         </form>
       </div>
     </div>
