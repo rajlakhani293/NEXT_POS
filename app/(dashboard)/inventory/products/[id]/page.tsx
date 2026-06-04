@@ -14,7 +14,6 @@ import { CategoryForm } from "@/app/(dashboard)/inventory/categories/createUpdat
 import { UnitForm } from "@/app/(dashboard)/inventory/units/createUpdate"
 import { TaxGroupForm } from "@/app/(dashboard)/settings/tax-groups/createUpdate"
 import { ImageUpload } from "@/components/imageUpload"
-import { PermissionGuard } from "@/components/permission-guard"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import {
@@ -29,7 +28,6 @@ import { Switch } from "@/components/ui/switch"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { catalog } from "@/lib/api/catalog"
-import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
@@ -205,9 +203,6 @@ export default function ProductFormPage() {
   const params = useParams()
   const id = params.id as string
   const isEdit = id !== "create"
-  const requiredPermission = isEdit
-    ? PERMISSIONS.products.update
-    : PERMISSIONS.products.create
 
   const [formData, setFormData] = useState<ProductFormValues>(initialValues)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -377,7 +372,7 @@ export default function ProductFormPage() {
   }
 
   return (
-    <PermissionGuard permission={requiredPermission}>
+    <>
       <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
         <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
           <div className="flex items-center gap-3">
@@ -822,6 +817,6 @@ export default function ProductFormPage() {
           onSuccess={() => handleAddFormSuccess("taxGroup")}
         />
       </div>
-    </PermissionGuard>
+    </>
   )
 }

@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
-import { PermissionGuard } from "@/components/permission-guard"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { catalog } from "@/lib/api/catalog"
@@ -51,44 +50,38 @@ export default function ProductsPage() {
   })
 
   return (
-    <PermissionGuard permission={PERMISSIONS.products.view}>
-      <div className="h-full space-y-4">
-        <DynamicTable
-          data={orders}
-          columns={columns}
-          tableTitle="Products"
-          title={canCreate ? "Add Product" : undefined}
-          showSearch
-          searchTerm={searchTerm}
-          currentPage={currentPage}
-          itemsPerPage={itemsPerPage}
-          totalItems={totalItems}
-          onPageChange={setCurrentPage}
-          onFilterChange={handleFilterChange}
-          sortConfig={sortConfig}
-          onSort={handleSort}
-          sortableFields={sortableFields}
-          isLoading={isLoading}
-          setAddEntityOpen={
-            canCreate
-              ? () => router.push("/inventory/products/create")
-              : undefined
-          }
-          showEdit={canUpdate}
-          onEdit={(record: any) =>
-            router.push(`/inventory/products/${record.id}`)
-          }
-          showDelete={canDelete}
-          deleteMutation={deleteProduct}
-          showStatus={canUpdate}
-          statusChangeMutation={({ ids, status }: any) =>
-            updateProductStatus({ payLoad: { ids, status } })
-          }
-          triggerRefresh={triggerRefresh}
-          deleteModalTitle="Delete Product"
-          deleteModalDescription="Are you sure you want to delete this product?"
-        />
-      </div>
-    </PermissionGuard>
+    <div className="h-full space-y-4">
+      <DynamicTable
+        data={orders}
+        columns={columns}
+        tableTitle="Products"
+        title={canCreate ? "Add Product" : undefined}
+        showSearch
+        searchTerm={searchTerm}
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+        totalItems={totalItems}
+        onPageChange={setCurrentPage}
+        onFilterChange={handleFilterChange}
+        sortConfig={sortConfig}
+        onSort={handleSort}
+        sortableFields={sortableFields}
+        isLoading={isLoading}
+        setAddEntityOpen={
+          canCreate ? () => router.push("/inventory/products/create") : undefined
+        }
+        showEdit={canUpdate}
+        onEdit={(record: any) => router.push(`/inventory/products/${record.id}`)}
+        showDelete={canDelete}
+        deleteMutation={deleteProduct}
+        showStatus={canUpdate}
+        statusChangeMutation={({ ids, status }: any) =>
+          updateProductStatus({ payLoad: { ids, status } })
+        }
+        triggerRefresh={triggerRefresh}
+        deleteModalTitle="Delete Product"
+        deleteModalDescription="Are you sure you want to delete this product?"
+      />
+    </div>
   )
 }

@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 
-import { PermissionGuard } from "@/components/permission-guard"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Spinner } from "@/components/ui/spinner"
@@ -38,7 +37,6 @@ export default function RoleFormPage() {
   const params = useParams()
   const id = params.id as string
   const isEdit = id !== "create"
-  const requiredPermission = isEdit ? PERMISSIONS.roles.update : PERMISSIONS.roles.create
 
   const [values, setValues] = useState<RoleFormValues>(initialValues)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -143,8 +141,7 @@ export default function RoleFormPage() {
   const isLoading = permissions.isLoading || (isEdit && role.isLoading)
 
   return (
-    <PermissionGuard permission={requiredPermission}>
-      <div className="-m-6 flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div className="-m-6 flex min-h-0 flex-1 flex-col overflow-hidden">
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-6 pt-6 pb-4">
             <div className="mb-5 flex items-center gap-3">
@@ -265,6 +262,5 @@ export default function RoleFormPage() {
           </div>
         </form>
       </div>
-    </PermissionGuard>
   )
 }

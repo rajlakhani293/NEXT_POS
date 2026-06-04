@@ -3,14 +3,12 @@
 import { useEffect, useRef, useState } from "react"
 
 import { ImageUpload } from "@/components/imageUpload"
-import { PermissionGuard } from "@/components/permission-guard"
 import { Button } from "@/components/ui/button"
 import { SelectItem } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { settings } from "@/lib/api/settings"
-import { PERMISSIONS } from "@/lib/permissions"
 import { useSession } from "@/lib/redux/session-provider"
 import { showToast } from "@/lib/toast"
 
@@ -142,8 +140,7 @@ export default function CompanySettingsPage() {
   }))
 
   return (
-    <PermissionGuard permission={PERMISSIONS.settings.view}>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
             <section className="px-10 pt-8">
@@ -234,6 +231,5 @@ export default function CompanySettingsPage() {
           </div>
         </form>
       </div>
-    </PermissionGuard>
   )
 }

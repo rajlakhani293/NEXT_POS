@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 
 import { AppSidebar } from "@/components/app-sidebar"
+import { RoutePermissionGuard } from "@/components/route-permission-guard"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import {
@@ -85,7 +86,7 @@ export default function DashboardLayout({
                   isNoPaddingPage ? "p-0" : "p-6",
                 ].join(" ")}
               >
-                {children}
+                <RoutePermissionGuard>{children}</RoutePermissionGuard>
               </div>
             </SidebarInset>
           </div>

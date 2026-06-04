@@ -3,7 +3,6 @@
 import { useState } from "react"
 
 import DynamicTable from "@/components/DynamicTable"
-import { PermissionGuard } from "@/components/permission-guard"
 import { CategoryForm } from "@/app/(dashboard)/inventory/categories/createUpdate"
 import { catalog } from "@/lib/api/catalog"
 import { PERMISSIONS } from "@/lib/permissions"
@@ -61,45 +60,43 @@ export default function CategoriesPage() {
   }
 
   return (
-    <PermissionGuard permission={PERMISSIONS.products.view}>
-      <div className="h-full space-y-4">
-        <DynamicTable
-          data={orders}
-          columns={columns}
-          tableTitle="Categories"
-          title={canCreate ? "Add Category" : undefined}
-          showSearch
-          searchTerm={searchTerm}
-          currentPage={currentPage}
-          itemsPerPage={itemsPerPage}
-          totalItems={totalItems}
-          onPageChange={setCurrentPage}
-          onFilterChange={handleFilterChange}
-          sortConfig={sortConfig}
-          onSort={handleSort}
-          sortableFields={sortableFields}
-          isLoading={isLoading}
-          setAddEntityOpen={canCreate ? handleAdd : undefined}
-          showEdit={canUpdate}
-          onEdit={handleEdit}
-          showDelete={canDelete}
-          deleteMutation={deleteCategory}
-          showStatus={canUpdate}
-          statusChangeMutation={({ ids, status }: any) =>
-            updateCategoryStatus({ payLoad: { ids, status } })
-          }
-          triggerRefresh={triggerRefresh}
-          deleteModalTitle="Delete Category"
-          deleteModalDescription="Are you sure you want to delete this category?"
-        />
+    <div className="h-full space-y-4">
+      <DynamicTable
+        data={orders}
+        columns={columns}
+        tableTitle="Categories"
+        title={canCreate ? "Add Category" : undefined}
+        showSearch
+        searchTerm={searchTerm}
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+        totalItems={totalItems}
+        onPageChange={setCurrentPage}
+        onFilterChange={handleFilterChange}
+        sortConfig={sortConfig}
+        onSort={handleSort}
+        sortableFields={sortableFields}
+        isLoading={isLoading}
+        setAddEntityOpen={canCreate ? handleAdd : undefined}
+        showEdit={canUpdate}
+        onEdit={handleEdit}
+        showDelete={canDelete}
+        deleteMutation={deleteCategory}
+        showStatus={canUpdate}
+        statusChangeMutation={({ ids, status }: any) =>
+          updateCategoryStatus({ payLoad: { ids, status } })
+        }
+        triggerRefresh={triggerRefresh}
+        deleteModalTitle="Delete Category"
+        deleteModalDescription="Are you sure you want to delete this category?"
+      />
 
-        <CategoryForm
-          isOpen={isFormOpen}
-          onClose={handleClose}
-          onSuccess={triggerRefresh}
-          editId={editId}
-        />
-      </div>
-    </PermissionGuard>
+      <CategoryForm
+        isOpen={isFormOpen}
+        onClose={handleClose}
+        onSuccess={triggerRefresh}
+        editId={editId}
+      />
+    </div>
   )
 }
