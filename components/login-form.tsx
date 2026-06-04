@@ -244,6 +244,7 @@ export function LoginForm({
                     value={phone}
                     maxLength={10}
                     prefix="+91"
+                    prefixPadding="pl-12"
                     prefixClassName="text-base"
                     className="h-12 rounded-xl text-base md:text-base"
                     onChange={(event) => {

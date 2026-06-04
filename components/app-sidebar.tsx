@@ -21,6 +21,8 @@ import {
   LandmarkIcon,
   ReceiptTextIcon,
   ShieldCheckIcon,
+  SparklesIcon,
+  TicketPercentIcon,
   StoreIcon,
   UsersIcon,
 } from "lucide-react"
@@ -95,6 +97,18 @@ const mainNavSections: DashboardNavSection[] = [
     url: "/customers",
     icon: <UsersIcon />,
     permission: PERMISSIONS.customers.view,
+    items: [
+      {
+        title: "Customers",
+        url: "/customers",
+        permission: PERMISSIONS.customers.view,
+      },
+      {
+        title: "Customer Groups",
+        url: "/customers/groups",
+        permission: PERMISSIONS.customers.view,
+      },
+    ],
   },
   {
     title: "Reports",
@@ -106,7 +120,12 @@ const mainNavSections: DashboardNavSection[] = [
     title: "Settings",
     url: "/settings/company",
     icon: <IoSettingsOutline />,
-    permission: [PERMISSIONS.settings.view, PERMISSIONS.branches.view],
+    permission: [
+      PERMISSIONS.settings.view,
+      PERMISSIONS.branches.view,
+      PERMISSIONS.promotions.view,
+      PERMISSIONS.rewards.view,
+    ],
     permissionMatch: "any",
   },
 ]
@@ -147,6 +166,18 @@ const settingsNavSections: DashboardNavSection[] = [
     url: "/settings/taxes",
     icon: <ReceiptTextIcon />,
     permission: PERMISSIONS.products.view,
+  },
+  {
+    title: "Coupons",
+    url: "/settings/coupons",
+    icon: <TicketPercentIcon />,
+    permission: PERMISSIONS.promotions.view,
+  },
+  {
+    title: "Rewards",
+    url: "/settings/rewards",
+    icon: <SparklesIcon />,
+    permission: PERMISSIONS.rewards.view,
   },
 ]
 
@@ -197,16 +228,24 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       return visibleItems
     }, [])
 
+  const matchesUrl = (url: string) =>
+    pathname === url || pathname.startsWith(`${url}/`)
+
   const buildNavItems = (sections: DashboardNavSection[]) =>
-    sections.map((item) => ({
-      ...item,
-      isActive: pathname === item.url || pathname.startsWith(`${item.url}/`),
-      items: item.items?.map((subItem) => ({
-        ...subItem,
-        isActive:
-          pathname === subItem.url || pathname.startsWith(`${subItem.url}/`),
-      })),
-    }))
+    sections.map((item) => {
+      const activeSubItem = item.items
+        ?.filter((subItem) => matchesUrl(subItem.url))
+        .sort((first, second) => second.url.length - first.url.length)[0]
+
+      return {
+        ...item,
+        isActive: Boolean(activeSubItem) || matchesUrl(item.url),
+        items: item.items?.map((subItem) => ({
+          ...subItem,
+          isActive: activeSubItem?.url === subItem.url,
+        })),
+      }
+    })
   const mainNavItems = buildNavItems(filterNavItems(mainNavSections))
   const settingsNavItems = buildNavItems(filterNavItems(settingsNavSections))
 

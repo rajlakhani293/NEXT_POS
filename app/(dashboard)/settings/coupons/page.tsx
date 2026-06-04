@@ -3,32 +3,30 @@
 import { useRouter } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
-import { customers } from "@/lib/api/customers"
+import { promotions } from "@/lib/api/promotions"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 
 const columns = [
   { key: "name", title: "Name" },
-  { key: "phone", title: "Phone" },
-  { key: "email", title: "Email" },
-  { key: "customer_type", title: "Type" },
-  { key: "company_name", title: "Company" },
-  { key: "opening_balance", title: "Opening Balance" },
-  { key: "credit_limit_amount", title: "Credit Limit" },
-  { key: "owed_amount", title: "Owed" },
+  { key: "code", title: "Code" },
+  { key: "type", title: "Type" },
+  { key: "discount_value", title: "Value" },
+  { key: "minimum_cart_value", title: "Min Cart" },
+  { key: "maximum_cart_value", title: "Max Cart" },
+  { key: "limit_usage", title: "Usage Limit" },
+  { key: "target_summary", title: "Customer Target" },
 ]
 
-export default function CustomersPage() {
+export default function CouponsPage() {
   const router = useRouter()
-  const [deleteCustomer] = (customers as any).useDeleteCustomerMutation()
-  const [updateCustomerStatus] = (
-    customers as any
-  ).useUpdateCustomerStatusMutation()
+  const [deleteCoupon] = (promotions as any).useDeleteCouponMutation()
+  const [updateCouponStatus] = (promotions as any).useUpdateCouponStatusMutation()
   const { hasPermission } = usePermissions()
-  const canCreate = hasPermission(PERMISSIONS.customers.create)
-  const canUpdate = hasPermission(PERMISSIONS.customers.update)
-  const canDelete = hasPermission(PERMISSIONS.customers.delete)
+  const canCreate = hasPermission(PERMISSIONS.promotions.create)
+  const canUpdate = hasPermission(PERMISSIONS.promotions.update)
+  const canDelete = hasPermission(PERMISSIONS.promotions.delete)
 
   const {
     orders,
@@ -44,16 +42,16 @@ export default function CustomersPage() {
     itemsPerPage,
     triggerRefresh,
   } = useTableData({
-    getMaster: (customers as any).useGetCustomersDataMutation,
+    getMaster: (promotions as any).useGetCouponsDataMutation,
     itemsPerPage: 10,
   })
 
   const handleAdd = (open: boolean) => {
-    if (open) router.push("/customers/create")
+    if (open) router.push("/settings/coupons/create")
   }
 
   const handleEdit = (record: any) => {
-    router.push(`/customers/${record.id}`)
+    router.push(`/settings/coupons/${record.id}`)
   }
 
   return (
@@ -61,8 +59,8 @@ export default function CustomersPage() {
       <DynamicTable
         data={orders}
         columns={columns}
-        tableTitle="Customers"
-        title={canCreate ? "Add Customer" : undefined}
+        tableTitle="Coupons"
+        title={canCreate ? "Add Coupon" : undefined}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}
@@ -78,15 +76,16 @@ export default function CustomersPage() {
         showEdit={canUpdate}
         onEdit={handleEdit}
         showDelete={canDelete}
-        deleteMutation={deleteCustomer}
+        deleteMutation={deleteCoupon}
         showStatus={canUpdate}
         statusChangeMutation={({ ids, status }: any) =>
-          updateCustomerStatus({ payLoad: { ids, status } })
+          updateCouponStatus({ payLoad: { ids, status } })
         }
         triggerRefresh={triggerRefresh}
-        deleteModalTitle="Delete Customer"
-        deleteModalDescription="Are you sure you want to delete this customer?"
+        deleteModalTitle="Delete Coupon"
+        deleteModalDescription="Are you sure you want to delete this coupon?"
       />
+
     </div>
   )
 }

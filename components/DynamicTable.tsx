@@ -200,16 +200,16 @@ const DynamicTable = ({
   data,
   columns,
   selectedRows = [],
-  onRowSelect = () => {},
+  onRowSelect = () => { },
   sortConfig = { key: "", direction: "ascending" },
-  onSort = () => {},
+  onSort = () => { },
   rowActions,
   isRowDisabled,
   currentPage = 1,
   itemsPerPage = 10,
   totalItems = 0,
-  onFilterChange = () => {},
-  onPageChange = () => {},
+  onFilterChange = () => { },
+  onPageChange = () => { },
   showStatus = false,
   statusChangeMutation,
   showDelete = false,
@@ -322,8 +322,7 @@ const DynamicTable = ({
           } catch (error) {
             const err = error as any
             showToast.error(
-              `Status Update Failed: ${err.status} - ${
-                err.data?.message || err.message
+              `Status Update Failed: ${err.status} - ${err.data?.message || err.message
               }`
             )
           }
@@ -495,7 +494,7 @@ const DynamicTable = ({
                         </span>
                       </div>
                       {selectedDateRange !==
-                      translateSelectedDateRange(null) ? (
+                        translateSelectedDateRange(null) ? (
                         <div
                           className="flex h-4 w-4 cursor-pointer items-center justify-center bg-white text-muted-foreground hover:text-destructive"
                           onClick={(e) => {
@@ -589,7 +588,7 @@ const DynamicTable = ({
                                   className={cn(
                                     "text-xs",
                                     selectedDateRange === range &&
-                                      "bg-green-100 text-green-900 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300"
+                                    "bg-green-100 text-green-900 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300"
                                   )}
                                 >
                                   {range}
@@ -626,8 +625,8 @@ const DynamicTable = ({
                                   onChange={(range) => {
                                     const start = range?.from
                                       ? dayjs(range.from)
-                                          .startOf("day")
-                                          .toDate()
+                                        .startOf("day")
+                                        .toDate()
                                       : null
                                     const end = range?.to
                                       ? dayjs(range.to).endOf("day").toDate()
@@ -794,20 +793,20 @@ const DynamicTable = ({
                         {columns.map((col) => {
                           const rawValue = col.render
                             ? col.render(
-                                row[col.key],
-                                {
-                                  row,
-                                  onChange: (action: string, payload?: any) =>
-                                    onChange(action, {
-                                      ...payload,
-                                      id: row.id,
-                                    }),
-                                },
-                                index
-                              )
+                              row[col.key],
+                              {
+                                row,
+                                onChange: (action: string, payload?: any) =>
+                                  onChange(action, {
+                                    ...payload,
+                                    id: row.id,
+                                  }),
+                              },
+                              index
+                            )
                             : (row[col.key] ?? (
-                                <span className="text-muted-foreground">-</span>
-                              ))
+                              <span className="text-muted-foreground">-</span>
+                            ))
 
                           return (
                             <td
@@ -841,7 +840,7 @@ const DynamicTable = ({
                                           <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 border hover:cursor-pointer"
+                                            className="h-8 w-8 border cursor-pointer"
                                             disabled={isDisabledRow}
                                             onClick={(e) => {
                                               e.stopPropagation()

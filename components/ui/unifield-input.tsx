@@ -25,6 +25,8 @@ interface UniFieldInputProps extends Omit<
   min?: number | string
   max?: number | string
   maxLength?: number
+  prefixPadding?: string
+  suffixPadding?: string
 }
 
 export const UniFieldInput = React.forwardRef<
@@ -50,6 +52,8 @@ export const UniFieldInput = React.forwardRef<
       max,
       maxLength,
       onChange,
+      prefixPadding,
+      suffixPadding,
       ...props
     },
     ref
@@ -155,7 +159,7 @@ export const UniFieldInput = React.forwardRef<
               {addonBefore}
               <div className="relative flex flex-1">
                 {prefix && (
-                  <div className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+                  <div className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-sm font-semibold text-gray-900">
                     {prefix}
                   </div>
                 )}
@@ -168,7 +172,8 @@ export const UniFieldInput = React.forwardRef<
                     addonAfter && "rounded-r-none",
                     error &&
                     "border-red-500 focus:border-red-500 focus:ring-red-500",
-                    prefix && "pl-10",
+                    prefix && (prefixPadding || "pl-8"),
+                    suffix && (suffixPadding || "pr-16"),
                     props.type === "number" &&
                     "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
                     className
@@ -195,8 +200,8 @@ export const UniFieldInput = React.forwardRef<
                 "h-10 border-2 bg-white text-sm font-semibold text-gray-900 placeholder:font-semibold placeholder:text-muted-foreground",
                 error &&
                 "border-red-500 focus:border-red-500 focus:ring-red-500",
-                prefix && "pl-12",
-                suffix && "pr-16",
+                prefix && (prefixPadding || "pl-8"),
+                suffix && (suffixPadding || "pr-16"),
                 props.type === "number" &&
                 "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
                 className

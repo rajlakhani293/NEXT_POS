@@ -52,6 +52,25 @@ export const PERMISSIONS = {
     update: "sales_update",
     void: "sales_void",
   },
+  cashRegister: {
+    view: "cash_register_view",
+    open: "cash_register_open",
+    close: "cash_register_close",
+    cashIn: "cash_register_cash_in",
+    cashOut: "cash_register_cash_out",
+  },
+  rewards: {
+    view: "rewards_view",
+    create: "rewards_create",
+    update: "rewards_update",
+    delete: "rewards_delete",
+  },
+  promotions: {
+    view: "promotions_view",
+    create: "promotions_create",
+    update: "promotions_update",
+    delete: "promotions_delete",
+  },
   reports: {
     view: "reports_view",
     export: "reports_export",

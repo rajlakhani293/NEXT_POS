@@ -36,7 +36,7 @@ export function DatePicker({
   return (
     <div className="space-y-1">
       {label && (
-        <FieldLabel htmlFor={inputId}>
+        <FieldLabel htmlFor={inputId} className="font-semibold text-gray-700">
           {label}
           {required && <span className="text-red-500">*</span>}
         </FieldLabel>
@@ -48,12 +48,12 @@ export function DatePicker({
             data-empty={!value}
             id={inputId}
             className={cn(
-              "h-10 w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground",
+              "h-10 w-full justify-start text-left border-2 bg-white text-sm font-semibold text-gray-500",
               className
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {value ? format(value, "PPP") : <span>{placeholder}</span>}
+            <CalendarIcon className="mr-2 h-4 w-4 text-gray-900" />
+            <div className="text-gray-900">{value ? format(value, "PPP") : <span>{placeholder}</span>}</div>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0">
@@ -62,6 +62,7 @@ export function DatePicker({
             selected={value}
             onSelect={onChange}
             initialFocus
+            className="text-gray-900 font-semibold"
           />
         </PopoverContent>
       </Popover>

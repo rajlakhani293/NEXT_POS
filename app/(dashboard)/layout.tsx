@@ -35,13 +35,16 @@ export default function DashboardLayout({
   const [isOffline, setIsOffline] = useState(
     typeof navigator !== "undefined" ? !navigator.onLine : false
   )
-  const isProductFormPage = /^\/inventory\/products\/[^/]+$/.test(pathname)
-  const noPaddingPage = {
-    "/settings/company": true,
-    isProductFormPage: isProductFormPage,
-  }
-  const isNoPaddingPage =
-    pathname in noPaddingPage || noPaddingPage.isProductFormPage
+  const noPaddingRules = [
+    "/settings/company",
+    /^\/inventory\/products\/[^/]+$/,
+    /^\/customers\/(create|\d+)$/,
+    /^\/settings\/coupons\/(create|\d+)$/,
+    /^\/settings\/rewards\/(create|\d+)$/,
+  ]
+  const isNoPaddingPage = noPaddingRules.some((rule) =>
+    typeof rule === "string" ? pathname === rule : rule.test(pathname)
+  )
 
 
   useEffect(() => {

@@ -21,17 +21,17 @@ interface FormField {
   name: string
   label: string
   type?:
-    | "text"
-    | "number"
-    | "select"
-    | "textarea"
-    | "switch"
-    | "file"
-    | "date"
-    | "hidden"
-    | "readonly"
-    | "radio"
-    | "email"
+  | "text"
+  | "number"
+  | "select"
+  | "textarea"
+  | "switch"
+  | "file"
+  | "date"
+  | "hidden"
+  | "readonly"
+  | "radio"
+  | "email"
   placeholder?: string
   required?: boolean
   options?: { label: string; value: string | number }[]
@@ -298,6 +298,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     error={errors[field.name]}
                     onAddNew={field.onAddNew}
                     addNewLabel={field.addNewLabel}
+                    allowClear={field.allowClear}
                   >
                     {field.options
                       ?.filter(

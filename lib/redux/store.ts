@@ -1,6 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit"
 import { auth } from "../api/auth"
 import { catalog } from "../api/catalog"
+import { customers } from "../api/customers"
+import { promotions } from "../api/promotions"
+import { registers } from "../api/registers"
+import { rewards } from "../api/rewards"
 import { settings } from "../api/settings"
 import sessionSlice from "./sessionSlice"
 
@@ -8,6 +12,10 @@ export const store = configureStore({
   reducer: {
     [auth.reducerPath]: auth.reducer,
     [catalog.reducerPath]: catalog.reducer,
+    [customers.reducerPath]: customers.reducer,
+    [promotions.reducerPath]: promotions.reducer,
+    [registers.reducerPath]: registers.reducer,
+    [rewards.reducerPath]: rewards.reducer,
     [settings.reducerPath]: settings.reducer,
     session: sessionSlice,
   },
@@ -15,6 +23,10 @@ export const store = configureStore({
     getDefaultMiddleware().concat([
       auth.middleware,
       catalog.middleware,
+      customers.middleware,
+      promotions.middleware,
+      registers.middleware,
+      rewards.middleware,
       settings.middleware,
     ]),
 })

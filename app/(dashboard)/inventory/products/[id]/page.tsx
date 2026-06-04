@@ -401,7 +401,7 @@ export default function ProductFormPage() {
             <div className="flex flex-col gap-5 px-4 pt-4 xl:flex-row">
               <div className="w-full space-y-5 xl:w-[70%]">
                 <section className="rounded-lg border border-gray-200 bg-white p-4">
-                  <ButtonGroup className="mb-4 overflow-hidden rounded-md border bg-white">
+                  <ButtonGroup className="mb-4 overflow-hidden rounded-md bg-white">
                     {[
                       { label: "Product", value: "stock" },
                       { label: "Service", value: "service" },
@@ -412,9 +412,9 @@ export default function ProductFormPage() {
                         variant="ghost"
                         onClick={() => updateField("product_type", item.value)}
                         className={cn(
-                          "min-w-24 border-0 text-sm font-semibold shadow-none hover:bg-gray-50",
+                          "min-w-24 text-sm font-semibold border shadow-none hover:bg-gray-50",
                           formData.product_type === item.value &&
-                            "bg-blue-600 text-white hover:bg-blue-600 hover:text-white"
+                          "bg-blue-600 text-white hover:bg-blue-600 hover:text-white border-0"
                         )}
                       >
                         {item.label}

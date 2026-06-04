@@ -3,32 +3,29 @@
 import { useRouter } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
-import { customers } from "@/lib/api/customers"
+import { rewards } from "@/lib/api/rewards"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 
 const columns = [
   { key: "name", title: "Name" },
-  { key: "phone", title: "Phone" },
-  { key: "email", title: "Email" },
-  { key: "customer_type", title: "Type" },
-  { key: "company_name", title: "Company" },
-  { key: "opening_balance", title: "Opening Balance" },
-  { key: "credit_limit_amount", title: "Credit Limit" },
-  { key: "owed_amount", title: "Owed" },
+  { key: "code", title: "Code" },
+  { key: "target", title: "Target" },
+  { key: "rule_summary", title: "Earn Rule" },
+  { key: "description", title: "Description" },
 ]
 
-export default function CustomersPage() {
+export default function RewardSystemsPage() {
   const router = useRouter()
-  const [deleteCustomer] = (customers as any).useDeleteCustomerMutation()
-  const [updateCustomerStatus] = (
-    customers as any
-  ).useUpdateCustomerStatusMutation()
+  const [deleteRewardSystem] = (rewards as any).useDeleteRewardSystemMutation()
+  const [updateRewardSystemStatus] = (
+    rewards as any
+  ).useUpdateRewardSystemStatusMutation()
   const { hasPermission } = usePermissions()
-  const canCreate = hasPermission(PERMISSIONS.customers.create)
-  const canUpdate = hasPermission(PERMISSIONS.customers.update)
-  const canDelete = hasPermission(PERMISSIONS.customers.delete)
+  const canCreate = hasPermission(PERMISSIONS.rewards.create)
+  const canUpdate = hasPermission(PERMISSIONS.rewards.update)
+  const canDelete = hasPermission(PERMISSIONS.rewards.delete)
 
   const {
     orders,
@@ -44,16 +41,16 @@ export default function CustomersPage() {
     itemsPerPage,
     triggerRefresh,
   } = useTableData({
-    getMaster: (customers as any).useGetCustomersDataMutation,
+    getMaster: (rewards as any).useGetRewardSystemsDataMutation,
     itemsPerPage: 10,
   })
 
   const handleAdd = (open: boolean) => {
-    if (open) router.push("/customers/create")
+    if (open) router.push("/settings/rewards/create")
   }
 
   const handleEdit = (record: any) => {
-    router.push(`/customers/${record.id}`)
+    router.push(`/settings/rewards/${record.id}`)
   }
 
   return (
@@ -61,8 +58,8 @@ export default function CustomersPage() {
       <DynamicTable
         data={orders}
         columns={columns}
-        tableTitle="Customers"
-        title={canCreate ? "Add Customer" : undefined}
+        tableTitle="Reward Systems"
+        title={canCreate ? "Add Reward" : undefined}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}
@@ -78,15 +75,16 @@ export default function CustomersPage() {
         showEdit={canUpdate}
         onEdit={handleEdit}
         showDelete={canDelete}
-        deleteMutation={deleteCustomer}
+        deleteMutation={deleteRewardSystem}
         showStatus={canUpdate}
         statusChangeMutation={({ ids, status }: any) =>
-          updateCustomerStatus({ payLoad: { ids, status } })
+          updateRewardSystemStatus({ payLoad: { ids, status } })
         }
         triggerRefresh={triggerRefresh}
-        deleteModalTitle="Delete Customer"
-        deleteModalDescription="Are you sure you want to delete this customer?"
+        deleteModalTitle="Delete Reward System"
+        deleteModalDescription="Are you sure you want to delete this reward system?"
       />
+
     </div>
   )
 }
