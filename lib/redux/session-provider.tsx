@@ -63,7 +63,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const response = await getSessionData().unwrap()
-      dispatch(setSessionData({ user: response.data }))
+      dispatch(setSessionData(response.data))
 
       if (pathname === "/login") {
         router.replace("/dashboard")

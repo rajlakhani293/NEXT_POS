@@ -80,7 +80,7 @@ export function LoginForm({
           device_name: defaultDeviceName,
         }).unwrap()
         await completeLogin(response.data.token, response.data.user)
-      } catch {}
+      } catch { }
     },
     [googleLogin, completeLogin]
   )
@@ -183,7 +183,7 @@ export function LoginForm({
       setDevOtp(response.data.otp_code)
       setStep("otp")
       showToast.success(response.data.message || "OTP sent successfully.")
-    } catch {}
+    } catch { }
   }
 
   const handleVerifyOtp = async () => {
@@ -204,7 +204,7 @@ export function LoginForm({
         device_name: defaultDeviceName,
       }).unwrap()
       await completeLogin(response.data.token, response.data.user)
-    } catch {}
+    } catch { }
   }
 
   return (
@@ -244,7 +244,8 @@ export function LoginForm({
                     value={phone}
                     maxLength={10}
                     prefix="+91"
-                    className="h-12 rounded-xl text-lg font-semibold text-gray-800 md:text-lg"
+                    prefixClassName="text-base"
+                    className="h-12 rounded-xl text-base md:text-base"
                     onChange={(event) => {
                       setPhone(event.target.value)
                       setPhoneError("")
@@ -263,7 +264,7 @@ export function LoginForm({
                     placeholder="6 digit OTP"
                     value={otpCode}
                     maxLength={6}
-                    className="h-12 rounded-xl text-lg font-semibold text-gray-800 md:text-lg"
+                    className="h-12 rounded-xl text-base md:text-base"
                     onChange={(event) => {
                       setOtpCode(event.target.value)
                       setOtpError("")

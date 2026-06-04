@@ -11,6 +11,7 @@ import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { settings } from "@/lib/api/settings"
 import { PERMISSIONS } from "@/lib/permissions"
+import { useSession } from "@/lib/redux/session-provider"
 import { showToast } from "@/lib/toast"
 
 const initialValues = {
@@ -73,6 +74,7 @@ function StateSelect({
 }
 
 export default function CompanySettingsPage() {
+  const { refreshSession } = useSession()
   const [values, setValues] = useState(initialValues)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoError, setLogoError] = useState("")
@@ -118,6 +120,7 @@ export default function CompanySettingsPage() {
     const logo = response?.data?.company?.logo || values.logo
     setValues((current) => ({ ...current, logo }))
     setLogoFile(null)
+    await Promise.all([refreshSession(), company.refetch()])
     showToast.success(
       response?.message || "Company profile updated successfully."
     )
@@ -133,7 +136,7 @@ export default function CompanySettingsPage() {
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
-            <section className="px-10 py-5">
+            <section className="px-10 pt-8">
               <h2 className="mb-4 text-2xl font-bold">Company Details</h2>
               <div>
                 <ProfileField label="Company Logo">

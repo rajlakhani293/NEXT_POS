@@ -65,6 +65,13 @@ const endpointsConfig = {
       method: "GET",
     }),
   },
+  switchBranch: {
+    query: (payLoad: { branch_id: number }) => ({
+      url: "accounts/switch-branch",
+      method: "POST",
+      body: payLoad,
+    }),
+  },
 }
 
 export const auth = createApi({
@@ -83,6 +90,9 @@ export const auth = createApi({
     getSessionData: builder.mutation<ApiEnvelope<AuthUser>, void>(
       endpointsConfig.getSessionData
     ),
+    switchBranch: builder.mutation<ApiEnvelope<any>, { branch_id: number }>(
+      endpointsConfig.switchBranch
+    ),
   }),
 })
 
@@ -91,4 +101,5 @@ export const {
   useVerifyOtpMutation,
   useGoogleLoginMutation,
   useGetSessionDataMutation,
+  useSwitchBranchMutation,
 } = auth

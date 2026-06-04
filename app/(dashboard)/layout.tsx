@@ -29,11 +29,19 @@ export default function DashboardLayout({
   const { clearSession } = useSession()
   const user = useAppSelector((state) => state.session.user)
   const branch = useAppSelector((state) => state.session.branch)
+  const branchList = useAppSelector((state) => state.session.branchList)
   const company = useAppSelector((state) => state.session.company)
   const [isOffline, setIsOffline] = useState(
     typeof navigator !== "undefined" ? !navigator.onLine : false
   )
   const isProductFormPage = /^\/inventory\/products\/[^/]+$/.test(pathname)
+  const noPaddingPage = {
+    "/settings/company": true,
+    isProductFormPage: isProductFormPage,
+  }
+  const isNoPaddingPage =
+    pathname in noPaddingPage || noPaddingPage.isProductFormPage
+
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false)
@@ -56,8 +64,13 @@ export default function DashboardLayout({
           className="flex h-full min-h-0 flex-col"
         >
           <SiteHeader
+            companyLogo={company?.logo}
             companyName={company?.name}
+            companyCode={company?.code}
             branchName={branch?.name}
+            branchCode={branch?.code}
+            branchId={branch?.id}
+            branchList={branchList}
             userName={user?.full_name}
             userContact={user?.phone || user?.email}
             userImage={user?.profile_image}
@@ -69,7 +82,7 @@ export default function DashboardLayout({
               <div
                 className={[
                   "m-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-100 bg-white",
-                  isProductFormPage ? "p-0" : "p-6",
+                  isNoPaddingPage ? "p-0" : "p-6",
                 ].join(" ")}
               >
                 {children}

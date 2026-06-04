@@ -93,7 +93,7 @@ export function NavUser({
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={resolvedSide}
             align={resolvedAlign}
-            sideOffset={4}
+            sideOffset={14}
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">

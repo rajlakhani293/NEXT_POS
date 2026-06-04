@@ -15,7 +15,9 @@ interface UniFieldInputProps extends Omit<
   error?: string
   containerClassName?: string
   prefix?: React.ReactNode
+  prefixClassName?: string
   suffix?: React.ReactNode
+  suffixClassName?: string
   addonBefore?: React.ReactNode
   addonAfter?: React.ReactNode
   as?: "input" | "textarea"
@@ -37,7 +39,9 @@ export const UniFieldInput = React.forwardRef<
       className,
       id,
       prefix,
+      prefixClassName,
       suffix,
+      suffixClassName,
       addonBefore,
       addonAfter,
       as = "input",
@@ -124,7 +128,7 @@ export const UniFieldInput = React.forwardRef<
         )}
         <div className="relative">
           {prefix && !(addonBefore || addonAfter) && (
-            <div className="absolute top-1/2 left-4 z-10 -translate-y-1/2 text-sm font-semibold text-gray-900">
+            <div className={cn("absolute top-1/2 left-4 z-10 -translate-y-1/2 text-sm font-semibold text-gray-900", prefixClassName)}>
               {prefix}
             </div>
           )}
@@ -136,7 +140,7 @@ export const UniFieldInput = React.forwardRef<
               className={cn(
                 "text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:text-muted-foreground",
                 error &&
-                  "border-red-500 focus:border-red-500 focus:ring-red-500",
+                "border-red-500 focus:border-red-500 focus:ring-red-500",
                 className
               )}
               aria-invalid={error ? true : undefined}
@@ -163,10 +167,10 @@ export const UniFieldInput = React.forwardRef<
                     addonBefore && "rounded-l-none",
                     addonAfter && "rounded-r-none",
                     error &&
-                      "border-red-500 focus:border-red-500 focus:ring-red-500",
+                    "border-red-500 focus:border-red-500 focus:ring-red-500",
                     prefix && "pl-10",
                     props.type === "number" &&
-                      "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
+                    "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
                     className
                   )}
                   aria-invalid={error ? true : undefined}
@@ -190,11 +194,11 @@ export const UniFieldInput = React.forwardRef<
               className={cn(
                 "h-10 border-2 bg-white text-sm font-semibold text-gray-900 placeholder:font-semibold placeholder:text-muted-foreground",
                 error &&
-                  "border-red-500 focus:border-red-500 focus:ring-red-500",
-                prefix && "pl-10",
+                "border-red-500 focus:border-red-500 focus:ring-red-500",
+                prefix && "pl-12",
                 suffix && "pr-16",
                 props.type === "number" &&
-                  "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
+                "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
                 className
               )}
               aria-invalid={error ? true : undefined}
@@ -208,7 +212,7 @@ export const UniFieldInput = React.forwardRef<
             />
           )}
           {suffix && (
-            <div className="absolute top-[2px] right-[2px] bottom-[2px] z-10 flex items-center justify-center rounded-r-[calc(var(--radius)-2px)] border-l bg-muted/30 px-3 text-sm text-muted-foreground">
+            <div className={cn("absolute top-[2px] right-[2px] bottom-[2px] z-10 flex items-center justify-center rounded-r-[calc(var(--radius)-2px)] border-l bg-muted/30 px-3 text-sm text-muted-foreground", suffixClassName)}>
               {suffix}
             </div>
           )}

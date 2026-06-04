@@ -29,6 +29,7 @@ interface Company {
   id: number
   name: string
   code: string
+  logo?: string
   logo_image?: string
   website_url?: string
   business_type_id?: number
@@ -47,6 +48,7 @@ interface Company {
 interface Branch {
   id: number
   name: string
+  code?: string
   contact_person_name?: string
   phone?: string
   email?: string
@@ -62,6 +64,10 @@ interface Branch {
 interface BranchListItem {
   id: number
   name: string
+  code?: string
+  city?: string
+  phone?: string
+  is_head_office?: boolean
   city__name?: string
   state__name?: string
 }
