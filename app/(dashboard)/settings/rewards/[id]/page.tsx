@@ -79,13 +79,14 @@ export default function RewardSystemFormPage() {
       const record = response?.data
       if (!record) return
 
-      const rules = Array.isArray(record.rules) && record.rules.length
-        ? record.rules.map((rule: any) => ({
-          from_amount: rule.from_amount ? String(rule.from_amount) : "",
-          to_amount: rule.to_amount ? String(rule.to_amount) : "",
-          reward: rule.reward ? String(rule.reward) : "",
-        }))
-        : []
+      const rules =
+        Array.isArray(record.rules) && record.rules.length
+          ? record.rules.map((rule: any) => ({
+            from_amount: rule.from_amount ? String(rule.from_amount) : "",
+            to_amount: rule.to_amount ? String(rule.to_amount) : "",
+            reward: rule.reward ? String(rule.reward) : "",
+          }))
+          : []
 
       setValues({
         name: record.name || "",
@@ -139,7 +140,9 @@ export default function RewardSystemFormPage() {
     if (!values.name.trim()) nextErrors.name = "Reward system name is required"
     if (!values.coupon_id) nextErrors.coupon_id = "Coupon is required"
     if (!values.target) nextErrors.target = "Target is required"
-    const hasValidRule = values.rules.some((rule) => Number(rule.reward || 0) > 0)
+    const hasValidRule = values.rules.some(
+      (rule) => Number(rule.reward || 0) > 0
+    )
     if (!hasValidRule) nextErrors.rules = "At least one reward rule is required"
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
@@ -169,10 +172,14 @@ export default function RewardSystemFormPage() {
     try {
       if (isEdit) {
         const response = await editRewardSystem({ id, payLoad }).unwrap()
-        showToast.success(response?.message || "Reward system updated successfully.")
+        showToast.success(
+          response?.message || "Reward system updated successfully."
+        )
       } else {
         const response = await createRewardSystem(payLoad).unwrap()
-        showToast.success(response?.message || "Reward system created successfully.")
+        showToast.success(
+          response?.message || "Reward system created successfully."
+        )
       }
       goBack()
     } finally {
@@ -220,187 +227,196 @@ export default function RewardSystemFormPage() {
       </div>
 
       <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto">
-        <form onSubmit={handleSubmit} noValidate className="flex min-h-full flex-col">
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="flex min-h-full flex-col"
+        >
           <div className="flex-1 space-y-5 px-4 pt-4">
-            <div className="rounded-lg border border-gray-200 bg-white p-4">
-              <UniFieldInput
-                label="Reward System Name"
-                required
-                placeholder="Enter reward system name"
-                value={values.name}
-                error={errors.name}
-                onChange={(event) => updateField("name", event.target.value)}
-              />
-            </div>
-
             <div className="grid gap-5 xl:grid-cols-[minmax(420px,560px)_minmax(560px,1fr)]">
-            <section className="rounded-lg border border-gray-200 bg-white p-4">
-              <div className="mb-4 border-b pb-3">
-                <h2 className="text-base font-bold text-gray-900">
-                  Reward Details
-                </h2>
-              </div>
-              <div className="space-y-4">
-                <UniFieldSelect
-                  label="Coupon"
-                  required
-                  value={values.coupon_id}
-                  onValueChange={(value) => updateField("coupon_id", value)}
-                  placeholder="Choose coupon"
-                  error={errors.coupon_id}
-                  allowClear
-                >
-                  {(coupons.data?.data || []).map((coupon: any) => (
-                    <SelectItem key={coupon.id} value={String(coupon.id)}>
-                      {coupon.name} ({coupon.code})
-                    </SelectItem>
-                  ))}
-                </UniFieldSelect>
-                <p className="-mt-3 text-xs font-medium text-gray-500">
-                  Decide which coupon applies when customer redeems this reward.
-                </p>
-
-                <UniFieldInput
-                  label="Target"
-                  required
-                  type="number"
-                  min="0"
-                  placeholder="Points needed to redeem"
-                  value={values.target}
-                  error={errors.target}
-                  onChange={(event) => updateField("target", event.target.value)}
-                />
-                <p className="-mt-3 text-xs font-medium text-gray-500">
-                  This is the objective that the user should reach to trigger
-                  the reward.
-                </p>
-
-                <UniFieldInput
-                  as="textarea"
-                  label="Description"
-                  placeholder="A short description about this system"
-                  rows={9}
-                  value={values.description}
-                  onChange={(event) =>
-                    updateField("description", event.target.value)
-                  }
-                />
-              </div>
-            </section>
-
-            <section className="rounded-lg border border-gray-200 bg-white p-4">
-              <div className="mb-4 flex items-center justify-between gap-3 border-b pb-3">
-                <div>
+              <section className="rounded-lg border border-gray-200 bg-white p-4">
+                <div className="mb-4 border-b pb-3">
                   <h2 className="text-base font-bold text-gray-900">
-                    Reward Rules
+                    Reward Details
                   </h2>
-                  <p className="mt-1 text-xs font-medium text-gray-500">
-                    Add cart value ranges and points earned for each range.
-                  </p>
                 </div>
-                <Button
-                  type="button"
-                  onClick={addRule}
-                  className="h-9 gap-2 bg-black text-white hover:bg-black/90"
-                >
-                  <Plus className="size-4" />
-                  Add Rule
-                </Button>
-              </div>
+                <div className="space-y-4">
+                  <UniFieldInput
+                    label="Reward System Name"
+                    required
+                    placeholder="Enter reward system name"
+                    value={values.name}
+                    error={errors.name}
+                    onChange={(event) =>
+                      updateField("name", event.target.value)
+                    }
+                  />
 
-              {values.rules.length ? (
-                <div className="overflow-hidden rounded-lg border border-gray-200">
-                  <div className="grid grid-cols-[64px_minmax(130px,1fr)_minmax(130px,1fr)_minmax(130px,1fr)_56px] gap-3 border-b bg-gray-50 px-3 py-2 text-xs font-bold text-gray-600">
-                    <div>No.</div>
-                    <div>From</div>
-                    <div>To</div>
-                    <div>Points</div>
-                    <div className="text-center">Action</div>
-                  </div>
-
-                  <div className="divide-y divide-gray-100">
-                    {values.rules.map((rule, index) => (
-                      <div
-                        key={index}
-                        className="grid grid-cols-[64px_minmax(130px,1fr)_minmax(130px,1fr)_minmax(130px,1fr)_56px] items-start gap-3 px-3 py-3"
-                      >
-                        <div className="flex h-10 items-center text-sm font-semibold text-gray-600">
-                          #{index + 1}
-                        </div>
-                        <UniFieldInput
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          prefix="₹"
-                          placeholder="From"
-                          value={rule.from_amount}
-                          onChange={(event) =>
-                            updateRule(index, "from_amount", event.target.value)
-                          }
-                        />
-                        <UniFieldInput
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          prefix="₹"
-                          placeholder="To"
-                          value={rule.to_amount}
-                          onChange={(event) =>
-                            updateRule(index, "to_amount", event.target.value)
-                          }
-                        />
-                        <UniFieldInput
-                          type="number"
-                          min="0"
-                          placeholder="Points"
-                          value={rule.reward}
-                          onChange={(event) =>
-                            updateRule(index, "reward", event.target.value)
-                          }
-                        />
-                        <div className="flex h-10 items-center justify-center">
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => removeRule(index)}
-                          >
-                            <X className="size-4" />
-                          </Button>
-                        </div>
-                      </div>
+                  <UniFieldSelect
+                    label="Coupon"
+                    required
+                    value={values.coupon_id}
+                    onValueChange={(value) => updateField("coupon_id", value)}
+                    placeholder="Choose coupon"
+                    error={errors.coupon_id}
+                    allowClear
+                  >
+                    {(coupons.data?.data || []).map((coupon: any) => (
+                      <SelectItem key={coupon.id} value={String(coupon.id)}>
+                        {coupon.name} ({coupon.code})
+                      </SelectItem>
                     ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex min-h-52 flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 text-center">
-                  <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-white text-gray-700 shadow-sm">
-                    <Plus className="size-5" />
-                  </div>
-                  <h3 className="text-sm font-bold text-gray-900">
-                    No reward rules added
-                  </h3>
-                  <p className="mt-1 max-w-sm text-xs font-medium text-gray-500">
-                    Click Add Rule to define cart value intervals and earned
-                    points.
+                  </UniFieldSelect>
+                  <p className="-mt-3 text-xs font-medium text-gray-500">
+                    Decide which coupon applies when customer redeems this
+                    reward.
                   </p>
-                </div>
-              )}
 
-              {errors.rules ? (
-                <p className="mt-3 text-sm font-semibold text-red-500">
-                  {errors.rules}
-                </p>
-              ) : null}
-            </section>
+                  <UniFieldInput
+                    label="Target"
+                    required
+                    type="number"
+                    min="0"
+                    placeholder="Points needed to redeem"
+                    value={values.target}
+                    error={errors.target}
+                    onChange={(event) =>
+                      updateField("target", event.target.value)
+                    }
+                  />
+                  <p className="-mt-3 text-xs font-medium text-gray-500">
+                    This is the objective that the user should reach to trigger
+                    the reward.
+                  </p>
+
+                  <UniFieldInput
+                    as="textarea"
+                    label="Description"
+                    placeholder="A short description about this system"
+                    rows={9}
+                    value={values.description}
+                    onChange={(event) =>
+                      updateField("description", event.target.value)
+                    }
+                  />
+                </div>
+              </section>
+
+              <section className="rounded-lg border border-gray-200 bg-white p-4">
+                <div className="mb-4 flex items-center justify-between gap-3 border-b pb-3">
+                  <div>
+                    <h2 className="text-base font-bold text-gray-900">
+                      Reward Rules
+                    </h2>
+                    <p className="mt-1 text-xs font-medium text-gray-500">
+                      Add cart value ranges and points earned for each range.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={addRule}
+                    className="h-9 gap-2 bg-black text-white hover:bg-black/90"
+                  >
+                    <Plus className="size-4" />
+                    Add Rule
+                  </Button>
+                </div>
+
+                {values.rules.length ? (
+                  <div className="overflow-hidden rounded-lg border border-gray-200">
+                    <div className="grid grid-cols-[64px_minmax(130px,1fr)_minmax(130px,1fr)_minmax(130px,1fr)_56px] gap-3 border-b bg-gray-50 px-3 py-2 text-xs font-bold text-gray-600">
+                      <div>No.</div>
+                      <div>From</div>
+                      <div>To</div>
+                      <div>Points</div>
+                      <div className="text-center">Action</div>
+                    </div>
+
+                    <div className="divide-y divide-gray-100">
+                      {values.rules.map((rule, index) => (
+                        <div
+                          key={index}
+                          className="grid grid-cols-[64px_minmax(130px,1fr)_minmax(130px,1fr)_minmax(130px,1fr)_56px] items-start gap-3 px-3 py-3"
+                        >
+                          <div className="flex h-10 items-center text-sm font-semibold text-gray-600">
+                            #{index + 1}
+                          </div>
+                          <UniFieldInput
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            prefix="₹"
+                            placeholder="From"
+                            value={rule.from_amount}
+                            onChange={(event) =>
+                              updateRule(
+                                index,
+                                "from_amount",
+                                event.target.value
+                              )
+                            }
+                          />
+                          <UniFieldInput
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            prefix="₹"
+                            placeholder="To"
+                            value={rule.to_amount}
+                            onChange={(event) =>
+                              updateRule(index, "to_amount", event.target.value)
+                            }
+                          />
+                          <UniFieldInput
+                            type="number"
+                            min="0"
+                            placeholder="Points"
+                            value={rule.reward}
+                            onChange={(event) =>
+                              updateRule(index, "reward", event.target.value)
+                            }
+                          />
+                          <div className="flex h-10 items-center justify-center">
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => removeRule(index)}
+                            >
+                              <X className="size-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex min-h-52 flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 text-center">
+                    <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-white text-gray-700 shadow-sm">
+                      <Plus className="size-5" />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-900">
+                      No reward rules added
+                    </h3>
+                    <p className="mt-1 max-w-sm text-xs font-medium text-gray-500">
+                      Click Add Rule to define cart value intervals and earned
+                      points.
+                    </p>
+                  </div>
+                )}
+
+                {errors.rules ? (
+                  <p className="mt-3 text-sm font-semibold text-red-500">
+                    {errors.rules}
+                  </p>
+                ) : null}
+              </section>
             </div>
           </div>
 
           <div>
-            <div
-              className="flex items-center justify-end gap-x-2 border-t-2 border-gray-100 bg-white p-3"
-            >
+            <div className="flex items-center justify-end gap-x-2 border-t-2 border-gray-100 bg-white p-3">
               <Button
                 type="button"
                 variant="outline"

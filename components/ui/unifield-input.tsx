@@ -142,7 +142,7 @@ export const UniFieldInput = React.forwardRef<
               id={inputId}
               rows={rows}
               className={cn(
-                "text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:text-muted-foreground",
+                "text-sm border-2 font-semibold text-gray-900 placeholder:font-medium placeholder:text-muted-foreground",
                 error &&
                 "border-red-500 focus:border-red-500 focus:ring-red-500",
                 className
