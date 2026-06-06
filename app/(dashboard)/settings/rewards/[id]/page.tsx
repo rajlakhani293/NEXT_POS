@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Plus, X } from "lucide-react"
-
+import { ArrowLeft, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SelectItem } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
@@ -12,6 +11,7 @@ import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { promotions } from "@/lib/api/promotions"
 import { rewards } from "@/lib/api/rewards"
 import { showToast } from "@/lib/toast"
+import { MdDelete } from "react-icons/md"
 
 type RewardRuleForm = {
   from_amount: string
@@ -322,6 +322,12 @@ export default function RewardSystemFormPage() {
                   </Button>
                 </div>
 
+                {errors.rules ? (
+                  <p className="mb-3 text-sm font-semibold text-red-500">
+                    {errors.rules}
+                  </p>
+                ) : null}
+
                 {values.rules.length ? (
                   <div className="overflow-hidden rounded-lg border border-gray-200">
                     <div className="grid grid-cols-[64px_minmax(130px,1fr)_minmax(130px,1fr)_minmax(130px,1fr)_56px] gap-3 border-b bg-gray-50 px-3 py-2 text-xs font-bold text-gray-600">
@@ -384,7 +390,7 @@ export default function RewardSystemFormPage() {
                               className="h-8 w-8"
                               onClick={() => removeRule(index)}
                             >
-                              <X className="size-4" />
+                              <MdDelete className="size-4.5" />
                             </Button>
                           </div>
                         </div>
@@ -393,9 +399,13 @@ export default function RewardSystemFormPage() {
                   </div>
                 ) : (
                   <div className="flex min-h-52 flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 text-center">
-                    <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-white text-gray-700 shadow-sm">
+                    <button
+                      type="button"
+                      onClick={addRule}
+                      className="mb-3 flex size-10 items-center justify-center rounded-full bg-white text-gray-700 shadow-sm hover:bg-gray-100 focus:outline-none transition-colors border border-gray-100"
+                    >
                       <Plus className="size-5" />
-                    </div>
+                    </button>
                     <h3 className="text-sm font-bold text-gray-900">
                       No reward rules added
                     </h3>
@@ -405,12 +415,6 @@ export default function RewardSystemFormPage() {
                     </p>
                   </div>
                 )}
-
-                {errors.rules ? (
-                  <p className="mt-3 text-sm font-semibold text-red-500">
-                    {errors.rules}
-                  </p>
-                ) : null}
               </section>
             </div>
           </div>

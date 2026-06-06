@@ -43,6 +43,7 @@ export default function SalesPage() {
   const [rewardBalances, setRewardBalances] = useState<any[]>([])
   const { hasPermission } = usePermissions()
   const canViewRewards = hasPermission(PERMISSIONS.rewards.view)
+  const canUpdateRewards = hasPermission(PERMISSIONS.rewards.update)
 
   const [getCurrentShift, { isLoading: isCheckingShift }] = (
     registers as any
@@ -62,6 +63,9 @@ export default function SalesPage() {
   const [getCustomerRewardBalance] = (
     rewards as any
   ).useGetCustomerRewardBalanceMutation()
+  const [earnCustomerRewardFromSale, { isLoading: isProcessingReward }] = (
+    rewards as any
+  ).useEarnCustomerRewardFromSaleMutation()
 
   const loadShift = async () => {
     const response = await getCurrentShift().unwrap()
@@ -142,6 +146,39 @@ export default function SalesPage() {
       ]
     })
     setProductId("")
+  }
+
+  const refreshRewardBalance = async () => {
+    if (!customerId || !canViewRewards) return
+    const response = await getCustomerRewardBalance({ id: customerId }).unwrap()
+    setRewardBalances(response?.data || [])
+  }
+
+  const handleContinuePayment = async () => {
+    if (!cartItems.length) return
+
+    if (!customerId || !canUpdateRewards) {
+      showToast.success("Sale ready for payment.")
+      return
+    }
+
+    const response = await earnCustomerRewardFromSale({
+      customer_id: Number(customerId),
+      cart_total: subtotal,
+      note: "Reward earned from POS sale.",
+    }).unwrap()
+    const rewardData = response?.data || {}
+    const issuedCount = rewardData.issued_coupons?.length || 0
+
+    if (rewardData.earned_points > 0) {
+      showToast.success(
+        `${rewardData.earned_points} reward point(s) earned${issuedCount ? ` and ${issuedCount} coupon issued` : ""}.`
+      )
+    } else {
+      showToast.success(response?.message || "Sale ready for payment.")
+    }
+
+    await refreshRewardBalance()
   }
 
   if (isCheckingShift && !shift) {
@@ -296,8 +333,12 @@ export default function SalesPage() {
                 <span>₹{subtotal.toFixed(2)}</span>
               </div>
             </div>
-            <Button className="mt-6 w-full" disabled={!cartItems.length}>
-              Continue Payment
+            <Button
+              className="mt-6 w-full"
+              disabled={!cartItems.length || isProcessingReward}
+              onClick={handleContinuePayment}
+            >
+              {isProcessingReward ? "Processing Rewards..." : "Continue Payment"}
             </Button>
           </div>
         </div>

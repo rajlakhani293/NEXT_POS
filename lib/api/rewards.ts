@@ -20,6 +20,7 @@ const endpointsConfig = {
   getRewardSystemById: { query: ({ id }: { id: number }) => getMutation(`systems/${id}`) },
   getCustomerRewardBalance: { query: ({ id }: { id: number | string }) => getMutation(`customers/${id}/balance`) },
   earnCustomerReward: { query: postMutation("customers/earn") },
+  earnCustomerRewardFromSale: { query: postMutation("customers/earn-from-sale") },
   redeemCustomerReward: { query: postMutation("customers/redeem") },
 }
 

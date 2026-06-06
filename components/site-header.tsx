@@ -252,15 +252,15 @@ export function SiteHeader({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" sideOffset={10} className="w-72">
-                <DropdownMenuLabel>Switch Branch</DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                {/* <DropdownMenuLabel>Switch Branch</DropdownMenuLabel>
+                <DropdownMenuSeparator /> */}
                 {branchList.length ? (
                   branchList.map((branch) => (
                     <DropdownMenuItem
                       key={branch.id}
                       disabled={switchState.isLoading}
                       onClick={() => handleSwitchBranch(branch.id)}
-                      className="flex items-start justify-between gap-3"
+                      className="flex items-start justify-between gap-3 cursor-pointer"
                     >
                       <div className="min-w-0">
                         <div className="truncate font-medium">{branch.name}</div>
