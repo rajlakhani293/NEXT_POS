@@ -23,6 +23,7 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/inventory/adjustments", permission: PERMISSIONS.inventory.view },
   { path: "/inventory/ledger", permission: PERMISSIONS.inventory.view },
   { path: "/settings/company", permission: PERMISSIONS.settings.view },
+  { path: "/settings/business", permission: PERMISSIONS.settings.view },
   { path: "/settings/branches", permission: PERMISSIONS.branches.view },
   { path: "/settings/users", permission: PERMISSIONS.users.view },
   { path: "/settings/roles/create", permission: PERMISSIONS.roles.create },

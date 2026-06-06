@@ -16,6 +16,10 @@ const endpointsConfig = {
   getCompany: { query: () => getMutation("organizations/company") },
   updateCompany: { query: ({ payLoad }: { payLoad: any }) => putMutation("organizations/company", payLoad) },
 
+  // Business settings
+  getBusinessSettings: { query: () => getMutation("settings/business") },
+  updateBusinessSettings: { query: ({ payLoad }: { payLoad: any }) => putMutation("settings/business", payLoad) },
+
   // Branches
   getBranchesDropdown: { query: () => getMutation("organizations/branches/dropdown-list") },
   getBranchesData: { query: postMutation("organizations/branches/get-transactions") },

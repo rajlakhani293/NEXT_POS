@@ -21,6 +21,7 @@ import {
   LandmarkIcon,
   ReceiptTextIcon,
   ShieldCheckIcon,
+  SlidersHorizontalIcon,
   SparklesIcon,
   TicketPercentIcon,
   StoreIcon,
@@ -153,6 +154,12 @@ const settingsNavSections: DashboardNavSection[] = [
     url: "/settings/branches",
     icon: <StoreIcon />,
     permission: PERMISSIONS.branches.view,
+  },
+  {
+    title: "Business Settings",
+    url: "/settings/business",
+    icon: <SlidersHorizontalIcon />,
+    permission: PERMISSIONS.settings.view,
   },
   {
     title: "Users",
