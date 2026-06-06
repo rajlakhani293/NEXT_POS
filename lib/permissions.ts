@@ -52,6 +52,11 @@ export const PERMISSIONS = {
     update: "sales_update",
     void: "sales_void",
   },
+  payments: {
+    view: "payments_view",
+    create: "payments_create",
+    collectDue: "payments_collect_due",
+  },
   cashRegister: {
     view: "cash_register_view",
     open: "cash_register_open",

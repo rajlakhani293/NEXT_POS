@@ -2,6 +2,8 @@ import { configureStore } from "@reduxjs/toolkit"
 import { auth } from "../api/auth"
 import { catalog } from "../api/catalog"
 import { customers } from "../api/customers"
+import { inventory } from "../api/inventory"
+import { payments } from "../api/payments"
 import { promotions } from "../api/promotions"
 import { registers } from "../api/registers"
 import { rewards } from "../api/rewards"
@@ -13,6 +15,8 @@ export const store = configureStore({
     [auth.reducerPath]: auth.reducer,
     [catalog.reducerPath]: catalog.reducer,
     [customers.reducerPath]: customers.reducer,
+    [inventory.reducerPath]: inventory.reducer,
+    [payments.reducerPath]: payments.reducer,
     [promotions.reducerPath]: promotions.reducer,
     [registers.reducerPath]: registers.reducer,
     [rewards.reducerPath]: rewards.reducer,
@@ -24,6 +28,8 @@ export const store = configureStore({
       auth.middleware,
       catalog.middleware,
       customers.middleware,
+      inventory.middleware,
+      payments.middleware,
       promotions.middleware,
       registers.middleware,
       rewards.middleware,
