@@ -72,6 +72,21 @@ interface BranchListItem {
   state__name?: string
 }
 
+interface BusinessSettings {
+  settings: {
+    allow_partial_orders: boolean
+    enable_customer_rewards: boolean
+    enable_credit_account: boolean
+    enable_cash_registers: boolean
+    order_types: string[]
+  }
+  order_types: {
+    value: string
+    label: string
+    enabled: boolean
+  }[]
+}
+
 interface SessionState {
   isUnauthorized: boolean
   permissionError: {
@@ -88,6 +103,7 @@ interface SessionState {
   company: Company | null
   branch: Branch | null
   branchList: BranchListItem[]
+  businessSettings: BusinessSettings | null
   isSessionLoaded: boolean
 }
 
@@ -100,6 +116,7 @@ const initialState: SessionState = {
   company: null,
   branch: null,
   branchList: [],
+  businessSettings: null,
   isSessionLoaded: false,
 }
 
@@ -136,6 +153,8 @@ const sessionSlice = createSlice({
       if (sessionData.company) state.company = sessionData.company
       if (sessionData.branch) state.branch = sessionData.branch
       if (sessionData.branch_list) state.branchList = sessionData.branch_list
+      if (sessionData.business_settings)
+        state.businessSettings = sessionData.business_settings
       state.isSessionLoaded = true
     },
     clearSessionData: (state) => {
@@ -143,6 +162,7 @@ const sessionSlice = createSlice({
       state.company = null
       state.branch = null
       state.branchList = []
+      state.businessSettings = null
       state.isSessionLoaded = false
       state.isUnauthorized = false
       state.permissionError = null
