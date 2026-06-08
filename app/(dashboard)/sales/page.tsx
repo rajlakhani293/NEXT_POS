@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { Plus, ShoppingCart } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,32 +19,47 @@ import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { catalog } from "@/lib/api/catalog"
 import { customers } from "@/lib/api/customers"
+import { payments } from "@/lib/api/payments"
+import { promotions } from "@/lib/api/promotions"
 import { registers } from "@/lib/api/registers"
-import { rewards } from "@/lib/api/rewards"
-import { PERMISSIONS } from "@/lib/permissions"
+import { sales } from "@/lib/api/sales"
 import { showToast } from "@/lib/toast"
-import { usePermissions } from "@/hooks/use-permissions"
 
 type CartItem = {
   product_id: string
   name: string
   qty: number
   price: number
+  available_stock: number
+  sku?: string
 }
 
+const money = (value: string | number | null | undefined) =>
+  Number(value || 0) || 0
+
+const parseCouponCodes = (value: string) =>
+  value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+
 export default function SalesPage() {
+  const router = useRouter()
   const loadedRef = useRef(false)
+
   const [shift, setShift] = useState<any>(null)
   const [isOpenShiftDialogOpen, setIsOpenShiftDialogOpen] = useState(false)
   const [openingCash, setOpeningCash] = useState("")
   const [declaredCash, setDeclaredCash] = useState("")
+
   const [customerId, setCustomerId] = useState("")
   const [productId, setProductId] = useState("")
+  const [couponInput, setCouponInput] = useState("")
+  const [selectedCouponId, setSelectedCouponId] = useState("")
+  const [paymentType, setPaymentType] = useState("cash-payment")
+  const [paymentAmount, setPaymentAmount] = useState("")
+  const [saleNote, setSaleNote] = useState("")
   const [cartItems, setCartItems] = useState<CartItem[]>([])
-  const [rewardBalances, setRewardBalances] = useState<any[]>([])
-  const { hasPermission } = usePermissions()
-  const canViewRewards = hasPermission(PERMISSIONS.rewards.view)
-  const canUpdateRewards = hasPermission(PERMISSIONS.rewards.update)
 
   const [getCurrentShift, { isLoading: isCheckingShift }] = (
     registers as any
@@ -54,18 +70,34 @@ export default function SalesPage() {
   const [closeShift, { isLoading: isClosingShift }] = (
     registers as any
   ).useCloseShiftMutation()
-  const [getCustomersDropdown, { data: customersData }] = (
-    customers as any
-  ).useGetCustomersDropdownMutation()
-  const [getProductsDropdown, { data: productsData }] = (
-    catalog as any
-  ).useGetProductsDropdownMutation()
-  const [getCustomerRewardBalance] = (
-    rewards as any
-  ).useGetCustomerRewardBalanceMutation()
-  const [earnCustomerRewardFromSale, { isLoading: isProcessingReward }] = (
-    rewards as any
-  ).useEarnCustomerRewardFromSaleMutation()
+  const [getCustomersDropdown, { data: customersData, isLoading: isCustomersLoading }] =
+    (customers as any).useGetCustomersDropdownMutation()
+  const [getProductsDropdown, { data: productsData, isLoading: isProductsLoading }] =
+    (catalog as any).useGetProductsDropdownMutation()
+  const [getPaymentTypesDropdown, { data: paymentTypesData, isLoading: isPaymentTypesLoading }] =
+    (payments as any).useGetPaymentTypesDropdownMutation()
+  const [getCouponsDropdown, { data: couponsData, isLoading: isCouponsLoading }] =
+    (promotions as any).useGetCouponsDropdownMutation()
+  const [createSale, { isLoading: isCreatingSale }] = (
+    sales as any
+  ).useCreateSaleMutation()
+
+  const customerOptions = customersData?.data || []
+  const productOptions = productsData?.data || []
+  const paymentTypeOptions = paymentTypesData?.data || []
+  const couponOptions = couponsData?.data || []
+
+  const selectedProduct = productOptions.find(
+    (product: any) => String(product.id) === productId
+  )
+
+  const subtotal = useMemo(
+    () => cartItems.reduce((total, item) => total + item.qty * item.price, 0),
+    [cartItems]
+  )
+  const couponCodes = useMemo(() => parseCouponCodes(couponInput), [couponInput])
+  const dueAmount = Math.max(subtotal - money(paymentAmount), 0)
+  const changeAmount = Math.max(money(paymentAmount) - subtotal, 0)
 
   const loadShift = async () => {
     const response = await getCurrentShift().unwrap()
@@ -80,26 +112,41 @@ export default function SalesPage() {
     loadShift()
     getCustomersDropdown()
     getProductsDropdown()
-  }, [getCurrentShift, getCustomersDropdown, getProductsDropdown])
+    getPaymentTypesDropdown()
+    getCouponsDropdown()
+  }, [
+    getCouponsDropdown,
+    getCurrentShift,
+    getCustomersDropdown,
+    getPaymentTypesDropdown,
+    getProductsDropdown,
+  ])
 
   useEffect(() => {
-    if (!customerId || !canViewRewards) {
-      setRewardBalances([])
+    if (!selectedCouponId) return
+    const selectedCoupon = couponOptions.find(
+      (coupon: any) => String(coupon.id) === selectedCouponId
+    )
+    if (!selectedCoupon?.code) return
+
+    setCouponInput((current) => {
+      const existing = parseCouponCodes(current)
+      if (existing.includes(selectedCoupon.code)) return current
+      return [...existing, selectedCoupon.code].join(", ")
+    })
+    setSelectedCouponId("")
+  }, [couponOptions, selectedCouponId])
+
+  useEffect(() => {
+    if (!subtotal) {
+      setPaymentAmount("")
       return
     }
-
-    getCustomerRewardBalance({ id: customerId })
-      .unwrap()
-      .then((response: any) => setRewardBalances(response?.data || []))
-      .catch(() => setRewardBalances([]))
-  }, [canViewRewards, customerId, getCustomerRewardBalance])
-
-  const customerOptions = customersData?.data || []
-  const productOptions = productsData?.data || []
-  const selectedProduct = productOptions.find(
-    (product: any) => String(product.id) === productId
-  )
-  const subtotal = cartItems.reduce((total, item) => total + item.qty * item.price, 0)
+    setPaymentAmount((current) => {
+      if (!current) return subtotal.toFixed(2)
+      return current
+    })
+  }, [subtotal])
 
   const handleOpenShift = async () => {
     const response = await openShift({
@@ -121,20 +168,28 @@ export default function SalesPage() {
     setShift(null)
     setDeclaredCash("")
     setCartItems([])
+    setCouponInput("")
+    setSaleNote("")
     setIsOpenShiftDialogOpen(true)
     showToast.success(response?.message || "Shift closed successfully.")
   }
 
   const handleAddProduct = () => {
     if (!selectedProduct) return
+
     const price = Number(selectedProduct.selling_price || selectedProduct.price || 0)
+    const availableStock = Number(selectedProduct.current_stock || 0)
+
     setCartItems((items) => {
       const existing = items.find((item) => item.product_id === productId)
       if (existing) {
         return items.map((item) =>
-          item.product_id === productId ? { ...item, qty: item.qty + 1 } : item
+          item.product_id === productId
+            ? { ...item, qty: item.qty + 1 }
+            : item
         )
       }
+
       return [
         ...items,
         {
@@ -142,51 +197,104 @@ export default function SalesPage() {
           name: selectedProduct.name,
           qty: 1,
           price,
+          available_stock: availableStock,
+          sku: selectedProduct.sku,
         },
       ]
     })
     setProductId("")
   }
 
-  const refreshRewardBalance = async () => {
-    if (!customerId || !canViewRewards) return
-    const response = await getCustomerRewardBalance({ id: customerId }).unwrap()
-    setRewardBalances(response?.data || [])
+  const updateQuantity = (product_id: string, delta: number) => {
+    setCartItems((items) =>
+      items
+        .map((item) =>
+          item.product_id === product_id
+            ? { ...item, qty: Math.max(item.qty + delta, 0) }
+            : item
+        )
+        .filter((item) => item.qty > 0)
+    )
   }
 
-  const handleContinuePayment = async () => {
-    if (!cartItems.length) return
+  const removeItem = (product_id: string) => {
+    setCartItems((items) => items.filter((item) => item.product_id !== product_id))
+  }
 
-    if (!customerId || !canUpdateRewards) {
-      showToast.success("Sale ready for payment.")
+  const resetSaleForm = () => {
+    setCustomerId("")
+    setProductId("")
+    setCouponInput("")
+    setSelectedCouponId("")
+    setPaymentAmount("")
+    setSaleNote("")
+    setCartItems([])
+  }
+
+  const handleCompleteSale = async () => {
+    if (!shift?.id) {
+      showToast.error("Open shift is required before billing.")
+      return
+    }
+    if (!cartItems.length) {
+      showToast.error("Add at least one product to cart.")
+      return
+    }
+    if (!paymentType) {
+      showToast.error("Choose payment type.")
       return
     }
 
-    const response = await earnCustomerRewardFromSale({
-      customer_id: Number(customerId),
-      cart_total: subtotal,
-      note: "Reward earned from POS sale.",
-    }).unwrap()
-    const rewardData = response?.data || {}
-    const issuedCount = rewardData.issued_coupons?.length || 0
-
-    if (rewardData.earned_points > 0) {
-      showToast.success(
-        `${rewardData.earned_points} reward point(s) earned${issuedCount ? ` and ${issuedCount} coupon issued` : ""}.`
-      )
-    } else {
-      showToast.success(response?.message || "Sale ready for payment.")
+    const paidAmount = money(paymentAmount)
+    const payLoad = {
+      customer_id: customerId ? Number(customerId) : null,
+      shift_id: shift.id,
+      order_type: "pos",
+      note: saleNote,
+      coupon_codes: couponCodes,
+      items: cartItems.map((item) => ({
+        product_id: Number(item.product_id),
+        quantity: String(item.qty),
+        unit_price: String(item.price),
+        discount_amount: "0",
+        tax_amount: "0",
+      })),
+      payments:
+        paidAmount > 0
+          ? [
+              {
+                payment_type: paymentType,
+                amount: String(paidAmount),
+                reference_number: "",
+                note: saleNote,
+              },
+            ]
+          : [],
     }
 
-    await refreshRewardBalance()
+    const response = await createSale(payLoad).unwrap()
+    const sale = response?.data
+    showToast.success(response?.message || "Sale created successfully.")
+    resetSaleForm()
+    await loadShift()
+    if (sale?.id) {
+      router.push(`/sales/${sale.id}`)
+    }
   }
 
-  if (isCheckingShift && !shift) {
+  const isInitialLoading =
+    isCheckingShift ||
+    isCustomersLoading ||
+    isProductsLoading ||
+    isPaymentTypesLoading ||
+    isCouponsLoading
+
+  if (isInitialLoading && !shift) {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Spinner />
-          Checking cashier shift...
+          Preparing sales screen...
         </div>
       </div>
     )
@@ -222,14 +330,12 @@ export default function SalesPage() {
             </Button>
           </div>
         ) : (
-          <Button onClick={() => setIsOpenShiftDialogOpen(true)}>
-            Open Shift
-          </Button>
+          <Button onClick={() => setIsOpenShiftDialogOpen(true)}>Open Shift</Button>
         )}
       </div>
 
       {shift ? (
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
           <div className="min-h-0 rounded-lg border border-gray-100 bg-white p-4">
             <div className="grid gap-4 md:grid-cols-2">
               <UniFieldSelect
@@ -274,22 +380,57 @@ export default function SalesPage() {
             </div>
 
             <div className="mt-6 overflow-hidden rounded-lg border">
-              <div className="grid grid-cols-[1fr_80px_100px_110px] bg-gray-50 px-4 py-2 text-sm font-bold text-gray-700">
+              <div className="grid grid-cols-[1.4fr_130px_110px_120px_56px] bg-gray-50 px-4 py-2 text-sm font-bold text-gray-700">
                 <span>Item</span>
                 <span>Qty</span>
                 <span>Price</span>
                 <span>Total</span>
+                <span />
               </div>
               {cartItems.length ? (
                 cartItems.map((item) => (
                   <div
                     key={item.product_id}
-                    className="grid grid-cols-[1fr_80px_100px_110px] border-t px-4 py-3 text-sm font-semibold"
+                    className="grid grid-cols-[1.4fr_130px_110px_120px_56px] items-center border-t px-4 py-3 text-sm font-semibold"
                   >
-                    <span>{item.name}</span>
-                    <span>{item.qty}</span>
+                    <div>
+                      <p className="font-semibold text-gray-900">{item.name}</p>
+                      <p className="text-xs text-gray-500">
+                        SKU: {item.sku || "-"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="size-8"
+                        onClick={() => updateQuantity(item.product_id, -1)}
+                      >
+                        <Minus className="size-4" />
+                      </Button>
+                      <span className="min-w-6 text-center">{item.qty}</span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="size-8"
+                        onClick={() => updateQuantity(item.product_id, 1)}
+                      >
+                        <Plus className="size-4" />
+                      </Button>
+                    </div>
                     <span>₹{item.price.toFixed(2)}</span>
                     <span>₹{(item.qty * item.price).toFixed(2)}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 text-red-500 hover:text-red-600"
+                      onClick={() => removeItem(item.product_id)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
                   </div>
                 ))
               ) : (
@@ -303,42 +444,91 @@ export default function SalesPage() {
 
           <div className="rounded-lg border border-gray-100 bg-white p-4">
             <h2 className="text-base font-bold">Bill Summary</h2>
-            {rewardBalances.length ? (
-              <div className="mt-3 rounded-md border border-blue-100 bg-blue-50 p-3">
-                <p className="text-sm font-bold text-blue-950">Rewards</p>
-                <div className="mt-2 space-y-1">
-                  {rewardBalances.map((balance: any) => (
-                    <div
-                      key={balance.id}
-                      className="flex justify-between text-xs font-semibold text-blue-900"
-                    >
-                      <span>{balance.reward_system_name}</span>
-                      <span>{balance.points} pts</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-            <div className="mt-4 space-y-3 text-sm font-semibold">
+
+            <div className="mt-4 space-y-4">
+              <UniFieldSelect
+                label="Suggested Coupon"
+                value={selectedCouponId}
+                onValueChange={setSelectedCouponId}
+                placeholder="Choose coupon"
+                allowClear
+              >
+                {couponOptions.map((coupon: any) => (
+                  <SelectItem key={coupon.id} value={String(coupon.id)}>
+                    {coupon.name} - {coupon.code}
+                  </SelectItem>
+                ))}
+              </UniFieldSelect>
+
+              <UniFieldInput
+                label="Coupon Codes"
+                value={couponInput}
+                onChange={(event) => setCouponInput(event.target.value)}
+                placeholder="Enter coupon codes separated by comma"
+              />
+
+              <UniFieldSelect
+                label="Payment Type"
+                value={paymentType}
+                onValueChange={setPaymentType}
+                placeholder="Choose payment type"
+              >
+                {paymentTypeOptions.map((payment: any) => (
+                  <SelectItem
+                    key={payment.value || payment.identifier}
+                    value={payment.value || payment.identifier}
+                  >
+                    {payment.label}
+                  </SelectItem>
+                ))}
+              </UniFieldSelect>
+
+              <UniFieldInput
+                label="Receive Amount"
+                value={paymentAmount}
+                onChange={(event) => setPaymentAmount(event.target.value)}
+                placeholder="Enter paid amount"
+                prefix="₹"
+                type="number"
+              />
+
+              <UniFieldInput
+                label="Sale Note"
+                value={saleNote}
+                onChange={(event) => setSaleNote(event.target.value)}
+                placeholder="Add note if needed"
+              />
+            </div>
+
+            <div className="mt-6 space-y-3 text-sm font-semibold">
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <span>₹{subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Discount</span>
-                <span>₹0.00</span>
+              <div className="flex justify-between">
+                <span>Received</span>
+                <span>₹{money(paymentAmount).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-amber-600">
+                <span>Due</span>
+                <span>₹{dueAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-green-600">
+                <span>Change</span>
+                <span>₹{changeAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between border-t pt-3 text-lg font-bold">
                 <span>Total</span>
                 <span>₹{subtotal.toFixed(2)}</span>
               </div>
             </div>
+
             <Button
               className="mt-6 w-full"
-              disabled={!cartItems.length || isProcessingReward}
-              onClick={handleContinuePayment}
+              disabled={!cartItems.length || isCreatingSale}
+              onClick={handleCompleteSale}
             >
-              {isProcessingReward ? "Processing Rewards..." : "Continue Payment"}
+              {isCreatingSale ? "Creating Sale..." : "Complete Sale"}
             </Button>
           </div>
         </div>

@@ -13,6 +13,7 @@ import { purchases } from "../api/purchases"
 import { registers } from "../api/registers"
 import { reports } from "../api/reports"
 import { rewards } from "../api/rewards"
+import { sales } from "../api/sales"
 import { settings } from "../api/settings"
 import sessionSlice from "./sessionSlice"
 
@@ -32,6 +33,7 @@ export const store = configureStore({
     [registers.reducerPath]: registers.reducer,
     [reports.reducerPath]: reports.reducer,
     [rewards.reducerPath]: rewards.reducer,
+    [sales.reducerPath]: sales.reducer,
     [settings.reducerPath]: settings.reducer,
     session: sessionSlice,
   },
@@ -51,6 +53,7 @@ export const store = configureStore({
       registers.middleware,
       reports.middleware,
       rewards.middleware,
+      sales.middleware,
       settings.middleware,
     ]),
 })

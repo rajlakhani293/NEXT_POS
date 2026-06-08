@@ -52,6 +52,11 @@ export const PERMISSIONS = {
     update: "sales_update",
     void: "sales_void",
   },
+  returns: {
+    view: "returns_view",
+    create: "returns_create",
+    approve: "returns_approve",
+  },
   payments: {
     view: "payments_view",
     create: "payments_create",
@@ -79,6 +84,13 @@ export const PERMISSIONS = {
   reports: {
     view: "reports_view",
     export: "reports_export",
+  },
+  special: {
+    refundOrder: "refund_order",
+    priceOverride: "price_override",
+    manualDiscount: "manual_discount",
+    viewProfitReport: "view_profit_report",
+    shiftDifferenceClose: "shift_difference_close",
   },
 } as const
 

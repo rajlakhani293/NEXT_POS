@@ -62,6 +62,18 @@ const mainNavSections: DashboardNavSection[] = [
     url: "/sales",
     icon: <ReceiptTextIcon />,
     permission: PERMISSIONS.sales.view,
+    items: [
+      {
+        title: "POS Billing",
+        url: "/sales",
+        permission: PERMISSIONS.sales.view,
+      },
+      {
+        title: "Sales History",
+        url: "/sales/history",
+        permission: PERMISSIONS.sales.view,
+      },
+    ],
   },
   {
     title: "Inventory",
