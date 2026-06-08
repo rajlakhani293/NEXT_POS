@@ -19,13 +19,16 @@ import {
   FileBarChart2Icon,
   LayoutGridIcon,
   LandmarkIcon,
+  ImageIcon,
   ReceiptTextIcon,
   ShieldCheckIcon,
+  ShoppingCartIcon,
   SlidersHorizontalIcon,
   SparklesIcon,
   TicketPercentIcon,
   StoreIcon,
   UsersIcon,
+  WalletCardsIcon,
 } from "lucide-react"
 import {
   MdOutlineArrowCircleLeft,
@@ -119,7 +122,54 @@ const mainNavSections: DashboardNavSection[] = [
         url: "/customers/groups",
         permission: PERMISSIONS.customers.view,
       },
+      {
+        title: "Customer Credit",
+        url: "/customers/credit",
+        permission: PERMISSIONS.customers.view,
+      },
     ],
+  },
+  {
+    title: "Purchases",
+    url: "/purchases",
+    icon: <ShoppingCartIcon />,
+    permission: PERMISSIONS.purchases.view,
+    items: [
+      {
+        title: "Purchase Orders",
+        url: "/purchases",
+        permission: PERMISSIONS.purchases.view,
+      },
+      {
+        title: "Suppliers",
+        url: "/purchases/suppliers",
+        permission: PERMISSIONS.purchases.view,
+      },
+    ],
+  },
+  {
+    title: "Expenses",
+    url: "/expenses",
+    icon: <WalletCardsIcon />,
+    permission: PERMISSIONS.settings.view,
+    items: [
+      {
+        title: "Expenses",
+        url: "/expenses",
+        permission: PERMISSIONS.settings.view,
+      },
+      {
+        title: "Categories",
+        url: "/expenses/categories",
+        permission: PERMISSIONS.settings.view,
+      },
+    ],
+  },
+  {
+    title: "Registers",
+    url: "/registers",
+    icon: <StoreIcon />,
+    permission: PERMISSIONS.cashRegister.view,
   },
   {
     title: "Reports",
@@ -162,6 +212,30 @@ const settingsNavSections: DashboardNavSection[] = [
     permission: PERMISSIONS.settings.view,
   },
   {
+    title: "Accounting",
+    url: "/settings/accounting/accounts",
+    icon: <WalletCardsIcon />,
+    permission: PERMISSIONS.reports.view,
+    items: [
+      {
+        title: "Accounts",
+        url: "/settings/accounting/accounts",
+        permission: PERMISSIONS.reports.view,
+      },
+      {
+        title: "Transactions",
+        url: "/settings/accounting/transactions",
+        permission: PERMISSIONS.reports.view,
+      },
+    ],
+  },
+  {
+    title: "Media",
+    url: "/settings/media",
+    icon: <ImageIcon />,
+    permission: PERMISSIONS.settings.view,
+  },
+  {
     title: "Users",
     url: "/settings/users",
     icon: <UsersIcon />,
@@ -196,6 +270,18 @@ const settingsNavSections: DashboardNavSection[] = [
     url: "/settings/rewards",
     icon: <SparklesIcon />,
     permission: PERMISSIONS.rewards.view,
+    items: [
+      {
+        title: "Reward Systems",
+        url: "/settings/rewards",
+        permission: PERMISSIONS.rewards.view,
+      },
+      {
+        title: "Customer History",
+        url: "/settings/rewards/balances",
+        permission: PERMISSIONS.rewards.view,
+      },
+    ],
   },
 ]
 

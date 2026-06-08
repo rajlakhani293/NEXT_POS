@@ -19,6 +19,8 @@ const endpointsConfig = {
   updateRewardSystemStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("systems/status", payLoad) },
   getRewardSystemById: { query: ({ id }: { id: number }) => getMutation(`systems/${id}`) },
   getCustomerRewardBalance: { query: ({ id }: { id: number | string }) => getMutation(`customers/${id}/balance`) },
+  getCustomerRewardBalancesData: { query: postMutation("customers/balances/get-transactions") },
+  getCustomerRewardRedemptionsData: { query: postMutation("customers/redemptions/get-transactions") },
   earnCustomerReward: { query: postMutation("customers/earn") },
   earnCustomerRewardFromSale: { query: postMutation("customers/earn-from-sale") },
   redeemCustomerReward: { query: postMutation("customers/redeem") },

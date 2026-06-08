@@ -9,6 +9,8 @@ const endpointsConfig = {
   openShift: { query: postMutation("shifts/open") },
   closeShift: { query: postMutation("shifts/close") },
   getShiftsData: { query: postMutation("shifts/get-transactions") },
+  cashIn: { query: postMutation("shifts/cash-in") },
+  cashOut: { query: postMutation("shifts/cash-out") },
 }
 
 export const registers = createApi({

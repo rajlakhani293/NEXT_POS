@@ -6,6 +6,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
+import { HeaderNotifications } from "@/components/header-notifications"
 import { NavUser } from "@/components/nav-user"
 import { SearchForm } from "@/components/search-form"
 import { Button } from "@/components/ui/button"
@@ -291,6 +292,7 @@ export function SiteHeader({
 
           <div className="ml-auto flex items-center gap-3">
             <SearchForm className="w-full max-w-xs sm:w-auto" />
+            <HeaderNotifications />
             <div className="hidden sm:block">
               <NavUser
                 user={{
