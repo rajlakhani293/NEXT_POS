@@ -212,6 +212,12 @@ const settingsNavSections: DashboardNavSection[] = [
     permission: PERMISSIONS.settings.view,
   },
   {
+    title: "Payment Types",
+    url: "/settings/payment-types",
+    icon: <WalletCardsIcon />,
+    permission: PERMISSIONS.payments.view,
+  },
+  {
     title: "Accounting",
     url: "/settings/accounting/accounts",
     icon: <WalletCardsIcon />,

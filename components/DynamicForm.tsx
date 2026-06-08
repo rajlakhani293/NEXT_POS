@@ -58,6 +58,7 @@ interface FormField {
   pattern?: string
   sanitize?: (value: any) => any
   validate?: (value: any, values: Record<string, any>) => string
+  disabled?: boolean | ((values: Record<string, any>) => boolean)
 }
 
 interface DynamicFormProps<T> {
@@ -282,7 +283,13 @@ const DynamicForm = <T extends Record<string, any>>({
           <form onSubmit={handleSubmit} className="space-y-4">
             {fields.map((field) => (
               <div key={field.name} className="space-y-2">
-                {field.type === "hidden" ? (
+                {(() => {
+                  const isFieldDisabled =
+                    typeof field.disabled === "function"
+                      ? field.disabled(formData)
+                      : Boolean(field.disabled)
+
+                  return field.type === "hidden" ? (
                   <input
                     type="hidden"
                     name={field.name}
@@ -299,6 +306,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     onAddNew={field.onAddNew}
                     addNewLabel={field.addNewLabel}
                     allowClear={field.allowClear}
+                    disabled={isFieldDisabled}
                   >
                     {field.options
                       ?.filter(
@@ -325,6 +333,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     rows={field.rows || 3}
                     maxLength={field.maxLength}
                     error={errors[field.name]}
+                    disabled={isFieldDisabled}
                   />
                 ) : field.type === "number" ? (
                   <UniFieldInput
@@ -346,6 +355,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     step="0.01"
                     maxLength={field.maxLength}
                     error={errors[field.name]}
+                    disabled={isFieldDisabled}
                   />
                 ) : field.type === "readonly" ? (
                   <UniFieldInput
@@ -356,6 +366,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     placeholder={field.placeholder}
                     prefix={field.prefix}
                     error={errors[field.name]}
+                    disabled={isFieldDisabled}
                   />
                 ) : field.type === "file" ? (
                   <UniFieldInput
@@ -368,6 +379,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     placeholder={field.placeholder}
                     prefix={field.prefix}
                     error={errors[field.name]}
+                    disabled={isFieldDisabled}
                   />
                 ) : field.type === "switch" ? (
                   <div className="flex items-center justify-between rounded-md border p-3">
@@ -386,6 +398,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     </div>
                     <Switch
                       checked={Boolean(formData[field.name])}
+                      disabled={isFieldDisabled}
                       onCheckedChange={(checked) =>
                         handleChange(field.name, checked)
                       }
@@ -412,6 +425,7 @@ const DynamicForm = <T extends Record<string, any>>({
                           onClick={() =>
                             handleChange(field.name, option.value.toString())
                           }
+                          disabled={isFieldDisabled}
                           className={`flex-1 ${formData[field.name] === option.value.toString() ? "bg-blue-500 text-white hover:bg-blue-600" : ""} ${errors[field.name] ? "border-red-500" : ""}`}
                         >
                           {option.label}
@@ -437,8 +451,10 @@ const DynamicForm = <T extends Record<string, any>>({
                     pattern={field.pattern}
                     maxLength={field.maxLength}
                     error={errors[field.name]}
+                    disabled={isFieldDisabled}
                   />
-                )}
+                )
+                })()}
 
                 {field.note && (
                   <p className="text-sm text-gray-500">Note: {field.note}</p>

@@ -30,6 +30,7 @@ interface UniFieldSelectProps {
   addNewLabel?: string
   size?: "sm" | "default" | "lg"
   allowClear?: boolean
+  disabled?: boolean
 }
 
 export const UniFieldSelect = ({
@@ -46,6 +47,7 @@ export const UniFieldSelect = ({
   addNewLabel,
   size = "default",
   allowClear = false,
+  disabled = false,
 }: UniFieldSelectProps) => {
   const handleValueChange = (val: string) => {
     if (val === "add_new" && onAddNew) {
@@ -65,13 +67,14 @@ export const UniFieldSelect = ({
           {label} {required && <span className="text-red-500">*</span>}
         </FieldLabel>
       )}
-      <Select value={value} onValueChange={handleValueChange}>
+      <Select value={value} onValueChange={handleValueChange} disabled={disabled}>
         <div className="group/select relative">
           <SelectTrigger
             aria-invalid={error ? true : undefined}
             size={size}
             className={cn(
               "bg-white text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:text-muted-foreground",
+              disabled && "cursor-not-allowed opacity-60",
               allowClear &&
                 value &&
                 "[&_svg]:transition-opacity group-focus-within/select:[&_svg]:opacity-0 group-hover/select:[&_svg]:opacity-0"
@@ -79,7 +82,7 @@ export const UniFieldSelect = ({
           >
             <SelectValue placeholder={placeholder || "Select an option"} />
           </SelectTrigger>
-          {allowClear && value ? (
+          {allowClear && value && !disabled ? (
             <button
               type="button"
               aria-label={`Clear ${label || "selection"}`}

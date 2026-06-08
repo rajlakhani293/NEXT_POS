@@ -6,6 +6,7 @@ import DynamicTable from "@/components/DynamicTable"
 import DynamicForm from "@/components/DynamicForm"
 import { PermissionGuard } from "@/components/permission-guard"
 import { expenses } from "@/lib/api/expenses"
+import { payments } from "@/lib/api/payments"
 import { registers } from "@/lib/api/registers"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
@@ -28,7 +29,7 @@ export default function ExpensesPage() {
     category_id: "",
     amount: "",
     expense_date: new Date().toISOString().slice(0, 10),
-    payment_type: "cash",
+    payment_type: "cash-payment",
     shift_id: "",
     reference_number: "",
     note: "",
@@ -44,6 +45,9 @@ export default function ExpensesPage() {
   const [getCurrentShift, currentShift] = (
     registers as any
   ).useGetCurrentShiftMutation()
+  const [getPaymentTypesDropdown, paymentTypes] = (
+    payments as any
+  ).useGetPaymentTypesDropdownMutation()
   const { hasPermission } = usePermissions()
   const table = useTableData({
     getMaster: (expenses as any).useGetExpensesDataMutation,
@@ -53,7 +57,8 @@ export default function ExpensesPage() {
   useEffect(() => {
     getExpenseCategoriesDropdown()
     getCurrentShift()
-  }, [getCurrentShift, getExpenseCategoriesDropdown])
+    getPaymentTypesDropdown()
+  }, [getCurrentShift, getExpenseCategoriesDropdown, getPaymentTypesDropdown])
 
   const categoryOptions = useMemo(
     () =>
@@ -71,7 +76,7 @@ export default function ExpensesPage() {
       category_id: "",
       amount: "",
       expense_date: new Date().toISOString().slice(0, 10),
-      payment_type: "cash",
+      payment_type: "cash-payment",
       shift_id: "",
       reference_number: "",
       note: "",
@@ -91,7 +96,7 @@ export default function ExpensesPage() {
       category_id: data.category_id ? String(data.category_id) : "",
       amount: data.amount ? String(data.amount) : "",
       expense_date: data.expense_date || new Date().toISOString().slice(0, 10),
-      payment_type: data.payment_type || "cash",
+      payment_type: data.payment_type || "cash-payment",
       shift_id: data.shift_id ? String(data.shift_id) : "",
       reference_number: data.reference_number || "",
       note: data.note || "",
@@ -182,12 +187,7 @@ export default function ExpensesPage() {
               label: "Payment Type",
               type: "select",
               required: true,
-              options: [
-                { label: "Cash", value: "cash" },
-                { label: "Online", value: "online" },
-                { label: "Bank", value: "bank" },
-                { label: "Card", value: "card" },
-              ],
+              options: paymentTypes.data?.data || [],
             },
             {
               name: "shift_id",

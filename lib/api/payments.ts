@@ -1,9 +1,22 @@
 import { createApi } from "@reduxjs/toolkit/query/react"
 
 import { createBaseQueryWithInterceptor } from "@/lib/api/base"
-import { getMutation } from "@/lib/api/apiUtils"
+import {
+  createMutation,
+  deleteMutation,
+  getMutation,
+  patchMutation,
+  postMutation,
+  putMutation,
+} from "@/lib/api/apiUtils"
 
 const endpointsConfig = {
+  getPaymentTypesData: { query: postMutation("types/get-transactions") },
+  createPaymentType: { query: createMutation("types/") },
+  editPaymentType: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`types/${id}`, payLoad) },
+  deletePaymentType: { query: deleteMutation("types/") },
+  updatePaymentTypeStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("types/status", payLoad) },
+  getPaymentTypeById: { query: ({ id }: { id: number }) => getMutation(`types/${id}`) },
   getPaymentTypesDropdown: { query: () => getMutation("types/dropdown-list") },
 }
 

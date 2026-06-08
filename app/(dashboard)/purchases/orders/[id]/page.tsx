@@ -10,6 +10,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { catalog } from "@/lib/api/catalog"
+import { payments } from "@/lib/api/payments"
 import { purchases } from "@/lib/api/purchases"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
@@ -32,14 +33,6 @@ type PurchaseFormValues = {
   shipping_amount: string
   note: string
 }
-
-const paymentTypes = [
-  { label: "Cash", value: "cash" },
-  { label: "Online", value: "online" },
-  { label: "Bank", value: "bank" },
-  { label: "Card", value: "card" },
-  { label: "Partial", value: "partial" },
-]
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -78,7 +71,7 @@ export default function PurchaseOrderFormPage() {
   const [payment, setPayment] = useState({
     amount: "",
     paid_at: today(),
-    payment_type: "cash",
+    payment_type: "cash-payment",
     reference_number: "",
     note: "",
   })
@@ -91,6 +84,9 @@ export default function PurchaseOrderFormPage() {
   const [getProductsDropdown, products] = (
     catalog as any
   ).useGetProductsDropdownMutation()
+  const [getPaymentTypesDropdown, paymentTypes] = (
+    payments as any
+  ).useGetPaymentTypesDropdownMutation()
   const [getPurchaseOrderById, purchaseOrder] = (
     purchases as any
   ).useGetPurchaseOrderByIdMutation()
@@ -106,6 +102,7 @@ export default function PurchaseOrderFormPage() {
   const record = purchaseOrder.data?.data
   const orderItems = record?.items || []
   const productOptions = products.data?.data || []
+  const paymentTypeOptions = paymentTypes.data?.data || []
   const supplierOptions = suppliers.data?.data || []
 
   useEffect(() => {
@@ -114,7 +111,11 @@ export default function PurchaseOrderFormPage() {
     loadKeyRef.current = loadKey
 
     const load = async () => {
-      await Promise.all([getSuppliersDropdown(), getProductsDropdown()])
+      await Promise.all([
+        getSuppliersDropdown(),
+        getProductsDropdown(),
+        getPaymentTypesDropdown(),
+      ])
       if (!isEdit) {
         setFormData(initialValues)
         setItems([emptyItem()])
@@ -148,6 +149,7 @@ export default function PurchaseOrderFormPage() {
 
     load()
   }, [
+    getPaymentTypesDropdown,
     getProductsDropdown,
     getPurchaseOrderById,
     getSuppliersDropdown,
@@ -632,7 +634,7 @@ export default function PurchaseOrderFormPage() {
                         }))
                       }
                     >
-                      {paymentTypes.map((type) => (
+                      {paymentTypeOptions.map((type: any) => (
                         <SelectItem key={type.value} value={type.value}>
                           {type.label}
                         </SelectItem>
