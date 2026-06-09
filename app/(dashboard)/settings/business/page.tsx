@@ -19,11 +19,11 @@ const initialSettings = {
   enable_customer_rewards: false,
   enable_credit_account: false,
   enable_cash_registers: true,
-  order_types: ["take_order", "delivery"],
+  order_types: ["takeaway", "delivery"],
 }
 
 const orderTypeOptions = [
-  { value: "take_order", label: "Take Order" },
+  { value: "takeaway", label: "Take Order" },
   { value: "delivery", label: "Delivery" },
 ]
 

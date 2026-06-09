@@ -220,10 +220,8 @@ export default function SalesHistoryPage() {
           allowClear
         >
           <SelectItem value="all">All order types</SelectItem>
-          <SelectItem value="pos">POS</SelectItem>
-          <SelectItem value="takeaway">Takeaway</SelectItem>
+          <SelectItem value="takeaway">Take Order</SelectItem>
           <SelectItem value="delivery">Delivery</SelectItem>
-          <SelectItem value="online">Online</SelectItem>
         </UniFieldSelect>
       </div>
 

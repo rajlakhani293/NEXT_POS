@@ -27,6 +27,7 @@ import { showToast } from "@/lib/toast"
 
 type CartItem = {
   product_id: string
+  unit_quantity_id?: string
   name: string
   qty: number
   price: number
@@ -73,6 +74,7 @@ export default function SalesPage() {
   const [productId, setProductId] = useState("")
   const [couponInput, setCouponInput] = useState("")
   const [selectedCouponId, setSelectedCouponId] = useState("")
+  const [orderType, setOrderType] = useState("takeaway")
   const [saleNote, setSaleNote] = useState("")
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [paymentsRows, setPaymentsRows] = useState<PaymentRow[]>([
@@ -270,6 +272,7 @@ export default function SalesPage() {
     setProductId("")
     setCouponInput("")
     setSelectedCouponId("")
+    setOrderType("takeaway")
     setSaleNote("")
     setCartItems([])
     setPaymentsRows([emptyPaymentRow()])
@@ -311,6 +314,7 @@ export default function SalesPage() {
     setCartItems(
       (heldSale.items || []).map((item: any) => ({
         product_id: String(item.product_id),
+        unit_quantity_id: item.unit_quantity_id ? String(item.unit_quantity_id) : undefined,
         name: item.product_name,
         qty: Number(item.quantity || 0),
         price: Number(item.unit_price || 0),
@@ -340,6 +344,9 @@ export default function SalesPage() {
       note: saleNote,
       items: cartItems.map((item) => ({
         product_id: Number(item.product_id),
+        unit_quantity_id: item.unit_quantity_id
+          ? Number(item.unit_quantity_id)
+          : null,
         quantity: String(item.qty),
         unit_price: String(item.price),
         discount_amount: "0",
@@ -375,11 +382,14 @@ export default function SalesPage() {
       draft_id: draftId ? Number(draftId) : null,
       customer_id: customerId ? Number(customerId) : null,
       shift_id: shift.id,
-      order_type: "pos",
+      order_type: orderType,
       note: saleNote,
       coupon_codes: couponCodes,
       items: cartItems.map((item) => ({
         product_id: Number(item.product_id),
+        unit_quantity_id: item.unit_quantity_id
+          ? Number(item.unit_quantity_id)
+          : null,
         quantity: String(item.qty),
         unit_price: String(item.price),
         discount_amount: "0",
@@ -590,6 +600,16 @@ export default function SalesPage() {
             <h2 className="text-base font-bold">Bill Summary</h2>
 
             <div className="mt-4 space-y-4">
+              <UniFieldSelect
+                label="Order Type"
+                value={orderType}
+                onValueChange={setOrderType}
+                placeholder="Choose order type"
+              >
+                <SelectItem value="takeaway">Take Order</SelectItem>
+                <SelectItem value="delivery">Delivery</SelectItem>
+              </UniFieldSelect>
+
               <UniFieldSelect
                 label="Suggested Coupon"
                 value={selectedCouponId}
