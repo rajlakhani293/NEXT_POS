@@ -1,10 +1,23 @@
 import { createApi } from "@reduxjs/toolkit/query/react"
 
 import { createBaseQueryWithInterceptor } from "@/lib/api/base"
-import { getMutation, postMutation } from "@/lib/api/apiUtils"
+import {
+  createMutation,
+  deleteMutation,
+  getMutation,
+  patchMutation,
+  postMutation,
+  putMutation,
+} from "@/lib/api/apiUtils"
 
 const endpointsConfig = {
   getRegistersDropdown: { query: () => getMutation("dropdown-list") },
+  getRegistersData: { query: postMutation("get-transactions") },
+  createRegister: { query: createMutation("") },
+  editRegister: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`${id}`, payLoad) },
+  deleteRegister: { query: deleteMutation("delete") },
+  updateRegisterStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("status", payLoad) },
+  getRegisterById: { query: ({ id }: { id: number | string }) => getMutation(`${id}`) },
   getCurrentShift: { query: () => getMutation("shifts/current") },
   openShift: { query: postMutation("shifts/open") },
   closeShift: { query: postMutation("shifts/close") },
@@ -18,6 +31,9 @@ const endpointsConfig = {
   },
   getShiftZReport: {
     query: ({ id }: { id: number | string }) => getMutation(`shifts/${id}/z-report`),
+  },
+  refreshShift: {
+    query: ({ id }: { id: number | string }) => getMutation(`shifts/${id}/refresh`),
   },
   cashIn: { query: postMutation("shifts/cash-in") },
   cashOut: { query: postMutation("shifts/cash-out") },

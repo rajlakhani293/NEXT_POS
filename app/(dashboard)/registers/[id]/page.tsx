@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, RefreshCwIcon } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
@@ -39,6 +39,9 @@ export default function RegisterShiftDetailPage() {
   const [getShiftZReport, zReportState] = (
     registers as any
   ).useGetShiftZReportMutation()
+  const [refreshShift, refreshShiftState] = (
+    registers as any
+  ).useRefreshShiftMutation()
 
   const loadShift = async () => {
     const [shiftResponse, zResponse] = await Promise.all([
@@ -66,6 +69,11 @@ export default function RegisterShiftDetailPage() {
   useEffect(() => {
     loadEntries(page)
   }, [id, page])
+
+  const handleRefreshShift = async () => {
+    await refreshShift({ id }).unwrap()
+    await Promise.all([loadShift(), loadEntries(page)])
+  }
 
   const topCards = useMemo(
     () => [
@@ -136,6 +144,20 @@ export default function RegisterShiftDetailPage() {
             Cashier: {shift?.cashier_name || "-"} · Status: {shift?.shift_status || "-"}
           </p>
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="ml-auto"
+          onClick={handleRefreshShift}
+          disabled={refreshShiftState.isLoading}
+        >
+          {refreshShiftState.isLoading ? (
+            <Spinner className="size-4" />
+          ) : (
+            <RefreshCwIcon className="size-4" />
+          )}
+          Refresh
+        </Button>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
