@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, ReceiptText } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -52,10 +52,26 @@ type ReturnLine = {
   note: string
 }
 
+type DuePaymentRow = {
+  id: string
+  payment_type: string
+  amount: string
+  reference_number: string
+  note: string
+}
+
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
 const money = (value: string | number | null | undefined) =>
   Number(value || 0) || 0
+
+const emptyDuePaymentRow = (): DuePaymentRow => ({
+  id: crypto.randomUUID(),
+  payment_type: "cash-payment",
+  amount: "",
+  reference_number: "",
+  note: "",
+})
 
 const buildReturnLines = (items: any[] = []): ReturnLine[] =>
   items
@@ -78,18 +94,29 @@ export default function SaleDetailPage() {
 
   const { hasPermission } = usePermissions()
   const canRefundOrder = hasPermission(PERMISSIONS.special.refundOrder)
+  const canVoidSale = hasPermission(PERMISSIONS.sales.void)
+  const canCollectDue = hasPermission(PERMISSIONS.payments.collectDue)
 
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false)
+  const [isCollectDueDialogOpen, setIsCollectDueDialogOpen] = useState(false)
   const [returnType, setReturnType] = useState("refund")
   const [refundPaymentType, setRefundPaymentType] = useState("cash-payment")
   const [exchangeSaleId, setExchangeSaleId] = useState("")
   const [returnNote, setReturnNote] = useState("")
   const [returnLines, setReturnLines] = useState<ReturnLine[]>([])
+  const [dueNote, setDueNote] = useState("")
+  const [duePayments, setDuePayments] = useState<DuePaymentRow[]>([
+    emptyDuePaymentRow(),
+  ])
 
   const [getSaleById, saleState] = (sales as any).useGetSaleByIdMutation()
   const [createSaleReturn, createReturnState] = (
     sales as any
   ).useCreateSaleReturnMutation()
+  const [collectSaleDue, collectDueState] = (
+    sales as any
+  ).useCollectSaleDueMutation()
+  const [voidSale, voidSaleState] = (sales as any).useVoidSaleMutation()
   const [getPaymentTypesDropdown, paymentTypesState] = (
     payments as any
   ).useGetPaymentTypesDropdownMutation()
@@ -130,6 +157,10 @@ export default function SaleDetailPage() {
       ),
     [selectedReturnItems]
   )
+  const dueCollectedAmount = useMemo(
+    () => duePayments.reduce((sum, row) => sum + money(row.amount), 0),
+    [duePayments]
+  )
 
   const resetReturnForm = () => {
     setReturnType("refund")
@@ -139,9 +170,24 @@ export default function SaleDetailPage() {
     setReturnLines(buildReturnLines(sale?.items || []))
   }
 
+  const resetCollectDueForm = () => {
+    setDueNote("")
+    setDuePayments([
+      {
+        ...emptyDuePaymentRow(),
+        amount: sale?.due_amount ? String(sale.due_amount) : "",
+      },
+    ])
+  }
+
   const openReturnDialog = () => {
     resetReturnForm()
     setIsReturnDialogOpen(true)
+  }
+
+  const openCollectDueDialog = () => {
+    resetCollectDueForm()
+    setIsCollectDueDialogOpen(true)
   }
 
   const updateReturnLine = (
@@ -187,6 +233,62 @@ export default function SaleDetailPage() {
     const response = await createSaleReturn({ id, payLoad }).unwrap()
     showToast.success(response?.message || "Return processed successfully.")
     setIsReturnDialogOpen(false)
+    await getSaleById({ id })
+  }
+
+  const handleVoidSale = async () => {
+    const response = await voidSale({
+      id,
+      payLoad: { note: "Voided from sale details." },
+    }).unwrap()
+    showToast.success(response?.message || "Sale voided successfully.")
+    await getSaleById({ id })
+  }
+
+  const updateDuePaymentRow = (
+    rowId: string,
+    field: keyof Omit<DuePaymentRow, "id">,
+    value: string
+  ) => {
+    setDuePayments((current) =>
+      current.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
+    )
+  }
+
+  const addDuePaymentRow = () => {
+    setDuePayments((current) => [...current, emptyDuePaymentRow()])
+  }
+
+  const removeDuePaymentRow = (rowId: string) => {
+    setDuePayments((current) =>
+      current.length === 1 ? current : current.filter((row) => row.id !== rowId)
+    )
+  }
+
+  const handleCollectDue = async () => {
+    const payments = duePayments
+      .filter((row) => money(row.amount) > 0)
+      .map((row) => ({
+        payment_type: row.payment_type,
+        amount: String(money(row.amount)),
+        reference_number: row.reference_number,
+        note: row.note,
+      }))
+
+    if (!payments.length) {
+      showToast.error("Enter at least one due payment.")
+      return
+    }
+
+    const response = await collectSaleDue({
+      id,
+      payLoad: {
+        payments,
+        note: dueNote,
+      },
+    }).unwrap()
+    showToast.success(response?.message || "Due collected successfully.")
+    setIsCollectDueDialogOpen(false)
     await getSaleById({ id })
   }
 
@@ -240,6 +342,32 @@ export default function SaleDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {canCollectDue &&
+            Number(sale.due_amount || 0) > 0 &&
+            !["void", "refunded"].includes(sale.payment_status) ? (
+              <Button variant="outline" onClick={openCollectDueDialog}>
+                Collect Due
+              </Button>
+            ) : null}
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/sales/${sale.id}/receipt`)}
+            >
+              <ReceiptText className="size-4" />
+              Receipt
+            </Button>
+            {canVoidSale &&
+            !["void", "refunded", "partially_refunded"].includes(
+              sale.payment_status
+            ) ? (
+              <Button
+                variant="outline"
+                onClick={handleVoidSale}
+                disabled={voidSaleState.isLoading}
+              >
+                {voidSaleState.isLoading ? "Voiding..." : "Void Sale"}
+              </Button>
+            ) : null}
             {canRefundOrder && refundableItems.length ? (
               <Button onClick={openReturnDialog}>Refund / Exchange</Button>
             ) : null}
@@ -623,6 +751,131 @@ export default function SaleDetailPage() {
               disabled={createReturnState.isLoading || !returnLines.length}
             >
               {createReturnState.isLoading ? "Processing..." : "Submit Return"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isCollectDueDialogOpen}
+        onOpenChange={setIsCollectDueDialogOpen}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Collect Due</DialogTitle>
+            <DialogDescription>
+              Add one or more payments to reduce the remaining due amount.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-500">Remaining Due</span>
+              <span className="font-semibold text-slate-900">
+                {formatMoney(sale.due_amount)}
+              </span>
+            </div>
+            <div className="mt-2 flex items-center justify-between text-sm">
+              <span className="text-slate-500">Entered Payment</span>
+              <span className="font-semibold text-slate-900">
+                {formatMoney(dueCollectedAmount)}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-900">Payments</p>
+              <Button type="button" variant="outline" size="sm" onClick={addDuePaymentRow}>
+                Add Payment
+              </Button>
+            </div>
+
+            {duePayments.map((row, index) => (
+              <div
+                key={row.id}
+                className="space-y-3 rounded-xl border border-gray-100 bg-gray-50 p-3"
+              >
+                <div className="grid gap-3 md:grid-cols-[1fr_140px_44px]">
+                  <UniFieldSelect
+                    label={index === 0 ? "Payment Type" : undefined}
+                    value={row.payment_type}
+                    onValueChange={(value) =>
+                      updateDuePaymentRow(row.id, "payment_type", value)
+                    }
+                  >
+                    {paymentTypeOptions.map((payment: any) => (
+                      <SelectItem
+                        key={payment.value || payment.identifier}
+                        value={payment.value || payment.identifier}
+                      >
+                        {payment.label}
+                      </SelectItem>
+                    ))}
+                  </UniFieldSelect>
+                  <UniFieldInput
+                    label={index === 0 ? "Amount" : undefined}
+                    value={row.amount}
+                    onChange={(event) =>
+                      updateDuePaymentRow(row.id, "amount", event.target.value)
+                    }
+                    placeholder="0.00"
+                    prefix="₹"
+                    type="number"
+                  />
+                  <div className="flex items-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-red-500 hover:text-red-600"
+                      onClick={() => removeDuePaymentRow(row.id)}
+                    >
+                      <span className="sr-only">Remove payment</span>
+                      x
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <UniFieldInput
+                    value={row.reference_number}
+                    onChange={(event) =>
+                      updateDuePaymentRow(
+                        row.id,
+                        "reference_number",
+                        event.target.value
+                      )
+                    }
+                    placeholder="Reference number"
+                  />
+                  <UniFieldInput
+                    value={row.note}
+                    onChange={(event) =>
+                      updateDuePaymentRow(row.id, "note", event.target.value)
+                    }
+                    placeholder="Payment note"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <UniFieldInput
+            label="Collection Note"
+            value={dueNote}
+            onChange={(event) => setDueNote(event.target.value)}
+            placeholder="Optional note"
+          />
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCollectDueDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleCollectDue} disabled={collectDueState.isLoading}>
+              {collectDueState.isLoading ? "Collecting..." : "Collect Due"}
             </Button>
           </DialogFooter>
         </DialogContent>

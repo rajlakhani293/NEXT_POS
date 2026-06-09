@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { Gift, TicketPercent } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { customers } from "@/lib/api/customers"
@@ -86,6 +87,22 @@ export default function CustomersPage() {
         triggerRefresh={triggerRefresh}
         deleteModalTitle="Delete Customer"
         deleteModalDescription="Are you sure you want to delete this customer?"
+        rowActions={(_, record) => [
+          {
+            key: "rewards",
+            label: "Rewards",
+            labelText: "Rewards",
+            icon: <Gift className="size-4" />,
+            onClick: () => router.push(`/customers/${record.id}/rewards`),
+          },
+          {
+            key: "coupons",
+            label: "Coupons",
+            labelText: "Coupons",
+            icon: <TicketPercent className="size-4" />,
+            onClick: () => router.push(`/customers/${record.id}/coupons`),
+          },
+        ]}
       />
     </div>
   )

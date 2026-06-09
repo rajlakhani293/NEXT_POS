@@ -9,13 +9,18 @@ export type RoutePermission = {
 export type ResolvedRoutePermission = Omit<RoutePermission, "path">
 
 export const ROUTE_PERMISSIONS: RoutePermission[] = [
+  { path: "/dashboard", permission: PERMISSIONS.reports.view },
   { path: "/sales", permission: PERMISSIONS.sales.view },
   { path: "/sales/history", permission: PERMISSIONS.sales.view },
+  { path: "/sales/receipt", permission: PERMISSIONS.sales.view },
   { path: "/customers/groups", permission: PERMISSIONS.customers.view },
   { path: "/customers/credit", permission: PERMISSIONS.customers.view },
+  { path: "/customers/rewards", permission: PERMISSIONS.rewards.view },
+  { path: "/customers/coupons", permission: PERMISSIONS.promotions.view },
   { path: "/customers/create", permission: PERMISSIONS.customers.create },
   { path: "/customers", permission: PERMISSIONS.customers.view },
   { path: "/purchases/orders/create", permission: PERMISSIONS.purchases.create },
+  { path: "/purchases/orders", permission: PERMISSIONS.purchases.view },
   { path: "/purchases/suppliers", permission: PERMISSIONS.purchases.view },
   { path: "/purchases", permission: PERMISSIONS.purchases.view },
   { path: "/expenses/categories", permission: PERMISSIONS.settings.view },
@@ -87,6 +92,11 @@ export function resolveRoutePermission(
       ],
       match: "any",
     }
+  }
+
+  const saleDetailMatch = pathname.match(/^\/sales\/([^/]+)$/)
+  if (saleDetailMatch && saleDetailMatch[1] !== "history") {
+    return { permission: PERMISSIONS.sales.view }
   }
 
   return ROUTE_PERMISSIONS.find(

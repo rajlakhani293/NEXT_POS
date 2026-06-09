@@ -18,6 +18,24 @@ const endpointsConfig = {
   deleteCoupon: { query: deleteMutation("coupons/delete") },
   updateCouponStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("coupons/status", payLoad) },
   getCouponById: { query: ({ id }: { id: number }) => getMutation(`coupons/${id}`) },
+  getCustomerCouponsData: {
+    query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
+      postMutation(`customers/${id}/coupons/get-transactions`)(payLoad),
+  },
+  getCustomerCouponHistoryData: {
+    query: ({
+      customerId,
+      customerCouponId,
+      payLoad,
+    }: {
+      customerId: number | string
+      customerCouponId: number | string
+      payLoad: any
+    }) =>
+      postMutation(
+        `customers/${customerId}/coupons/${customerCouponId}/history/get-transactions`
+      )(payLoad),
+  },
 }
 
 export const promotions = createApi({

@@ -6,6 +6,7 @@ import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { accounting } from "@/lib/api/accounting"
+import { getDateRange } from "@/lib/utils"
 import { reports } from "@/lib/api/reports"
 import { showToast } from "@/lib/toast"
 
@@ -69,6 +70,11 @@ export default function ReportsPage() {
   const [rows, setRows] = useState<any[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [page, setPage] = useState(1)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedDateRange, setSelectedDateRange] = useState<string | null>(
+    "This Month"
+  )
+  const [dateFilters, setDateFilters] = useState(() => getDateRange("This Month"))
 
   const [getDashboardSummary, summaryState] = (
     reports as any
@@ -105,7 +111,13 @@ export default function ReportsPage() {
   }
 
   const loadRows = async (nextPage = page, tab = activeTab) => {
-    const payload = { page: nextPage, limit: 10 }
+    const payload = {
+      page: nextPage,
+      limit: 10,
+      search: searchTerm || undefined,
+      startDate: dateFilters.startDate,
+      endDate: dateFilters.endDate,
+    }
     const mutationMap: Record<string, any> = {
       customer_due: getCustomerDueReport,
       supplier_payable: getSupplierPayableReport,
@@ -125,7 +137,33 @@ export default function ReportsPage() {
 
   useEffect(() => {
     loadRows(page, activeTab)
-  }, [activeTab, page])
+  }, [activeTab, page, searchTerm, dateFilters.startDate, dateFilters.endDate])
+
+  const handleFilterChange = (action: string, payload?: any) => {
+    switch (action) {
+      case "search":
+        setPage(1)
+        setSearchTerm(payload || "")
+        break
+      case "dateRange":
+        if (typeof payload === "string") {
+          setPage(1)
+          setSelectedDateRange(payload)
+          setDateFilters(getDateRange(payload))
+        }
+        break
+      case "customDate":
+        if (payload) {
+          const [startDate, endDate] = payload
+          setPage(1)
+          setSelectedDateRange("Custom")
+          setDateFilters({ startDate, endDate })
+        }
+        break
+      default:
+        break
+    }
+  }
 
   const refreshSnapshot = async () => {
     const response = await refreshDashboardSnapshot({}).unwrap()
@@ -208,10 +246,16 @@ export default function ReportsPage() {
         data={rows}
         columns={columns[activeTab]}
         tableTitle={tabLabels[activeTab]}
+        showSearch
+        showDateRange
+        searchTerm={searchTerm}
+        selectedDateRange={selectedDateRange}
+        dateFilters={dateFilters}
         currentPage={page}
         itemsPerPage={10}
         totalItems={totalItems}
         onPageChange={setPage}
+        onFilterChange={handleFilterChange}
         isLoading={summaryState.isLoading || isTableLoading}
         hideActions
       />

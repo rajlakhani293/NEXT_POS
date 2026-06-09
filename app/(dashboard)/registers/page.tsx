@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import { ArrowRight } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import DynamicForm from "@/components/DynamicForm"
@@ -25,6 +27,7 @@ const columns = [
 ]
 
 export default function RegistersPage() {
+  const router = useRouter()
   const [activeForm, setActiveForm] = useState<
     "open" | "close" | "cash_in" | "cash_out" | null
   >(null)
@@ -168,7 +171,15 @@ export default function RegistersPage() {
           onSort={table.handleSort}
           sortableFields={table.sortableFields}
           isLoading={table.isLoading}
-          hideActions
+          rowActions={(_, record) => [
+            {
+              key: "view",
+              label: "View Shift",
+              labelText: "View Shift",
+              icon: <ArrowRight className="size-4" />,
+              onClick: () => router.push(`/registers/${record.id}`),
+            },
+          ]}
         />
 
         <DynamicForm

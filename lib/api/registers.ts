@@ -9,6 +9,16 @@ const endpointsConfig = {
   openShift: { query: postMutation("shifts/open") },
   closeShift: { query: postMutation("shifts/close") },
   getShiftsData: { query: postMutation("shifts/get-transactions") },
+  getShiftById: {
+    query: ({ id }: { id: number | string }) => getMutation(`shifts/${id}`),
+  },
+  getShiftEntriesData: {
+    query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
+      postMutation(`shifts/${id}/entries/get-transactions`)(payLoad),
+  },
+  getShiftZReport: {
+    query: ({ id }: { id: number | string }) => getMutation(`shifts/${id}/z-report`),
+  },
   cashIn: { query: postMutation("shifts/cash-in") },
   cashOut: { query: postMutation("shifts/cash-out") },
 }

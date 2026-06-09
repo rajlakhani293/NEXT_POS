@@ -34,6 +34,14 @@ type CartItem = {
   sku?: string
 }
 
+type PaymentRow = {
+  id: string
+  payment_type: string
+  amount: string
+  reference_number: string
+  note: string
+}
+
 const money = (value: string | number | null | undefined) =>
   Number(value || 0) || 0
 
@@ -42,6 +50,14 @@ const parseCouponCodes = (value: string) =>
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean)
+
+const emptyPaymentRow = (): PaymentRow => ({
+  id: crypto.randomUUID(),
+  payment_type: "cash-payment",
+  amount: "",
+  reference_number: "",
+  note: "",
+})
 
 export default function SalesPage() {
   const router = useRouter()
@@ -53,13 +69,16 @@ export default function SalesPage() {
   const [declaredCash, setDeclaredCash] = useState("")
 
   const [customerId, setCustomerId] = useState("")
+  const [draftId, setDraftId] = useState("")
   const [productId, setProductId] = useState("")
   const [couponInput, setCouponInput] = useState("")
   const [selectedCouponId, setSelectedCouponId] = useState("")
-  const [paymentType, setPaymentType] = useState("cash-payment")
-  const [paymentAmount, setPaymentAmount] = useState("")
   const [saleNote, setSaleNote] = useState("")
   const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [paymentsRows, setPaymentsRows] = useState<PaymentRow[]>([
+    emptyPaymentRow(),
+  ])
+  const [isHeldCartDialogOpen, setIsHeldCartDialogOpen] = useState(false)
 
   const [getCurrentShift, { isLoading: isCheckingShift }] = (
     registers as any
@@ -81,6 +100,14 @@ export default function SalesPage() {
   const [createSale, { isLoading: isCreatingSale }] = (
     sales as any
   ).useCreateSaleMutation()
+  const [holdSale, { isLoading: isHoldingSale }] = (
+    sales as any
+  ).useHoldSaleMutation()
+  const [getHeldSalesData, heldSalesState] = (
+    sales as any
+  ).useGetHeldSalesDataMutation()
+  const [getHeldSaleById] = (sales as any).useGetHeldSaleByIdMutation()
+  const [deleteHeldSale] = (sales as any).useDeleteHeldSaleMutation()
 
   const customerOptions = customersData?.data || []
   const productOptions = productsData?.data || []
@@ -90,14 +117,20 @@ export default function SalesPage() {
   const selectedProduct = productOptions.find(
     (product: any) => String(product.id) === productId
   )
+  const heldSales = heldSalesState.data?.data?.items || []
 
   const subtotal = useMemo(
     () => cartItems.reduce((total, item) => total + item.qty * item.price, 0),
     [cartItems]
   )
   const couponCodes = useMemo(() => parseCouponCodes(couponInput), [couponInput])
-  const dueAmount = Math.max(subtotal - money(paymentAmount), 0)
-  const changeAmount = Math.max(money(paymentAmount) - subtotal, 0)
+  const totalPaid = useMemo(
+    () =>
+      paymentsRows.reduce((sum, row) => sum + money(row.amount), 0),
+    [paymentsRows]
+  )
+  const dueAmount = Math.max(subtotal - totalPaid, 0)
+  const changeAmount = Math.max(totalPaid - subtotal, 0)
 
   const loadShift = async () => {
     const response = await getCurrentShift().unwrap()
@@ -139,12 +172,22 @@ export default function SalesPage() {
 
   useEffect(() => {
     if (!subtotal) {
-      setPaymentAmount("")
+      setPaymentsRows((current) =>
+        current.map((row, index) =>
+          index === 0 ? { ...row, amount: "" } : row
+        )
+      )
       return
     }
-    setPaymentAmount((current) => {
-      if (!current) return subtotal.toFixed(2)
-      return current
+
+    setPaymentsRows((current) => {
+      if (!current.length) {
+        return [{ ...emptyPaymentRow(), amount: subtotal.toFixed(2) }]
+      }
+      if (current.some((row) => row.amount)) return current
+      return current.map((row, index) =>
+        index === 0 ? { ...row, amount: subtotal.toFixed(2) } : row
+      )
     })
   }, [subtotal])
 
@@ -222,13 +265,100 @@ export default function SalesPage() {
   }
 
   const resetSaleForm = () => {
+    setDraftId("")
     setCustomerId("")
     setProductId("")
     setCouponInput("")
     setSelectedCouponId("")
-    setPaymentAmount("")
     setSaleNote("")
     setCartItems([])
+    setPaymentsRows([emptyPaymentRow()])
+  }
+
+  const refreshHeldSales = async () => {
+    await getHeldSalesData({
+      page: 1,
+      limit: 20,
+      search: undefined,
+    }).unwrap()
+  }
+
+  const handleOpenHeldSales = async () => {
+    await refreshHeldSales()
+    setIsHeldCartDialogOpen(true)
+  }
+
+  const handleResumeHeldSale = async (heldSaleId: number | string) => {
+    const response = await getHeldSaleById({ id: heldSaleId }).unwrap()
+    const heldSale = response?.data
+    if (!heldSale) return
+
+    setDraftId(String(heldSale.id))
+    setCustomerId(heldSale.customer_id ? String(heldSale.customer_id) : "")
+    setCouponInput((heldSale.coupon_codes || []).join(", "))
+    setSaleNote(heldSale.note_text || "")
+    setPaymentsRows(
+      (heldSale.payments || []).length
+        ? (heldSale.payments || []).map((payment: any) => ({
+            id: crypto.randomUUID(),
+            payment_type: payment.payment_type || "cash-payment",
+            amount: String(payment.amount || ""),
+            reference_number: payment.reference_number || "",
+            note: payment.note || "",
+          }))
+        : [emptyPaymentRow()]
+    )
+    setCartItems(
+      (heldSale.items || []).map((item: any) => ({
+        product_id: String(item.product_id),
+        name: item.product_name,
+        qty: Number(item.quantity || 0),
+        price: Number(item.unit_price || 0),
+        available_stock: 0,
+        sku: item.sku,
+      }))
+    )
+    setIsHeldCartDialogOpen(false)
+    showToast.success("Held cart loaded successfully.")
+  }
+
+  const handleDeleteHeldSale = async (heldSaleId: number | string) => {
+    const response = await deleteHeldSale({ id: heldSaleId }).unwrap()
+    showToast.success(response?.message || "Held cart deleted successfully.")
+    await refreshHeldSales()
+  }
+
+  const handleHoldSale = async () => {
+    if (!cartItems.length) {
+      showToast.error("Add at least one product before holding cart.")
+      return
+    }
+
+    const payLoad = {
+      customer_id: customerId ? Number(customerId) : null,
+      coupon_codes: couponCodes,
+      note: saleNote,
+      items: cartItems.map((item) => ({
+        product_id: Number(item.product_id),
+        quantity: String(item.qty),
+        unit_price: String(item.price),
+        discount_amount: "0",
+        tax_amount: "0",
+      })),
+      payments: paymentsRows
+        .filter((row) => money(row.amount) > 0)
+        .map((row) => ({
+          payment_type: row.payment_type,
+          amount: String(money(row.amount)),
+          reference_number: row.reference_number,
+          note: row.note,
+        })),
+    }
+
+    const response = await holdSale(payLoad).unwrap()
+    showToast.success(response?.message || "Held cart saved successfully.")
+    resetSaleForm()
+    await refreshHeldSales()
   }
 
   const handleCompleteSale = async () => {
@@ -240,13 +370,9 @@ export default function SalesPage() {
       showToast.error("Add at least one product to cart.")
       return
     }
-    if (!paymentType) {
-      showToast.error("Choose payment type.")
-      return
-    }
-
-    const paidAmount = money(paymentAmount)
+    const validPayments = paymentsRows.filter((row) => money(row.amount) > 0)
     const payLoad = {
+      draft_id: draftId ? Number(draftId) : null,
       customer_id: customerId ? Number(customerId) : null,
       shift_id: shift.id,
       order_type: "pos",
@@ -259,17 +385,12 @@ export default function SalesPage() {
         discount_amount: "0",
         tax_amount: "0",
       })),
-      payments:
-        paidAmount > 0
-          ? [
-              {
-                payment_type: paymentType,
-                amount: String(paidAmount),
-                reference_number: "",
-                note: saleNote,
-              },
-            ]
-          : [],
+      payments: validPayments.map((row) => ({
+        payment_type: row.payment_type,
+        amount: String(money(row.amount)),
+        reference_number: row.reference_number,
+        note: row.note || saleNote,
+      })),
     }
 
     const response = await createSale(payLoad).unwrap()
@@ -288,6 +409,26 @@ export default function SalesPage() {
     isProductsLoading ||
     isPaymentTypesLoading ||
     isCouponsLoading
+
+  const updatePaymentRow = (
+    rowId: string,
+    field: keyof Omit<PaymentRow, "id">,
+    value: string
+  ) => {
+    setPaymentsRows((current) =>
+      current.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
+    )
+  }
+
+  const addPaymentRow = () => {
+    setPaymentsRows((current) => [...current, emptyPaymentRow()])
+  }
+
+  const removePaymentRow = (rowId: string) => {
+    setPaymentsRows((current) =>
+      current.length === 1 ? current : current.filter((row) => row.id !== rowId)
+    )
+  }
 
   if (isInitialLoading && !shift) {
     return (
@@ -313,6 +454,9 @@ export default function SalesPage() {
         </div>
         {shift ? (
           <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleOpenHeldSales}>
+              Held Carts
+            </Button>
             <UniFieldInput
               value={declaredCash}
               onChange={(event) => setDeclaredCash(event.target.value)}
@@ -467,30 +611,81 @@ export default function SalesPage() {
                 placeholder="Enter coupon codes separated by comma"
               />
 
-              <UniFieldSelect
-                label="Payment Type"
-                value={paymentType}
-                onValueChange={setPaymentType}
-                placeholder="Choose payment type"
-              >
-                {paymentTypeOptions.map((payment: any) => (
-                  <SelectItem
-                    key={payment.value || payment.identifier}
-                    value={payment.value || payment.identifier}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-slate-900">Payments</p>
+                  <Button type="button" variant="outline" size="sm" onClick={addPaymentRow}>
+                    Add Payment
+                  </Button>
+                </div>
+                {paymentsRows.map((row, index) => (
+                  <div
+                    key={row.id}
+                    className="space-y-3 rounded-xl border border-gray-100 bg-gray-50 p-3"
                   >
-                    {payment.label}
-                  </SelectItem>
+                    <div className="grid gap-3 md:grid-cols-[1fr_140px_44px]">
+                      <UniFieldSelect
+                        label={index === 0 ? "Payment Type" : undefined}
+                        value={row.payment_type}
+                        onValueChange={(value) =>
+                          updatePaymentRow(row.id, "payment_type", value)
+                        }
+                        placeholder="Choose payment type"
+                      >
+                        {paymentTypeOptions.map((payment: any) => (
+                          <SelectItem
+                            key={payment.value || payment.identifier}
+                            value={payment.value || payment.identifier}
+                          >
+                            {payment.label}
+                          </SelectItem>
+                        ))}
+                      </UniFieldSelect>
+                      <UniFieldInput
+                        label={index === 0 ? "Amount" : undefined}
+                        value={row.amount}
+                        onChange={(event) =>
+                          updatePaymentRow(row.id, "amount", event.target.value)
+                        }
+                        placeholder="0.00"
+                        prefix="₹"
+                        type="number"
+                      />
+                      <div className="flex items-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-500 hover:text-red-600"
+                          onClick={() => removePaymentRow(row.id)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <UniFieldInput
+                        value={row.reference_number}
+                        onChange={(event) =>
+                          updatePaymentRow(
+                            row.id,
+                            "reference_number",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Reference number"
+                      />
+                      <UniFieldInput
+                        value={row.note}
+                        onChange={(event) =>
+                          updatePaymentRow(row.id, "note", event.target.value)
+                        }
+                        placeholder="Payment note"
+                      />
+                    </div>
+                  </div>
                 ))}
-              </UniFieldSelect>
-
-              <UniFieldInput
-                label="Receive Amount"
-                value={paymentAmount}
-                onChange={(event) => setPaymentAmount(event.target.value)}
-                placeholder="Enter paid amount"
-                prefix="₹"
-                type="number"
-              />
+              </div>
 
               <UniFieldInput
                 label="Sale Note"
@@ -507,7 +702,7 @@ export default function SalesPage() {
               </div>
               <div className="flex justify-between">
                 <span>Received</span>
-                <span>₹{money(paymentAmount).toFixed(2)}</span>
+                <span>₹{totalPaid.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-amber-600">
                 <span>Due</span>
@@ -523,6 +718,13 @@ export default function SalesPage() {
               </div>
             </div>
 
+            <Button
+              variant="outline"
+              disabled={!cartItems.length || isHoldingSale}
+              onClick={handleHoldSale}
+            >
+              {isHoldingSale ? "Saving..." : "Hold Cart"}
+            </Button>
             <Button
               className="mt-6 w-full"
               disabled={!cartItems.length || isCreatingSale}
@@ -560,6 +762,58 @@ export default function SalesPage() {
               {isOpeningShift ? "Opening..." : "Open Shift"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isHeldCartDialogOpen} onOpenChange={setIsHeldCartDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Held Carts</DialogTitle>
+            <DialogDescription>
+              Resume or delete held carts saved for this branch.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="max-h-[420px] space-y-3 overflow-auto">
+            {heldSales.length ? (
+              heldSales.map((heldSale: any) => (
+                <div
+                  key={heldSale.id}
+                  className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900">{heldSale.code}</p>
+                    <p className="text-sm text-slate-500">
+                      {heldSale.customer?.name || heldSale.customer__name || "Walk-in customer"}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {heldSale.total_items || 0} item(s) • ₹
+                      {Number(heldSale.total || 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleResumeHeldSale(heldSale.id)}
+                    >
+                      Resume
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="text-red-500 hover:text-red-600"
+                      onClick={() => handleDeleteHeldSale(heldSale.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-xl border border-dashed border-gray-200 py-12 text-center text-sm text-slate-500">
+                No held carts found.
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
