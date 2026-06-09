@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { BanknoteIcon, PackageCheckIcon } from "lucide-react"
+import { BanknoteIcon, FileTextIcon, PackageCheckIcon } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { usePermissions } from "@/hooks/use-permissions"
@@ -224,16 +224,23 @@ export default function PurchaseOrdersPage() {
             : []),
           ...(canPay
             ? [
-              {
-                key: "pay",
-                label: "Pay Supplier",
+                {
+                  key: "pay",
+                  label: "Pay Supplier",
                 labelText: "Pay Supplier",
                 icon: <BanknoteIcon className="size-4" />,
                 onClick: () =>
                   router.push(`/purchases/orders/${record.id}?action=pay`),
-              },
-            ]
+                },
+              ]
             : []),
+          {
+            key: "invoice",
+            label: "Invoice",
+            labelText: "Invoice",
+            icon: <FileTextIcon className="size-4" />,
+            onClick: () => router.push(`/purchases/orders/${record.id}/invoice`),
+          },
         ]}
       />
     </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, PlusIcon, Trash2Icon } from "lucide-react"
+import { ArrowLeft, FileTextIcon, PlusIcon, Trash2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { SelectItem } from "@/components/ui/select"
@@ -309,6 +309,17 @@ export default function PurchaseOrderFormPage() {
               Buy stock from supplier, receive stock-in and record supplier payment.
             </p>
           </div>
+          {isEdit ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="ml-auto"
+              onClick={() => router.push(`/purchases/orders/${id}/invoice`)}
+            >
+              <FileTextIcon className="size-4" />
+              Invoice
+            </Button>
+          ) : null}
         </div>
       </div>
 

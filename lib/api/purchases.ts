@@ -20,6 +20,7 @@ const endpointsConfig = {
   getSupplierById: { query: ({ id }: { id: number }) => getMutation(`suppliers/${id}`) },
 
   getPurchaseOrdersData: { query: postMutation("orders/get-transactions") },
+  getProcurementProductsData: { query: postMutation("products/get-transactions") },
   createPurchaseOrder: { query: createMutation("orders/") },
   editPurchaseOrder: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`orders/${id}`, payLoad) },
   deletePurchaseOrder: { query: deleteMutation("orders/delete") },

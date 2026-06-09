@@ -60,6 +60,12 @@ type DuePaymentRow = {
   note: string
 }
 
+type InstallmentLineForm = {
+  id: string
+  due_date: string
+  amount: string
+}
+
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
 const money = (value: string | number | null | undefined) =>
@@ -71,6 +77,12 @@ const emptyDuePaymentRow = (): DuePaymentRow => ({
   amount: "",
   reference_number: "",
   note: "",
+})
+
+const emptyInstallmentLine = (): InstallmentLineForm => ({
+  id: crypto.randomUUID(),
+  due_date: "",
+  amount: "",
 })
 
 const buildReturnLines = (items: any[] = []): ReturnLine[] =>
@@ -96,9 +108,13 @@ export default function SaleDetailPage() {
   const canRefundOrder = hasPermission(PERMISSIONS.special.refundOrder)
   const canVoidSale = hasPermission(PERMISSIONS.sales.void)
   const canCollectDue = hasPermission(PERMISSIONS.payments.collectDue)
+  const canUpdateSale = hasPermission(PERMISSIONS.sales.update)
+  const canCreatePayment = hasPermission(PERMISSIONS.payments.create)
 
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false)
   const [isCollectDueDialogOpen, setIsCollectDueDialogOpen] = useState(false)
+  const [isInstallmentDialogOpen, setIsInstallmentDialogOpen] = useState(false)
+  const [isInstallmentPayDialogOpen, setIsInstallmentPayDialogOpen] = useState(false)
   const [returnType, setReturnType] = useState("refund")
   const [refundPaymentType, setRefundPaymentType] = useState("cash-payment")
   const [exchangeSaleId, setExchangeSaleId] = useState("")
@@ -108,11 +124,32 @@ export default function SaleDetailPage() {
   const [duePayments, setDuePayments] = useState<DuePaymentRow[]>([
     emptyDuePaymentRow(),
   ])
+  const [processingStatus, setProcessingStatus] = useState("")
+  const [deliveryStatus, setDeliveryStatus] = useState("")
+  const [installmentLines, setInstallmentLines] = useState<InstallmentLineForm[]>([
+    emptyInstallmentLine(),
+  ])
+  const [installmentTarget, setInstallmentTarget] = useState<any>(null)
+  const [installmentPaymentType, setInstallmentPaymentType] = useState("cash-payment")
+  const [installmentPaymentAmount, setInstallmentPaymentAmount] = useState("")
+  const [installmentPaymentNote, setInstallmentPaymentNote] = useState("")
 
   const [getSaleById, saleState] = (sales as any).useGetSaleByIdMutation()
   const [createSaleReturn, createReturnState] = (
     sales as any
   ).useCreateSaleReturnMutation()
+  const [updateSaleProcessing, updateProcessingState] = (
+    sales as any
+  ).useUpdateSaleProcessingMutation()
+  const [updateSaleDelivery, updateDeliveryState] = (
+    sales as any
+  ).useUpdateSaleDeliveryMutation()
+  const [createSaleInstallments, createInstallmentsState] = (
+    sales as any
+  ).useCreateSaleInstallmentsMutation()
+  const [paySaleInstallment, payInstallmentState] = (
+    sales as any
+  ).usePaySaleInstallmentMutation()
   const [collectSaleDue, collectDueState] = (
     sales as any
   ).useCollectSaleDueMutation()
@@ -130,6 +167,7 @@ export default function SaleDetailPage() {
 
   const sale = saleState.data?.data
   const paymentTypeOptions = paymentTypesState.data?.data || []
+  const installmentPlan = sale?.installment_plan
   const refundableItems = useMemo(
     () =>
       (sale?.items || []).filter(
@@ -143,6 +181,11 @@ export default function SaleDetailPage() {
     getPaymentTypesDropdown()
     setReturnLines(buildReturnLines(sale?.items || []))
   }, [getPaymentTypesDropdown, isReturnDialogOpen, sale?.items])
+
+  useEffect(() => {
+    setProcessingStatus(sale?.process_status || "")
+    setDeliveryStatus(sale?.delivery_status || "")
+  }, [sale?.process_status, sale?.delivery_status])
 
   const selectedReturnItems = useMemo(
     () => returnLines.filter((line) => money(line.quantity) > 0),
@@ -292,6 +335,110 @@ export default function SaleDetailPage() {
     await getSaleById({ id })
   }
 
+  const handleUpdateProcessing = async (value: string) => {
+    setProcessingStatus(value)
+    const response = await updateSaleProcessing({
+      id,
+      payLoad: { status: value },
+    }).unwrap()
+    showToast.success(response?.message || "Processing status updated.")
+    await getSaleById({ id })
+  }
+
+  const handleUpdateDelivery = async (value: string) => {
+    setDeliveryStatus(value)
+    const response = await updateSaleDelivery({
+      id,
+      payLoad: { status: value },
+    }).unwrap()
+    showToast.success(response?.message || "Delivery status updated.")
+    await getSaleById({ id })
+  }
+
+  const addInstallmentLine = () => {
+    setInstallmentLines((current) => [...current, emptyInstallmentLine()])
+  }
+
+  const updateInstallmentLine = (
+    rowId: string,
+    field: keyof Omit<InstallmentLineForm, "id">,
+    value: string
+  ) => {
+    setInstallmentLines((current) =>
+      current.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
+    )
+  }
+
+  const removeInstallmentLine = (rowId: string) => {
+    setInstallmentLines((current) =>
+      current.length === 1 ? current : current.filter((row) => row.id !== rowId)
+    )
+  }
+
+  const openInstallmentDialog = () => {
+    setInstallmentLines([emptyInstallmentLine()])
+    setIsInstallmentDialogOpen(true)
+  }
+
+  const openInstallmentPayDialog = (line: any) => {
+    setInstallmentTarget(line)
+    const remaining = Math.max(
+      money(line.amount) - money(line.paid_amount),
+      0
+    )
+    setInstallmentPaymentAmount(remaining ? String(remaining) : "")
+    setInstallmentPaymentNote("")
+    setInstallmentPaymentType("cash-payment")
+    setIsInstallmentPayDialogOpen(true)
+  }
+
+  const handleCreateInstallments = async () => {
+    const lines = installmentLines.filter(
+      (row) => row.due_date && money(row.amount) > 0
+    )
+    if (!lines.length) {
+      showToast.error("Add at least one installment line.")
+      return
+    }
+
+    const response = await createSaleInstallments({
+      id,
+      payLoad: {
+        total_installments: lines.length,
+        total_amount: String(sale?.due_amount || 0),
+        lines: lines.map((line) => ({
+          due_date: line.due_date,
+          amount: String(money(line.amount)),
+        })),
+      },
+    }).unwrap()
+    showToast.success(response?.message || "Installments saved successfully.")
+    setIsInstallmentDialogOpen(false)
+    await getSaleById({ id })
+  }
+
+  const handlePayInstallment = async () => {
+    if (!installmentTarget) return
+    if (money(installmentPaymentAmount) <= 0) {
+      showToast.error("Enter installment payment amount.")
+      return
+    }
+
+    const response = await paySaleInstallment({
+      id,
+      installmentId: installmentTarget.id,
+      payLoad: {
+        amount: String(money(installmentPaymentAmount)),
+        payment_type: installmentPaymentType,
+        note: installmentPaymentNote,
+      },
+    }).unwrap()
+    showToast.success(response?.message || "Installment paid successfully.")
+    setIsInstallmentPayDialogOpen(false)
+    setInstallmentTarget(null)
+    await getSaleById({ id })
+  }
+
   if (saleState.isLoading && !sale) {
     return (
       <div className="flex h-full items-center justify-center bg-gray-50">
@@ -382,7 +529,7 @@ export default function SaleDetailPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 px-6 py-6 lg:grid-cols-4">
+      <div className="grid gap-4 px-6 py-6 lg:grid-cols-4">
           <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
               Customer
@@ -425,6 +572,38 @@ export default function SaleDetailPage() {
               {sale.refunds?.length || 0} return(s)
             </p>
           </div>
+        </div>
+
+        <div className="grid gap-4 border-t border-gray-100 px-6 py-6 lg:grid-cols-2">
+          <UniFieldSelect
+            label="Processing Status"
+            value={processingStatus || "none"}
+            onValueChange={(value) =>
+              handleUpdateProcessing(value === "none" ? "" : value)
+            }
+            disabled={!canUpdateSale || updateProcessingState.isLoading}
+          >
+            <SelectItem value="none">Not Set</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="processing">Processing</SelectItem>
+            <SelectItem value="ready">Ready</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+          </UniFieldSelect>
+
+          <UniFieldSelect
+            label="Delivery Status"
+            value={deliveryStatus || "none"}
+            onValueChange={(value) =>
+              handleUpdateDelivery(value === "none" ? "" : value)
+            }
+            disabled={!canUpdateSale || updateDeliveryState.isLoading}
+          >
+            <SelectItem value="none">Not Set</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="packed">Packed</SelectItem>
+            <SelectItem value="shipped">Shipped</SelectItem>
+            <SelectItem value="delivered">Delivered</SelectItem>
+          </UniFieldSelect>
         </div>
       </div>
 
@@ -530,6 +709,77 @@ export default function SaleDetailPage() {
           </section>
         </div>
       </div>
+
+      <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Instalments</h2>
+            <p className="text-sm text-slate-500">
+              Payment schedule and installment collections for this sale.
+            </p>
+          </div>
+          {canUpdateSale && Number(sale.due_amount || 0) > 0 ? (
+            <Button type="button" variant="outline" onClick={openInstallmentDialog}>
+              {installmentPlan ? "Update Instalments" : "Create Instalments"}
+            </Button>
+          ) : null}
+        </div>
+        <div className="overflow-x-auto px-4 py-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Due Date</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Paid</TableHead>
+                <TableHead>Remaining</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {installmentPlan?.lines?.length ? (
+                installmentPlan.lines.map((line: any) => (
+                  <TableRow key={line.id}>
+                    <TableCell>{line.due_date}</TableCell>
+                    <TableCell>{formatMoney(line.amount)}</TableCell>
+                    <TableCell>{formatMoney(line.paid_amount)}</TableCell>
+                    <TableCell>
+                      {formatMoney(money(line.amount) - money(line.paid_amount))}
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      {String(line.installment_status || "-").replaceAll("_", " ")}
+                    </TableCell>
+                    <TableCell>
+                      {canCreatePayment &&
+                      money(line.amount) > money(line.paid_amount) ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openInstallmentPayDialog(line)}
+                        >
+                          Pay
+                        </Button>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="py-10 text-center text-sm text-slate-500"
+                  >
+                    No installments created for this sale.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </section>
 
       <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
         <div className="border-b border-gray-100 px-6 py-4">
@@ -876,6 +1126,165 @@ export default function SaleDetailPage() {
             </Button>
             <Button onClick={handleCollectDue} disabled={collectDueState.isLoading}>
               {collectDueState.isLoading ? "Collecting..." : "Collect Due"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isInstallmentDialogOpen}
+        onOpenChange={setIsInstallmentDialogOpen}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Save Instalments</DialogTitle>
+            <DialogDescription>
+              Create payment schedule lines for the current due amount.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-500">Current Due</span>
+              <span className="font-semibold text-slate-900">
+                {formatMoney(sale.due_amount)}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-900">Installment Lines</p>
+              <Button type="button" variant="outline" size="sm" onClick={addInstallmentLine}>
+                Add Line
+              </Button>
+            </div>
+
+            {installmentLines.map((line, index) => (
+              <div
+                key={line.id}
+                className="grid gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1fr_1fr_44px]"
+              >
+                <UniFieldInput
+                  label={index === 0 ? "Due Date" : undefined}
+                  type="date"
+                  value={line.due_date}
+                  onChange={(event) =>
+                    updateInstallmentLine(line.id, "due_date", event.target.value)
+                  }
+                />
+                <UniFieldInput
+                  label={index === 0 ? "Amount" : undefined}
+                  value={line.amount}
+                  onChange={(event) =>
+                    updateInstallmentLine(line.id, "amount", event.target.value)
+                  }
+                  placeholder="0.00"
+                  prefix="₹"
+                  type="number"
+                />
+                <div className="flex items-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-500 hover:text-red-600"
+                    onClick={() => removeInstallmentLine(line.id)}
+                  >
+                    <span className="sr-only">Remove installment line</span>
+                    x
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsInstallmentDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateInstallments}
+              disabled={createInstallmentsState.isLoading}
+            >
+              {createInstallmentsState.isLoading ? "Saving..." : "Save Instalments"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isInstallmentPayDialogOpen}
+        onOpenChange={setIsInstallmentPayDialogOpen}
+      >
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Pay Instalment</DialogTitle>
+            <DialogDescription>
+              Record payment against the selected installment line.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">Due Date</span>
+              <span className="font-semibold text-slate-900">
+                {installmentTarget?.due_date || "-"}
+              </span>
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <span className="text-slate-500">Remaining</span>
+              <span className="font-semibold text-slate-900">
+                {formatMoney(
+                  money(installmentTarget?.amount) - money(installmentTarget?.paid_amount)
+                )}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-4">
+            <UniFieldSelect
+              label="Payment Type"
+              value={installmentPaymentType}
+              onValueChange={setInstallmentPaymentType}
+            >
+              {paymentTypeOptions.map((payment: any) => (
+                <SelectItem
+                  key={payment.value || payment.identifier}
+                  value={payment.value || payment.identifier}
+                >
+                  {payment.label}
+                </SelectItem>
+              ))}
+            </UniFieldSelect>
+            <UniFieldInput
+              label="Amount"
+              value={installmentPaymentAmount}
+              onChange={(event) => setInstallmentPaymentAmount(event.target.value)}
+              placeholder="0.00"
+              prefix="₹"
+              type="number"
+            />
+            <UniFieldInput
+              label="Note"
+              value={installmentPaymentNote}
+              onChange={(event) => setInstallmentPaymentNote(event.target.value)}
+              placeholder="Optional note"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsInstallmentPayDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handlePayInstallment} disabled={payInstallmentState.isLoading}>
+              {payInstallmentState.isLoading ? "Paying..." : "Pay Instalment"}
             </Button>
           </DialogFooter>
         </DialogContent>

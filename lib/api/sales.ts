@@ -25,6 +25,56 @@ const endpointsConfig = {
   getSaleReceipt: {
     query: ({ id }: { id: number | string }) => getMutation(`${id}/receipt`),
   },
+  updateSaleProcessing: {
+    query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
+      createMutation(`${id}/processing`)(payLoad),
+  },
+  updateSaleDelivery: {
+    query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
+      createMutation(`${id}/delivery`)(payLoad),
+  },
+  getSaleInstallments: {
+    query: ({ id }: { id: number | string }) => getMutation(`${id}/instalments`),
+  },
+  createSaleInstallments: {
+    query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
+      createMutation(`${id}/instalments`)(payLoad),
+  },
+  updateSaleInstallment: {
+    query: ({
+      id,
+      installmentId,
+      payLoad,
+    }: {
+      id: number | string
+      installmentId: number | string
+      payLoad: any
+    }) => ({
+      url: `${id}/instalments/${installmentId}`,
+      method: "PUT",
+      body: payLoad,
+    }),
+  },
+  deleteSaleInstallment: {
+    query: ({
+      id,
+      installmentId,
+    }: {
+      id: number | string
+      installmentId: number | string
+    }) => deleteMutation(`${id}/instalments/${installmentId}`)({}),
+  },
+  paySaleInstallment: {
+    query: ({
+      id,
+      installmentId,
+      payLoad,
+    }: {
+      id: number | string
+      installmentId: number | string
+      payLoad: any
+    }) => createMutation(`${id}/instalments/${installmentId}/pay`)(payLoad),
+  },
   createSaleReturn: {
     query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
       createMutation(`${id}/refund`)(payLoad),
