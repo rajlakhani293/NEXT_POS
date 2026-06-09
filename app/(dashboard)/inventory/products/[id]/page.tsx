@@ -6,7 +6,11 @@ import {
   ArrowLeft,
   CheckIcon,
   ChevronDownIcon,
+  Pencil,
+  Plus,
+  Trash2,
   WandSparkles,
+  X,
 } from "lucide-react"
 
 import { BrandForm } from "@/app/(dashboard)/inventory/brands/createUpdate"
@@ -107,6 +111,18 @@ type ProductFormValues = {
   expiry_tracking_enabled: boolean
 }
 
+type ProductUnitQuantityFormValues = {
+  id?: number
+  unit_id: string
+  convert_unit_id: string
+  barcode: string
+  quantity: string
+  sale_price: string
+  purchase_price: string
+  is_default: boolean
+  scale_plu: string
+}
+
 const initialValues: ProductFormValues = {
   name: "",
   sku: "",
@@ -130,6 +146,17 @@ const initialValues: ProductFormValues = {
   track_stock: true,
   allow_decimal_qty: false,
   expiry_tracking_enabled: false,
+}
+
+const initialUnitQuantityValues: ProductUnitQuantityFormValues = {
+  unit_id: "",
+  convert_unit_id: "",
+  barcode: "",
+  quantity: "",
+  sale_price: "",
+  purchase_price: "",
+  is_default: false,
+  scale_plu: "",
 }
 
 const toOption = (items: any[] = []) =>
@@ -210,6 +237,12 @@ export default function ProductFormPage() {
   const [isFooterStuck, setIsFooterStuck] = useState(false)
   const [imageError, setImageError] = useState("")
   const [initialImageUrl, setInitialImageUrl] = useState("")
+  const [unitQuantityForm, setUnitQuantityForm] =
+    useState<ProductUnitQuantityFormValues>(initialUnitQuantityValues)
+  const [unitQuantityErrors, setUnitQuantityErrors] = useState<
+    Record<string, string>
+  >({})
+  const [isSavingUnitQuantity, setIsSavingUnitQuantity] = useState(false)
   const [addFormOpen, setAddFormOpen] = useState<
     "category" | "brand" | "unit" | "taxGroup" | null
   >(null)
@@ -221,6 +254,18 @@ export default function ProductFormPage() {
   const [createProduct] = (catalog as any).useCreateProductMutation()
   const [editProduct] = (catalog as any).useEditProductMutation()
   const [getProductById, product] = (catalog as any).useGetProductByIdMutation()
+  const [getProductUnitQuantities, unitQuantities] = (
+    catalog as any
+  ).useGetProductUnitQuantitiesMutation()
+  const [createProductUnitQuantity] = (
+    catalog as any
+  ).useCreateProductUnitQuantityMutation()
+  const [editProductUnitQuantity] = (
+    catalog as any
+  ).useEditProductUnitQuantityMutation()
+  const [deleteProductUnitQuantity] = (
+    catalog as any
+  ).useDeleteProductUnitQuantityMutation()
   const [getCategoriesDropdown, categories] = (
     catalog as any
   ).useGetCategoriesDropdownMutation()
@@ -253,6 +298,7 @@ export default function ProductFormPage() {
       }
 
       const result = await getProductById({ id }).unwrap()
+      await getProductUnitQuantities({ productId: id })
       const record = result?.data
       if (!record) return
 
@@ -276,6 +322,7 @@ export default function ProductFormPage() {
     getBrandsDropdown,
     getCategoriesDropdown,
     getProductById,
+    getProductUnitQuantities,
     getTaxGroupsDropdown,
     getUnitsDropdown,
     id,
@@ -338,6 +385,105 @@ export default function ProductFormPage() {
     if (type === "unit") await getUnitsDropdown()
     if (type === "taxGroup") await getTaxGroupsDropdown()
     setAddFormOpen(null)
+  }
+
+  const updateUnitQuantityField = (
+    name: keyof ProductUnitQuantityFormValues,
+    value: any
+  ) => {
+    setUnitQuantityForm((current) => ({ ...current, [name]: value }))
+    if (unitQuantityErrors[name]) {
+      setUnitQuantityErrors((current) => ({ ...current, [name]: "" }))
+    }
+  }
+
+  const resetUnitQuantityForm = () => {
+    setUnitQuantityForm(initialUnitQuantityValues)
+    setUnitQuantityErrors({})
+  }
+
+  const validateUnitQuantity = () => {
+    const nextErrors: Record<string, string> = {}
+    if (!unitQuantityForm.unit_id) nextErrors.unit_id = "Unit is required"
+    if (!unitQuantityForm.quantity)
+      nextErrors.quantity = "Quantity is required"
+    setUnitQuantityErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
+
+  const handleSaveUnitQuantity = async () => {
+    if (!validateUnitQuantity()) return
+
+    setIsSavingUnitQuantity(true)
+    try {
+      const payLoad = {
+        unit_id: Number(unitQuantityForm.unit_id),
+        convert_unit_id: unitQuantityForm.convert_unit_id
+          ? Number(unitQuantityForm.convert_unit_id)
+          : null,
+        barcode: unitQuantityForm.barcode,
+        quantity: unitQuantityForm.quantity || "1",
+        sale_price: unitQuantityForm.sale_price || "0",
+        purchase_price: unitQuantityForm.purchase_price || "0",
+        is_default: unitQuantityForm.is_default,
+        scale_plu: unitQuantityForm.scale_plu,
+      }
+
+      if (unitQuantityForm.id) {
+        const response = await editProductUnitQuantity({
+          productId: id,
+          id: unitQuantityForm.id,
+          payLoad,
+        }).unwrap()
+        showToast.success(
+          response?.message || "Product unit quantity updated successfully."
+        )
+      } else {
+        const response = await createProductUnitQuantity({
+          productId: id,
+          payLoad,
+        }).unwrap()
+        showToast.success(
+          response?.message || "Product unit quantity created successfully."
+        )
+      }
+
+      resetUnitQuantityForm()
+      await getProductUnitQuantities({ productId: id })
+    } finally {
+      setIsSavingUnitQuantity(false)
+    }
+  }
+
+  const handleEditUnitQuantity = (record: any) => {
+    setUnitQuantityForm({
+      id: record.id,
+      unit_id: record.unit_id ? String(record.unit_id) : "",
+      convert_unit_id: record.convert_unit_id
+        ? String(record.convert_unit_id)
+        : "",
+      barcode: record.barcode || "",
+      quantity: record.quantity ? String(record.quantity) : "",
+      sale_price: record.sale_price ? String(record.sale_price) : "",
+      purchase_price: record.purchase_price ? String(record.purchase_price) : "",
+      is_default: Boolean(record.is_default),
+      scale_plu: record.scale_plu || "",
+    })
+    setUnitQuantityErrors({})
+  }
+
+  const handleDeleteUnitQuantity = async (record: any) => {
+    const response = await deleteProductUnitQuantity({
+      productId: id,
+      id: record.id,
+    }).unwrap()
+    showToast.success(
+      response?.message || "Product unit quantity deleted successfully."
+    )
+    await getProductUnitQuantities({ productId: id })
+    if (unitQuantityForm.id === record.id) {
+      resetUnitQuantityForm()
+    }
   }
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -709,6 +855,258 @@ export default function ProductFormPage() {
                           updateField("max_stock", event.target.value)
                         }
                       />
+                    </div>
+                  </section>
+                ) : null}
+
+                {isEdit ? (
+                  <section className="rounded-lg border border-gray-200 bg-white p-4">
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="text-base font-semibold text-gray-900">
+                          Selling Units
+                        </h2>
+                        <p className="text-xs font-medium text-gray-500">
+                          Add alternate units like Box, Dozen, Kg or Pack.
+                        </p>
+                      </div>
+                      {unitQuantityForm.id ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={resetUnitQuantityForm}
+                          className="h-8 gap-1 text-xs"
+                        >
+                          <X className="size-3.5" />
+                          Clear
+                        </Button>
+                      ) : null}
+                    </div>
+
+                    <div className="space-y-3">
+                      {(unitQuantities.data?.data || []).map((record: any) => (
+                        <div
+                          key={record.id}
+                          className="rounded-md border border-gray-200 p-3"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-sm font-semibold text-gray-900">
+                                  {record.unit_name || "Unit"}
+                                </span>
+                                {record.is_default ? (
+                                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700">
+                                    Default
+                                  </span>
+                                ) : null}
+                              </div>
+                              <p className="mt-1 text-xs font-medium text-gray-500">
+                                {Number(record.quantity || 0).toLocaleString()}{" "}
+                                {record.convert_unit_short_name ||
+                                  record.convert_unit_name ||
+                                  "base unit"}{" "}
+                                per {record.unit_short_name || record.unit_name}
+                              </p>
+                              <p className="mt-1 text-xs font-semibold text-gray-700">
+                                Sale ₹{Number(record.sale_price || 0).toFixed(2)}
+                                {" · "}Buy ₹
+                                {Number(record.purchase_price || 0).toFixed(2)}
+                              </p>
+                              {record.scale_plu ? (
+                                <p className="mt-1 text-xs font-medium text-gray-500">
+                                  PLU: {record.scale_plu}
+                                </p>
+                              ) : null}
+                              {record.barcode ? (
+                                <p className="mt-1 text-xs font-medium text-gray-500">
+                                  Barcode: {record.barcode}
+                                </p>
+                              ) : null}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleEditUnitQuantity(record)}
+                              >
+                                <Pencil className="size-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-red-600 hover:text-red-700"
+                                onClick={() => handleDeleteUnitQuantity(record)}
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {unitQuantities.isLoading ? (
+                        <div className="flex items-center gap-2 rounded-md border border-dashed p-3 text-xs font-semibold text-gray-500">
+                          <Spinner className="h-4 w-4" />
+                          Loading selling units...
+                        </div>
+                      ) : null}
+
+                      {!unitQuantities.isLoading &&
+                      (unitQuantities.data?.data || []).length === 0 ? (
+                        <div className="rounded-md border border-dashed p-3 text-xs font-semibold text-gray-500">
+                          No alternate selling units added yet.
+                        </div>
+                      ) : null}
+
+                      <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
+                        <div className="grid grid-cols-1 gap-3">
+                          <UniFieldSelect
+                            label="Unit"
+                            required
+                            value={unitQuantityForm.unit_id}
+                            onValueChange={(value) =>
+                              updateUnitQuantityField("unit_id", value)
+                            }
+                            placeholder="Select Unit"
+                            error={unitQuantityErrors.unit_id}
+                            onAddNew={() => setAddFormOpen("unit")}
+                            addNewLabel="Add New Unit"
+                          >
+                            {toOption(units.data?.data).map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </UniFieldSelect>
+                          <UniFieldSelect
+                            label="Convert Unit"
+                            value={unitQuantityForm.convert_unit_id}
+                            onValueChange={(value) =>
+                              updateUnitQuantityField("convert_unit_id", value)
+                            }
+                            placeholder="Select Base Unit"
+                            allowClear
+                          >
+                            {toOption(units.data?.data).map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </UniFieldSelect>
+                          <UniFieldInput
+                            label="Quantity"
+                            required
+                            type="number"
+                            min="0"
+                            step="0.0001"
+                            placeholder="Example 12"
+                            value={unitQuantityForm.quantity}
+                            onChange={(event) =>
+                              updateUnitQuantityField(
+                                "quantity",
+                                event.target.value
+                              )
+                            }
+                            error={unitQuantityErrors.quantity}
+                          />
+                          <div className="grid grid-cols-2 gap-3">
+                            <UniFieldInput
+                              label="Sale Price"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              prefix="₹"
+                              placeholder="0.00"
+                              value={unitQuantityForm.sale_price}
+                              onChange={(event) =>
+                                updateUnitQuantityField(
+                                  "sale_price",
+                                  event.target.value
+                                )
+                              }
+                            />
+                            <UniFieldInput
+                              label="Purchase"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              prefix="₹"
+                              placeholder="0.00"
+                              value={unitQuantityForm.purchase_price}
+                              onChange={(event) =>
+                                updateUnitQuantityField(
+                                  "purchase_price",
+                                  event.target.value
+                                )
+                              }
+                            />
+                          </div>
+                          <UniFieldInput
+                            label="Barcode"
+                            placeholder="Optional selling-unit barcode"
+                            value={unitQuantityForm.barcode}
+                            onChange={(event) =>
+                              updateUnitQuantityField(
+                                "barcode",
+                                event.target.value
+                              )
+                            }
+                          />
+                          <UniFieldInput
+                            label="Scale PLU"
+                            placeholder="Optional scale PLU"
+                            value={unitQuantityForm.scale_plu}
+                            onChange={(event) =>
+                              updateUnitQuantityField(
+                                "scale_plu",
+                                event.target.value
+                              )
+                            }
+                          />
+                          <div className="flex items-center justify-between rounded-md border bg-white p-3">
+                            <span className="text-sm font-medium text-gray-700">
+                              Default Selling Unit
+                            </span>
+                            <Switch
+                              checked={unitQuantityForm.is_default}
+                              onCheckedChange={(checked) =>
+                                updateUnitQuantityField("is_default", checked)
+                              }
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            onClick={handleSaveUnitQuantity}
+                            disabled={isSavingUnitQuantity}
+                            className="w-full bg-black text-white hover:bg-black/90"
+                          >
+                            {isSavingUnitQuantity ? (
+                              <span className="flex items-center gap-2">
+                                <Spinner />
+                                Saving...
+                              </span>
+                            ) : (
+                              <>
+                                <Plus className="size-4" />
+                                {unitQuantityForm.id
+                                  ? "Update Selling Unit"
+                                  : "Add Selling Unit"}
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </section>
                 ) : null}
