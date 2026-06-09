@@ -230,6 +230,7 @@ export default function SaleDetailPage() {
 
   const openCollectDueDialog = () => {
     resetCollectDueForm()
+    getPaymentTypesDropdown()
     setIsCollectDueDialogOpen(true)
   }
 
@@ -248,6 +249,13 @@ export default function SaleDetailPage() {
   const handleSubmitReturn = async () => {
     if (!selectedReturnItems.length) {
       showToast.error("Enter return quantity for at least one item.")
+      return
+    }
+    const invalidLine = selectedReturnItems.find(
+      (line) => money(line.quantity) > line.refundable_quantity
+    )
+    if (invalidLine) {
+      showToast.error(`Return quantity exceeds available quantity for ${invalidLine.product_name}.`)
       return
     }
 
@@ -905,20 +913,36 @@ export default function SaleDetailPage() {
                       </TableCell>
                       <TableCell>{line.refundable_quantity}</TableCell>
                       <TableCell className="min-w-32">
-                        <UniFieldInput
-                          value={line.quantity}
-                          onChange={(event) =>
-                            updateReturnLine(
-                              line.sale_item_id,
-                              "quantity",
-                              event.target.value
-                            )
-                          }
-                          placeholder="0"
-                          type="number"
-                          min={0}
-                          max={line.refundable_quantity}
-                        />
+                        <div className="flex items-center gap-2">
+                          <UniFieldInput
+                            value={line.quantity}
+                            onChange={(event) =>
+                              updateReturnLine(
+                                line.sale_item_id,
+                                "quantity",
+                                event.target.value
+                              )
+                            }
+                            placeholder="0"
+                            type="number"
+                            min={0}
+                            max={line.refundable_quantity}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              updateReturnLine(
+                                line.sale_item_id,
+                                "quantity",
+                                String(line.refundable_quantity)
+                              )
+                            }
+                          >
+                            Max
+                          </Button>
+                        </div>
                       </TableCell>
                       <TableCell className="min-w-36">
                         <UniFieldInput

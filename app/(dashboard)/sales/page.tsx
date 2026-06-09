@@ -22,12 +22,15 @@ import { customers } from "@/lib/api/customers"
 import { payments } from "@/lib/api/payments"
 import { promotions } from "@/lib/api/promotions"
 import { registers } from "@/lib/api/registers"
+import { rewards } from "@/lib/api/rewards"
 import { sales } from "@/lib/api/sales"
 import { showToast } from "@/lib/toast"
 
 type CartItem = {
   product_id: string
   unit_quantity_id?: string
+  unit_id?: string
+  unit_label?: string
   name: string
   qty: number
   price: number
@@ -72,6 +75,8 @@ export default function SalesPage() {
   const [customerId, setCustomerId] = useState("")
   const [draftId, setDraftId] = useState("")
   const [productId, setProductId] = useState("")
+  const [barcode, setBarcode] = useState("")
+  const [selectedUnitQuantityId, setSelectedUnitQuantityId] = useState("")
   const [couponInput, setCouponInput] = useState("")
   const [selectedCouponId, setSelectedCouponId] = useState("")
   const [orderType, setOrderType] = useState("takeaway")
@@ -99,6 +104,18 @@ export default function SalesPage() {
     (payments as any).useGetPaymentTypesDropdownMutation()
   const [getCouponsDropdown, { data: couponsData, isLoading: isCouponsLoading }] =
     (promotions as any).useGetCouponsDropdownMutation()
+  const [getProductUnitQuantities, unitQuantitiesState] = (
+    catalog as any
+  ).useGetProductUnitQuantitiesMutation()
+  const [searchProductUsingBarcode, barcodeSearchState] = (
+    catalog as any
+  ).useSearchProductUsingBarcodeMutation()
+  const [getCustomerRewardBalance, rewardBalanceState] = (
+    rewards as any
+  ).useGetCustomerRewardBalanceMutation()
+  const [redeemCustomerReward, redeemRewardState] = (
+    rewards as any
+  ).useRedeemCustomerRewardMutation()
   const [createSale, { isLoading: isCreatingSale }] = (
     sales as any
   ).useCreateSaleMutation()
@@ -118,6 +135,16 @@ export default function SalesPage() {
 
   const selectedProduct = productOptions.find(
     (product: any) => String(product.id) === productId
+  )
+  const productUnitQuantities = unitQuantitiesState.data?.data || []
+  const selectedUnitQuantity = productUnitQuantities.find(
+    (unitQuantity: any) => String(unitQuantity.id) === selectedUnitQuantityId
+  )
+  const rewardBalances = rewardBalanceState.data?.data || []
+  const redeemableReward = rewardBalances.find(
+    (balance: any) =>
+      Number(balance.points || 0) >= Number(balance.target_points || 0) &&
+      Number(balance.target_points || 0) > 0
   )
   const heldSales = heldSalesState.data?.data?.items || []
 
@@ -173,6 +200,17 @@ export default function SalesPage() {
   }, [couponOptions, selectedCouponId])
 
   useEffect(() => {
+    setSelectedUnitQuantityId("")
+    if (!productId) return
+    getProductUnitQuantities({ productId })
+  }, [getProductUnitQuantities, productId])
+
+  useEffect(() => {
+    if (!customerId) return
+    getCustomerRewardBalance({ id: customerId })
+  }, [customerId, getCustomerRewardBalance])
+
+  useEffect(() => {
     if (!subtotal) {
       setPaymentsRows((current) =>
         current.map((row, index) =>
@@ -219,17 +257,30 @@ export default function SalesPage() {
     showToast.success(response?.message || "Shift closed successfully.")
   }
 
-  const handleAddProduct = () => {
-    if (!selectedProduct) return
+  const addProductToCart = (product: any, unitQuantity?: any) => {
+    if (!product) return
 
-    const price = Number(selectedProduct.selling_price || selectedProduct.price || 0)
-    const availableStock = Number(selectedProduct.current_stock || 0)
+    const price = Number(
+      unitQuantity?.sale_price || product.selling_price || product.price || 0
+    )
+    const availableStock = Number(product.current_stock || 0)
+    const unitQuantityId = unitQuantity?.id ? String(unitQuantity.id) : ""
+    const unitLabel =
+      unitQuantity?.unit_short_name ||
+      unitQuantity?.unit_name ||
+      product.unit_name ||
+      ""
 
     setCartItems((items) => {
-      const existing = items.find((item) => item.product_id === productId)
+      const existing = items.find(
+        (item) =>
+          item.product_id === String(product.id) &&
+          (item.unit_quantity_id || "") === unitQuantityId
+      )
       if (existing) {
         return items.map((item) =>
-          item.product_id === productId
+          item.product_id === String(product.id) &&
+          (item.unit_quantity_id || "") === unitQuantityId
             ? { ...item, qty: item.qty + 1 }
             : item
         )
@@ -238,23 +289,48 @@ export default function SalesPage() {
       return [
         ...items,
         {
-          product_id: productId,
-          name: selectedProduct.name,
+          product_id: String(product.id),
+          unit_quantity_id: unitQuantityId || undefined,
+          unit_id: unitQuantity?.unit_id
+            ? String(unitQuantity.unit_id)
+            : product.unit_id
+              ? String(product.unit_id)
+              : undefined,
+          unit_label: unitLabel,
+          name: product.name,
           qty: 1,
           price,
           available_stock: availableStock,
-          sku: selectedProduct.sku,
+          sku: product.sku,
         },
       ]
     })
-    setProductId("")
   }
 
-  const updateQuantity = (product_id: string, delta: number) => {
+  const handleAddProduct = () => {
+    if (!selectedProduct) return
+    addProductToCart(selectedProduct, selectedUnitQuantity)
+    setProductId("")
+    setSelectedUnitQuantityId("")
+  }
+
+  const handleBarcodeSearch = async () => {
+    const reference = barcode.trim()
+    if (!reference) return
+    const response = await searchProductUsingBarcode({ reference }).unwrap()
+    const product = response?.data
+    if (!product) return
+    addProductToCart(product, product.matched_unit_quantity)
+    setBarcode("")
+    showToast.success(`${product.name} added to cart.`)
+  }
+
+  const updateQuantity = (product_id: string, delta: number, unit_quantity_id = "") => {
     setCartItems((items) =>
       items
         .map((item) =>
-          item.product_id === product_id
+          item.product_id === product_id &&
+          (item.unit_quantity_id || "") === unit_quantity_id
             ? { ...item, qty: Math.max(item.qty + delta, 0) }
             : item
         )
@@ -262,14 +338,22 @@ export default function SalesPage() {
     )
   }
 
-  const removeItem = (product_id: string) => {
-    setCartItems((items) => items.filter((item) => item.product_id !== product_id))
+  const removeItem = (product_id: string, unit_quantity_id = "") => {
+    setCartItems((items) =>
+      items.filter(
+        (item) =>
+          item.product_id !== product_id ||
+          (item.unit_quantity_id || "") !== unit_quantity_id
+      )
+    )
   }
 
   const resetSaleForm = () => {
     setDraftId("")
     setCustomerId("")
     setProductId("")
+    setBarcode("")
+    setSelectedUnitQuantityId("")
     setCouponInput("")
     setSelectedCouponId("")
     setOrderType("takeaway")
@@ -332,6 +416,35 @@ export default function SalesPage() {
     await refreshHeldSales()
   }
 
+  const handleRedeemReward = async () => {
+    if (!customerId) {
+      showToast.error("Choose customer before redeeming reward.")
+      return
+    }
+    if (!redeemableReward) {
+      showToast.error("No redeemable reward balance for this customer.")
+      return
+    }
+    const response = await redeemCustomerReward({
+      customer_id: Number(customerId),
+      reward_system_id: Number(redeemableReward.reward_system_id),
+      points: Number(redeemableReward.target_points),
+      note: "Redeemed from POS checkout.",
+    }).unwrap()
+    const couponCode = response?.data?.issued_coupon?.code
+    if (couponCode) {
+      setCouponInput((current) => {
+        const existing = parseCouponCodes(current)
+        if (existing.includes(couponCode)) return current
+        return [...existing, couponCode].join(", ")
+      })
+      showToast.success(`Reward redeemed. Coupon ${couponCode} added.`)
+    } else {
+      showToast.success(response?.message || "Reward redeemed successfully.")
+    }
+    await getCustomerRewardBalance({ id: customerId })
+  }
+
   const handleHoldSale = async () => {
     if (!cartItems.length) {
       showToast.error("Add at least one product before holding cart.")
@@ -347,6 +460,7 @@ export default function SalesPage() {
         unit_quantity_id: item.unit_quantity_id
           ? Number(item.unit_quantity_id)
           : null,
+        unit_id: item.unit_id ? Number(item.unit_id) : null,
         quantity: String(item.qty),
         unit_price: String(item.price),
         discount_amount: "0",
@@ -390,6 +504,7 @@ export default function SalesPage() {
         unit_quantity_id: item.unit_quantity_id
           ? Number(item.unit_quantity_id)
           : null,
+        unit_id: item.unit_id ? Number(item.unit_id) : null,
         quantity: String(item.qty),
         unit_price: String(item.price),
         discount_amount: "0",
@@ -508,6 +623,30 @@ export default function SalesPage() {
               </UniFieldSelect>
 
               <div className="flex items-end gap-2">
+                <UniFieldInput
+                  label="Barcode"
+                  value={barcode}
+                  onChange={(event) => setBarcode(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault()
+                      handleBarcodeSearch()
+                    }
+                  }}
+                  placeholder="Scan or enter barcode"
+                  containerClassName="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleBarcodeSearch}
+                  disabled={!barcode.trim() || barcodeSearchState.isLoading}
+                >
+                  {barcodeSearchState.isLoading ? <Spinner /> : "Add"}
+                </Button>
+              </div>
+
+              <div className="flex items-end gap-2">
                 <UniFieldSelect
                   label="Product"
                   value={productId}
@@ -521,6 +660,25 @@ export default function SalesPage() {
                     </SelectItem>
                   ))}
                 </UniFieldSelect>
+                {productUnitQuantities.length ? (
+                  <UniFieldSelect
+                    label="Selling Unit"
+                    value={selectedUnitQuantityId}
+                    onValueChange={setSelectedUnitQuantityId}
+                    placeholder="Base unit"
+                    allowClear
+                    containerClassName="w-44"
+                  >
+                    {productUnitQuantities.map((unitQuantity: any) => (
+                      <SelectItem
+                        key={unitQuantity.id}
+                        value={String(unitQuantity.id)}
+                      >
+                        {unitQuantity.unit_name || unitQuantity.unit_short_name}
+                      </SelectItem>
+                    ))}
+                  </UniFieldSelect>
+                ) : null}
                 <Button
                   type="button"
                   onClick={handleAddProduct}
@@ -544,13 +702,14 @@ export default function SalesPage() {
               {cartItems.length ? (
                 cartItems.map((item) => (
                   <div
-                    key={item.product_id}
+                    key={`${item.product_id}:${item.unit_quantity_id || "base"}`}
                     className="grid grid-cols-[1.4fr_130px_110px_120px_56px] items-center border-t px-4 py-3 text-sm font-semibold"
                   >
                     <div>
                       <p className="font-semibold text-gray-900">{item.name}</p>
                       <p className="text-xs text-gray-500">
                         SKU: {item.sku || "-"}
+                        {item.unit_label ? ` · Unit: ${item.unit_label}` : ""}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -559,7 +718,13 @@ export default function SalesPage() {
                         variant="outline"
                         size="icon"
                         className="size-8"
-                        onClick={() => updateQuantity(item.product_id, -1)}
+                        onClick={() =>
+                          updateQuantity(
+                            item.product_id,
+                            -1,
+                            item.unit_quantity_id || ""
+                          )
+                        }
                       >
                         <Minus className="size-4" />
                       </Button>
@@ -569,7 +734,13 @@ export default function SalesPage() {
                         variant="outline"
                         size="icon"
                         className="size-8"
-                        onClick={() => updateQuantity(item.product_id, 1)}
+                        onClick={() =>
+                          updateQuantity(
+                            item.product_id,
+                            1,
+                            item.unit_quantity_id || ""
+                          )
+                        }
                       >
                         <Plus className="size-4" />
                       </Button>
@@ -581,7 +752,9 @@ export default function SalesPage() {
                       variant="ghost"
                       size="icon"
                       className="size-8 text-red-500 hover:text-red-600"
-                      onClick={() => removeItem(item.product_id)}
+                      onClick={() =>
+                        removeItem(item.product_id, item.unit_quantity_id || "")
+                      }
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -630,6 +803,35 @@ export default function SalesPage() {
                 onChange={(event) => setCouponInput(event.target.value)}
                 placeholder="Enter coupon codes separated by comma"
               />
+
+              {customerId ? (
+                <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold text-blue-950">
+                        Customer Rewards
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-blue-700">
+                        {rewardBalanceState.isLoading
+                          ? "Loading reward balance..."
+                          : redeemableReward
+                            ? `${redeemableReward.points} points available. Redeem ${redeemableReward.target_points} points for coupon.`
+                            : "No redeemable points right now."}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRedeemReward}
+                      disabled={!redeemableReward || redeemRewardState.isLoading}
+                      className="bg-white"
+                    >
+                      {redeemRewardState.isLoading ? <Spinner /> : "Redeem"}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

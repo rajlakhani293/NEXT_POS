@@ -17,6 +17,8 @@ import {
 import { sales } from "@/lib/api/sales"
 
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
+const formatLabel = (value: any) =>
+  String(value || "-").replaceAll("_", " ").replaceAll("-", " ")
 
 export default function SaleReceiptPage() {
   const router = useRouter()
@@ -85,11 +87,20 @@ export default function SaleReceiptPage() {
         </Button>
       </div>
 
-      <div className="mx-auto w-full max-w-3xl rounded-3xl border border-gray-200 bg-white p-8 shadow-sm print:max-w-none print:rounded-none print:border-0 print:shadow-none">
+      <div className="mx-auto w-full max-w-3xl rounded-3xl border border-gray-200 bg-white p-8 shadow-sm print:max-w-none print:rounded-none print:border-0 print:p-4 print:shadow-none">
         <div className="border-b border-dashed border-gray-200 pb-6 text-center">
           <h2 className="text-3xl font-bold text-slate-950">NEXT POS</h2>
-          <p className="mt-2 text-sm text-slate-500">Sale Receipt</p>
-          <p className="mt-1 text-sm text-slate-700">Sale No: {receipt.code}</p>
+          <p className="mt-2 text-sm font-semibold text-slate-500">
+            Sale Receipt
+          </p>
+          <p className="mt-1 text-sm font-bold text-slate-800">
+            Sale No: {receipt.code}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            {receipt.created_at
+              ? new Date(receipt.created_at).toLocaleString()
+              : "-"}
+          </p>
         </div>
 
         <div className="grid gap-4 border-b border-dashed border-gray-200 py-6 md:grid-cols-2">
@@ -107,10 +118,12 @@ export default function SaleReceiptPage() {
               Order Type
             </p>
             <p className="mt-1 text-sm font-semibold capitalize text-slate-900">
-              {String(receipt.order_type || "-").replaceAll("_", " ")}
+              {receipt.order_type === "takeaway"
+                ? "Take Order"
+                : formatLabel(receipt.order_type)}
             </p>
             <p className="text-sm text-slate-500">
-              Status: {String(receipt.payment_status || "-").replaceAll("_", " ")}
+              Status: {formatLabel(receipt.payment_status)}
             </p>
           </div>
         </div>
@@ -135,6 +148,7 @@ export default function SaleReceiptPage() {
                       </p>
                       <p className="text-xs text-slate-500">
                         SKU: {item.product__sku || "-"}
+                        {item.unit__name ? ` · Unit: ${item.unit__name}` : ""}
                       </p>
                     </div>
                   </TableCell>
@@ -210,14 +224,45 @@ export default function SaleReceiptPage() {
                 className="flex items-center justify-between text-sm"
               >
                 <span className="capitalize text-slate-500">
-                  {String(payment.payment_type || "-").replaceAll("-", " ")}
+                  {formatLabel(payment.payment_type)}
                 </span>
                 <span className="font-semibold text-slate-900">
                   {formatMoney(payment.amount)}
                 </span>
               </div>
             ))}
+            {!(receipt.payments || []).length ? (
+              <p className="text-sm text-slate-500">No payment recorded.</p>
+            ) : null}
           </div>
+        </div>
+
+        {(receipt.applied_coupons || []).length ? (
+          <div className="mt-6 border-t border-dashed border-gray-200 pt-6">
+            <p className="text-sm font-semibold text-slate-900">Coupons</p>
+            <div className="mt-3 space-y-2">
+              {(receipt.applied_coupons || []).map((coupon: any) => (
+                <div
+                  key={coupon.id}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <span className="text-slate-500">{coupon.code}</span>
+                  <span className="font-semibold text-slate-900">
+                    -{formatMoney(coupon.discount_amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mt-8 border-t border-dashed border-gray-200 pt-5 text-center">
+          <p className="text-sm font-bold text-slate-900">
+            Thank you for shopping with us.
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Please keep this receipt for returns and exchanges.
+          </p>
         </div>
       </div>
     </div>
