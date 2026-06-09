@@ -46,6 +46,12 @@ export const PERMISSIONS = {
     receive: "purchases_receive",
     pay: "purchases_pay",
   },
+  expenses: {
+    view: "expenses_view",
+    create: "expenses_create",
+    update: "expenses_update",
+    delete: "expenses_delete",
+  },
   sales: {
     view: "sales_view",
     create: "sales_create",

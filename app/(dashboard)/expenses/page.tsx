@@ -18,6 +18,8 @@ const columns = [
   { key: "amount", title: "Amount" },
   { key: "expense_date", title: "Date" },
   { key: "payment_type", title: "Payment" },
+  { key: "shift__register__name", title: "Register" },
+  { key: "shift__shift_status", title: "Shift Status" },
   { key: "reference_number", title: "Reference" },
   { key: "note", title: "Note" },
 ]
@@ -120,13 +122,28 @@ export default function ExpensesPage() {
   }
 
   return (
-    <PermissionGuard permission={PERMISSIONS.settings.view}>
+    <PermissionGuard permission={PERMISSIONS.expenses.view}>
       <>
+        {currentShift.data?.data ? (
+          <div className="mb-4 rounded-lg border bg-white p-4">
+            <p className="text-sm font-semibold text-muted-foreground">
+              Current Shift
+            </p>
+            <h2 className="text-lg font-bold">
+              {currentShift.data.data.register_name || "Register"} · Expected Cash ₹
+              {currentShift.data.data.expected_cash || 0}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              If you record an expense with `Cash` and assign this shift, expected cash will reduce automatically.
+            </p>
+          </div>
+        ) : null}
+
         <DynamicTable
           data={table.orders}
           columns={columns}
           tableTitle="Expenses"
-          title={hasPermission(PERMISSIONS.settings.update) ? "Add Expense" : undefined}
+          title={hasPermission(PERMISSIONS.expenses.create) ? "Add Expense" : undefined}
           showSearch
           searchTerm={table.searchTerm}
           currentPage={table.currentPage}
@@ -139,13 +156,13 @@ export default function ExpensesPage() {
           sortableFields={table.sortableFields}
           isLoading={table.isLoading}
           setAddEntityOpen={
-            hasPermission(PERMISSIONS.settings.update) ? openCreate : undefined
+            hasPermission(PERMISSIONS.expenses.create) ? openCreate : undefined
           }
-          showEdit={hasPermission(PERMISSIONS.settings.update)}
+          showEdit={hasPermission(PERMISSIONS.expenses.update)}
           onEdit={openEdit}
-          showDelete={hasPermission(PERMISSIONS.settings.update)}
+          showDelete={hasPermission(PERMISSIONS.expenses.delete)}
           deleteMutation={deleteExpense}
-          showStatus={hasPermission(PERMISSIONS.settings.update)}
+          showStatus={hasPermission(PERMISSIONS.expenses.update)}
           statusChangeMutation={({ ids, status }: any) =>
             updateExpenseStatus({ payLoad: { ids, status } })
           }

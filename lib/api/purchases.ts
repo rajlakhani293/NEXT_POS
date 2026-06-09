@@ -25,8 +25,36 @@ const endpointsConfig = {
   editPurchaseOrder: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`orders/${id}`, payLoad) },
   deletePurchaseOrder: { query: deleteMutation("orders/delete") },
   getPurchaseOrderById: { query: ({ id }: { id: number }) => getMutation(`orders/${id}`) },
+  getPurchaseOrderProducts: { query: ({ id }: { id: number | string }) => getMutation(`orders/${id}/products`) },
+  refreshPurchaseOrder: { query: ({ id }: { id: number | string }) => getMutation(`orders/${id}/refresh`) },
+  changePurchasePaymentStatus: {
+    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
+      putMutation(`orders/${id}/change-payment-status`, payLoad),
+  },
+  addPurchaseOrderProduct: {
+    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
+      createMutation(`orders/${id}/products`)(payLoad),
+  },
+  editPurchaseOrderProduct: {
+    query: ({ id, productId, payLoad }: { id: any; productId: any; payLoad: any }) =>
+      putMutation(`orders/${id}/products/${productId}`, payLoad),
+  },
+  bulkUpdatePurchaseOrderProducts: {
+    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
+      putMutation(`orders/${id}/products`, payLoad),
+  },
+  deletePurchaseOrderProduct: {
+    query: ({ id, productId }: { id: any; productId: any }) =>
+      deleteMutation(`orders/${id}/products/${productId}`)({}),
+  },
   receivePurchaseOrder: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`orders/${id}/receive`)(payLoad) },
   payPurchaseOrder: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`orders/${id}/pay`)(payLoad) },
+  setPurchaseOrderAsPaid: { query: ({ id }: { id: any }) => getMutation(`orders/${id}/set-as-paid`) },
+  getPurchasePreload: { query: ({ key }: { key: string }) => getMutation(`preload/${key}`) },
+  storePurchasePreload: { query: postMutation("preload") },
+  getLowStockSuggestions: { query: () => getMutation("low-stock-suggestions") },
+  searchProductForProcurement: { query: postMutation("products/search-product") },
+  searchProcurementProduct: { query: postMutation("products/search-procurement-product") },
 }
 
 export const purchases = createApi({

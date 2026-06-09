@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, FileTextIcon, PlusIcon, Trash2Icon } from "lucide-react"
+import { ArrowLeft, FileTextIcon, PlusIcon, RefreshCwIcon, Trash2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { SelectItem } from "@/components/ui/select"
@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 
 type PurchaseItemForm = {
   id: string
+  purchase_item_id?: number
   product_id: string
   ordered_quantity: string
   cost_price: string
@@ -98,12 +99,73 @@ export default function PurchaseOrderFormPage() {
     purchases as any
   ).useReceivePurchaseOrderMutation()
   const [payPurchaseOrder] = (purchases as any).usePayPurchaseOrderMutation()
+  const [changePurchasePaymentStatus] = (
+    purchases as any
+  ).useChangePurchasePaymentStatusMutation()
+  const [bulkUpdatePurchaseOrderProducts] = (
+    purchases as any
+  ).useBulkUpdatePurchaseOrderProductsMutation()
+  const [deletePurchaseOrderProduct] = (
+    purchases as any
+  ).useDeletePurchaseOrderProductMutation()
+  const [getLowStockSuggestions] = (
+    purchases as any
+  ).useGetLowStockSuggestionsMutation()
+  const [refreshPurchaseOrder] = (
+    purchases as any
+  ).useRefreshPurchaseOrderMutation()
+  const [setPurchaseOrderAsPaid] = (
+    purchases as any
+  ).useSetPurchaseOrderAsPaidMutation()
 
   const record = purchaseOrder.data?.data
   const orderItems = record?.items || []
   const productOptions = products.data?.data || []
   const paymentTypeOptions = paymentTypes.data?.data || []
   const supplierOptions = suppliers.data?.data || []
+
+  const hydratePurchase = (purchase: any) => {
+    setFormData({
+      supplier_id: purchase.supplier_id ? String(purchase.supplier_id) : "",
+      code: purchase.code || "",
+      order_date: purchase.order_date || today(),
+      expected_date: purchase.expected_date || "",
+      workflow_status: purchase.workflow_status || "ordered",
+      discount_amount: String(purchase.discount_amount || ""),
+      shipping_amount: String(purchase.shipping_amount || ""),
+      note: purchase.note || "",
+    })
+
+    setItems(
+      (purchase.items || []).map((item: any) => ({
+        id: crypto.randomUUID(),
+        purchase_item_id: item.id,
+        product_id: item.product_id ? String(item.product_id) : "",
+        ordered_quantity: String(item.ordered_quantity || ""),
+        cost_price: String(item.cost_price || ""),
+        tax_amount: String(item.tax_amount || ""),
+      }))
+    )
+
+    const dueAmount = Math.max(
+      money(purchase.total) - money(purchase.paid_amount),
+      0
+    )
+    setPayment((current) => ({
+      ...current,
+      amount: dueAmount ? String(dueAmount) : "",
+    }))
+  }
+
+  const reloadOrder = async () => {
+    if (!isEdit) return null
+    const response = await getPurchaseOrderById({ id }).unwrap()
+    const purchase = response?.data
+    if (purchase) {
+      hydratePurchase(purchase)
+    }
+    return purchase
+  }
 
   useEffect(() => {
     const loadKey = `${id}:${isEdit ? "edit" : "create"}`
@@ -122,29 +184,7 @@ export default function PurchaseOrderFormPage() {
         return
       }
 
-      const response = await getPurchaseOrderById({ id }).unwrap()
-      const purchase = response?.data
-      if (!purchase) return
-
-      setFormData({
-        supplier_id: purchase.supplier_id ? String(purchase.supplier_id) : "",
-        code: purchase.code || "",
-        order_date: purchase.order_date || today(),
-        expected_date: purchase.expected_date || "",
-        workflow_status: purchase.workflow_status || "ordered",
-        discount_amount: String(purchase.discount_amount || ""),
-        shipping_amount: String(purchase.shipping_amount || ""),
-        note: purchase.note || "",
-      })
-
-      const dueAmount = Math.max(
-        money(purchase.total) - money(purchase.paid_amount),
-        0
-      )
-      setPayment((current) => ({
-        ...current,
-        amount: dueAmount ? String(dueAmount) : "",
-      }))
+      await reloadOrder()
     }
 
     load()
@@ -195,7 +235,7 @@ export default function PurchaseOrderFormPage() {
     const nextErrors: Record<string, string> = {}
     if (!formData.supplier_id) nextErrors.supplier_id = "Supplier is required"
     if (!formData.order_date) nextErrors.order_date = "Order date is required"
-    if (!isEdit) {
+    if (items.length) {
       items.forEach((item, index) => {
         if (!item.product_id) nextErrors[`product_${index}`] = "Product is required"
         if (!item.ordered_quantity)
@@ -233,6 +273,18 @@ export default function PurchaseOrderFormPage() {
         showToast.success(response?.message || "Purchase order created.")
       } else {
         const response = await editPurchaseOrder({ id, payLoad }).unwrap()
+        await bulkUpdatePurchaseOrderProducts({
+          id,
+          payLoad: {
+            items: items.map((item) => ({
+              purchase_item_id: item.purchase_item_id,
+              product_id: Number(item.product_id),
+              ordered_quantity: item.ordered_quantity || "0",
+              cost_price: item.cost_price || "0",
+              tax_amount: item.tax_amount || "0",
+            })),
+          },
+        }).unwrap()
         showToast.success(response?.message || "Purchase order updated.")
       }
       goBack()
@@ -259,7 +311,7 @@ export default function PurchaseOrderFormPage() {
       payLoad: { items: selectedItems, note: formData.note || "" },
     }).unwrap()
     showToast.success(response?.message || "Stock received successfully.")
-    await getPurchaseOrderById({ id })
+    await reloadOrder()
     setReceiveItems({})
   }
 
@@ -274,7 +326,66 @@ export default function PurchaseOrderFormPage() {
       payLoad: payment,
     }).unwrap()
     showToast.success(response?.message || "Purchase payment recorded.")
-    await getPurchaseOrderById({ id })
+    await reloadOrder()
+  }
+
+  const handleUseLowStockSuggestions = async () => {
+    const response = await getLowStockSuggestions().unwrap()
+    const suggestions = response?.data || []
+    if (!suggestions.length) {
+      showToast.error("No low stock suggestions found.")
+      return
+    }
+    setItems((current) => [
+      ...current,
+      ...suggestions.map((item: any) => ({
+        id: crypto.randomUUID(),
+        product_id: String(item.id),
+        ordered_quantity: "1",
+        cost_price: String(item.purchase_price || 0),
+        tax_amount: "0",
+      })),
+    ])
+    showToast.success("Low stock suggestions added.")
+  }
+
+  const handleRefreshOrder = async () => {
+    await refreshPurchaseOrder({ id }).unwrap()
+    await reloadOrder()
+    showToast.success("Procurement refreshed successfully.")
+  }
+
+  const handleSetAsPaid = async () => {
+    const response = await setPurchaseOrderAsPaid({ id }).unwrap()
+    showToast.success(response?.message || "Procurement marked as paid.")
+    await reloadOrder()
+  }
+
+  const handlePaymentStatusChange = async (
+    payment_status: "paid" | "partial" | "unpaid"
+  ) => {
+    const payLoad: Record<string, string> = { payment_status }
+    if (payment_status === "partial") {
+      if (money(payment.amount) <= 0) {
+        showToast.error("Enter partial amount first.")
+        return
+      }
+      payLoad.amount = payment.amount
+    }
+
+    const response = await changePurchasePaymentStatus({ id, payLoad }).unwrap()
+    showToast.success(response?.message || "Payment status updated.")
+    await reloadOrder()
+  }
+
+  const handleRemoveItem = async (item: PurchaseItemForm) => {
+    if (isEdit && item.purchase_item_id) {
+      await deletePurchaseOrderProduct({ id, productId: item.purchase_item_id }).unwrap()
+      showToast.success("Procurement product deleted.")
+      await reloadOrder()
+      return
+    }
+    setItems((current) => current.filter((currentItem) => currentItem.id !== item.id))
   }
 
   if (isLoading) {
@@ -309,17 +420,27 @@ export default function PurchaseOrderFormPage() {
               Buy stock from supplier, receive stock-in and record supplier payment.
             </p>
           </div>
-          {isEdit ? (
-            <Button
-              type="button"
-              variant="outline"
-              className="ml-auto"
-              onClick={() => router.push(`/purchases/orders/${id}/invoice`)}
-            >
-              <FileTextIcon className="size-4" />
-              Invoice
-            </Button>
-          ) : null}
+          <div className="ml-auto flex items-center gap-2">
+            {isEdit ? (
+              <>
+                <Button type="button" variant="outline" onClick={handleRefreshOrder}>
+                  <RefreshCwIcon className="size-4" />
+                  Refresh
+                </Button>
+                <Button type="button" variant="outline" onClick={handleSetAsPaid}>
+                  Set As Paid
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push(`/purchases/orders/${id}/invoice`)}
+                >
+                  <FileTextIcon className="size-4" />
+                  Invoice
+                </Button>
+              </>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -422,10 +543,15 @@ export default function PurchaseOrderFormPage() {
                     Add products that you are buying from the supplier.
                   </p>
                 </div>
-                <Button type="button" onClick={() => setItems([...items, emptyItem()])}>
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" onClick={handleUseLowStockSuggestions}>
+                    Low Stock Suggestions
+                  </Button>
+                  <Button type="button" onClick={() => setItems([...items, emptyItem()])}>
                   <PlusIcon className="size-4" />
                   Add Item
-                </Button>
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -495,11 +621,7 @@ export default function PurchaseOrderFormPage() {
                         variant="outline"
                         size="icon"
                         disabled={items.length === 1}
-                        onClick={() =>
-                          setItems((current) =>
-                            current.filter((currentItem) => currentItem.id !== item.id)
-                          )
-                        }
+                        onClick={() => handleRemoveItem(item)}
                       >
                         <Trash2Icon className="size-4" />
                       </Button>
@@ -526,34 +648,134 @@ export default function PurchaseOrderFormPage() {
           ) : (
             <>
               <section className="rounded-lg border border-gray-200 bg-white p-4">
-                <h2 className="mb-4 text-base font-bold text-gray-900">
-                  Purchase Items
-                </h2>
-                <div className="overflow-hidden rounded-lg border border-gray-100">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-left font-bold text-gray-700">
-                      <tr>
-                        <th className="p-3">Product</th>
-                        <th className="p-3">Ordered</th>
-                        <th className="p-3">Received</th>
-                        <th className="p-3">Cost</th>
-                        <th className="p-3">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orderItems.map((item: any) => (
-                        <tr key={item.id} className="border-t">
-                          <td className="p-3 font-semibold">
-                            {item.product__name}
-                          </td>
-                          <td className="p-3">{item.ordered_quantity}</td>
-                          <td className="p-3">{item.received_quantity}</td>
-                          <td className="p-3">₹{item.cost_price}</td>
-                          <td className="p-3">₹{item.total}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-bold text-gray-900">
+                      Purchase Items
+                    </h2>
+                    <p className="text-xs font-medium text-gray-500">
+                      Manage procurement products, receive quantities and supplier billing.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" onClick={handleUseLowStockSuggestions}>
+                      Low Stock Suggestions
+                    </Button>
+                    <Button type="button" onClick={() => setItems([...items, emptyItem()])}>
+                      <PlusIcon className="size-4" />
+                      Add Item
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {items.map((item, index) => {
+                    const existingItem = orderItems.find(
+                      (orderItem: any) => orderItem.id === item.purchase_item_id
+                    )
+                    const receivedQuantity = money(existingItem?.received_quantity)
+                    const rowTotal =
+                      money(item.ordered_quantity) * money(item.cost_price) +
+                      money(item.tax_amount)
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.8fr_auto]"
+                      >
+                        <UniFieldSelect
+                          label={index === 0 ? "Product" : undefined}
+                          required
+                          value={item.product_id}
+                          onValueChange={(value) =>
+                            updateItem(item.id, "product_id", value)
+                          }
+                          placeholder="Select product"
+                          error={errors[`product_${index}`]}
+                        >
+                          {productOptions.map((product: any) => (
+                            <SelectItem key={product.id} value={String(product.id)}>
+                              {product.name}
+                            </SelectItem>
+                          ))}
+                        </UniFieldSelect>
+                        <UniFieldInput
+                          label={index === 0 ? "Ordered" : undefined}
+                          required
+                          type="number"
+                          min={receivedQuantity}
+                          step="0.001"
+                          placeholder="Qty"
+                          value={item.ordered_quantity}
+                          onChange={(event) =>
+                            updateItem(item.id, "ordered_quantity", event.target.value)
+                          }
+                          error={errors[`quantity_${index}`]}
+                        />
+                        <UniFieldInput
+                          label={index === 0 ? "Received" : undefined}
+                          value={existingItem ? String(existingItem.received_quantity || 0) : "0"}
+                          readOnly
+                          disabled
+                        />
+                        <UniFieldInput
+                          label={index === 0 ? "Cost" : undefined}
+                          required
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          prefix="₹"
+                          placeholder="Cost"
+                          value={item.cost_price}
+                          onChange={(event) =>
+                            updateItem(item.id, "cost_price", event.target.value)
+                          }
+                          error={errors[`cost_${index}`]}
+                        />
+                        <div className="space-y-2">
+                          <UniFieldInput
+                            label={index === 0 ? "Tax" : undefined}
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            prefix="₹"
+                            placeholder="Tax"
+                            value={item.tax_amount}
+                            onChange={(event) =>
+                              updateItem(item.id, "tax_amount", event.target.value)
+                            }
+                          />
+                          <p className="text-xs font-medium text-gray-500">
+                            Total: ₹{rowTotal.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className={cn("flex items-end", index === 0 && "pt-6")}>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            disabled={items.length === 1}
+                            onClick={() => handleRemoveItem(item)}
+                          >
+                            <Trash2Icon className="size-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="mt-4 grid gap-2 rounded-lg bg-gray-50 p-3 text-sm font-semibold text-gray-700 md:ml-auto md:w-80">
+                  <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span>₹{totals.subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tax</span>
+                    <span>₹{totals.tax.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-base font-bold text-gray-950">
+                    <span>Total</span>
+                    <span>₹{totals.total.toFixed(2)}</span>
+                  </div>
                 </div>
               </section>
 
@@ -696,6 +918,29 @@ export default function PurchaseOrderFormPage() {
                   >
                     {payPurchaseOrder.isLoading ? <Spinner /> : "Pay Supplier"}
                   </Button>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handlePaymentStatusChange("unpaid")}
+                    >
+                      Mark Unpaid
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handlePaymentStatusChange("partial")}
+                    >
+                      Mark Partial
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handlePaymentStatusChange("paid")}
+                    >
+                      Mark Paid
+                    </Button>
+                  </div>
                 </section>
               </div>
             </>

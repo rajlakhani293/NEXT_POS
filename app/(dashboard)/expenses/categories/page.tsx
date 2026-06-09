@@ -24,10 +24,10 @@ export default function ExpenseCategoriesPage() {
       deleteTitle="Delete Expense Category"
       deleteDescription="Are you sure you want to delete this expense category?"
       permissions={{
-        view: PERMISSIONS.settings.view,
-        create: PERMISSIONS.settings.update,
-        update: PERMISSIONS.settings.update,
-        delete: PERMISSIONS.settings.update,
+        view: PERMISSIONS.expenses.view,
+        create: PERMISSIONS.expenses.create,
+        update: PERMISSIONS.expenses.update,
+        delete: PERMISSIONS.expenses.delete,
       }}
     />
   )
