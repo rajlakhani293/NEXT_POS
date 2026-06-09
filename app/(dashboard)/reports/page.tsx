@@ -11,6 +11,14 @@ import { reports } from "@/lib/api/reports"
 import { showToast } from "@/lib/toast"
 
 const reportTabs = [
+  "sales",
+  "sold_stock",
+  "profit",
+  "payment_types",
+  "products",
+  "low_stock",
+  "stock",
+  "cashier",
   "customer_due",
   "supplier_payable",
   "stock_ledger",
@@ -19,6 +27,14 @@ const reportTabs = [
 ] as const
 
 const tabLabels: Record<(typeof reportTabs)[number], string> = {
+  sales: "Sale Report",
+  sold_stock: "Sold Stock",
+  profit: "Profit",
+  payment_types: "Payment Types",
+  products: "Products",
+  low_stock: "Low Stock",
+  stock: "Stock",
+  cashier: "Cashier",
   customer_due: "Customer Due",
   supplier_payable: "Supplier Payable",
   stock_ledger: "Stock Ledger",
@@ -27,6 +43,83 @@ const tabLabels: Record<(typeof reportTabs)[number], string> = {
 }
 
 const columns: Record<string, any[]> = {
+  sales: [
+    { key: "code", title: "Order" },
+    { key: "customer__name", title: "Customer" },
+    { key: "cashier__full_name", title: "Cashier" },
+    { key: "order_type", title: "Type" },
+    { key: "payment_status", title: "Payment" },
+    { key: "total", title: "Total" },
+    { key: "tendered_amount", title: "Paid" },
+    { key: "due_amount", title: "Due" },
+    { key: "created_at", title: "Date" },
+  ],
+  sold_stock: [
+    { key: "sale_order__code", title: "Order" },
+    { key: "product__name", title: "Product" },
+    { key: "quantity", title: "Qty" },
+    { key: "unit_price", title: "Price" },
+    { key: "discount_amount", title: "Discount" },
+    { key: "tax_amount", title: "Tax" },
+    { key: "total", title: "Total" },
+    { key: "cost_price", title: "Cost" },
+    { key: "created_at", title: "Date" },
+  ],
+  profit: [
+    { key: "sale_order__code", title: "Order" },
+    { key: "product__name", title: "Product" },
+    { key: "quantity", title: "Qty" },
+    { key: "total", title: "Sales" },
+    { key: "cost_total", title: "Cost" },
+    { key: "profit_amount", title: "Profit" },
+    { key: "created_at", title: "Date" },
+  ],
+  payment_types: [
+    { key: "sale_order__code", title: "Order" },
+    { key: "payment_type", title: "Payment" },
+    { key: "amount", title: "Amount" },
+    { key: "paid_at", title: "Paid At" },
+    { key: "reference_number", title: "Reference" },
+    { key: "note", title: "Note" },
+  ],
+  products: [
+    { key: "name", title: "Product" },
+    { key: "sku", title: "SKU" },
+    { key: "barcode", title: "Barcode" },
+    { key: "product_type", title: "Type" },
+    { key: "current_stock", title: "Stock" },
+    { key: "sold_quantity", title: "Sold Qty" },
+    { key: "sold_amount", title: "Sold Amount" },
+    { key: "selling_price", title: "Selling" },
+  ],
+  low_stock: [
+    { key: "name", title: "Product" },
+    { key: "sku", title: "SKU" },
+    { key: "barcode", title: "Barcode" },
+    { key: "current_stock", title: "Stock" },
+    { key: "min_stock", title: "Min" },
+    { key: "max_stock", title: "Max" },
+    { key: "purchase_price", title: "Purchase" },
+    { key: "selling_price", title: "Selling" },
+  ],
+  stock: [
+    { key: "name", title: "Product" },
+    { key: "sku", title: "SKU" },
+    { key: "barcode", title: "Barcode" },
+    { key: "product_type", title: "Type" },
+    { key: "track_stock", title: "Track" },
+    { key: "opening_stock", title: "Opening" },
+    { key: "current_stock", title: "Current" },
+    { key: "min_stock", title: "Min" },
+    { key: "max_stock", title: "Max" },
+  ],
+  cashier: [
+    { key: "cashier__full_name", title: "Cashier" },
+    { key: "order_count", title: "Orders" },
+    { key: "total_sales", title: "Sales" },
+    { key: "total_paid", title: "Paid" },
+    { key: "total_due", title: "Due" },
+  ],
   customer_due: [
     { key: "name", title: "Customer" },
     { key: "phone", title: "Phone" },
@@ -65,7 +158,7 @@ const columns: Record<string, any[]> = {
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] =
-    useState<(typeof reportTabs)[number]>("customer_due")
+    useState<(typeof reportTabs)[number]>("sales")
   const [summary, setSummary] = useState<any>(null)
   const [rows, setRows] = useState<any[]>([])
   const [totalItems, setTotalItems] = useState(0)
@@ -94,6 +187,30 @@ export default function ReportsPage() {
   const [getCustomerCreditLedgerReport, customerCreditState] = (
     reports as any
   ).useGetCustomerCreditLedgerReportMutation()
+  const [getSaleReport, saleReportState] = (
+    reports as any
+  ).useGetSaleReportMutation()
+  const [getSoldStockReport, soldStockState] = (
+    reports as any
+  ).useGetSoldStockReportMutation()
+  const [getProfitReport, profitState] = (
+    reports as any
+  ).useGetProfitReportMutation()
+  const [getPaymentTypesReport, paymentTypesState] = (
+    reports as any
+  ).useGetPaymentTypesReportMutation()
+  const [getProductsReport, productsState] = (
+    reports as any
+  ).useGetProductsReportMutation()
+  const [getLowStockReport, lowStockState] = (
+    reports as any
+  ).useGetLowStockReportMutation()
+  const [getStockReport, stockState] = (
+    reports as any
+  ).useGetStockReportMutation()
+  const [getCashierReport, cashierState] = (
+    reports as any
+  ).useGetCashierReportMutation()
   const [getTransactionHistoryData, accountingState] = (
     accounting as any
   ).useGetTransactionHistoryDataMutation()
@@ -103,6 +220,14 @@ export default function ReportsPage() {
     supplierPayableState.isLoading ||
     stockLedgerState.isLoading ||
     customerCreditState.isLoading ||
+    saleReportState.isLoading ||
+    soldStockState.isLoading ||
+    profitState.isLoading ||
+    paymentTypesState.isLoading ||
+    productsState.isLoading ||
+    lowStockState.isLoading ||
+    stockState.isLoading ||
+    cashierState.isLoading ||
     accountingState.isLoading
 
   const loadSummary = async () => {
@@ -119,6 +244,14 @@ export default function ReportsPage() {
       endDate: dateFilters.endDate,
     }
     const mutationMap: Record<string, any> = {
+      sales: getSaleReport,
+      sold_stock: getSoldStockReport,
+      profit: getProfitReport,
+      payment_types: getPaymentTypesReport,
+      products: getProductsReport,
+      low_stock: getLowStockReport,
+      stock: getStockReport,
+      cashier: getCashierReport,
       customer_due: getCustomerDueReport,
       supplier_payable: getSupplierPayableReport,
       stock_ledger: getStockLedgerReport,
