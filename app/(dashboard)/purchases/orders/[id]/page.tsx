@@ -65,6 +65,8 @@ export default function PurchaseOrderFormPage() {
   const id = params.id as string
   const isEdit = id !== "create"
   const loadKeyRef = useRef("")
+  const contentRef = useRef<HTMLDivElement>(null)
+  const paginationSentinelRef = useRef<HTMLDivElement>(null)
 
   const [formData, setFormData] = useState<PurchaseFormValues>(initialValues)
   const [items, setItems] = useState<PurchaseItemForm[]>([emptyItem()])
@@ -78,45 +80,22 @@ export default function PurchaseOrderFormPage() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isFooterStuck, setIsFooterStuck] = useState(false)
 
-  const [getSuppliersDropdown, suppliers] = (
-    purchases as any
-  ).useGetSuppliersDropdownMutation()
-  const [getProductsDropdown, products] = (
-    catalog as any
-  ).useGetProductsDropdownMutation()
-  const [getPaymentTypesDropdown, paymentTypes] = (
-    payments as any
-  ).useGetPaymentTypesDropdownMutation()
-  const [getPurchaseOrderById, purchaseOrder] = (
-    purchases as any
-  ).useGetPurchaseOrderByIdMutation()
-  const [createPurchaseOrder] = (
-    purchases as any
-  ).useCreatePurchaseOrderMutation()
+  const [getSuppliersDropdown, suppliers] = (purchases as any).useGetSuppliersDropdownMutation()
+  const [getProductsDropdown, products] = (catalog as any).useGetProductsDropdownMutation()
+  const [getPaymentTypesDropdown, paymentTypes] = (payments as any).useGetPaymentTypesDropdownMutation()
+  const [getPurchaseOrderById, purchaseOrder] = (purchases as any).useGetPurchaseOrderByIdMutation()
+  const [createPurchaseOrder] = (purchases as any).useCreatePurchaseOrderMutation()
   const [editPurchaseOrder] = (purchases as any).useEditPurchaseOrderMutation()
-  const [receivePurchaseOrder] = (
-    purchases as any
-  ).useReceivePurchaseOrderMutation()
+  const [receivePurchaseOrder] = (purchases as any).useReceivePurchaseOrderMutation()
   const [payPurchaseOrder] = (purchases as any).usePayPurchaseOrderMutation()
-  const [changePurchasePaymentStatus] = (
-    purchases as any
-  ).useChangePurchasePaymentStatusMutation()
-  const [bulkUpdatePurchaseOrderProducts] = (
-    purchases as any
-  ).useBulkUpdatePurchaseOrderProductsMutation()
-  const [deletePurchaseOrderProduct] = (
-    purchases as any
-  ).useDeletePurchaseOrderProductMutation()
-  const [getLowStockSuggestions] = (
-    purchases as any
-  ).useGetLowStockSuggestionsMutation()
-  const [refreshPurchaseOrder] = (
-    purchases as any
-  ).useRefreshPurchaseOrderMutation()
-  const [setPurchaseOrderAsPaid] = (
-    purchases as any
-  ).useSetPurchaseOrderAsPaidMutation()
+  const [changePurchasePaymentStatus] = (purchases as any).useChangePurchasePaymentStatusMutation()
+  const [bulkUpdatePurchaseOrderProducts] = (purchases as any).useBulkUpdatePurchaseOrderProductsMutation()
+  const [deletePurchaseOrderProduct] = (purchases as any).useDeletePurchaseOrderProductMutation()
+  const [getLowStockSuggestions] = (purchases as any).useGetLowStockSuggestionsMutation()
+  const [refreshPurchaseOrder] = (purchases as any).useRefreshPurchaseOrderMutation()
+  const [setPurchaseOrderAsPaid] = (purchases as any).useSetPurchaseOrderAsPaidMutation()
 
   const record = purchaseOrder.data?.data
   const orderItems = record?.items || []
@@ -213,6 +192,26 @@ export default function PurchaseOrderFormPage() {
     suppliers.isLoading ||
     products.isLoading ||
     (isEdit && purchaseOrder.isLoading)
+
+  useEffect(() => {
+    const content = contentRef.current
+    if (!content) return
+
+    const updateFooterState = () => {
+      const distanceFromBottom =
+        content.scrollHeight - content.scrollTop - content.clientHeight
+      setIsFooterStuck(distanceFromBottom > 40)
+    }
+
+    updateFooterState()
+    content.addEventListener("scroll", updateFooterState, { passive: true })
+    window.addEventListener("resize", updateFooterState)
+
+    return () => {
+      content.removeEventListener("scroll", updateFooterState)
+      window.removeEventListener("resize", updateFooterState)
+    }
+  }, [isEdit, isLoading, items.length, orderItems.length])
 
   const updateField = (name: keyof PurchaseFormValues, value: string) => {
     setFormData((current) => ({ ...current, [name]: value }))
@@ -444,209 +443,96 @@ export default function PurchaseOrderFormPage() {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <form onSubmit={handleSubmit} noValidate className="space-y-4 p-4">
-          <section className="rounded-lg border border-gray-200 bg-white p-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <UniFieldSelect
-                label="Supplier"
-                required
-                value={formData.supplier_id}
-                onValueChange={(value) => updateField("supplier_id", value)}
-                placeholder="Select Supplier"
-                error={errors.supplier_id}
-              >
-                {supplierOptions.map((supplier: any) => (
-                  <SelectItem key={supplier.id} value={String(supplier.id)}>
-                    {supplier.name}
-                  </SelectItem>
-                ))}
-              </UniFieldSelect>
-              <UniFieldInput
-                label="Purchase Code"
-                placeholder="Auto generated if empty"
-                value={formData.code}
-                onChange={(event) => updateField("code", event.target.value)}
-              />
-              <UniFieldInput
-                label="Order Date"
-                required
-                type="date"
-                value={formData.order_date}
-                onChange={(event) =>
-                  updateField("order_date", event.target.value)
-                }
-                error={errors.order_date}
-              />
-              <UniFieldInput
-                label="Expected Date"
-                type="date"
-                value={formData.expected_date}
-                onChange={(event) =>
-                  updateField("expected_date", event.target.value)
-                }
-              />
-              <UniFieldSelect
-                label="Workflow Status"
-                value={formData.workflow_status}
-                onValueChange={(value) => updateField("workflow_status", value)}
-              >
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="ordered">Ordered</SelectItem>
-                <SelectItem value="partial">Partial</SelectItem>
-                <SelectItem value="received">Received</SelectItem>
-              </UniFieldSelect>
-              <UniFieldInput
-                label="Shipping Amount"
-                type="number"
-                min="0"
-                step="0.01"
-                prefix="₹"
-                placeholder="Enter shipping"
-                value={formData.shipping_amount}
-                onChange={(event) =>
-                  updateField("shipping_amount", event.target.value)
-                }
-              />
-              <UniFieldInput
-                label="Discount Amount"
-                type="number"
-                min="0"
-                step="0.01"
-                prefix="₹"
-                placeholder="Enter discount"
-                value={formData.discount_amount}
-                onChange={(event) =>
-                  updateField("discount_amount", event.target.value)
-                }
-              />
-              <div className="md:col-span-2">
-                <UniFieldInput
-                  as="textarea"
-                  label="Note"
-                  placeholder="Enter purchase note"
-                  value={formData.note}
-                  onChange={(event) => updateField("note", event.target.value)}
-                />
-              </div>
-            </div>
-          </section>
-
-          {!isEdit ? (
+      <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
+          <div className="space-y-4 px-4 pt-4 mb-0">
             <section className="rounded-lg border border-gray-200 bg-white p-4">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h2 className="text-base font-bold text-gray-900">
-                    Purchase Items
-                  </h2>
-                  <p className="text-xs font-medium text-gray-500">
-                    Add products that you are buying from the supplier.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" onClick={handleUseLowStockSuggestions}>
-                    Low Stock Suggestions
-                  </Button>
-                  <Button type="button" onClick={() => setItems([...items, emptyItem()])}>
-                  <PlusIcon className="size-4" />
-                  Add Item
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {items.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1.5fr_1fr_1fr_1fr_auto]"
-                  >
-                    <UniFieldSelect
-                      label={index === 0 ? "Product" : undefined}
-                      required
-                      value={item.product_id}
-                      onValueChange={(value) =>
-                        updateItem(item.id, "product_id", value)
-                      }
-                      placeholder="Select product"
-                      error={errors[`product_${index}`]}
-                    >
-                      {productOptions.map((product: any) => (
-                        <SelectItem key={product.id} value={String(product.id)}>
-                          {product.name}
-                        </SelectItem>
-                      ))}
-                    </UniFieldSelect>
-                    <UniFieldInput
-                      label={index === 0 ? "Qty" : undefined}
-                      required
-                      type="number"
-                      min="0"
-                      step="0.001"
-                      placeholder="Qty"
-                      value={item.ordered_quantity}
-                      onChange={(event) =>
-                        updateItem(item.id, "ordered_quantity", event.target.value)
-                      }
-                      error={errors[`quantity_${index}`]}
-                    />
-                    <UniFieldInput
-                      label={index === 0 ? "Cost" : undefined}
-                      required
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      prefix="₹"
-                      placeholder="Cost"
-                      value={item.cost_price}
-                      onChange={(event) =>
-                        updateItem(item.id, "cost_price", event.target.value)
-                      }
-                      error={errors[`cost_${index}`]}
-                    />
-                    <UniFieldInput
-                      label={index === 0 ? "Tax" : undefined}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      prefix="₹"
-                      placeholder="Tax"
-                      value={item.tax_amount}
-                      onChange={(event) =>
-                        updateItem(item.id, "tax_amount", event.target.value)
-                      }
-                    />
-                    <div className={cn("flex items-end", index === 0 && "pt-6")}>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        disabled={items.length === 1}
-                        onClick={() => handleRemoveItem(item)}
-                      >
-                        <Trash2Icon className="size-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 grid gap-2 rounded-lg bg-gray-50 p-3 text-sm font-semibold text-gray-700 md:ml-auto md:w-80">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>₹{totals.subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Tax</span>
-                  <span>₹{totals.tax.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-base font-bold text-gray-950">
-                  <span>Total</span>
-                  <span>₹{totals.total.toFixed(2)}</span>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <UniFieldSelect
+                  label="Supplier"
+                  required
+                  value={formData.supplier_id}
+                  onValueChange={(value) => updateField("supplier_id", value)}
+                  placeholder="Select Supplier"
+                  error={errors.supplier_id}
+                >
+                  {supplierOptions.map((supplier: any) => (
+                    <SelectItem key={supplier.id} value={String(supplier.id)}>
+                      {supplier.name}
+                    </SelectItem>
+                  ))}
+                </UniFieldSelect>
+                <UniFieldInput
+                  label="Purchase Code"
+                  placeholder="Auto generated if empty"
+                  value={formData.code}
+                  onChange={(event) => updateField("code", event.target.value)}
+                />
+                <UniFieldInput
+                  label="Order Date"
+                  required
+                  type="date"
+                  value={formData.order_date}
+                  onChange={(event) =>
+                    updateField("order_date", event.target.value)
+                  }
+                  error={errors.order_date}
+                />
+                <UniFieldInput
+                  label="Expected Date"
+                  type="date"
+                  value={formData.expected_date}
+                  onChange={(event) =>
+                    updateField("expected_date", event.target.value)
+                  }
+                />
+                <UniFieldSelect
+                  label="Workflow Status"
+                  value={formData.workflow_status}
+                  onValueChange={(value) => updateField("workflow_status", value)}
+                >
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="ordered">Ordered</SelectItem>
+                  <SelectItem value="partial">Partial</SelectItem>
+                  <SelectItem value="received">Received</SelectItem>
+                </UniFieldSelect>
+                <UniFieldInput
+                  label="Shipping Amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  prefix="₹"
+                  placeholder="Enter shipping"
+                  value={formData.shipping_amount}
+                  onChange={(event) =>
+                    updateField("shipping_amount", event.target.value)
+                  }
+                />
+                <UniFieldInput
+                  label="Discount Amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  prefix="₹"
+                  placeholder="Enter discount"
+                  value={formData.discount_amount}
+                  onChange={(event) =>
+                    updateField("discount_amount", event.target.value)
+                  }
+                />
+                <div className="md:col-span-2">
+                  <UniFieldInput
+                    as="textarea"
+                    label="Note"
+                    placeholder="Enter purchase note"
+                    value={formData.note}
+                    onChange={(event) => updateField("note", event.target.value)}
+                  />
                 </div>
               </div>
             </section>
-          ) : (
-            <>
+
+            {!isEdit ? (
               <section className="rounded-lg border border-gray-200 bg-white p-4">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
@@ -654,7 +540,7 @@ export default function PurchaseOrderFormPage() {
                       Purchase Items
                     </h2>
                     <p className="text-xs font-medium text-gray-500">
-                      Manage procurement products, receive quantities and supplier billing.
+                      Add products that you are buying from the supplier.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -667,102 +553,83 @@ export default function PurchaseOrderFormPage() {
                     </Button>
                   </div>
                 </div>
-                <div className="space-y-3">
-                  {items.map((item, index) => {
-                    const existingItem = orderItems.find(
-                      (orderItem: any) => orderItem.id === item.purchase_item_id
-                    )
-                    const receivedQuantity = money(existingItem?.received_quantity)
-                    const rowTotal =
-                      money(item.ordered_quantity) * money(item.cost_price) +
-                      money(item.tax_amount)
 
-                    return (
-                      <div
-                        key={item.id}
-                        className="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.8fr_auto]"
+                <div className="space-y-3">
+                  {items.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1.5fr_1fr_1fr_1fr_auto]"
+                    >
+                      <UniFieldSelect
+                        label={index === 0 ? "Product" : undefined}
+                        required
+                        value={item.product_id}
+                        onValueChange={(value) =>
+                          updateItem(item.id, "product_id", value)
+                        }
+                        placeholder="Select product"
+                        error={errors[`product_${index}`]}
                       >
-                        <UniFieldSelect
-                          label={index === 0 ? "Product" : undefined}
-                          required
-                          value={item.product_id}
-                          onValueChange={(value) =>
-                            updateItem(item.id, "product_id", value)
-                          }
-                          placeholder="Select product"
-                          error={errors[`product_${index}`]}
+                        {productOptions.map((product: any) => (
+                          <SelectItem key={product.id} value={String(product.id)}>
+                            {product.name}
+                          </SelectItem>
+                        ))}
+                      </UniFieldSelect>
+                      <UniFieldInput
+                        label={index === 0 ? "Qty" : undefined}
+                        required
+                        type="number"
+                        min="0"
+                        step="0.001"
+                        placeholder="Qty"
+                        value={item.ordered_quantity}
+                        onChange={(event) =>
+                          updateItem(item.id, "ordered_quantity", event.target.value)
+                        }
+                        error={errors[`quantity_${index}`]}
+                      />
+                      <UniFieldInput
+                        label={index === 0 ? "Cost" : undefined}
+                        required
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        prefix="₹"
+                        placeholder="Cost"
+                        value={item.cost_price}
+                        onChange={(event) =>
+                          updateItem(item.id, "cost_price", event.target.value)
+                        }
+                        error={errors[`cost_${index}`]}
+                      />
+                      <UniFieldInput
+                        label={index === 0 ? "Tax" : undefined}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        prefix="₹"
+                        placeholder="Tax"
+                        value={item.tax_amount}
+                        onChange={(event) =>
+                          updateItem(item.id, "tax_amount", event.target.value)
+                        }
+                      />
+                      <div className={cn("flex items-end", index === 0 && "pt-6")}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          disabled={items.length === 1}
+                          onClick={() => handleRemoveItem(item)}
                         >
-                          {productOptions.map((product: any) => (
-                            <SelectItem key={product.id} value={String(product.id)}>
-                              {product.name}
-                            </SelectItem>
-                          ))}
-                        </UniFieldSelect>
-                        <UniFieldInput
-                          label={index === 0 ? "Ordered" : undefined}
-                          required
-                          type="number"
-                          min={receivedQuantity}
-                          step="0.001"
-                          placeholder="Qty"
-                          value={item.ordered_quantity}
-                          onChange={(event) =>
-                            updateItem(item.id, "ordered_quantity", event.target.value)
-                          }
-                          error={errors[`quantity_${index}`]}
-                        />
-                        <UniFieldInput
-                          label={index === 0 ? "Received" : undefined}
-                          value={existingItem ? String(existingItem.received_quantity || 0) : "0"}
-                          readOnly
-                          disabled
-                        />
-                        <UniFieldInput
-                          label={index === 0 ? "Cost" : undefined}
-                          required
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          prefix="₹"
-                          placeholder="Cost"
-                          value={item.cost_price}
-                          onChange={(event) =>
-                            updateItem(item.id, "cost_price", event.target.value)
-                          }
-                          error={errors[`cost_${index}`]}
-                        />
-                        <div className="space-y-2">
-                          <UniFieldInput
-                            label={index === 0 ? "Tax" : undefined}
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            prefix="₹"
-                            placeholder="Tax"
-                            value={item.tax_amount}
-                            onChange={(event) =>
-                              updateItem(item.id, "tax_amount", event.target.value)
-                            }
-                          />
-                          <p className="text-xs font-medium text-gray-500">
-                            Total: ₹{rowTotal.toFixed(2)}
-                          </p>
-                        </div>
-                        <div className={cn("flex items-end", index === 0 && "pt-6")}>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            disabled={items.length === 1}
-                            onClick={() => handleRemoveItem(item)}
-                          >
-                            <Trash2Icon className="size-4" />
-                          </Button>
-                        </div>
+                          <Trash2Icon className="size-4" />
+                        </Button>
                       </div>
-                    )
-                  })}
+                    </div>
+                  ))}
                 </div>
+
                 <div className="mt-4 grid gap-2 rounded-lg bg-gray-50 p-3 text-sm font-semibold text-gray-700 md:ml-auto md:w-80">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
@@ -778,185 +645,351 @@ export default function PurchaseOrderFormPage() {
                   </div>
                 </div>
               </section>
-
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            ) : (
+              <>
                 <section className="rounded-lg border border-gray-200 bg-white p-4">
-                  <h2 className="text-base font-bold text-gray-900">
-                    Stock In / Receive Purchase
-                  </h2>
-                  <p className="mb-4 text-xs font-medium text-gray-500">
-                    Enter received quantity. This increases product current stock.
-                  </p>
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-base font-bold text-gray-900">
+                        Purchase Items
+                      </h2>
+                      <p className="text-xs font-medium text-gray-500">
+                        Manage procurement products, receive quantities and supplier billing.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="outline" onClick={handleUseLowStockSuggestions}>
+                        Low Stock Suggestions
+                      </Button>
+                      <Button type="button" onClick={() => setItems([...items, emptyItem()])}>
+                        <PlusIcon className="size-4" />
+                        Add Item
+                      </Button>
+                    </div>
+                  </div>
                   <div className="space-y-3">
-                    {orderItems.map((item: any) => {
-                      const pending = Math.max(
-                        money(item.ordered_quantity) - money(item.received_quantity),
-                        0
+                    {items.map((item, index) => {
+                      const existingItem = orderItems.find(
+                        (orderItem: any) => orderItem.id === item.purchase_item_id
                       )
+                      const receivedQuantity = money(existingItem?.received_quantity)
+                      const rowTotal =
+                        money(item.ordered_quantity) * money(item.cost_price) +
+                        money(item.tax_amount)
+
                       return (
                         <div
                           key={item.id}
-                          className="grid grid-cols-1 gap-3 rounded-lg bg-gray-50 p-3 md:grid-cols-[1fr_160px]"
+                          className="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.8fr_auto]"
                         >
-                          <div>
-                            <p className="text-sm font-bold text-gray-900">
-                              {item.product__name}
-                            </p>
-                            <p className="text-xs font-medium text-gray-500">
-                              Pending: {pending}
-                            </p>
-                          </div>
+                          <UniFieldSelect
+                            label={index === 0 ? "Product" : undefined}
+                            required
+                            value={item.product_id}
+                            onValueChange={(value) =>
+                              updateItem(item.id, "product_id", value)
+                            }
+                            placeholder="Select product"
+                            error={errors[`product_${index}`]}
+                          >
+                            {productOptions.map((product: any) => (
+                              <SelectItem key={product.id} value={String(product.id)}>
+                                {product.name}
+                              </SelectItem>
+                            ))}
+                          </UniFieldSelect>
                           <UniFieldInput
+                            label={index === 0 ? "Ordered" : undefined}
+                            required
+                            type="number"
+                            min={receivedQuantity}
+                            step="0.001"
+                            placeholder="Qty"
+                            value={item.ordered_quantity}
+                            onChange={(event) =>
+                              updateItem(item.id, "ordered_quantity", event.target.value)
+                            }
+                            error={errors[`quantity_${index}`]}
+                          />
+                          <UniFieldInput
+                            label={index === 0 ? "Received" : undefined}
+                            value={existingItem ? String(existingItem.received_quantity || 0) : "0"}
+                            readOnly
+                            disabled
+                          />
+                          <UniFieldInput
+                            label={index === 0 ? "Cost" : undefined}
+                            required
                             type="number"
                             min="0"
-                            max={pending}
-                            step="0.001"
-                            placeholder="Receive qty"
-                            value={receiveItems[item.id] || ""}
+                            step="0.01"
+                            prefix="₹"
+                            placeholder="Cost"
+                            value={item.cost_price}
                             onChange={(event) =>
-                              setReceiveItems((current) => ({
-                                ...current,
-                                [item.id]: event.target.value,
-                              }))
+                              updateItem(item.id, "cost_price", event.target.value)
                             }
+                            error={errors[`cost_${index}`]}
                           />
+                          <div className="space-y-2">
+                            <UniFieldInput
+                              label={index === 0 ? "Tax" : undefined}
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              prefix="₹"
+                              placeholder="Tax"
+                              value={item.tax_amount}
+                              onChange={(event) =>
+                                updateItem(item.id, "tax_amount", event.target.value)
+                              }
+                            />
+                            <p className="text-xs font-medium text-gray-500">
+                              Total: ₹{rowTotal.toFixed(2)}
+                            </p>
+                          </div>
+                          <div className={cn("flex items-end", index === 0 && "pt-6")}>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              disabled={items.length === 1}
+                              onClick={() => handleRemoveItem(item)}
+                            >
+                              <Trash2Icon className="size-4" />
+                            </Button>
+                          </div>
                         </div>
                       )
                     })}
                   </div>
-                  <Button
-                    type="button"
-                    className="mt-4"
-                    onClick={submitReceive}
-                    disabled={receivePurchaseOrder.isLoading}
-                  >
-                    {receivePurchaseOrder.isLoading ? <Spinner /> : "Receive Stock"}
-                  </Button>
+                  <div className="mt-4 grid gap-2 rounded-lg bg-gray-50 p-3 text-sm font-semibold text-gray-700 md:ml-auto md:w-80">
+                    <div className="flex justify-between">
+                      <span>Subtotal</span>
+                      <span>₹{totals.subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Tax</span>
+                      <span>₹{totals.tax.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-base font-bold text-gray-950">
+                      <span>Total</span>
+                      <span>₹{totals.total.toFixed(2)}</span>
+                    </div>
+                  </div>
                 </section>
 
-                <section className="rounded-lg border border-gray-200 bg-white p-4">
-                  <h2 className="text-base font-bold text-gray-900">
-                    Supplier Payment
-                  </h2>
-                  <p className="mb-4 text-xs font-medium text-gray-500">
-                    Record payment against this purchase order.
-                  </p>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <UniFieldInput
-                      label="Amount"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      prefix="₹"
-                      placeholder="Enter amount"
-                      value={payment.amount}
-                      onChange={(event) =>
-                        setPayment((current) => ({
-                          ...current,
-                          amount: event.target.value,
-                        }))
-                      }
-                    />
-                    <UniFieldSelect
-                      label="Payment Type"
-                      value={payment.payment_type}
-                      onValueChange={(value) =>
-                        setPayment((current) => ({
-                          ...current,
-                          payment_type: value,
-                        }))
-                      }
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                  <section className="rounded-lg border border-gray-200 bg-white p-4">
+                    <h2 className="text-base font-bold text-gray-900">
+                      Stock In / Receive Purchase
+                    </h2>
+                    <p className="mb-4 text-xs font-medium text-gray-500">
+                      Enter received quantity. This increases product current stock.
+                    </p>
+                    <div className="space-y-3">
+                      {orderItems.map((item: any) => {
+                        const pending = Math.max(
+                          money(item.ordered_quantity) - money(item.received_quantity),
+                          0
+                        )
+                        return (
+                          <div
+                            key={item.id}
+                            className="grid grid-cols-1 gap-3 rounded-lg bg-gray-50 p-3 md:grid-cols-[1fr_160px]"
+                          >
+                            <div>
+                              <p className="text-sm font-bold text-gray-900">
+                                {item.product__name}
+                              </p>
+                              <p className="text-xs font-medium text-gray-500">
+                                Pending: {pending}
+                              </p>
+                            </div>
+                            <UniFieldInput
+                              type="number"
+                              min="0"
+                              max={pending}
+                              step="0.001"
+                              placeholder="Receive qty"
+                              value={receiveItems[item.id] || ""}
+                              onChange={(event) =>
+                                setReceiveItems((current) => ({
+                                  ...current,
+                                  [item.id]: event.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <Button
+                      type="button"
+                      className="mt-4"
+                      onClick={submitReceive}
+                      disabled={receivePurchaseOrder.isLoading}
                     >
-                      {paymentTypeOptions.map((type: any) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </UniFieldSelect>
-                    <UniFieldInput
-                      label="Paid At"
-                      type="date"
-                      value={payment.paid_at}
-                      onChange={(event) =>
-                        setPayment((current) => ({
-                          ...current,
-                          paid_at: event.target.value,
-                        }))
-                      }
-                    />
-                    <UniFieldInput
-                      label="Reference"
-                      placeholder="Transaction/reference number"
-                      value={payment.reference_number}
-                      onChange={(event) =>
-                        setPayment((current) => ({
-                          ...current,
-                          reference_number: event.target.value,
-                        }))
-                      }
-                    />
-                    <div className="md:col-span-2">
+                      {receivePurchaseOrder.isLoading ? <Spinner /> : "Receive Stock"}
+                    </Button>
+                  </section>
+
+                  <section className="rounded-lg border border-gray-200 bg-white p-4">
+                    <h2 className="text-base font-bold text-gray-900">
+                      Supplier Payment
+                    </h2>
+                    <p className="mb-4 text-xs font-medium text-gray-500">
+                      Record payment against this purchase order.
+                    </p>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <UniFieldInput
-                        as="textarea"
-                        label="Payment Note"
-                        placeholder="Enter payment note"
-                        value={payment.note}
+                        label="Amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        prefix="₹"
+                        placeholder="Enter amount"
+                        value={payment.amount}
                         onChange={(event) =>
                           setPayment((current) => ({
                             ...current,
-                            note: event.target.value,
+                            amount: event.target.value,
                           }))
                         }
                       />
+                      <UniFieldSelect
+                        label="Payment Type"
+                        value={payment.payment_type}
+                        onValueChange={(value) =>
+                          setPayment((current) => ({
+                            ...current,
+                            payment_type: value,
+                          }))
+                        }
+                      >
+                        {paymentTypeOptions.map((type: any) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </UniFieldSelect>
+                      <UniFieldInput
+                        label="Paid At"
+                        type="date"
+                        value={payment.paid_at}
+                        onChange={(event) =>
+                          setPayment((current) => ({
+                            ...current,
+                            paid_at: event.target.value,
+                          }))
+                        }
+                      />
+                      <UniFieldInput
+                        label="Reference"
+                        placeholder="Transaction/reference number"
+                        value={payment.reference_number}
+                        onChange={(event) =>
+                          setPayment((current) => ({
+                            ...current,
+                            reference_number: event.target.value,
+                          }))
+                        }
+                      />
+                      <div className="md:col-span-2">
+                        <UniFieldInput
+                          as="textarea"
+                          label="Payment Note"
+                          placeholder="Enter payment note"
+                          value={payment.note}
+                          onChange={(event) =>
+                            setPayment((current) => ({
+                              ...current,
+                              note: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <Button
-                    type="button"
-                    className="mt-4"
-                    onClick={submitPayment}
-                    disabled={payPurchaseOrder.isLoading}
-                  >
-                    {payPurchaseOrder.isLoading ? <Spinner /> : "Pay Supplier"}
-                  </Button>
-                  <div className="mt-3 flex flex-wrap gap-2">
                     <Button
                       type="button"
-                      variant="outline"
-                      onClick={() => handlePaymentStatusChange("unpaid")}
+                      className="mt-4"
+                      onClick={submitPayment}
+                      disabled={payPurchaseOrder.isLoading}
                     >
-                      Mark Unpaid
+                      {payPurchaseOrder.isLoading ? <Spinner /> : "Pay Supplier"}
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handlePaymentStatusChange("partial")}
-                    >
-                      Mark Partial
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handlePaymentStatusChange("paid")}
-                    >
-                      Mark Paid
-                    </Button>
-                  </div>
-                </section>
-              </div>
-            </>
-          )}
-        </form>
-      </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => handlePaymentStatusChange("unpaid")}
+                      >
+                        Mark Unpaid
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => handlePaymentStatusChange("partial")}
+                      >
+                        Mark Partial
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => handlePaymentStatusChange("paid")}
+                      >
+                        Mark Paid
+                      </Button>
+                    </div>
+                  </section>
+                </div>
+              </>
+            )}
+          </div>
 
-      <div className="sticky bottom-0 z-30 border-t border-gray-200 bg-white px-4 py-3">
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={goBack}>
-            Cancel
-          </Button>
-          <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? <Spinner /> : isEdit ? "Save Purchase" : "Create Purchase"}
-          </Button>
-        </div>
+          <div ref={paginationSentinelRef} className="h-px w-full" />
+
+          <footer
+            className={cn(
+              "sticky z-50 transition-all duration-300 ease-in-out",
+              isFooterStuck ? "bottom-2 mx-3" : "bottom-0 mx-0"
+            )}
+          >
+            <div
+              className={cn(
+                "flex items-center justify-end gap-x-2 rounded-b-xl bg-white/90 p-3 backdrop-blur-md transition-shadow duration-200",
+                isFooterStuck
+                  ? "rounded-t-xl border border-gray-200"
+                  : "rounded-t-none border-t-2 border-gray-100"
+              )}
+            >
+              <Button
+                type="button"
+                variant="outline"
+                onClick={goBack}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="min-w-32 bg-black text-white hover:bg-black/90"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <Spinner />
+                    Saving...
+                  </span>
+                ) : isEdit ? (
+                  "Save Purchase"
+                ) : (
+                  "Create Purchase"
+                )}
+              </Button>
+            </div>
+          </footer>
+        </form>
       </div>
     </div>
   )

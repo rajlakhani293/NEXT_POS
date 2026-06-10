@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { BanknoteIcon, FileTextIcon, PackageCheckIcon } from "lucide-react"
 
@@ -10,8 +10,6 @@ import { useTableData } from "@/hooks/useTableData"
 import { purchases } from "@/lib/api/purchases"
 import { PERMISSIONS } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
-import { SelectItem } from "@/components/ui/select"
-import { UniFieldSelect } from "@/components/ui/unifield-select"
 
 const workflowLabels: Record<string, string> = {
   draft: "Draft",
@@ -53,28 +51,12 @@ export default function PurchaseOrdersPage() {
   const [deletePurchaseOrder] = (
     purchases as any
   ).useDeletePurchaseOrderMutation()
-  const [getSuppliersDropdown, suppliersState] = (
-    purchases as any
-  ).useGetSuppliersDropdownMutation()
   const { hasPermission } = usePermissions()
   const canCreate = hasPermission(PERMISSIONS.purchases.create)
   const canUpdate = hasPermission(PERMISSIONS.purchases.update)
   const canDelete = hasPermission(PERMISSIONS.purchases.update)
   const canReceive = hasPermission(PERMISSIONS.purchases.receive)
   const canPay = hasPermission(PERMISSIONS.purchases.pay)
-  const [supplierFilter, setSupplierFilter] = useState("all")
-  const [workflowFilter, setWorkflowFilter] = useState("all")
-
-  useEffect(() => {
-    getSuppliersDropdown()
-  }, [getSuppliersDropdown])
-
-  const selectedFilters = {
-    ...(supplierFilter !== "all" ? { supplier_id: Number(supplierFilter) } : {}),
-    ...(workflowFilter !== "all"
-      ? { workflow_status: workflowFilter }
-      : {}),
-  }
 
   const {
     orders,
@@ -92,10 +74,7 @@ export default function PurchaseOrdersPage() {
   } = useTableData({
     getMaster: (purchases as any).useGetPurchaseOrdersDataMutation,
     itemsPerPage: 10,
-    selectedFilters,
   })
-
-  const supplierOptions = suppliersState.data?.data || []
 
   const summaryCards = useMemo(() => {
     const totalAmount = orders.reduce(
@@ -152,36 +131,6 @@ export default function PurchaseOrdersPage() {
         ))}
       </div>
 
-      <div className="grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 md:grid-cols-2 xl:grid-cols-4">
-        <UniFieldSelect
-          label="Supplier"
-          value={supplierFilter}
-          onValueChange={setSupplierFilter}
-          placeholder="All suppliers"
-          allowClear
-        >
-          <SelectItem value="all">All suppliers</SelectItem>
-          {supplierOptions.map((supplier: any) => (
-            <SelectItem key={supplier.id} value={String(supplier.id)}>
-              {supplier.name}
-            </SelectItem>
-          ))}
-        </UniFieldSelect>
-        <UniFieldSelect
-          label="Workflow Status"
-          value={workflowFilter}
-          onValueChange={setWorkflowFilter}
-          placeholder="All statuses"
-          allowClear
-        >
-          <SelectItem value="all">All statuses</SelectItem>
-          <SelectItem value="draft">Draft</SelectItem>
-          <SelectItem value="ordered">Ordered</SelectItem>
-          <SelectItem value="partial">Partial</SelectItem>
-          <SelectItem value="received">Received</SelectItem>
-        </UniFieldSelect>
-      </div>
-
       <DynamicTable
         data={orders}
         columns={columns}
@@ -224,15 +173,15 @@ export default function PurchaseOrdersPage() {
             : []),
           ...(canPay
             ? [
-                {
-                  key: "pay",
-                  label: "Pay Supplier",
+              {
+                key: "pay",
+                label: "Pay Supplier",
                 labelText: "Pay Supplier",
                 icon: <BanknoteIcon className="size-4" />,
                 onClick: () =>
                   router.push(`/purchases/orders/${record.id}?action=pay`),
-                },
-              ]
+              },
+            ]
             : []),
           {
             key: "invoice",
