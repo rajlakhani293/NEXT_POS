@@ -261,18 +261,6 @@ const settingsNavSections: DashboardNavSection[] = [
     url: "/settings/rewards",
     icon: <SparklesIcon />,
     permission: PERMISSIONS.rewards.view,
-    items: [
-      {
-        title: "Reward Systems",
-        url: "/settings/rewards",
-        permission: PERMISSIONS.rewards.view,
-      },
-      {
-        title: "Customer History",
-        url: "/settings/rewards/balances",
-        permission: PERMISSIONS.rewards.view,
-      },
-    ],
   },
 ]
 
