@@ -86,8 +86,8 @@ export default function DashboardLayout({
             <SidebarInset className="min-h-0 overflow-hidden bg-[#F9F9F9]">
               <div
                 className={[
-                  "m-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-100 bg-white",
-                  isNoPaddingPage ? "p-0" : "p-6",
+                  "m-2 flex min-h-0 flex-1 flex-col rounded-lg border border-gray-100 bg-white",
+                  isNoPaddingPage ? "overflow-hidden p-0" : "overflow-y-auto p-6",
                 ].join(" ")}
               >
                 <RoutePermissionGuard>{children}</RoutePermissionGuard>

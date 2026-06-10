@@ -21,6 +21,7 @@ import { catalog } from "@/lib/api/catalog"
 import { customers } from "@/lib/api/customers"
 import { payments } from "@/lib/api/payments"
 import { promotions } from "@/lib/api/promotions"
+import { useAppSelector } from "@/lib/redux/hooks"
 import { registers } from "@/lib/api/registers"
 import { rewards } from "@/lib/api/rewards"
 import { sales } from "@/lib/api/sales"
@@ -66,6 +67,9 @@ const emptyPaymentRow = (): PaymentRow => ({
 export default function SalesPage() {
   const router = useRouter()
   const loadedRef = useRef(false)
+  const cashRegistersEnabled = useAppSelector(
+    (state) => state.session.businessSettings?.settings?.enable_cash_registers
+  )
 
   const [shift, setShift] = useState<any>(null)
   const [isOpenShiftDialogOpen, setIsOpenShiftDialogOpen] = useState(false)
@@ -162,6 +166,12 @@ export default function SalesPage() {
   const changeAmount = Math.max(totalPaid - subtotal, 0)
 
   const loadShift = async () => {
+    if (!cashRegistersEnabled) {
+      setShift(null)
+      setIsOpenShiftDialogOpen(false)
+      return
+    }
+
     const response = await getCurrentShift().unwrap()
     const activeShift = response?.data || null
     setShift(activeShift)
@@ -171,7 +181,6 @@ export default function SalesPage() {
   useEffect(() => {
     if (loadedRef.current) return
     loadedRef.current = true
-    loadShift()
     getCustomersDropdown()
     getProductsDropdown()
     getPaymentTypesDropdown()
@@ -183,6 +192,10 @@ export default function SalesPage() {
     getPaymentTypesDropdown,
     getProductsDropdown,
   ])
+
+  useEffect(() => {
+    loadShift()
+  }, [cashRegistersEnabled])
 
   useEffect(() => {
     if (!selectedCouponId) return
@@ -483,7 +496,7 @@ export default function SalesPage() {
   }
 
   const handleCompleteSale = async () => {
-    if (!shift?.id) {
+    if (cashRegistersEnabled && !shift?.id) {
       showToast.error("Open shift is required before billing.")
       return
     }
@@ -495,7 +508,7 @@ export default function SalesPage() {
     const payLoad = {
       draft_id: draftId ? Number(draftId) : null,
       customer_id: customerId ? Number(customerId) : null,
-      shift_id: shift.id,
+      shift_id: cashRegistersEnabled ? shift.id : null,
       order_type: orderType,
       note: saleNote,
       coupon_codes: couponCodes,
@@ -529,7 +542,7 @@ export default function SalesPage() {
   }
 
   const isInitialLoading =
-    isCheckingShift ||
+    (cashRegistersEnabled && isCheckingShift) ||
     isCustomersLoading ||
     isProductsLoading ||
     isPaymentTypesLoading ||
@@ -572,12 +585,14 @@ export default function SalesPage() {
         <div>
           <h1 className="text-lg font-bold text-gray-950">Sales Billing</h1>
           <p className="text-sm text-muted-foreground">
-            {shift
-              ? `Active shift: ${shift.register_name || "Register"}`
-              : "Open a shift before starting sales."}
+            {cashRegistersEnabled
+              ? shift
+                ? `Active shift: ${shift.register_name || "Register"}`
+                : "Open a shift before starting sales."
+              : "Cash registers are disabled. Sales can be billed directly."}
           </p>
         </div>
-        {shift ? (
+        {cashRegistersEnabled && shift ? (
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={handleOpenHeldSales}>
               Held Carts
@@ -598,12 +613,16 @@ export default function SalesPage() {
               Close Shift
             </Button>
           </div>
-        ) : (
+        ) : cashRegistersEnabled ? (
           <Button onClick={() => setIsOpenShiftDialogOpen(true)}>Open Shift</Button>
+        ) : (
+          <Button variant="outline" onClick={handleOpenHeldSales}>
+            Held Carts
+          </Button>
         )}
       </div>
 
-      {shift ? (
+      {!cashRegistersEnabled || shift ? (
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
           <div className="min-h-0 rounded-lg border border-gray-100 bg-white p-4">
             <div className="grid gap-4 md:grid-cols-2">
