@@ -56,6 +56,7 @@ const columns = [
 export default function SalesHistoryPage() {
   const router = useRouter()
   const { hasPermission } = usePermissions()
+  const canCreateSale = hasPermission(PERMISSIONS.sales.create)
   const canVoidSale = hasPermission(PERMISSIONS.sales.void)
   const canCollectDue = hasPermission(PERMISSIONS.payments.collectDue)
   const [voidSale] = (sales as any).useVoidSaleMutation()
@@ -229,6 +230,7 @@ export default function SalesHistoryPage() {
         data={orders}
         columns={columns}
         tableTitle="Sales History"
+        title={canCreateSale ? "Add Sale" : undefined}
         showSearch
         showDateRange
         searchTerm={searchTerm}
@@ -241,6 +243,9 @@ export default function SalesHistoryPage() {
         onSort={handleSort}
         sortableFields={sortableFields}
         isLoading={isLoading}
+        setAddEntityOpen={
+          canCreateSale ? () => router.push("/sales") : undefined
+        }
         showEdit
         onEdit={(record: any) => router.push(`/sales/${record.id}`)}
         rowActions={(_, record) => [

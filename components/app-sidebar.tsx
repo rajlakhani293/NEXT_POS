@@ -59,21 +59,9 @@ const mainNavSections: DashboardNavSection[] = [
   },
   {
     title: "Sales",
-    url: "/sales",
+    url: "/sales/history",
     icon: <ReceiptTextIcon />,
     permission: PERMISSIONS.sales.view,
-    items: [
-      {
-        title: "POS Billing",
-        url: "/sales",
-        permission: PERMISSIONS.sales.view,
-      },
-      {
-        title: "Sales History",
-        url: "/sales/history",
-        permission: PERMISSIONS.sales.view,
-      },
-    ],
   },
   {
     title: "Inventory",
@@ -132,11 +120,6 @@ const mainNavSections: DashboardNavSection[] = [
       {
         title: "Customer Groups",
         url: "/customers/groups",
-        permission: PERMISSIONS.customers.view,
-      },
-      {
-        title: "Customer Credit",
-        url: "/customers/credit",
         permission: PERMISSIONS.customers.view,
       },
     ],
@@ -350,8 +333,13 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       return visibleItems
     }, [])
 
-  const matchesUrl = (url: string) =>
-    pathname === url || pathname.startsWith(`${url}/`)
+  const matchesUrl = (url: string) => {
+    if (url === "/sales/history") {
+      return pathname === "/sales" || pathname.startsWith("/sales/")
+    }
+
+    return pathname === url || pathname.startsWith(`${url}/`)
+  }
 
   const buildNavItems = (sections: DashboardNavSection[]) =>
     sections.map((item) => {

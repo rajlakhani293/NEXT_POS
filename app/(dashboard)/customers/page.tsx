@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Gift, TicketPercent } from "lucide-react"
+import { Gift, TicketPercent, Wallet } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { customers } from "@/lib/api/customers"
@@ -88,6 +88,16 @@ export default function CustomersPage() {
         deleteModalTitle="Delete Customer"
         deleteModalDescription="Are you sure you want to delete this customer?"
         rowActions={(_, record) => [
+          {
+            key: "credit",
+            label: "Credit History",
+            labelText: "Credit History",
+            icon: <Wallet className="size-4" />,
+            onClick: () =>
+              router.push(
+                `/customers/credit?customer_id=${record.id}&customer_name=${encodeURIComponent(record.name || record.phone || "")}`
+              ),
+          },
           {
             key: "rewards",
             label: "Rewards",
