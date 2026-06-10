@@ -11,7 +11,13 @@ import { useTableData } from "@/hooks/useTableData"
 
 const columns = [
   { key: "code", title: "Code" },
-  { key: "adjustment_type", title: "Type" },
+  {
+    key: "adjustment_type_label",
+    title: "Action",
+    render: (_: any, context: any) =>
+      context.row.adjustment_type_label ||
+      String(context.row.adjustment_type || "-").replaceAll("_", " "),
+  },
   { key: "reason", title: "Reason" },
   { key: "note", title: "Note" },
   { key: "created_at", title: "Created At" },

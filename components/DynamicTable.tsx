@@ -864,7 +864,7 @@ const DynamicTable = ({
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-8 w-8"
+                                      className="h-8 w-8 border"
                                     >
                                       <FiMoreVertical className="h-4 w-4" />
                                     </Button>
@@ -879,9 +879,9 @@ const DynamicTable = ({
                                             onClick?.()
                                           }}
                                         >
-                                          <div className="flex items-center gap-2">
+                                          <div className="flex items-center gap-2 cursor-pointer">
                                             {icon}
-                                            {label}
+                                            <span className="text-sm font-medium">{label}</span>
                                           </div>
                                         </DropdownMenuItem>
                                       )

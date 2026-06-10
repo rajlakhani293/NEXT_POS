@@ -11,11 +11,12 @@ type StockAdjustmentFormProps = {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  product?: any
 }
 
 const initialValues = {
   product_id: "",
-  adjustment_type: "increase",
+  adjustment_type: "",
   quantity: "",
   unit_cost: "",
   reason: "",
@@ -26,6 +27,7 @@ export function StockAdjustmentForm({
   isOpen,
   onClose,
   onSuccess,
+  product,
 }: StockAdjustmentFormProps) {
   const loadedRef = useRef(false)
   const [createStockAdjustment] = (
@@ -42,9 +44,17 @@ export function StockAdjustmentForm({
   }, [getProductsDropdown, isOpen])
 
   const productOptions = (products.data?.data || []).map((product: any) => ({
-    label: `${product.name}${product.sku ? ` (${product.sku})` : ""}`,
+    label: `${product.name}${product.sku ? ` (${product.sku})` : ""} - Stock: ${product.current_stock || 0}`,
     value: product.id,
   }))
+  const productFieldOptions = product
+    ? [
+        {
+          label: `${product.name}${product.sku ? ` (${product.sku})` : ""} - Stock: ${product.current_stock || 0}`,
+          value: product.id,
+        },
+      ]
+    : productOptions
 
   const handleSubmit = async (values: typeof initialValues) => {
     const response = await createStockAdjustment({
@@ -67,23 +77,27 @@ export function StockAdjustmentForm({
           placeholder: "Select product",
           type: "select",
           required: true,
-          options: productOptions,
+          options: productFieldOptions,
+          disabled: Boolean(product),
         },
         {
           name: "adjustment_type",
-          label: "Adjustment Type",
-          placeholder: "Select type",
+          label: "Select Action",
+          placeholder: "Select action",
           type: "select",
           required: true,
           options: [
-            { label: "Increase Stock", value: "increase" },
-            { label: "Decrease Stock", value: "decrease" },
+            { label: "Add", value: "added" },
+            { label: "Delete", value: "deleted" },
+            { label: "Defective", value: "defective" },
+            { label: "Lost", value: "lost" },
+            { label: "Set", value: "set" },
           ],
         },
         {
           name: "quantity",
           label: "Quantity",
-          placeholder: "Enter quantity",
+          placeholder: "Enter quantity. For Set, enter final stock.",
           type: "number",
           required: true,
         },
@@ -97,7 +111,7 @@ export function StockAdjustmentForm({
         {
           name: "reason",
           label: "Reason",
-          placeholder: "Damage, opening correction, manual adjustment",
+          placeholder: "Useful to describe why this adjustment is needed",
           type: "text",
           required: true,
         },
@@ -109,10 +123,13 @@ export function StockAdjustmentForm({
           rows: 3,
         },
       ]}
-      initialValues={initialValues}
+      initialValues={{
+        ...initialValues,
+        product_id: product?.id ? String(product.id) : "",
+      }}
       onSubmit={handleSubmit}
       onClose={onClose}
-      title="Create Stock Adjustment"
+      title="Stock Adjustment"
       isOpen={isOpen}
       formWidth="w-[560px]"
     />

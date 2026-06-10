@@ -94,16 +94,6 @@ const mainNavSections: DashboardNavSection[] = [
         url: "/inventory/units",
         permission: PERMISSIONS.products.view,
       },
-      {
-        title: "Stock Adjustments",
-        url: "/inventory/adjustments",
-        permission: PERMISSIONS.inventory.view,
-      },
-      {
-        title: "Stock Ledger",
-        url: "/inventory/ledger",
-        permission: PERMISSIONS.inventory.view,
-      },
     ],
   },
   {
