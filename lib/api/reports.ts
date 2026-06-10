@@ -4,7 +4,7 @@ import { createBaseQueryWithInterceptor } from "@/lib/api/base"
 import { postMutation } from "@/lib/api/apiUtils"
 
 const endpointsConfig = {
-  getDashboardSummary: { query: postMutation("dashboard-summary") },
+  getDashboardSummary: { query: postMutation("dashboard-summary"), type: "query" },
   refreshDashboardSnapshot: { query: postMutation("dashboard-snapshot/refresh") },
   getCustomerDueReport: { query: postMutation("customer-due") },
   getSupplierPayableReport: { query: postMutation("supplier-payable") },
@@ -18,20 +18,22 @@ const endpointsConfig = {
   getLowStockReport: { query: postMutation("low-stock") },
   getStockReport: { query: postMutation("stock-report") },
   getCashierReport: { query: postMutation("cashier-report") },
-  getCustomerStatement: {
-    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
-      postMutation(`customers-statement/${id}`)(payLoad),
-  },
+  getCustomerStatement: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`customers-statement/${id}`)(payLoad) },
 }
 
 export const reports = createApi({
   reducerPath: "reports",
   baseQuery: createBaseQueryWithInterceptor("reports"),
   endpoints: (builder) => {
-    const finalEndpoints: Record<string, any> = {}
+    const finalEndpoints: Record<string, any> = {};
     for (const [name, config] of Object.entries(endpointsConfig)) {
-      finalEndpoints[name] = builder.mutation(config as any)
+      const { type, ...restConfig } = config as any;
+      if (type === "query") {
+        finalEndpoints[name] = builder.query(restConfig);
+      } else {
+        finalEndpoints[name] = builder.mutation(restConfig);
+      }
     }
-    return finalEndpoints
+    return finalEndpoints;
   },
-})
+});

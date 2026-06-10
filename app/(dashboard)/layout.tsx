@@ -17,10 +17,6 @@ import { Spinner } from "@/components/ui/spinner"
 import { useSession } from "@/lib/redux/session-provider"
 import { useAppSelector } from "@/lib/redux/hooks"
 
-export const iframeHeight = "800px"
-
-export const description = "A sidebar with a header and a search form."
-
 export default function DashboardLayout({
   children,
 }: {

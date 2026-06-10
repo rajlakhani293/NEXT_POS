@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
@@ -157,9 +157,9 @@ const columns: Record<string, any[]> = {
 }
 
 export default function ReportsPage() {
+  const lastRowsRequestRef = useRef("")
   const [activeTab, setActiveTab] =
     useState<(typeof reportTabs)[number]>("sales")
-  const [summary, setSummary] = useState<any>(null)
   const [rows, setRows] = useState<any[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [page, setPage] = useState(1)
@@ -169,9 +169,12 @@ export default function ReportsPage() {
   )
   const [dateFilters, setDateFilters] = useState(() => getDateRange("This Month"))
 
-  const [getDashboardSummary, summaryState] = (
-    reports as any
-  ).useGetDashboardSummaryMutation()
+  const {
+    data: summaryResponse,
+    refetch: refetchSummary,
+    isLoading: isSummaryLoading,
+  } = (reports as any).useGetDashboardSummaryQuery({})
+  const summary = summaryResponse?.data || null
   const [refreshDashboardSnapshot, snapshotState] = (
     reports as any
   ).useRefreshDashboardSnapshotMutation()
@@ -230,19 +233,26 @@ export default function ReportsPage() {
     cashierState.isLoading ||
     accountingState.isLoading
 
-  const loadSummary = async () => {
-    const response = await getDashboardSummary({}).unwrap()
-    setSummary(response?.data)
-  }
 
-  const loadRows = async (nextPage = page, tab = activeTab) => {
-    const payload = {
-      page: nextPage,
+
+  const rowsPayload = useMemo(
+    () => ({
+      page,
       limit: 10,
       search: searchTerm || undefined,
       startDate: dateFilters.startDate,
       endDate: dateFilters.endDate,
-    }
+    }),
+    [dateFilters.endDate, dateFilters.startDate, page, searchTerm]
+  )
+
+  const loadRows = async (payload = rowsPayload, tab = activeTab) => {
+    const requestKey = JSON.stringify({ tab, payload })
+
+    if (lastRowsRequestRef.current === requestKey) return
+    lastRowsRequestRef.current = requestKey
+
+    const requestPayload = { ...payload, limit: 10 }
     const mutationMap: Record<string, any> = {
       sales: getSaleReport,
       sold_stock: getSoldStockReport,
@@ -258,19 +268,17 @@ export default function ReportsPage() {
       customer_credit: getCustomerCreditLedgerReport,
       accounting: getTransactionHistoryData,
     }
-    const response = await mutationMap[tab](payload).unwrap()
+    const response = await mutationMap[tab](requestPayload).unwrap()
     const data = response?.data || {}
     setRows(data.items || [])
     setTotalItems(data.total || 0)
   }
 
-  useEffect(() => {
-    loadSummary()
-  }, [])
+
 
   useEffect(() => {
-    loadRows(page, activeTab)
-  }, [activeTab, page, searchTerm, dateFilters.startDate, dateFilters.endDate])
+    loadRows(rowsPayload, activeTab)
+  }, [activeTab, rowsPayload])
 
   const handleFilterChange = (action: string, payload?: any) => {
     switch (action) {
@@ -301,7 +309,7 @@ export default function ReportsPage() {
   const refreshSnapshot = async () => {
     const response = await refreshDashboardSnapshot({}).unwrap()
     showToast.success(response?.message || "Dashboard snapshot refreshed.")
-    await loadSummary()
+    refetchSummary()
   }
 
   const cards = [
@@ -389,7 +397,7 @@ export default function ReportsPage() {
         totalItems={totalItems}
         onPageChange={setPage}
         onFilterChange={handleFilterChange}
-        isLoading={summaryState.isLoading || isTableLoading}
+        isLoading={isSummaryLoading || isTableLoading}
         hideActions
       />
     </div>

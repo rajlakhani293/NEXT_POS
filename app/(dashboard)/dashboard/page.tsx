@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
 import Link from "next/link"
 import {
   ArrowRight,
@@ -22,32 +22,22 @@ import { showToast } from "@/lib/toast"
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
 export default function DashboardPage() {
-  const [summary, setSummary] = useState<any>(null)
+  const [refreshDashboardSnapshot, refreshState] = (reports as any).useRefreshDashboardSnapshotMutation()
 
-  const [getDashboardSummary, summaryState] = (
-    reports as any
-  ).useGetDashboardSummaryMutation()
-  const [refreshDashboardSnapshot, refreshState] = (
-    reports as any
-  ).useRefreshDashboardSnapshotMutation()
-
-  const loadSummary = async () => {
+  const queryArgs = useMemo(() => {
     const now = new Date()
     const start = new Date(now)
     start.setHours(0, 0, 0, 0)
     const end = new Date(now)
     end.setHours(23, 59, 59, 999)
-
-    const response = await getDashboardSummary({
+    return {
       startDate: start.toISOString(),
       endDate: end.toISOString(),
-    }).unwrap()
-    setSummary(response?.data || null)
-  }
-
-  useEffect(() => {
-    loadSummary()
+    }
   }, [])
+
+  const { data: summaryResponse, refetch } = (reports as any).useGetDashboardSummaryQuery(queryArgs)
+  const summary = summaryResponse?.data || null
 
   const cards = useMemo(
     () => [
@@ -118,7 +108,7 @@ export default function DashboardPage() {
   const refreshSnapshot = async () => {
     const response = await refreshDashboardSnapshot({}).unwrap()
     showToast.success(response?.message || "Dashboard snapshot refreshed.")
-    await loadSummary()
+    refetch()
   }
 
   return (
@@ -185,7 +175,7 @@ export default function DashboardPage() {
 
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             <Link
-              href="/sales"
+              href="/sales/create"
               className="rounded-2xl border border-gray-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
             >
               <div className="flex items-center justify-between">
@@ -199,7 +189,7 @@ export default function DashboardPage() {
               </div>
             </Link>
             <Link
-              href="/sales/history"
+              href="/sales"
               className="rounded-2xl border border-gray-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
             >
               <div className="flex items-center justify-between">
@@ -263,7 +253,7 @@ export default function DashboardPage() {
             Live cashier shift summary for this branch.
           </p>
 
-          {summaryState.isLoading && !summary ? (
+          {!summary ? (
             <div className="mt-6 flex items-center gap-3 text-sm text-slate-500">
               <Spinner />
               Loading shift summary...

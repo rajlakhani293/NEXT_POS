@@ -29,10 +29,12 @@ export default function RewardBalancesPage() {
   const balances = useTableData({
     getMaster: (rewards as any).useGetCustomerRewardBalancesDataMutation,
     itemsPerPage: 10,
+    enabled: tab === "balances",
   })
   const redemptions = useTableData({
     getMaster: (rewards as any).useGetCustomerRewardRedemptionsDataMutation,
     itemsPerPage: 10,
+    enabled: tab === "redemptions",
   })
 
   const table = tab === "balances" ? balances : redemptions

@@ -13,6 +13,7 @@ const getCurrentFinancialYear = () => {
 
 interface UseTableDataProps {
   getMaster: any
+  enabled?: boolean
   itemsPerPage?: number
   searchTerm?: string
   advancedFilters?: { status: string | number }
@@ -28,6 +29,7 @@ interface UseTableDataProps {
 
 export const useTableData = ({
   getMaster,
+  enabled = true,
   itemsPerPage: initialItemsPerPage = 10,
   searchTerm: initialSearchTerm,
   selectedFilters = {},
@@ -75,31 +77,63 @@ export const useTableData = ({
   // Debounce the search term to prevent excessive API calls
   const debouncedSearchTerm = useDebounce(searchTerm, 400)
 
-  const queryBody = {
-    page: currentPage,
-    limit: itemsPerPage,
-    search: debouncedSearchTerm || undefined,
-    status:
-      advancedFilters?.status !== "All" && advancedFilters?.status !== allLabel
-        ? advancedFilters?.status
+  const selectedFiltersKey = useMemo(
+    () => JSON.stringify(selectedFilters || {}),
+    [selectedFilters]
+  )
+  const extraOptionsKey = useMemo(
+    () => JSON.stringify(extraOptions || {}),
+    [extraOptions]
+  )
+
+  const queryBody = useMemo(() => {
+    const parsedSelectedFilters = JSON.parse(selectedFiltersKey || "{}")
+    const parsedExtraOptions = JSON.parse(extraOptionsKey || "{}")
+
+    return {
+      page: currentPage,
+      limit: itemsPerPage,
+      search: debouncedSearchTerm || undefined,
+      status:
+        advancedFilters?.status !== "All" && advancedFilters?.status !== allLabel
+          ? advancedFilters?.status
+          : undefined,
+      ...(disableDateFilter
+        ? {}
+        : {
+            startDate: dateFilters.startDate,
+            endDate: dateFilters.endDate,
+          }),
+      sortBy: sortConfig?.key || undefined,
+      sortDirection: sortConfig?.direction || undefined,
+      filter: Object.keys(parsedSelectedFilters).length
+        ? parsedSelectedFilters
         : undefined,
-    ...(disableDateFilter
-      ? {}
-      : {
-          startDate: dateFilters.startDate,
-          endDate: dateFilters.endDate,
-        }),
-    sortBy: sortConfig?.key || undefined,
-    sortDirection: sortConfig?.direction || undefined,
-    filter: Object.keys(selectedFilters).length ? selectedFilters : undefined,
-    ...(periodType === "CUSTOM" ? { periodType: "CUSTOM" } : {}),
-    ...extraOptions,
-  }
+      ...(periodType === "CUSTOM" ? { periodType: "CUSTOM" } : {}),
+      ...parsedExtraOptions,
+    }
+  }, [
+    advancedFilters?.status,
+    allLabel,
+    currentPage,
+    dateFilters.endDate,
+    dateFilters.startDate,
+    debouncedSearchTerm,
+    disableDateFilter,
+    extraOptionsKey,
+    itemsPerPage,
+    periodType,
+    selectedFiltersKey,
+    sortConfig?.direction,
+    sortConfig?.key,
+  ])
 
   const isQueryChanged = (prev: any, next: any): boolean =>
     JSON.stringify(prev) !== JSON.stringify(next)
 
   useEffect(() => {
+    if (!enabled) return
+
     const isManualRefresh = prevRefreshVersionRef.current !== refreshVersion
 
     if (isManualRefresh || isQueryChanged(prevQueryRef.current, queryBody)) {
@@ -107,7 +141,7 @@ export const useTableData = ({
       prevRefreshVersionRef.current = refreshVersion
       trigger(queryBody)
     }
-  }, [queryBody, trigger, refreshVersion])
+  }, [enabled, queryBody, trigger, refreshVersion])
 
   // Watch for changes to update Active Tab label visually
   useEffect(() => {

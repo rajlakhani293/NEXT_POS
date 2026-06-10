@@ -465,7 +465,7 @@ export default function SaleDetailPage() {
           <p className="text-sm font-medium text-gray-600">
             Sale details not found.
           </p>
-          <Button variant="outline" onClick={() => router.push("/sales/history")}>
+          <Button variant="outline" onClick={() => router.push("/sales")}>
             Back to Sales History
           </Button>
         </div>
@@ -483,7 +483,7 @@ export default function SaleDetailPage() {
               variant="outline"
               size="icon"
               className="size-12 rounded-2xl"
-              onClick={() => router.push("/sales/history")}
+              onClick={() => router.push("/sales")}
             >
               <ArrowLeft className="size-5" />
             </Button>

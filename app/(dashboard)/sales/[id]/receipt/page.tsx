@@ -53,7 +53,7 @@ export default function SaleReceiptPage() {
       <div className="flex h-full items-center justify-center">
         <div className="space-y-3 text-center">
           <p className="text-sm font-medium text-gray-600">Receipt not found.</p>
-          <Button variant="outline" onClick={() => router.push("/sales/history")}>
+          <Button variant="outline" onClick={() => router.push("/sales")}>
             Back to Sales History
           </Button>
         </div>

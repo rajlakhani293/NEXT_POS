@@ -59,7 +59,7 @@ const mainNavSections: DashboardNavSection[] = [
   },
   {
     title: "Sales",
-    url: "/sales/history",
+    url: "/sales",
     icon: <ReceiptTextIcon />,
     permission: PERMISSIONS.sales.view,
   },
@@ -334,7 +334,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
     }, [])
 
   const matchesUrl = (url: string) => {
-    if (url === "/sales/history") {
+    if (url === "/sales") {
       return pathname === "/sales" || pathname.startsWith("/sales/")
     }
 
