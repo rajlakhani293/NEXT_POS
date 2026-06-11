@@ -77,6 +77,7 @@ const buildCustomerFields = (states: any[]) => [
     type: "text",
     placeholder: "Enter 10 digit phone number",
     prefix: "+91",
+    prefixPadding: "pl-12",
     maxLength: 10,
     inputMode: "numeric",
     sanitize: (value: string) => value.replace(/\D/g, "").slice(0, 10),

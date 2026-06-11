@@ -125,7 +125,13 @@ export const UniFieldInput = React.forwardRef<
         className={cn("gap-1", containerClassName)}
       >
         {label && (
-          <FieldLabel htmlFor={inputId} className="font-semibold text-gray-700">
+          <FieldLabel
+            htmlFor={inputId}
+            className={cn(
+              "font-semibold text-gray-700",
+              error && "text-destructive"
+            )}
+          >
             {label}
             {props.required && <span className="text-red-500">*</span>}
           </FieldLabel>

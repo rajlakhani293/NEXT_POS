@@ -40,6 +40,7 @@ export default function TransactionHistoryPage() {
         sortableFields={table.sortableFields}
         isLoading={table.isLoading}
         hideActions
+        showDateRange
       />
     </PermissionGuard>
   )

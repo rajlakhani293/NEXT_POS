@@ -54,6 +54,7 @@ interface FormField {
   checkedValue?: any
   unCheckedValue?: any
   prefix?: React.ReactNode
+  prefixPadding?: string
   inputMode?: React.InputHTMLAttributes<HTMLInputElement>["inputMode"]
   pattern?: string
   sanitize?: (value: any) => any
@@ -330,6 +331,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     required={field.required}
                     placeholder={field.placeholder}
                     prefix={field.prefix}
+                    prefixPadding={field.prefixPadding}
                     rows={field.rows || 3}
                     maxLength={field.maxLength}
                     error={errors[field.name]}
@@ -351,6 +353,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     required={field.required}
                     placeholder={field.placeholder}
                     prefix={field.prefix}
+                    prefixPadding={field.prefixPadding}
                     min="0"
                     step="0.01"
                     maxLength={field.maxLength}
@@ -365,6 +368,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     readOnly
                     placeholder={field.placeholder}
                     prefix={field.prefix}
+                    prefixPadding={field.prefixPadding}
                     error={errors[field.name]}
                     disabled={isFieldDisabled}
                   />
@@ -378,6 +382,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     required={field.required}
                     placeholder={field.placeholder}
                     prefix={field.prefix}
+                    prefixPadding={field.prefixPadding}
                     error={errors[field.name]}
                     disabled={isFieldDisabled}
                   />
@@ -447,6 +452,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     required={field.required}
                     placeholder={field.placeholder}
                     prefix={field.prefix}
+                    prefixPadding={field.prefixPadding}
                     inputMode={field.inputMode}
                     pattern={field.pattern}
                     maxLength={field.maxLength}

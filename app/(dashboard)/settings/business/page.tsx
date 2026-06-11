@@ -80,7 +80,6 @@ function OrderTypeMultiSelect({
               ? selectedLabels.join(", ")
               : "Select order type"}
           </span>
-          <span className="text-gray-400">Select</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-(--radix-dropdown-menu-trigger-width)">
@@ -147,7 +146,7 @@ export default function BusinessSettingsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-10 py-8">
+      <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-950">
             Business Settings

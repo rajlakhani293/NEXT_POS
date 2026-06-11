@@ -49,6 +49,8 @@ export const UniFieldSelect = ({
   allowClear = false,
   disabled = false,
 }: UniFieldSelectProps) => {
+  const hasError = Boolean(error || validationError)
+
   const handleValueChange = (val: string) => {
     if (val === "add_new" && onAddNew) {
       onAddNew()
@@ -59,18 +61,23 @@ export const UniFieldSelect = ({
 
   return (
     <Field
-      data-invalid={error ? true : undefined}
+      data-invalid={hasError ? true : undefined}
       className={cn("w-full gap-1 bg-white", containerClassName)}
     >
       {label && (
-        <FieldLabel className="font-semibold text-gray-700">
+        <FieldLabel
+          className={cn(
+            "font-semibold text-gray-700",
+            hasError && "text-destructive"
+          )}
+        >
           {label} {required && <span className="text-red-500">*</span>}
         </FieldLabel>
       )}
       <Select value={value} onValueChange={handleValueChange} disabled={disabled}>
         <div className="group/select relative">
           <SelectTrigger
-            aria-invalid={error ? true : undefined}
+            aria-invalid={hasError ? true : undefined}
             size={size}
             className={cn(
               "bg-white text-sm font-semibold text-gray-900 placeholder:font-medium placeholder:text-muted-foreground",

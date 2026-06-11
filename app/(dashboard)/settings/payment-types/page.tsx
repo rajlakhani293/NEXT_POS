@@ -1,20 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Edit, Trash2 } from "lucide-react"
+import { CheckCircle2, CircleOff } from "lucide-react"
 
 import DynamicForm from "@/components/DynamicForm"
 import DynamicTable from "@/components/DynamicTable"
 import { PermissionGuard } from "@/components/permission-guard"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { payments } from "@/lib/api/payments"
@@ -25,8 +16,7 @@ const initialValues = {
   label: "",
   identifier: "",
   description: "",
-  is_enabled: true,
-  sort_order: "0",
+  sort_order: "",
   is_system: false,
 }
 
@@ -46,11 +36,21 @@ const columns = [
     },
   },
   {
-    key: "is_enabled",
-    title: "Enabled",
+    key: "status",
+    title: "Status",
     render: (_value: any, context: any) => {
       const record = context.row
-      return record.is_enabled ? "Yes" : "No"
+      const isActive = Number(record.status || 0) === 0
+      return (
+        <span
+          className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${isActive
+            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+            : "border-gray-200 bg-gray-50 text-gray-600"
+            }`}
+        >
+          {isActive ? "Active" : "Inactive"}
+        </span>
+      )
     },
   },
   { key: "sort_order", title: "Sort" },
@@ -68,7 +68,6 @@ export default function PaymentTypesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editId, setEditId] = useState<number | string | null>(null)
   const [formValues, setFormValues] = useState(initialValues)
-  const [deleteRecord, setDeleteRecord] = useState<any>(null)
   const { hasPermission } = usePermissions()
 
   const [createPaymentType] = (payments as any).useCreatePaymentTypeMutation()
@@ -106,7 +105,6 @@ export default function PaymentTypesPage() {
       label: data.label || "",
       identifier: data.identifier || "",
       description: data.description || "",
-      is_enabled: Boolean(data.is_enabled),
       sort_order: String(data.sort_order ?? 0),
       is_system: Boolean(data.is_system),
     })
@@ -120,7 +118,6 @@ export default function PaymentTypesPage() {
         ? values.identifier
         : normalizeIdentifier(values.identifier || values.label),
       description: values.description || "",
-      is_enabled: Boolean(values.is_enabled),
       sort_order: Number(values.sort_order || 0),
     }
 
@@ -132,11 +129,13 @@ export default function PaymentTypesPage() {
     table.triggerRefresh()
   }
 
-  const confirmDelete = async () => {
-    if (!deleteRecord) return
-    const response = await deletePaymentType({ ids: [deleteRecord.id] }).unwrap()
-    showToast.success(response?.message || "Payment type deleted successfully.")
-    setDeleteRecord(null)
+  const togglePaymentTypeStatus = async (record: any) => {
+    const currentStatus = Number(record.status || 0)
+    const nextStatus = currentStatus === 0 ? 1 : 0
+    const response = await updatePaymentTypeStatus({
+      payLoad: { ids: [record.id], status: nextStatus },
+    }).unwrap()
+    showToast.success(response?.message || "Payment type status updated.")
     table.triggerRefresh()
   }
 
@@ -162,23 +161,29 @@ export default function PaymentTypesPage() {
           setAddEntityOpen={canCreate ? openCreate : undefined}
           showEdit={canCreate}
           onEdit={openEdit}
-          showDelete={false}
-          showStatus={canCreate}
-          statusChangeMutation={({ ids, status }: any) =>
-            updatePaymentTypeStatus({ payLoad: { ids, status } })
-          }
+          showDelete={canCreate}
+          canDeleteRow={(record) => !record?.is_system}
+          deleteMutation={deletePaymentType}
+          deleteModalTitle="Delete Payment Type"
+          deleteModalDescription="Are you sure you want to delete this payment type?"
           rowActions={(_id, record) =>
             canCreate && !record?.is_system
               ? [
-                  {
-                    key: "delete",
-                    label: "Delete",
-                    labelText: "Delete",
-                    icon: <Trash2 className="size-4 text-red-500" />,
-                    onClick: () => setDeleteRecord(record),
-                    priority: 2,
-                  },
-                ]
+                {
+                  key: "status",
+                  label: Number(record.status || 0) === 0 ? "Disable" : "Enable",
+                  labelText:
+                    Number(record.status || 0) === 0 ? "Disable" : "Enable",
+                  icon:
+                    Number(record.status || 0) === 0 ? (
+                      <CircleOff className="size-4 text-amber-600" />
+                    ) : (
+                      <CheckCircle2 className="size-4 text-emerald-600" />
+                    ),
+                  onClick: () => togglePaymentTypeStatus(record),
+                  priority: 2,
+                },
+              ]
               : []
           }
           triggerRefresh={table.triggerRefresh}
@@ -204,7 +209,6 @@ export default function PaymentTypesPage() {
               placeholder: "cash-payment",
               required: true,
               disabled: (values: any) => Boolean(values.is_system),
-              note: "System identifiers are fixed because sales/register logic depends on them.",
             },
             {
               name: "description",
@@ -212,12 +216,6 @@ export default function PaymentTypesPage() {
               type: "textarea",
               rows: 3,
               placeholder: "Enter description",
-            },
-            {
-              name: "is_enabled",
-              label: "Enabled",
-              type: "switch",
-              note: "Disabled payment types will not show in payment dropdowns.",
             },
             {
               name: "sort_order",
@@ -228,26 +226,6 @@ export default function PaymentTypesPage() {
           ]}
           onSubmit={submitPaymentType}
         />
-
-        <Dialog open={Boolean(deleteRecord)} onOpenChange={() => setDeleteRecord(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Payment Type</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete {deleteRecord?.label}? System
-                payment types cannot be deleted.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteRecord(null)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={confirmDelete}>
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </PermissionGuard>
   )

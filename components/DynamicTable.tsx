@@ -169,6 +169,7 @@ interface DynamicTableProps {
     entity_id?: string
   }) => Promise<any>
   showDelete?: boolean
+  canDeleteRow?: (row: any) => boolean
   showEdit?: boolean
   deleteMutation?: (args: {
     ids: (string | number)[]
@@ -213,6 +214,7 @@ const DynamicTable = ({
   showStatus = false,
   statusChangeMutation,
   showDelete = false,
+  canDeleteRow,
   showEdit = true,
   deleteMutation,
   onEdit,
@@ -367,7 +369,7 @@ const DynamicTable = ({
       })
     }
 
-    if (showDelete) {
+    if (showDelete && (!canDeleteRow || canDeleteRow(currentItem))) {
       defaultActions.push({
         key: "delete",
         label: "Delete",
