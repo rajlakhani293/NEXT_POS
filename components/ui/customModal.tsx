@@ -14,7 +14,7 @@ import {
 } from "./dialog"
 import { cn } from "@/lib/utils"
 
-interface CustomPopupProps {
+interface CustomModalProps {
   title: string
   description?: string
   trigger?: React.ReactNode
@@ -25,9 +25,13 @@ interface CustomPopupProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   className?: string
+  headerClassName?: string
+  bodyClassName?: string
+  footerClassName?: string
+  showFooter?: boolean
 }
 
-const CustomPopup = ({
+const CustomModal = ({
   title,
   description,
   trigger,
@@ -38,37 +42,48 @@ const CustomPopup = ({
   open,
   onOpenChange,
   className,
-}: CustomPopupProps) => {
+  headerClassName,
+  bodyClassName,
+  footerClassName,
+  showFooter = true,
+}: CustomModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className={cn("sm:max-w-[500px]", className)}>
-        <DialogHeader>
+        <DialogHeader className={headerClassName}>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <div className="-mx-6 no-scrollbar max-h-[60vh] overflow-y-auto border-y border-gray-100 px-6 py-4">
+        <div
+          className={cn(
+            "-mx-6 no-scrollbar max-h-[60vh] overflow-y-auto border-y border-gray-100 px-6 py-4",
+            bodyClassName
+          )}
+        >
           {children}
         </div>
-        <DialogFooter>
-          {footer ? (
-            footer
-          ) : (
-            <>
-              <DialogClose asChild>
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Close
+        {showFooter && (
+          <DialogFooter className={footerClassName}>
+            {footer ? (
+              footer
+            ) : (
+              <>
+                <DialogClose asChild>
+                  <Button type="button" variant="outline" onClick={onClose}>
+                    Close
+                  </Button>
+                </DialogClose>
+                <Button type="button" onClick={onSave}>
+                  Save
                 </Button>
-              </DialogClose>
-              <Button type="button" onClick={onSave}>
-                Save
-              </Button>
-            </>
-          )}
-        </DialogFooter>
+              </>
+            )}
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   )
 }
 
-export default CustomPopup
+export default CustomModal

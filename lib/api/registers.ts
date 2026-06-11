@@ -25,16 +25,6 @@ const endpointsConfig = {
   getShiftById: {
     query: ({ id }: { id: number | string }) => getMutation(`shifts/${id}`),
   },
-  getShiftEntriesData: {
-    query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
-      postMutation(`shifts/${id}/entries/get-transactions`)(payLoad),
-  },
-  getShiftZReport: {
-    query: ({ id }: { id: number | string }) => getMutation(`shifts/${id}/z-report`),
-  },
-  refreshShift: {
-    query: ({ id }: { id: number | string }) => getMutation(`shifts/${id}/refresh`),
-  },
   cashIn: { query: postMutation("shifts/cash-in") },
   cashOut: { query: postMutation("shifts/cash-out") },
 }
@@ -45,7 +35,11 @@ export const registers = createApi({
   endpoints: (builder) => {
     const finalEndpoints: Record<string, any> = {}
     for (const [name, config] of Object.entries(endpointsConfig)) {
-      finalEndpoints[name] = builder.mutation(config as any)
+      if ((config as any).type === "query") {
+        finalEndpoints[name] = builder.query(config as any)
+      } else {
+        finalEndpoints[name] = builder.mutation(config as any)
+      }
     }
     return finalEndpoints
   },

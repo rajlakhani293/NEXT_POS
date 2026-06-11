@@ -36,6 +36,7 @@ export default function DashboardLayout({
     /^\/inventory\/products\/[^/]+$/,
     /^\/customers\/(create|\d+)$/,
     /^\/purchases\/orders\/[^/]+$/,
+    /^\/registers\/[^/]$/,
     /^\/settings\/coupons\/(create|\d+)$/,
     /^\/settings\/rewards\/(create|\d+)$/,
   ]

@@ -5,7 +5,6 @@ import { expenses } from "@/lib/api/expenses"
 
 const initialValues = {
   name: "",
-  code: "",
   description: "",
 }
 
@@ -16,7 +15,6 @@ export function ExpenseCategoryForm(props: any) {
       entityName="Expense Category"
       fields={[
         { name: "name", label: "Name", placeholder: "Enter category name", type: "text", required: true },
-        { name: "code", label: "Code", placeholder: "Auto generated if empty", type: "text" },
         { name: "description", label: "Description", placeholder: "Enter description", type: "textarea" },
       ]}
       initialValues={initialValues}

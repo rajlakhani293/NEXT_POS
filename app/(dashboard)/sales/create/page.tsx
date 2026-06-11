@@ -2,7 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react"
+import {
+  BanknoteArrowDown,
+  BanknoteArrowUp,
+  LogOut,
+  Minus,
+  Plus,
+  ShoppingCart,
+  Trash2,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +29,8 @@ import { catalog } from "@/lib/api/catalog"
 import { customers } from "@/lib/api/customers"
 import { payments } from "@/lib/api/payments"
 import { promotions } from "@/lib/api/promotions"
+import { usePermissions } from "@/hooks/use-permissions"
+import { PERMISSIONS } from "@/lib/permissions"
 import { useAppSelector } from "@/lib/redux/hooks"
 import { registers } from "@/lib/api/registers"
 import { rewards } from "@/lib/api/rewards"
@@ -72,11 +82,20 @@ export default function SalesPage() {
   const cashRegistersEnabled = useAppSelector(
     (state) => state.session.businessSettings?.settings?.enable_cash_registers
   )
+  const { hasPermission } = usePermissions()
 
   const [shift, setShift] = useState<any>(null)
   const [isOpenShiftDialogOpen, setIsOpenShiftDialogOpen] = useState(false)
+  const [shiftAction, setShiftAction] = useState<
+    "cash_in" | "cash_out" | "close" | null
+  >(null)
+  const [selectedRegisterId, setSelectedRegisterId] = useState("")
   const [openingCash, setOpeningCash] = useState("")
+  const [openingNote, setOpeningNote] = useState("")
+  const [movementAmount, setMovementAmount] = useState("")
+  const [movementNote, setMovementNote] = useState("")
   const [declaredCash, setDeclaredCash] = useState("")
+  const [closingNote, setClosingNote] = useState("")
 
   const [customerId, setCustomerId] = useState("")
   const [draftId, setDraftId] = useState("")
@@ -102,6 +121,16 @@ export default function SalesPage() {
   const [closeShift, { isLoading: isClosingShift }] = (
     registers as any
   ).useCloseShiftMutation()
+  const [cashIn, { isLoading: isCashingIn }] = (
+    registers as any
+  ).useCashInMutation()
+  const [cashOut, { isLoading: isCashingOut }] = (
+    registers as any
+  ).useCashOutMutation()
+  const [
+    getRegistersDropdown,
+    { data: registersDropdownData, isLoading: isRegistersLoading },
+  ] = (registers as any).useGetRegistersDropdownMutation()
   const [getCustomersDropdown, { data: customersData, isLoading: isCustomersLoading }] =
     (customers as any).useGetCustomersDropdownMutation()
   const [getProductsDropdown, { data: productsData, isLoading: isProductsLoading }] =
@@ -138,6 +167,7 @@ export default function SalesPage() {
   const productOptions = productsData?.data || []
   const paymentTypeOptions = paymentTypesData?.data || []
   const couponOptions = couponsData?.data || []
+  const registerOptions = registersDropdownData?.data || []
 
   const selectedProduct = productOptions.find(
     (product: any) => String(product.id) === productId
@@ -200,6 +230,9 @@ export default function SalesPage() {
     const shiftKey = String(cashRegistersEnabled)
     if (loadedShiftRef.current === shiftKey) return
     loadedShiftRef.current = shiftKey
+    if (cashRegistersEnabled) {
+      getRegistersDropdown()
+    }
     loadShift()
   }, [cashRegistersEnabled])
 
@@ -256,12 +289,20 @@ export default function SalesPage() {
   }, [subtotal])
 
   const handleOpenShift = async () => {
+    if (!selectedRegisterId) {
+      showToast.error("Please select a cash register.")
+      return
+    }
+
     const response = await openShift({
+      register_id: Number(selectedRegisterId),
       opening_cash: openingCash || "0",
-      note: "",
+      note: openingNote || "",
     }).unwrap()
     setShift(response?.data || null)
+    setSelectedRegisterId("")
     setOpeningCash("")
+    setOpeningNote("")
     setIsOpenShiftDialogOpen(false)
     showToast.success(response?.message || "Shift opened successfully.")
   }
@@ -270,15 +311,37 @@ export default function SalesPage() {
     const response = await closeShift({
       shift_id: shift?.id,
       declared_cash: declaredCash || shift?.expected_cash || "0",
-      note: "",
+      note: closingNote || "",
     }).unwrap()
     setShift(null)
     setDeclaredCash("")
+    setClosingNote("")
+    setShiftAction(null)
     setCartItems([])
     setCouponInput("")
     setSaleNote("")
     setIsOpenShiftDialogOpen(true)
     showToast.success(response?.message || "Shift closed successfully.")
+  }
+
+  const handleCashMovement = async () => {
+    if (!movementAmount || Number(movementAmount) <= 0) {
+      showToast.error("Amount must be greater than 0.")
+      return
+    }
+
+    const mutation = shiftAction === "cash_out" ? cashOut : cashIn
+    const response = await mutation({
+      shift_id: shift?.id,
+      amount: movementAmount,
+      note: movementNote || "",
+    }).unwrap()
+
+    setMovementAmount("")
+    setMovementNote("")
+    setShiftAction(null)
+    await loadShift()
+    showToast.success(response?.message || "Cash movement recorded.")
   }
 
   const addProductToCart = (product: any, unitQuantity?: any) => {
@@ -554,6 +617,7 @@ export default function SalesPage() {
 
   const isInitialLoading =
     (cashRegistersEnabled && isCheckingShift) ||
+    (cashRegistersEnabled && isRegistersLoading) ||
     isCustomersLoading ||
     isProductsLoading ||
     isPaymentTypesLoading ||
@@ -604,28 +668,47 @@ export default function SalesPage() {
           </p>
         </div>
         {cashRegistersEnabled && shift ? (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button variant="outline" onClick={handleOpenHeldSales}>
               Held Carts
             </Button>
-            <UniFieldInput
-              value={declaredCash}
-              onChange={(event) => setDeclaredCash(event.target.value)}
-              placeholder="Declared cash"
-              prefix="₹"
-              type="number"
-              containerClassName="w-44"
-            />
-            <Button
-              variant="outline"
-              onClick={handleCloseShift}
-              disabled={isClosingShift}
-            >
-              Close Shift
-            </Button>
+            {hasPermission(PERMISSIONS.cashRegister.cashIn) ? (
+              <Button
+                variant="outline"
+                onClick={() => setShiftAction("cash_in")}
+              >
+                <BanknoteArrowDown className="size-4" />
+                Cash In
+              </Button>
+            ) : null}
+            {hasPermission(PERMISSIONS.cashRegister.cashOut) ? (
+              <Button
+                variant="outline"
+                onClick={() => setShiftAction("cash_out")}
+              >
+                <BanknoteArrowUp className="size-4" />
+                Cash Out
+              </Button>
+            ) : null}
+            {hasPermission(PERMISSIONS.cashRegister.close) ? (
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  setDeclaredCash(String(shift.expected_cash || ""))
+                  setShiftAction("close")
+                }}
+              >
+                <LogOut className="size-4" />
+                Close Shift
+              </Button>
+            ) : null}
           </div>
         ) : cashRegistersEnabled ? (
-          <Button onClick={() => setIsOpenShiftDialogOpen(true)}>Open Shift</Button>
+          hasPermission(PERMISSIONS.cashRegister.open) ? (
+            <Button onClick={() => setIsOpenShiftDialogOpen(true)}>
+              Open Shift
+            </Button>
+          ) : null
         ) : (
           <Button variant="outline" onClick={handleOpenHeldSales}>
             Held Carts
@@ -998,9 +1081,40 @@ export default function SalesPage() {
           <DialogHeader>
             <DialogTitle>Open Cashier Shift</DialogTitle>
             <DialogDescription>
-              Enter opening cash before starting billing for this branch.
+              Select a register and enter its opening drawer cash before billing.
             </DialogDescription>
           </DialogHeader>
+          <UniFieldSelect
+            label="Cash Register"
+            value={selectedRegisterId}
+            onValueChange={setSelectedRegisterId}
+            placeholder="Select cash register"
+            required
+          >
+            {registerOptions.map((register: any) => (
+              <SelectItem key={register.id} value={String(register.id)}>
+                {register.name}
+                {register.location ? ` - ${register.location}` : ""}
+              </SelectItem>
+            ))}
+          </UniFieldSelect>
+          {!isRegistersLoading && registerOptions.length === 0 ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              <p className="font-semibold">No cash register is available.</p>
+              <p className="mt-1">
+                Create a register before opening the sales screen.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-3 bg-white"
+                onClick={() => router.push("/registers")}
+              >
+                Create Cash Register
+              </Button>
+            </div>
+          ) : null}
           <UniFieldInput
             label="Opening Cash"
             value={openingCash}
@@ -1009,9 +1123,115 @@ export default function SalesPage() {
             prefix="₹"
             type="number"
           />
+          <UniFieldInput
+            as="textarea"
+            label="Note"
+            value={openingNote}
+            onChange={(event) => setOpeningNote(event.target.value)}
+            placeholder="Optional opening note"
+          />
           <DialogFooter>
-            <Button onClick={handleOpenShift} disabled={isOpeningShift}>
+            <Button
+              onClick={handleOpenShift}
+              disabled={isOpeningShift || !selectedRegisterId}
+            >
               {isOpeningShift ? "Opening..." : "Open Shift"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={shiftAction === "cash_in" || shiftAction === "cash_out"}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShiftAction(null)
+            setMovementAmount("")
+            setMovementNote("")
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {shiftAction === "cash_out" ? "Cash Out" : "Cash In"}
+            </DialogTitle>
+            <DialogDescription>
+              {shiftAction === "cash_out"
+                ? "Record cash removed from the active register."
+                : "Record additional cash placed into the active register."}
+            </DialogDescription>
+          </DialogHeader>
+          <UniFieldInput
+            label="Amount"
+            value={movementAmount}
+            onChange={(event) => setMovementAmount(event.target.value)}
+            placeholder="Enter amount"
+            prefix="₹"
+            type="number"
+          />
+          <UniFieldInput
+            as="textarea"
+            label="Note"
+            value={movementNote}
+            onChange={(event) => setMovementNote(event.target.value)}
+            placeholder="Why is this cash moving?"
+          />
+          <DialogFooter>
+            <Button
+              onClick={handleCashMovement}
+              disabled={isCashingIn || isCashingOut}
+            >
+              {isCashingIn || isCashingOut
+                ? "Saving..."
+                : shiftAction === "cash_out"
+                  ? "Record Cash Out"
+                  : "Record Cash In"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={shiftAction === "close"}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShiftAction(null)
+            setDeclaredCash("")
+            setClosingNote("")
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Close Cashier Shift</DialogTitle>
+            <DialogDescription>
+              Expected cash is ₹{Number(shift?.expected_cash || 0).toFixed(2)}.
+              Enter the physical cash counted in the drawer.
+            </DialogDescription>
+          </DialogHeader>
+          <UniFieldInput
+            label="Declared Cash"
+            value={declaredCash}
+            onChange={(event) => setDeclaredCash(event.target.value)}
+            placeholder="Enter counted cash"
+            prefix="₹"
+            type="number"
+          />
+          <UniFieldInput
+            as="textarea"
+            label="Closing Note"
+            value={closingNote}
+            onChange={(event) => setClosingNote(event.target.value)}
+            placeholder="Optional closing note"
+          />
+          <DialogFooter>
+            <Button
+              variant="destructive"
+              onClick={handleCloseShift}
+              disabled={isClosingShift || declaredCash === ""}
+            >
+              {isClosingShift ? "Closing..." : "Close Shift"}
             </Button>
           </DialogFooter>
         </DialogContent>
