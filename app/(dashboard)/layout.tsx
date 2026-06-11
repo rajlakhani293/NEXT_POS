@@ -40,6 +40,7 @@ export default function DashboardLayout({
     /^\/reports\/[^/]+$/,
     /^\/settings\/coupons\/(create|\d+)$/,
     /^\/settings\/rewards\/(create|\d+)$/,
+    /^\/settings\/roles\/(create|\d+)$/,
   ]
   const isNoPaddingPage = noPaddingRules.some((rule) =>
     typeof rule === "string" ? pathname === rule : rule.test(pathname)

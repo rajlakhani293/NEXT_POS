@@ -12,14 +12,12 @@ const initialValues = {
 }
 
 export function TaxForm(props: any) {
-  const hasLoadedTaxGroupsRef = useRef(false)
   const [getTaxGroupsDropdown, taxGroups] = (
     catalog as any
   ).useGetTaxGroupsDropdownMutation()
 
   useEffect(() => {
-    if (!props.isOpen || hasLoadedTaxGroupsRef.current) return
-    hasLoadedTaxGroupsRef.current = true
+    if (!props.isOpen) return
     getTaxGroupsDropdown()
   }, [getTaxGroupsDropdown, props.isOpen])
 

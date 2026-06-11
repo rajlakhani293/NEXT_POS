@@ -6,6 +6,7 @@ import { Textarea } from "./textarea"
 import { Field, FieldError, FieldLabel } from "./field"
 import { Input } from "./input"
 import { ButtonGroup } from "./button-group"
+import { X } from "lucide-react"
 
 interface UniFieldInputProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -27,6 +28,8 @@ interface UniFieldInputProps extends Omit<
   maxLength?: number
   prefixPadding?: string
   suffixPadding?: string
+  allowClear?: boolean
+  onClear?: () => void
 }
 
 export const UniFieldInput = React.forwardRef<
@@ -54,11 +57,41 @@ export const UniFieldInput = React.forwardRef<
       onChange,
       prefixPadding,
       suffixPadding,
+      allowClear = false,
+      onClear,
       ...props
     },
     ref
   ) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, "-")
+    const hasValue = props.value !== undefined && String(props.value).length > 0
+    const clearButton =
+      allowClear && hasValue ? (
+        <button
+          type="button"
+          aria-label={`Clear ${label || props.placeholder || "input"}`}
+          className="flex size-5 items-center justify-center rounded-full text-muted-foreground hover:bg-gray-200 hover:text-gray-900"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => {
+            if (onClear) {
+              onClear()
+              return
+            }
+            if (onChange) {
+              onChange({
+                target: { value: "" },
+                currentTarget: { value: "" },
+              } as React.ChangeEvent<HTMLInputElement>)
+            }
+          }}
+        >
+          <X className="size-3.5" />
+        </button>
+      ) : null
+    const finalSuffix = suffix ?? clearButton
+    const finalSuffixClassName =
+      suffixClassName ??
+      (clearButton ? "border-l-0 bg-transparent px-2" : undefined)
 
     const handleWheel = (e: React.WheelEvent<HTMLInputElement>) => {
       if (props.type === "number") {
@@ -179,7 +212,7 @@ export const UniFieldInput = React.forwardRef<
                     error &&
                     "border-red-500 focus:border-red-500 focus:ring-red-500",
                     prefix && (prefixPadding || "pl-8"),
-                    suffix && (suffixPadding || "pr-16"),
+                    finalSuffix && (suffixPadding || "pr-16"),
                     props.type === "number" &&
                     "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
                     className
@@ -207,7 +240,7 @@ export const UniFieldInput = React.forwardRef<
                 error &&
                 "border-red-500 focus:border-red-500 focus:ring-red-500",
                 prefix && (prefixPadding || "pl-8"),
-                suffix && (suffixPadding || "pr-16"),
+                finalSuffix && (suffixPadding || "pr-16"),
                 props.type === "number" &&
                 "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none",
                 className
@@ -222,9 +255,9 @@ export const UniFieldInput = React.forwardRef<
               onWheel={handleWheel}
             />
           )}
-          {suffix && (
-            <div className={cn("absolute top-[2px] right-[2px] bottom-[2px] z-10 flex items-center justify-center rounded-r-[calc(var(--radius)-2px)] border-l bg-muted/30 px-3 text-sm text-muted-foreground", suffixClassName)}>
-              {suffix}
+          {finalSuffix && (
+            <div className={cn("absolute top-[2px] right-[2px] bottom-[2px] z-10 flex items-center justify-center rounded-r-[calc(var(--radius)-2px)] border-l bg-muted/30 px-3 text-sm text-muted-foreground", finalSuffixClassName)}>
+              {finalSuffix}
             </div>
           )}
         </div>
