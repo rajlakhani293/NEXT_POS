@@ -87,7 +87,7 @@ export const auth = createApi({
     googleLogin: builder.mutation<ApiEnvelope<LoginResponse>, any>(
       endpointsConfig.googleLogin
     ),
-    getSessionData: builder.mutation<ApiEnvelope<AuthUser>, void>(
+    getSessionData: builder.query<ApiEnvelope<any>, void>(
       endpointsConfig.getSessionData
     ),
     switchBranch: builder.mutation<ApiEnvelope<any>, { branch_id: number }>(
@@ -100,6 +100,7 @@ export const {
   useSendOtpMutation,
   useVerifyOtpMutation,
   useGoogleLoginMutation,
-  useGetSessionDataMutation,
+  useGetSessionDataQuery,
+  useLazyGetSessionDataQuery,
   useSwitchBranchMutation,
 } = auth

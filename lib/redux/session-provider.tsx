@@ -1,10 +1,12 @@
 "use client"
 
 import React, {
+  useCallback,
   createContext,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react"
 import Cookies from "js-cookie"
@@ -36,24 +38,34 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch()
   const router = useRouter()
   const pathname = usePathname()
+  const pathnameRef = useRef(pathname)
+  const bootstrapStartedRef = useRef(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [getSessionData] = auth.useGetSessionDataMutation()
 
-  const clearSession = () => {
+  useEffect(() => {
+    pathnameRef.current = pathname
+  }, [pathname])
+
+  const clearSession = useCallback(() => {
     dispatch(clearSessionData())
+    dispatch(auth.util.resetApiState())
     Cookies.remove("token", { path: "/" })
 
-    if (!publicRoutes.some((route) => pathname.startsWith(route))) {
+    if (
+      !publicRoutes.some((route) => pathnameRef.current.startsWith(route))
+    ) {
       router.replace("/login")
     }
-  }
+  }, [dispatch, router])
 
-  const refreshSession = async () => {
+  const refreshSession = useCallback(async () => {
     const token = Cookies.get("token")
 
     if (!token) {
       dispatch(clearSessionData())
-      if (!publicRoutes.some((route) => pathname.startsWith(route))) {
+      if (
+        !publicRoutes.some((route) => pathnameRef.current.startsWith(route))
+      ) {
         router.replace("/login")
       }
       return
@@ -62,10 +74,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true)
 
     try {
-      const response = await getSessionData().unwrap()
+      const request = dispatch(
+        auth.endpoints.getSessionData.initiate(undefined, {
+          forceRefetch: true,
+          subscribe: false,
+        })
+      )
+      const response = await request.unwrap()
       dispatch(setSessionData(response.data))
 
-      if (pathname === "/login") {
+      if (pathnameRef.current === "/login") {
         router.replace("/dashboard")
       }
     } catch {
@@ -73,11 +91,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [clearSession, dispatch, router])
 
   useEffect(() => {
+    if (bootstrapStartedRef.current) return
+    bootstrapStartedRef.current = true
     void refreshSession()
-  }, [pathname])
+  }, [refreshSession])
 
   const value = useMemo(
     () => ({
@@ -85,7 +105,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       refreshSession,
       clearSession,
     }),
-    [isLoading]
+    [clearSession, isLoading, refreshSession]
   )
 
   return (

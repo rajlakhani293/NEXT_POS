@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { catalog } from "@/lib/api/catalog"
@@ -14,16 +14,12 @@ const initialValues = {
 }
 
 export function UnitForm(props: any) {
-  const hasLoadedUnitGroupsRef = useRef(false)
-  const [getUnitGroupsDropdown, unitGroups] = (
-    catalog as any
-  ).useGetUnitGroupsDropdownMutation()
+  const [getUnitGroupsDropdown, unitGroups] = (catalog as any).useGetUnitGroupsDropdownMutation()
 
   useEffect(() => {
-    if (!props.isOpen || hasLoadedUnitGroupsRef.current) return
-    hasLoadedUnitGroupsRef.current = true
+    if (!props.isOpen) return
     getUnitGroupsDropdown()
-  }, [getUnitGroupsDropdown, props.isOpen])
+  }, [props.isOpen])
 
   const unitGroupOptions = (unitGroups.data?.data || []).map((item: any) => ({
     label: item.name,

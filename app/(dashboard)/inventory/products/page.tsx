@@ -27,9 +27,7 @@ export default function ProductsPage() {
   const router = useRouter()
   const [adjustmentProduct, setAdjustmentProduct] = useState<any>(null)
   const [deleteProduct] = (catalog as any).useDeleteProductMutation()
-  const [updateProductStatus] = (
-    catalog as any
-  ).useUpdateProductStatusMutation()
+  const [updateProductStatus] = (catalog as any).useUpdateProductStatusMutation()
   const { hasPermission } = usePermissions()
   const canCreate = hasPermission(PERMISSIONS.products.create)
   const canUpdate = hasPermission(PERMISSIONS.products.update)
