@@ -102,6 +102,7 @@ export default function RegistersPage() {
               ? () => openRegisterForm()
               : undefined
           }
+          showDateRange
           showEdit={hasPermission(PERMISSIONS.cashRegister.close)}
           onEdit={openRegisterForm}
           showDelete={hasPermission(PERMISSIONS.cashRegister.close)}

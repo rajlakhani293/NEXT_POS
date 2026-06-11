@@ -80,6 +80,7 @@ export default function CustomersPage() {
         onEdit={handleEdit}
         showDelete={canDelete}
         deleteMutation={deleteCustomer}
+        showDateRange
         showStatus={canUpdate}
         statusChangeMutation={({ ids, status }: any) =>
           updateCustomerStatus({ payLoad: { ids, status } })

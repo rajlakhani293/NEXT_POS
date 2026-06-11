@@ -69,6 +69,7 @@ export default function ProductsPage() {
         onSort={handleSort}
         sortableFields={sortableFields}
         isLoading={isLoading}
+        showDateRange
         setAddEntityOpen={
           canCreate ? () => router.push("/inventory/products/create") : undefined
         }

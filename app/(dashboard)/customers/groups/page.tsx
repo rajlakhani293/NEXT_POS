@@ -81,6 +81,7 @@ export default function CustomerGroupsPage() {
         isLoading={isLoading}
         setAddEntityOpen={canCreate ? handleAdd : undefined}
         showEdit={canUpdate}
+        showDateRange
         onEdit={handleEdit}
         showDelete={canDelete}
         deleteMutation={deleteCustomerGroup}

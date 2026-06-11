@@ -102,6 +102,7 @@ export default function ExpensesPage() {
           statusChangeMutation={({ ids, status }: any) =>
             updateExpenseStatus({ payLoad: { ids, status } })
           }
+          showDateRange
           triggerRefresh={table.triggerRefresh}
           deleteModalTitle="Delete Expense"
           deleteModalDescription="Are you sure you want to delete this expense?"

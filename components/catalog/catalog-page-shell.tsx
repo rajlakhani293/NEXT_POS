@@ -29,6 +29,7 @@ type CatalogPageShellProps = {
     update?: string
     delete?: string
   }
+  showDateRange?: boolean
 }
 
 export function CatalogPageShell({
@@ -42,6 +43,7 @@ export function CatalogPageShell({
   deleteTitle,
   deleteDescription,
   permissions = PERMISSIONS.products,
+  showDateRange = true,
 }: CatalogPageShellProps) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editId, setEditId] = useState<number | string | null>(null)
@@ -65,9 +67,12 @@ export function CatalogPageShell({
     searchTerm,
     itemsPerPage,
     triggerRefresh,
+    selectedDateRange,
+    dateFilters,
   } = useTableData({
     getMaster: getDataHook,
     itemsPerPage: 10,
+    disableDateFilter: !showDateRange,
   })
 
   const handleAdd = (open: boolean) => {
@@ -116,6 +121,9 @@ export function CatalogPageShell({
           triggerRefresh={triggerRefresh}
           deleteModalTitle={deleteTitle}
           deleteModalDescription={deleteDescription}
+          showDateRange={showDateRange}
+          selectedDateRange={selectedDateRange}
+          dateFilters={dateFilters}
         />
 
         <FormComponent

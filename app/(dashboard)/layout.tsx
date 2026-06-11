@@ -37,6 +37,7 @@ export default function DashboardLayout({
     /^\/customers\/(create|\d+)$/,
     /^\/purchases\/orders\/[^/]+$/,
     /^\/registers\/[^/]$/,
+    /^\/reports\/[^/]+$/,
     /^\/settings\/coupons\/(create|\d+)$/,
     /^\/settings\/rewards\/(create|\d+)$/,
   ]

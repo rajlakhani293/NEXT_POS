@@ -2,14 +2,14 @@
 
 import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight } from "lucide-react"
-
+import { ArrowLeft } from "lucide-react"
 import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
 import { useTableData } from "@/hooks/useTableData"
 import { registers } from "@/lib/api/registers"
 import { formatDateTime } from "@/lib/format"
 import { ShiftDetails } from "./shiftDetails"
+import { IoMdEye } from "react-icons/io"
 
 const columns = [
   { key: "cashier_name", title: "Cashier" },
@@ -87,12 +87,13 @@ export default function RegisterShiftHistoryPage() {
           sortableFields={table.sortableFields}
           isLoading={table.isLoading}
           showEdit={false}
+          showDateRange
           rowActions={(_, record) => [
             {
               key: "view",
               label: "View Shift",
               labelText: "View Shift",
-              icon: <ArrowRight className="size-4" />,
+              icon: <IoMdEye className="size-4" />,
               onClick: () => setSelectedShiftId(record.id),
             },
           ]}

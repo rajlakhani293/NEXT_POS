@@ -75,6 +75,7 @@ export default function CategoriesPage() {
         onFilterChange={handleFilterChange}
         sortConfig={sortConfig}
         onSort={handleSort}
+        showDateRange
         sortableFields={sortableFields}
         isLoading={isLoading}
         setAddEntityOpen={canCreate ? handleAdd : undefined}
