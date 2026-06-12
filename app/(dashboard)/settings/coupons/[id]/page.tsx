@@ -63,6 +63,11 @@ const initialValues: CouponFormValues = {
   customer_ids: [],
 }
 
+const targetFields: Array<keyof Pick<
+  CouponFormValues,
+  "product_ids" | "category_ids" | "customer_group_ids" | "customer_ids"
+>> = ["product_ids", "category_ids", "customer_group_ids", "customer_ids"]
+
 const idsToArray = (value: any) =>
   Array.isArray(value)
     ? value
@@ -350,6 +355,9 @@ export default function CouponFormPage() {
     if (errors[name]) {
       setErrors((current) => ({ ...current, [name]: "" }))
     }
+    if (targetFields.includes(name as any) && errors.target_scope) {
+      setErrors((current) => ({ ...current, target_scope: "" }))
+    }
   }
 
   const validate = () => {
@@ -358,6 +366,11 @@ export default function CouponFormPage() {
     if (!values.code.trim()) nextErrors.code = "Coupon code is required"
     if (!values.discount_value)
       nextErrors.discount_value = "Discount value is required"
+    const hasTarget = targetFields.some((field) => values[field].length > 0)
+    if (!hasTarget) {
+      nextErrors.target_scope =
+        "Select at least one target: product, category, customer group, or customer."
+    }
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
@@ -603,8 +616,13 @@ export default function CouponFormPage() {
             </section>
 
             <section className="rounded-lg border border-gray-200 bg-white p-4">
+              {errors.target_scope && (
+                <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-600">
+                  {errors.target_scope}
+                </div>
+              )}
               <Tabs defaultValue="products" className="h-full">
-                <TabsList className="mb-4">
+                <TabsList className="mb-2">
                   <TabsTrigger value="products">Products</TabsTrigger>
                   <TabsTrigger value="categories">Categories</TabsTrigger>
                   <TabsTrigger value="customer-groups">
