@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
+import { UniFieldInput } from "@/components/ui/unifield-input"
 import { settings } from "@/lib/api/settings"
 import { showToast } from "@/lib/toast"
 
@@ -19,6 +20,13 @@ const initialSettings = {
   enable_customer_rewards: false,
   enable_credit_account: false,
   enable_cash_registers: true,
+  allow_decimal_quantities: true,
+  quick_product_enabled: true,
+  show_quantity: true,
+  currency_precision: 2,
+  hide_empty_categories: true,
+  unit_price_editable: true,
+  default_change_payment_type: "cash-payment",
   order_types: ["takeaway", "delivery"],
 }
 
@@ -124,7 +132,7 @@ export default function BusinessSettingsPage() {
 
   const updateBusinessField = (
     name: keyof typeof initialSettings,
-    value: boolean | string[]
+    value: boolean | number | string | string[]
   ) => {
     setBusinessSettings((current) => ({ ...current, [name]: value }))
   }
@@ -205,6 +213,75 @@ export default function BusinessSettingsPage() {
                     updateBusinessField("enable_cash_registers", checked)
                   }
                 />
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-gray-950">
+                  POS Defaults
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Default checkout behavior created with every company.
+                </p>
+              </div>
+              <div className="grid gap-3">
+                <SettingSwitch
+                  title="Allow Decimal Quantities"
+                  description="Allow quantities such as 1.5 kg or 0.25 litre."
+                  checked={businessSettings.allow_decimal_quantities}
+                  onCheckedChange={(checked) =>
+                    updateBusinessField("allow_decimal_quantities", checked)
+                  }
+                />
+                <SettingSwitch
+                  title="Enable Quick Product"
+                  description="Allow faster product selection and quick checkout entry."
+                  checked={businessSettings.quick_product_enabled}
+                  onCheckedChange={(checked) =>
+                    updateBusinessField("quick_product_enabled", checked)
+                  }
+                />
+                <SettingSwitch
+                  title="Show Quantity"
+                  description="Show product quantity controls during billing."
+                  checked={businessSettings.show_quantity}
+                  onCheckedChange={(checked) =>
+                    updateBusinessField("show_quantity", checked)
+                  }
+                />
+                <SettingSwitch
+                  title="Hide Empty Categories"
+                  description="Hide categories that do not contain available products."
+                  checked={businessSettings.hide_empty_categories}
+                  onCheckedChange={(checked) =>
+                    updateBusinessField("hide_empty_categories", checked)
+                  }
+                />
+                <SettingSwitch
+                  title="Unit Price Editable"
+                  description="Allow authorized users to edit the selling price during billing."
+                  checked={businessSettings.unit_price_editable}
+                  onCheckedChange={(checked) =>
+                    updateBusinessField("unit_price_editable", checked)
+                  }
+                />
+                <div className="rounded-xl border border-gray-100 bg-white px-5 py-4">
+                  <UniFieldInput
+                    label="Currency Precision"
+                    type="number"
+                    min={0}
+                    max={6}
+                    value={businessSettings.currency_precision}
+                    onChange={(event) =>
+                      updateBusinessField(
+                        "currency_precision",
+                        Number(event.target.value)
+                      )
+                    }
+                    containerClassName="max-w-xs"
+                  />
+                </div>
               </div>
             </section>
 

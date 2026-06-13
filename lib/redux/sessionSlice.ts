@@ -78,6 +78,13 @@ interface BusinessSettings {
     enable_customer_rewards: boolean
     enable_credit_account: boolean
     enable_cash_registers: boolean
+    allow_decimal_quantities: boolean
+    quick_product_enabled: boolean
+    show_quantity: boolean
+    currency_precision: number
+    hide_empty_categories: boolean
+    unit_price_editable: boolean
+    default_change_payment_type: string
     order_types: string[]
   }
   order_types: {
