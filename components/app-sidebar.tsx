@@ -214,8 +214,23 @@ const settingsNavSections: DashboardNavSection[] = [
         permission: PERMISSIONS.reports.view,
       },
       {
+        title: "Rules",
+        url: "/settings/accounting/rules",
+        permission: PERMISSIONS.reports.view,
+      },
+      {
         title: "Transactions",
         url: "/settings/accounting/transactions",
+        permission: PERMISSIONS.reports.view,
+      },
+      {
+        title: "History",
+        url: "/settings/accounting/history",
+        permission: PERMISSIONS.reports.view,
+      },
+      {
+        title: "Configuration",
+        url: "/settings/accounting/configuration",
         permission: PERMISSIONS.reports.view,
       },
     ],

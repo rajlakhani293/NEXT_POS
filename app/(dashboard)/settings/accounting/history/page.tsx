@@ -1,29 +1,24 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { Plus } from "lucide-react"
-
 import DynamicTable from "@/components/DynamicTable"
 import { PermissionGuard } from "@/components/permission-guard"
-import { Button } from "@/components/ui/button"
+import { useTableData } from "@/hooks/useTableData"
 import { accounting } from "@/lib/api/accounting"
 import { PERMISSIONS } from "@/lib/permissions"
-import { useTableData } from "@/hooks/useTableData"
 
 const columns = [
-  { key: "name", title: "Transaction" },
+  { key: "transaction__name", title: "Transaction" },
   { key: "account__name", title: "Account" },
-  { key: "transaction_type", title: "Type" },
+  { key: "action_type", title: "Action" },
+  { key: "amount", title: "Amount" },
+  { key: "balance_before", title: "Before" },
+  { key: "balance_after", title: "After" },
   { key: "source_type", title: "Source" },
-  { key: "event_key", title: "Event" },
-  { key: "value", title: "Amount" },
-  { key: "transaction_date", title: "Date" },
 ]
 
-export default function TransactionsPage() {
-  const router = useRouter()
+export default function TransactionHistoryPage() {
   const table = useTableData({
-    getMaster: (accounting as any).useGetTransactionsDataMutation,
+    getMaster: (accounting as any).useGetTransactionHistoryDataMutation,
     itemsPerPage: 10,
   })
 
@@ -32,7 +27,7 @@ export default function TransactionsPage() {
       <DynamicTable
         data={table.orders}
         columns={columns}
-        tableTitle="Transactions"
+        tableTitle="Transaction History"
         showSearch
         searchTerm={table.searchTerm}
         currentPage={table.currentPage}
@@ -46,12 +41,6 @@ export default function TransactionsPage() {
         isLoading={table.isLoading}
         hideActions
         showDateRange
-        secondaryActionButton={
-          <Button onClick={() => router.push("/settings/accounting/transactions/create")}>
-            <Plus className="size-4" />
-            Create Expense
-          </Button>
-        }
       />
     </PermissionGuard>
   )

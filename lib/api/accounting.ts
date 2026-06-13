@@ -11,7 +11,10 @@ import {
 } from "@/lib/api/apiUtils"
 
 const endpointsConfig = {
-  getAccountsDropdown: { query: () => getMutation("accounts/dropdown-list") },
+  getAccountsDropdown: {
+    type: "query",
+    query: () => getMutation("accounts/dropdown-list"),
+  },
   getAccountsData: { query: postMutation("accounts/get-transactions") },
   createAccount: { query: createMutation("accounts/") },
   editAccount: {
@@ -31,6 +34,29 @@ const endpointsConfig = {
   getTransactionsData: { query: postMutation("transactions/get-transactions") },
   getTransactionHistoryData: { query: postMutation("history/get-transactions") },
   bootstrapAccounting: { query: () => postMutation("bootstrap")({}) },
+  getAccountingActions: {
+    type: "query",
+    query: () => getMutation("rules/actions"),
+  },
+  getAccountingRules: {
+    type: "query",
+    query: () => getMutation("rules"),
+  },
+  createAccountingRule: { query: createMutation("rules/") },
+  editAccountingRule: {
+    query: ({ id, payLoad }: { id: number; payLoad: any }) =>
+      putMutation(`rules/${id}`, payLoad),
+  },
+  deleteAccountingRule: { query: deleteMutation("rules/delete") },
+  resetAccountingRules: { query: () => postMutation("rules/reset")({}) },
+  getAccountingSettings: {
+    type: "query",
+    query: () => getMutation("settings"),
+  },
+  updateAccountingSettings: {
+    query: ({ payLoad }: { payLoad: any }) =>
+      putMutation("settings", payLoad),
+  },
 }
 
 export const accounting = createApi({
@@ -39,7 +65,10 @@ export const accounting = createApi({
   endpoints: (builder) => {
     const finalEndpoints: Record<string, any> = {}
     for (const [name, config] of Object.entries(endpointsConfig)) {
-      finalEndpoints[name] = builder.mutation(config as any)
+      finalEndpoints[name] =
+        (config as any).type === "query"
+          ? builder.query(config as any)
+          : builder.mutation(config as any)
     }
     return finalEndpoints
   },
