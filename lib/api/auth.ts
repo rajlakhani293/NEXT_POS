@@ -11,13 +11,14 @@ export type ApiEnvelope<T> = {
 
 export type AuthUser = {
   id: number
+  username: string
   full_name: string
   email?: string | null
   phone?: string | null
+  theme?: string
+  language?: string
   company_id?: number | null
   branch_id?: number | null
-  auth_provider?: string | null
-  onboarding_completed?: boolean
   profile_image?: string | null
   permissions?: string[]
   role?: unknown
@@ -29,32 +30,17 @@ export type LoginResponse = {
   user: AuthUser
 }
 
-export type SendOtpResponse = {
-  phone: string
-  purpose: string
-  expires_at: string
-  otp_code: string
-  message: string
-}
-
 const endpointsConfig = {
-  sendOtp: {
+  login: {
     query: (payLoad: any) => ({
-      url: "accounts/send-otp",
+      url: "accounts/login",
       method: "POST",
       body: payLoad,
     }),
   },
-  verifyOtp: {
+  register: {
     query: (payLoad: any) => ({
-      url: "accounts/verify-otp",
-      method: "POST",
-      body: payLoad,
-    }),
-  },
-  googleLogin: {
-    query: (payLoad: any) => ({
-      url: "accounts/google-login",
+      url: "accounts/register",
       method: "POST",
       body: payLoad,
     }),
@@ -78,14 +64,11 @@ export const auth = createApi({
   reducerPath: "auth",
   baseQuery: createBaseQueryWithInterceptor(""),
   endpoints: (builder) => ({
-    sendOtp: builder.mutation<ApiEnvelope<SendOtpResponse>, any>(
-      endpointsConfig.sendOtp
+    login: builder.mutation<ApiEnvelope<LoginResponse>, any>(
+      endpointsConfig.login
     ),
-    verifyOtp: builder.mutation<ApiEnvelope<LoginResponse>, any>(
-      endpointsConfig.verifyOtp
-    ),
-    googleLogin: builder.mutation<ApiEnvelope<LoginResponse>, any>(
-      endpointsConfig.googleLogin
+    register: builder.mutation<ApiEnvelope<LoginResponse>, any>(
+      endpointsConfig.register
     ),
     getSessionData: builder.query<ApiEnvelope<any>, void>(
       endpointsConfig.getSessionData
@@ -97,9 +80,8 @@ export const auth = createApi({
 })
 
 export const {
-  useSendOtpMutation,
-  useVerifyOtpMutation,
-  useGoogleLoginMutation,
+  useLoginMutation,
+  useRegisterMutation,
   useGetSessionDataQuery,
   useLazyGetSessionDataQuery,
   useSwitchBranchMutation,

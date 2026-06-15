@@ -1,42 +1,25 @@
 "use client"
 
-import { cn } from "@/lib/utils"
-import { Card, CardContent } from "./ui/card"
-import { Field, FieldDescription, FieldGroup, FieldSeparator } from "./ui/field"
-import { GalleryVerticalEnd } from "lucide-react"
-import { BiLoaderCircle } from "react-icons/bi"
-import { MdEdit } from "react-icons/md"
-import { UniFieldInput } from "./ui/unifield-input"
-import { Button } from "./ui/button"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Cookies from "js-cookie"
+import { BiLoaderCircle } from "react-icons/bi"
+import { GalleryVerticalEnd } from "lucide-react"
+
+import { auth, type AuthUser } from "@/lib/api/auth"
 import { useAppDispatch } from "@/lib/redux/hooks"
 import { useSession } from "@/lib/redux/session-provider"
-import { useCallback, useEffect, useRef, useState } from "react"
-import { auth, AuthUser } from "@/lib/api/auth"
-import Cookies from "js-cookie"
 import { setSessionData } from "@/lib/redux/sessionSlice"
-import { showToast } from "@/lib/toast"
-import { FaAngleDoubleRight } from "react-icons/fa"
-import { FcGoogle } from "react-icons/fc"
-
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (config: {
-            client_id: string
-            callback: (response: { credential?: string }) => void
-          }) => void
-          renderButton: (
-            element: HTMLElement,
-            options: Record<string, unknown>
-          ) => void
-        }
-      }
-    }
-  }
-}
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
+import { UniFieldInput } from "@/components/ui/unifield-input"
 
 const defaultDeviceName = "Web App"
 
@@ -47,183 +30,77 @@ export function LoginForm({
   const router = useRouter()
   const dispatch = useAppDispatch()
   const { refreshSession } = useSession()
-  const googleButtonRef = useRef<HTMLDivElement | null>(null)
-  const googleInitializedRef = useRef(false)
-  const [step, setStep] = useState<"phone" | "otp">("phone")
-  const [phone, setPhone] = useState("")
-  const [phoneError, setPhoneError] = useState("")
-  const [otpCode, setOtpCode] = useState("")
-  const [otpError, setOtpError] = useState("")
-  const [devOtp, setDevOtp] = useState("")
-  const [sendOtp, { isLoading: isSendingOtp }] = auth.useSendOtpMutation()
-  const [verifyOtp, { isLoading: isVerifyingOtp }] = auth.useVerifyOtpMutation()
-  const [googleLogin, { isLoading: isGoogleLoading }] =
-    auth.useGoogleLoginMutation()
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+  const [mode, setMode] = useState<"login" | "register">("login")
+  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [passwordConfirm, setPasswordConfirm] = useState("")
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [login, { isLoading: isLoggingIn }] = auth.useLoginMutation()
+  const [register, { isLoading: isRegistering }] = auth.useRegisterMutation()
+  const isLoading = isLoggingIn || isRegistering
 
-  const completeLogin = useCallback(
-    async (token: string, user: AuthUser) => {
-      Cookies.set("token", token, { expires: 1, path: "/" })
-      dispatch(setSessionData({ user }))
-      await refreshSession()
-      router.replace("/dashboard")
-    },
-    [dispatch, refreshSession, router]
-  )
-
-  const handleGoogleCredential = useCallback(
-    async (credential: string) => {
-      try {
-        const response = await googleLogin({
-          provider: "google",
-          id_token: credential,
-          device_name: defaultDeviceName,
-        }).unwrap()
-        await completeLogin(response.data.token, response.data.user)
-      } catch { }
-    },
-    [googleLogin, completeLogin]
-  )
-
-  useEffect(() => {
-    if (!googleClientId) {
-      return
-    }
-
-    let observer: ResizeObserver | null = null
-
-    const initializeGoogle = () => {
-      if (!window.google?.accounts?.id || !googleButtonRef.current) {
-        return
-      }
-
-      if (googleInitializedRef.current) {
-        return
-      }
-
-      window.google.accounts.id.initialize({
-        client_id: googleClientId,
-        callback: (response: { credential?: string }) => {
-          if (response?.credential) {
-            void handleGoogleCredential(response.credential)
-          }
-        },
-      })
-
-      const renderButton = () => {
-        if (!googleButtonRef.current || !window.google?.accounts?.id) return
-        const parentElement = googleButtonRef.current.parentElement
-        if (!parentElement) return
-        const width = parentElement.offsetWidth
-        googleButtonRef.current.innerHTML = ""
-        window.google.accounts.id.renderButton(googleButtonRef.current, {
-          theme: "outline",
-          size: "large",
-          text: "continue_with",
-          shape: "rectangular",
-          width: width,
-        })
-      }
-
-      renderButton()
-      googleInitializedRef.current = true
-
-      if (
-        googleButtonRef.current.parentElement &&
-        typeof ResizeObserver !== "undefined"
-      ) {
-        observer = new ResizeObserver(() => {
-          renderButton()
-        })
-        observer.observe(googleButtonRef.current.parentElement)
-      }
-    }
-
-    if (window.google?.accounts?.id) {
-      initializeGoogle()
-    } else {
-      const existingScript = document.querySelector<HTMLScriptElement>(
-        'script[src="https://accounts.google.com/gsi/client"]'
-      )
-
-      if (existingScript) {
-        existingScript.addEventListener("load", initializeGoogle)
-      } else {
-        const script = document.createElement("script")
-        script.src = "https://accounts.google.com/gsi/client"
-        script.async = true
-        script.defer = true
-        script.onload = initializeGoogle
-        document.head.appendChild(script)
-      }
-    }
-
-    return () => {
-      if (observer) {
-        observer.disconnect()
-      }
-    }
-  }, [googleClientId, handleGoogleCredential])
-
-  const handleSendOtp = async () => {
-    const cleanPhone = phone.trim()
-    if (!cleanPhone) {
-      setPhoneError("Mobile number is required")
-      return
-    }
-    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
-      setPhoneError(
-        "Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9"
-      )
-      return
-    }
-    setPhoneError("")
-    try {
-      const response = await sendOtp({ phone: cleanPhone }).unwrap()
-      setDevOtp(response.data.otp_code)
-      setStep("otp")
-      showToast.success(response.data.message || "OTP sent successfully.")
-    } catch { }
+  const completeLogin = async (token: string, user: AuthUser) => {
+    Cookies.set("token", token, { expires: 1, path: "/" })
+    dispatch(setSessionData({ user }))
+    await refreshSession()
+    router.replace("/dashboard")
   }
 
-  const handleVerifyOtp = async () => {
-    const cleanOtp = otpCode.trim()
-    if (!cleanOtp) {
-      setOtpError("Please enter a valid OTP")
-      return
+  const validate = () => {
+    const nextErrors: Record<string, string> = {}
+    if (username.trim().length < 3) {
+      nextErrors.username = "Username must contain at least 3 characters."
     }
-    if (cleanOtp.length !== 6) {
-      setOtpError("Please enter a valid 6-digit OTP")
-      return
+    if (password.length < 8) {
+      nextErrors.password = "Password must contain at least 8 characters."
     }
-    setOtpError("")
+    if (mode === "register") {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        nextErrors.email = "Enter a valid email address."
+      }
+      if (password !== passwordConfirm) {
+        nextErrors.passwordConfirm = "Password confirmation does not match."
+      }
+    }
+    setErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!validate()) return
+
     try {
-      const response = await verifyOtp({
-        phone,
-        code: cleanOtp,
+      const payLoad = {
+        username: username.trim(),
+        password,
         device_name: defaultDeviceName,
-      }).unwrap()
+        ...(mode === "register"
+          ? {
+              email: email.trim(),
+              password_confirm: passwordConfirm,
+            }
+          : {}),
+      }
+      const response =
+        mode === "login"
+          ? await login(payLoad).unwrap()
+          : await register(payLoad).unwrap()
       await completeLogin(response.data.token, response.data.user)
-    } catch { }
+    } catch {
+      // API errors are displayed globally by the base query interceptor.
+    }
   }
 
   return (
     <div
-      className={cn("flex w-full max-w-lg flex-col gap-6 px-4", className)}
+      className={cn("flex w-full max-w-md flex-col gap-6 px-4", className)}
       {...props}
     >
       <Card className="w-full">
         <CardContent>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault()
-              if (step === "phone") {
-                void handleSendOtp()
-              } else {
-                void handleVerifyOtp()
-              }
-            }}
-          >
+          <form onSubmit={handleSubmit}>
             <FieldGroup>
               <div className="flex flex-col items-center gap-3 text-center">
                 <div className="flex size-11 items-center justify-center rounded-2xl bg-[#3155f6] text-white shadow-sm">
@@ -231,129 +108,127 @@ export function LoginForm({
                 </div>
                 <div className="space-y-1">
                   <h1 className="text-2xl font-bold tracking-tight text-zinc-950">
-                    Welcome to Next POS
+                    {mode === "login" ? "Welcome back" : "Create your account"}
                   </h1>
+                  <FieldDescription>
+                    Sign in securely with your username and password.
+                  </FieldDescription>
                 </div>
               </div>
 
-              {step === "phone" ? (
+              <Field>
+                <FieldLabel htmlFor="username">Username</FieldLabel>
+                <UniFieldInput
+                  id="username"
+                  value={username}
+                  placeholder="Enter username"
+                  autoComplete="username"
+                  disabled={isLoading}
+                  error={errors.username}
+                  onChange={(event) => {
+                    setUsername(event.target.value)
+                    setErrors((current) => ({ ...current, username: "" }))
+                  }}
+                />
+              </Field>
+
+              {mode === "register" ? (
                 <Field>
+                  <FieldLabel htmlFor="email">Email</FieldLabel>
                   <UniFieldInput
-                    type="number"
-                    placeholder="10 digit mobile number"
-                    value={phone}
-                    maxLength={10}
-                    prefix="+91"
-                    prefixPadding="pl-12"
-                    prefixClassName="text-base"
-                    className="h-12 rounded-xl text-base md:text-base"
+                    id="email"
+                    type="email"
+                    value={email}
+                    placeholder="Enter email address"
+                    autoComplete="email"
+                    disabled={isLoading}
+                    error={errors.email}
                     onChange={(event) => {
-                      setPhone(event.target.value)
-                      setPhoneError("")
+                      setEmail(event.target.value)
+                      setErrors((current) => ({ ...current, email: "" }))
                     }}
-                    error={phoneError}
-                    disabled={isSendingOtp}
                   />
-                  <FieldDescription>
-                    We will be sending an OTP to this number.
-                  </FieldDescription>
                 </Field>
-              ) : (
+              ) : null}
+
+              <Field>
+                <FieldLabel htmlFor="password">Password</FieldLabel>
+                <UniFieldInput
+                  id="password"
+                  type="password"
+                  value={password}
+                  placeholder="Enter password"
+                  autoComplete={
+                    mode === "login" ? "current-password" : "new-password"
+                  }
+                  disabled={isLoading}
+                  error={errors.password}
+                  onChange={(event) => {
+                    setPassword(event.target.value)
+                    setErrors((current) => ({ ...current, password: "" }))
+                  }}
+                />
+              </Field>
+
+              {mode === "register" ? (
                 <Field>
+                  <FieldLabel htmlFor="password-confirm">
+                    Confirm Password
+                  </FieldLabel>
                   <UniFieldInput
-                    type="number"
-                    placeholder="6 digit OTP"
-                    value={otpCode}
-                    maxLength={6}
-                    className="h-12 rounded-xl text-base md:text-base"
+                    id="password-confirm"
+                    type="password"
+                    value={passwordConfirm}
+                    placeholder="Confirm password"
+                    autoComplete="new-password"
+                    disabled={isLoading}
+                    error={errors.passwordConfirm}
                     onChange={(event) => {
-                      setOtpCode(event.target.value)
-                      setOtpError("")
+                      setPasswordConfirm(event.target.value)
+                      setErrors((current) => ({
+                        ...current,
+                        passwordConfirm: "",
+                      }))
                     }}
-                    disabled={isVerifyingOtp}
-                    error={otpError}
                   />
-                  <FieldDescription className="flex items-center gap-1.5 font-semibold text-gray-600">
-                    <span>Verification code sent to {phone}.</span>
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center rounded-md text-[#3155f6] transition-colors hover:bg-[#3155f6]/10"
-                      onClick={() => {
-                        setStep("phone")
-                        setOtpCode("")
-                        setDevOtp("")
-                        setOtpError("")
-                      }}
-                    >
-                      <MdEdit className="size-4" />
-                    </button>
-                  </FieldDescription>
-                  {devOtp ? (
-                    <FieldDescription className="font-medium text-emerald-700">
-                      Dev OTP: {devOtp}
-                    </FieldDescription>
-                  ) : null}
                 </Field>
-              )}
+              ) : null}
 
               <Field>
                 <Button
                   type="submit"
                   variant="blue"
                   size="lg"
-                  disabled={step === "phone" ? isSendingOtp : isVerifyingOtp}
-                  className="text-base font-semibold hover:scale-105"
+                  disabled={isLoading}
+                  className="w-full text-base font-semibold"
                 >
-                  {step === "phone" ? (
-                    isSendingOtp ? (
-                      <BiLoaderCircle className="size-5 animate-spin" />
-                    ) : (
-                      <>
-                        Continue with Mobile Number
-                        <FaAngleDoubleRight className="size-5" />
-                      </>
-                    )
-                  ) : isVerifyingOtp ? (
+                  {isLoading ? (
                     <BiLoaderCircle className="size-5 animate-spin" />
+                  ) : mode === "login" ? (
+                    "Login"
                   ) : (
-                    "Confirm OTP"
+                    "Create Account"
                   )}
                 </Button>
               </Field>
 
-              <FieldSeparator>Or</FieldSeparator>
-
-              <Field>
-                <div className="space-y-3">
-                  <div className="relative">
-                    <Button
-                      variant="outline"
-                      type="button"
-                      className="h-10 w-full justify-center rounded-lg border-zinc-300 bg-zinc-50 text-base font-semibold text-zinc-700 hover:bg-zinc-100"
-                      disabled={isGoogleLoading}
-                    >
-                      {isGoogleLoading ? (
-                        <BiLoaderCircle className="size-5 animate-spin" />
-                      ) : (
-                        <FcGoogle className="size-5" />
-                      )}
-                      {isGoogleLoading
-                        ? "Signing in with Google..."
-                        : "Continue with Google"}
-                    </Button>
-                    <div
-                      ref={googleButtonRef}
-                      className="absolute inset-0 overflow-hidden rounded-2xl opacity-0"
-                      aria-hidden="true"
-                    />
-                  </div>
-                  {isGoogleLoading ? (
-                    <FieldDescription className="text-center text-sm text-zinc-500">
-                      Signing in with Google...
-                    </FieldDescription>
-                  ) : null}
-                </div>
-              </Field>
+              <FieldDescription className="text-center">
+                {mode === "login"
+                  ? "Don't have an account?"
+                  : "Already have an account?"}{" "}
+                <button
+                  type="button"
+                  className="font-semibold text-[#3155f6] hover:underline"
+                  onClick={() => {
+                    setMode((current) =>
+                      current === "login" ? "register" : "login"
+                    )
+                    setErrors({})
+                  }}
+                >
+                  {mode === "login" ? "Sign up" : "Login"}
+                </button>
+              </FieldDescription>
             </FieldGroup>
           </form>
         </CardContent>
