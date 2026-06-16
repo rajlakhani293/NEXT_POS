@@ -12,7 +12,6 @@ import {
 
 const endpointsConfig = {
   // Company profile
-  getStatesDropdown: { query: () => getMutation("organizations/states/dropdown-list") },
   getCompany: { query: () => getMutation("organizations/company") },
   updateCompany: { query: ({ payLoad }: { payLoad: any }) => putMutation("organizations/company", payLoad) },
 

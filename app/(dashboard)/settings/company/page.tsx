@@ -4,10 +4,8 @@ import { useEffect, useRef, useState } from "react"
 
 import { ImageUpload } from "@/components/imageUpload"
 import { Button } from "@/components/ui/button"
-import { SelectItem } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
-import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { settings } from "@/lib/api/settings"
 import { useSession } from "@/lib/redux/session-provider"
 import { showToast } from "@/lib/toast"
@@ -19,7 +17,7 @@ const initialValues = {
   phone: "",
   gst_number: "",
   city_name: "",
-  state_id: "",
+  state: "",
   address: "",
   logo: "",
 }
@@ -44,33 +42,6 @@ function ProfileField({
   )
 }
 
-function StateSelect({
-  value,
-  onValueChange,
-  placeholder,
-  options,
-}: {
-  value: string
-  onValueChange: (value: string) => void
-  placeholder: string
-  options: { label: string; value: string }[]
-}) {
-  return (
-    <UniFieldSelect
-      value={value}
-      onValueChange={onValueChange}
-      placeholder={placeholder}
-      allowClear
-    >
-      {options.map((option) => (
-        <SelectItem key={option.value} value={option.value}>
-          {option.label}
-        </SelectItem>
-      ))}
-    </UniFieldSelect>
-  )
-}
-
 export default function CompanySettingsPage() {
   const { refreshSession } = useSession()
   const [values, setValues] = useState(initialValues)
@@ -78,9 +49,6 @@ export default function CompanySettingsPage() {
   const [logoError, setLogoError] = useState("")
   const hasLoadedRef = useRef(false)
   const [getCompany, company] = (settings as any).useGetCompanyMutation()
-  const [getStatesDropdown, states] = (
-    settings as any
-  ).useGetStatesDropdownMutation()
   const [updateCompany, updateState] = (
     settings as any
   ).useUpdateCompanyMutation()
@@ -89,8 +57,7 @@ export default function CompanySettingsPage() {
     if (hasLoadedRef.current) return
     hasLoadedRef.current = true
     getCompany()
-    getStatesDropdown()
-  }, [getCompany, getStatesDropdown])
+  }, [getCompany])
 
   useEffect(() => {
     const data = company.data?.data
@@ -115,7 +82,6 @@ export default function CompanySettingsPage() {
     const payLoad = {
       company: {
         ...values,
-        state_id: values.state_id ? Number(values.state_id) : null,
       },
     }
     let requestBody: typeof payLoad | FormData = payLoad
@@ -133,11 +99,6 @@ export default function CompanySettingsPage() {
       response?.message || "Company profile updated successfully."
     )
   }
-
-  const stateOptions = (states.data?.data || []).map((state: any) => ({
-    label: state.name,
-    value: String(state.id),
-  }))
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -205,11 +166,10 @@ export default function CompanySettingsPage() {
                   />
                 </ProfileField>
                 <ProfileField label="State">
-                  <StateSelect
-                    placeholder="Select company state"
-                    value={values.state_id ? String(values.state_id) : ""}
-                    onValueChange={(value) => updateField("state_id", value)}
-                    options={stateOptions}
+                  <UniFieldInput
+                    placeholder="Enter company state"
+                    value={values.state}
+                    onChange={(e) => updateField("state", e.target.value)}
                   />
                 </ProfileField>
                 <ProfileField label="Address">

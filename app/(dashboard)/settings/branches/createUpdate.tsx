@@ -1,7 +1,5 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { settings } from "@/lib/api/settings"
 
@@ -10,7 +8,7 @@ const initialValues = {
   phone: "",
   address: "",
   city: "",
-  state_id: "",
+  state: "",
   postal_code: "",
 }
 
@@ -30,18 +28,6 @@ const validateIndianMobile = (value: any) => {
 }
 
 export function BranchForm(props: any) {
-  const [getStatesDropdown, states] = (settings as any).useGetStatesDropdownMutation()
-
-  useEffect(() => {
-    if (!props.isOpen) return
-    getStatesDropdown()
-  }, [getStatesDropdown, props.isOpen])
-
-  const stateOptions = (states.data?.data || []).map((state: any) => ({
-    label: state.name,
-    value: state.id,
-  }))
-
   return (
     <CatalogMasterForm
       {...props}
@@ -78,11 +64,10 @@ export function BranchForm(props: any) {
           type: "text",
         },
         {
-          name: "state_id",
+          name: "state",
           label: "State",
-          placeholder: "Select state",
-          type: "select",
-          options: stateOptions,
+          placeholder: "Enter state",
+          type: "text",
         },
         {
           name: "postal_code",
@@ -105,7 +90,6 @@ export function BranchForm(props: any) {
       buildPayload={(values) => ({
         ...values,
         phone: values.phone ? onlyDigits(values.phone, 10) : "",
-        state_id: values.state_id ? Number(values.state_id) : undefined,
       })}
     />
   )

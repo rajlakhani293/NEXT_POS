@@ -12,7 +12,7 @@ import { useTableData } from "@/hooks/useTableData"
 const columns = [
   { key: "name", title: "Name" },
   { key: "code", title: "Code" },
-  { key: "credit_limit", title: "Credit Limit" },
+  { key: "minimal_credit_payment", title: "Minimum Credit Payment %" },
   { key: "description", title: "Description" },
 ]
 

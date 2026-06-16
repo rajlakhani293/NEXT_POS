@@ -17,14 +17,14 @@ type CustomerGroupFormProps = {
 type CustomerGroupFormValues = {
   name: string
   description: string
-  credit_limit: string
+  minimal_credit_payment: string
   reward_system_id: string
 }
 
 const initialValues: CustomerGroupFormValues = {
   name: "",
   description: "",
-  credit_limit: "",
+  minimal_credit_payment: "",
   reward_system_id: "",
 }
 
@@ -37,11 +37,13 @@ const buildFields = (rewardSystems: any[]) => [
     required: true,
   },
   {
-    name: "credit_limit",
-    label: "Credit Limit",
+    name: "minimal_credit_payment",
+    label: "Minimum Credit Payment",
     type: "number",
-    placeholder: "Enter credit limit",
-    prefix: "₹",
+    placeholder: "Enter minimum payment percentage",
+    suffix: "%",
+    min: 0,
+    max: 100,
   },
   {
     name: "reward_system_id",
@@ -94,7 +96,9 @@ export function CustomerGroupForm({
       ? {
         name: record.name || "",
         description: record.description || "",
-        credit_limit: record.credit_limit ? String(record.credit_limit) : "",
+        minimal_credit_payment: record.minimal_credit_payment
+          ? String(record.minimal_credit_payment)
+          : "",
         reward_system_id: record.reward_system_id
           ? String(record.reward_system_id)
           : "",
@@ -105,7 +109,7 @@ export function CustomerGroupForm({
     const payLoad = {
       name: values.name,
       description: values.description || "",
-      credit_limit: values.credit_limit || "0",
+      minimal_credit_payment: values.minimal_credit_payment || "0",
       reward_system_id: values.reward_system_id
         ? Number(values.reward_system_id)
         : undefined,

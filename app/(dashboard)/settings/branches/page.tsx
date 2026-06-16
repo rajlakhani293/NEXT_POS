@@ -10,7 +10,7 @@ const columns = [
   { key: "code", title: "Code" },
   { key: "phone", title: "Phone" },
   { key: "city", title: "City" },
-  { key: "state__name", title: "State" },
+  { key: "state", title: "State" },
 ]
 
 export default function BranchesPage() {

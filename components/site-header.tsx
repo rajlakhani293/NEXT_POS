@@ -53,7 +53,7 @@ const initialBranchValues = {
   phone: "",
   address: "",
   city: "",
-  state_id: "",
+  state: "",
   postal_code: "",
 }
 
@@ -84,22 +84,6 @@ function BranchQuickForm({
   onClose: () => void
   onSuccess: () => void
 }) {
-  const hasLoadedStatesRef = useRef(false)
-  const [getStatesDropdown, states] = (
-    settings as any
-  ).useGetStatesDropdownMutation()
-
-  useEffect(() => {
-    if (!isOpen || hasLoadedStatesRef.current) return
-    hasLoadedStatesRef.current = true
-    getStatesDropdown()
-  }, [getStatesDropdown, isOpen])
-
-  const stateOptions = (states.data?.data || []).map((state: any) => ({
-    label: state.name,
-    value: state.id,
-  }))
-
   return (
     <CatalogMasterForm
       isOpen={isOpen}
@@ -127,7 +111,7 @@ function BranchQuickForm({
         },
         { name: "address", label: "Address", placeholder: "Enter address", type: "textarea", rows: 3 },
         { name: "city", label: "City", placeholder: "Enter city", type: "text" },
-        { name: "state_id", label: "State", placeholder: "Select state", type: "select", options: stateOptions },
+        { name: "state", label: "State", placeholder: "Enter state", type: "text" },
         {
           name: "postal_code",
           label: "Postal Code",
@@ -147,7 +131,6 @@ function BranchQuickForm({
       buildPayload={(values) => ({
         ...values,
         phone: values.phone ? onlyDigits(values.phone, 10) : "",
-        state_id: values.state_id ? Number(values.state_id) : undefined,
       })}
     />
   )
