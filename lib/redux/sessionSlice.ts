@@ -14,7 +14,7 @@ interface User {
   pincode?: string
   profile_image?: string
   city_id?: number
-  state_id?: number
+  state?: string
   country_id?: number
   company_id?: number
   branch_id?: number
@@ -40,7 +40,7 @@ interface Company {
   phone?: string
   email?: string
   city_id?: number
-  state_id?: number
+  state?: string
   country_id?: number
   owner_id?: number
 }
@@ -55,7 +55,7 @@ interface Branch {
   address?: string
   pincode?: string
   city_id?: number
-  state_id?: number
+  state?: string
   country_id?: number
   company_id?: number
   status?: number
@@ -69,7 +69,7 @@ interface BranchListItem {
   phone?: string
   is_head_office?: boolean
   city__name?: string
-  state__name?: string
+  state?: string
 }
 
 interface BusinessSettings {

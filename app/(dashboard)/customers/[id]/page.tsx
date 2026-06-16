@@ -20,7 +20,6 @@ import {
 import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { customers } from "@/lib/api/customers"
-import { settings } from "@/lib/api/settings"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
@@ -36,11 +35,9 @@ type CustomerFormValues = {
   billing_address_line_1: string
   billing_pincode: string
   billing_city: string
-  billing_state_id: string
   shipping_address_line_1: string
   shipping_pincode: string
   shipping_city: string
-  shipping_state_id: string
 }
 
 const initialValues: CustomerFormValues = {
@@ -55,11 +52,9 @@ const initialValues: CustomerFormValues = {
   billing_address_line_1: "",
   billing_pincode: "",
   billing_city: "",
-  billing_state_id: "",
   shipping_address_line_1: "",
   shipping_pincode: "",
   shipping_city: "",
-  shipping_state_id: "",
 }
 
 const customerTypes = [
@@ -147,9 +142,6 @@ export default function CustomerFormPage() {
   const [getCustomerById, customer] = (
     customers as any
   ).useGetCustomerByIdMutation()
-  const [getStatesDropdown, states] = (
-    settings as any
-  ).useGetStatesDropdownMutation()
 
   useEffect(() => {
     const loadKey = `${id}:${isEdit ? "edit" : "create"}`
@@ -157,8 +149,6 @@ export default function CustomerFormPage() {
     loadKeyRef.current = loadKey
 
     const load = async () => {
-      await getStatesDropdown()
-
       if (!isEdit) {
         setValues(initialValues)
         setOpeningBalanceType("debit")
@@ -188,22 +178,16 @@ export default function CustomerFormPage() {
         billing_address_line_1: billingAddress.address_line_1 || "",
         billing_pincode: billingAddress.pincode || "",
         billing_city: billingAddress.city || "",
-        billing_state_id: billingAddress.state_id
-          ? String(billingAddress.state_id)
-          : "",
         shipping_address_line_1: shippingAddress.address_line_1 || "",
         shipping_pincode: shippingAddress.pincode || "",
         shipping_city: shippingAddress.city || "",
-        shipping_state_id: shippingAddress.state_id
-          ? String(shippingAddress.state_id)
-          : "",
       })
       setOpeningBalanceType(openingBalance < 0 ? "credit" : "debit")
       setErrors({})
     }
 
     load()
-  }, [getCustomerById, getStatesDropdown, id, isEdit])
+  }, [getCustomerById, id, isEdit])
 
   useEffect(() => {
     const sentinel = paginationSentinelRef.current
@@ -229,16 +213,10 @@ export default function CustomerFormPage() {
     }
   }
 
-  const stateOptions = (states.data?.data || []).map((state: any) => ({
-    label: state.name,
-    value: String(state.id),
-  }))
-
   const getAddressValues = (type: AddressType): AddressFormValues => ({
     address_line_1: values[`${type}_address_line_1` as keyof CustomerFormValues],
     pincode: values[`${type}_pincode` as keyof CustomerFormValues],
     city: values[`${type}_city` as keyof CustomerFormValues],
-    state_id: values[`${type}_state_id` as keyof CustomerFormValues],
   })
 
   const handleAddressChange = (
@@ -250,7 +228,6 @@ export default function CustomerFormPage() {
       [`${addressType}_address_line_1`]: addressValues.address_line_1,
       [`${addressType}_pincode`]: addressValues.pincode,
       [`${addressType}_city`]: addressValues.city,
-      [`${addressType}_state_id`]: addressValues.state_id,
     }))
   }
 
@@ -290,12 +267,6 @@ export default function CustomerFormPage() {
       ...values,
       opening_balance: String(signedOpeningBalance),
       credit_limit_amount: values.credit_limit_amount || "0",
-      billing_state_id: values.billing_state_id
-        ? Number(values.billing_state_id)
-        : undefined,
-      shipping_state_id: values.shipping_state_id
-        ? Number(values.shipping_state_id)
-        : undefined,
     }
 
     setIsSubmitting(true)
@@ -494,7 +465,6 @@ export default function CustomerFormPage() {
                 onOpenChange={setAddressFormType}
                 billingAddress={getAddressValues("billing")}
                 shippingAddress={getAddressValues("shipping")}
-                stateOptions={stateOptions}
                 onAddressChange={handleAddressChange}
               />
             </div>

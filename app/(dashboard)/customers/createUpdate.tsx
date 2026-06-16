@@ -4,7 +4,6 @@ import { useEffect } from "react"
 
 import DynamicForm from "@/components/DynamicForm"
 import { customers } from "@/lib/api/customers"
-import { settings } from "@/lib/api/settings"
 import { showToast } from "@/lib/toast"
 
 type CustomerFormProps = {
@@ -26,11 +25,9 @@ type CustomerFormValues = {
   billing_address_line_1: string
   billing_pincode: string
   billing_city: string
-  billing_state_id: string
   shipping_address_line_1: string
   shipping_pincode: string
   shipping_city: string
-  shipping_state_id: string
 }
 
 const initialValues: CustomerFormValues = {
@@ -45,14 +42,12 @@ const initialValues: CustomerFormValues = {
   billing_address_line_1: "",
   billing_pincode: "",
   billing_city: "",
-  billing_state_id: "",
   shipping_address_line_1: "",
   shipping_pincode: "",
   shipping_city: "",
-  shipping_state_id: "",
 }
 
-const buildCustomerFields = (states: any[]) => [
+const buildCustomerFields = () => [
   {
     name: "customer_type",
     label: "Customer Type",
@@ -151,17 +146,6 @@ const buildCustomerFields = (states: any[]) => [
     placeholder: "Enter city",
   },
   {
-    name: "billing_state_id",
-    label: "Billing State",
-    type: "select",
-    placeholder: "Select state",
-    allowClear: true,
-    options: states.map((state: any) => ({
-      label: state.name,
-      value: state.id,
-    })),
-  },
-  {
     name: "shipping_address_line_1",
     label: "Shipping Address Line 1",
     type: "text",
@@ -187,17 +171,6 @@ const buildCustomerFields = (states: any[]) => [
     type: "text",
     placeholder: "Enter city",
   },
-  {
-    name: "shipping_state_id",
-    label: "Shipping State",
-    type: "select",
-    placeholder: "Select state",
-    allowClear: true,
-    options: states.map((state: any) => ({
-      label: state.name,
-      value: state.id,
-    })),
-  },
 ]
 
 export function CustomerForm({
@@ -211,21 +184,17 @@ export function CustomerForm({
   const [getCustomerById, { data, isLoading }] = (
     customers as any
   ).useGetCustomerByIdMutation()
-  const [getStatesDropdown, states] = (settings as any).useGetStatesDropdownMutation()
 
   useEffect(() => {
-    if (isOpen) {
-      getStatesDropdown()
-    }
     if (isOpen && editId) {
       getCustomerById({ id: editId })
     }
-  }, [editId, getCustomerById, getStatesDropdown, isOpen])
+  }, [editId, getCustomerById, isOpen])
 
   const record = data?.data
   const billingAddress = record?.addresses?.billing || record?.address || {}
   const shippingAddress = record?.addresses?.shipping || {}
-  const customerFields = buildCustomerFields(states.data?.data || [])
+  const customerFields = buildCustomerFields()
   const formValues: CustomerFormValues =
     editId && record
       ? {
@@ -244,15 +213,9 @@ export function CustomerForm({
           billing_address_line_1: billingAddress.address_line_1 || "",
           billing_pincode: billingAddress.pincode || "",
           billing_city: billingAddress.city || "",
-          billing_state_id: billingAddress.state_id
-            ? String(billingAddress.state_id)
-            : "",
           shipping_address_line_1: shippingAddress.address_line_1 || "",
           shipping_pincode: shippingAddress.pincode || "",
           shipping_city: shippingAddress.city || "",
-          shipping_state_id: shippingAddress.state_id
-            ? String(shippingAddress.state_id)
-            : "",
         }
       : initialValues
 
@@ -261,12 +224,6 @@ export function CustomerForm({
       ...values,
       opening_balance: values.opening_balance || "0",
       credit_limit_amount: values.credit_limit_amount || "0",
-      billing_state_id: values.billing_state_id
-        ? Number(values.billing_state_id)
-        : undefined,
-      shipping_state_id: values.shipping_state_id
-        ? Number(values.shipping_state_id)
-        : undefined,
     }
 
     if (editId) {

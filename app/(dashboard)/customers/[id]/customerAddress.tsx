@@ -12,12 +12,6 @@ export type AddressFormValues = {
   address_line_1: string
   pincode: string
   city: string
-  state_id: string
-}
-
-type StateOption = {
-  label: string
-  value: string
 }
 
 type CustomerAddressAddonProps = {
@@ -25,7 +19,6 @@ type CustomerAddressAddonProps = {
   onOpenChange: (type: AddressType | null) => void
   billingAddress: AddressFormValues
   shippingAddress: AddressFormValues
-  stateOptions: StateOption[]
   onAddressChange: (type: AddressType, address: AddressFormValues) => void
 }
 
@@ -33,22 +26,18 @@ const emptyAddressValues: AddressFormValues = {
   address_line_1: "",
   pincode: "",
   city: "",
-  state_id: "",
 }
 
 const sanitizePincode = (value: string) => value.replace(/\D/g, "").slice(0, 6)
 
 const hasAddress = (address: AddressFormValues) =>
-  Boolean(
-    address.address_line_1 || address.pincode || address.city || address.state_id
-  )
+  Boolean(address.address_line_1 || address.pincode || address.city)
 
 export function CustomerAddressAddon({
   openType,
   onOpenChange,
   billingAddress,
   shippingAddress,
-  stateOptions,
   onAddressChange,
 }: CustomerAddressAddonProps) {
   const getAddressValues = (type: AddressType) =>
@@ -85,14 +74,6 @@ export function CustomerAddressAddon({
       type: "text",
       placeholder: "Enter city",
     },
-    {
-      name: "state_id",
-      label: "State",
-      type: "select",
-      placeholder: "Select state",
-      allowClear: true,
-      options: stateOptions,
-    },
   ]
 
   const handleAddressSubmit = async (address: AddressFormValues) => {
@@ -104,9 +85,6 @@ export function CustomerAddressAddon({
   const renderAddressCard = (type: AddressType, title: string) => {
     const address = getAddressValues(type)
     const isAdded = hasAddress(address)
-    const selectedState = stateOptions.find(
-      (state) => state.value === address.state_id
-    )
 
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-4">
@@ -145,9 +123,7 @@ export function CustomerAddressAddon({
           <div className="mt-4 rounded-md bg-gray-50 p-3 text-sm font-medium leading-6 text-gray-600">
             {address.address_line_1 ? <div>{address.address_line_1}</div> : null}
             <div>
-              {[address.city, selectedState?.label, address.pincode]
-                .filter(Boolean)
-                .join(", ")}
+              {[address.city, address.pincode].filter(Boolean).join(", ")}
             </div>
           </div>
         ) : null}
