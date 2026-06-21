@@ -56,6 +56,7 @@ export const PERMISSIONS = {
     view: "sales_view",
     create: "sales_create",
     update: "sales_update",
+    delete: "sales_delete",
     void: "sales_void",
   },
   returns: {

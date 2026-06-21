@@ -22,6 +22,9 @@ const endpointsConfig = {
   getSaleById: {
     query: ({ id }: { id: number | string }) => getMutation(`${id}`),
   },
+  deleteSales: {
+    query: deleteMutation("delete"),
+  },
   getSaleReceipt: {
     query: ({ id }: { id: number | string }) => getMutation(`${id}/receipt`),
   },
