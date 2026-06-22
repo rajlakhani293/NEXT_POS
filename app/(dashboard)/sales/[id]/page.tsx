@@ -259,14 +259,21 @@ export default function SaleDetailPage() {
       return
     }
 
-    if (returnType === "refund" && !refundPaymentType) {
+    if ((returnType === "refund" || returnType === "exchange") && !refundPaymentType) {
       showToast.error("Choose refund payment type.")
+      return
+    }
+    if (returnType === "exchange" && !exchangeSaleId) {
+      showToast.error("Enter exchange sale id.")
       return
     }
 
     const payLoad: any = {
       return_type: returnType,
-      payment_type: returnType === "refund" ? refundPaymentType : undefined,
+      payment_type:
+        returnType === "refund" || returnType === "exchange"
+          ? refundPaymentType
+          : undefined,
       exchange_sale_id:
         returnType === "exchange" && exchangeSaleId
           ? Number(exchangeSaleId)
@@ -856,9 +863,9 @@ export default function SaleDetailPage() {
               <SelectItem value="exchange">Exchange</SelectItem>
             </UniFieldSelect>
 
-            {returnType === "refund" ? (
+            {returnType === "refund" || returnType === "exchange" ? (
               <UniFieldSelect
-                label="Refund Payment Type"
+                label={returnType === "exchange" ? "Difference Refund Type" : "Refund Payment Type"}
                 value={refundPaymentType}
                 onValueChange={setRefundPaymentType}
                 placeholder="Choose payment type"
@@ -879,7 +886,7 @@ export default function SaleDetailPage() {
                 label="Exchange Sale ID"
                 value={exchangeSaleId}
                 onChange={(event) => setExchangeSaleId(event.target.value)}
-                placeholder="Optional linked sale id"
+                placeholder="Linked sale id"
                 type="number"
               />
             ) : null}
