@@ -176,6 +176,7 @@ export default function SalesPage() {
   const selectedUnitQuantity = productUnitQuantities.find(
     (unitQuantity: any) => String(unitQuantity.id) === selectedUnitQuantityId
   )
+  const firstUnitQuantity = productUnitQuantities[0]
   const rewardBalances = rewardBalanceState.data?.data || []
   const redeemableReward = rewardBalances.find(
     (balance: any) =>
@@ -256,6 +257,11 @@ export default function SalesPage() {
     if (!productId) return
     getProductUnitQuantities({ productId })
   }, [getProductUnitQuantities, productId])
+
+  useEffect(() => {
+    if (!productId || selectedUnitQuantityId || !firstUnitQuantity?.id) return
+    setSelectedUnitQuantityId(String(firstUnitQuantity.id))
+  }, [firstUnitQuantity?.id, productId, selectedUnitQuantityId])
 
   useEffect(() => {
     if (!customerId) {
@@ -345,16 +351,22 @@ export default function SalesPage() {
   }
 
   const addProductToCart = (product: any, unitQuantity?: any) => {
-    if (!product) return
+    if (!product) return false
+    const stockManaged =
+      product.stock_management !== "disabled" && product.type !== "dematerialized"
 
-    const price = Number(
-      unitQuantity?.sale_price || product.selling_price || product.price || 0
-    )
-    const availableStock = Number(product.current_stock || 0)
+    if (stockManaged && !unitQuantity?.id) {
+      showToast.error("Select a selling unit before adding this product.")
+      return false
+    }
+
+    const price = Number(unitQuantity?.sale_price || 0)
+    const availableStock = Number(unitQuantity?.quantity || 0)
     const unitQuantityId = unitQuantity?.id ? String(unitQuantity.id) : ""
     const unitLabel =
-      unitQuantity?.unit_short_name ||
+      unitQuantity?.unit_identifier ||
       unitQuantity?.unit_name ||
+      unitQuantity?.unit_short_name ||
       product.unit_name ||
       ""
 
@@ -392,13 +404,19 @@ export default function SalesPage() {
         },
       ]
     })
+    return true
   }
 
   const handleAddProduct = () => {
     if (!selectedProduct) return
-    addProductToCart(selectedProduct, selectedUnitQuantity)
-    setProductId("")
-    setSelectedUnitQuantityId("")
+    const added = addProductToCart(
+      selectedProduct,
+      selectedUnitQuantity || firstUnitQuantity
+    )
+    if (added) {
+      setProductId("")
+      setSelectedUnitQuantityId("")
+    }
   }
 
   const handleBarcodeSearch = async () => {
@@ -407,9 +425,18 @@ export default function SalesPage() {
     const response = await searchProductUsingBarcode({ reference }).unwrap()
     const product = response?.data
     if (!product) return
-    addProductToCart(product, product.matched_unit_quantity)
-    setBarcode("")
-    showToast.success(`${product.name} added to cart.`)
+    let matchedUnitQuantity = product.matched_unit_quantity
+    if (!matchedUnitQuantity?.id) {
+      const unitResponse = await getProductUnitQuantities({
+        productId: product.id,
+      }).unwrap()
+      matchedUnitQuantity = (unitResponse?.data || [])[0]
+    }
+    const added = addProductToCart(product, matchedUnitQuantity)
+    if (added) {
+      setBarcode("")
+      showToast.success(`${product.name} added to cart.`)
+    }
   }
 
   const updateQuantity = (product_id: string, delta: number, unit_quantity_id = "") => {

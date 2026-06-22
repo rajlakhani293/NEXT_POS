@@ -21,7 +21,7 @@ const endpointsConfig = {
 
 export const notifications = createApi({
   reducerPath: "notifications",
-  baseQuery: createBaseQueryWithInterceptor("notifications"),
+  baseQuery: createBaseQueryWithInterceptor("settings/notifications"),
   endpoints: (builder) => {
     const finalEndpoints: Record<string, any> = {}
     for (const [name, config] of Object.entries(endpointsConfig)) {

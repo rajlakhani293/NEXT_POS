@@ -29,12 +29,17 @@ export function HeaderNotifications() {
   ).useMarkNotificationsReadMutation()
 
   const refresh = async () => {
-    const [listResponse, countResponse] = await Promise.all([
-      getNotificationsData({ page: 1, limit: 6 }).unwrap(),
-      getUnreadCount().unwrap(),
-    ])
-    setItems(listResponse?.data?.items || [])
-    setUnreadCount(countResponse?.data?.count || 0)
+    try {
+      const [listResponse, countResponse] = await Promise.all([
+        getNotificationsData({ page: 1, limit: 6 }).unwrap(),
+        getUnreadCount().unwrap(),
+      ])
+      setItems(listResponse?.data?.items || [])
+      setUnreadCount(countResponse?.data?.count || 0)
+    } catch {
+      setItems([])
+      setUnreadCount(0)
+    }
   }
 
   useEffect(() => {
@@ -43,9 +48,13 @@ export function HeaderNotifications() {
 
   const markRead = async (ids: number[]) => {
     if (!ids.length) return
-    const response = await markNotificationsRead({ payLoad: { ids } }).unwrap()
-    showToast.success(response?.message || "Notification marked as read.")
-    await refresh()
+    try {
+      const response = await markNotificationsRead({ payLoad: { ids } }).unwrap()
+      showToast.success(response?.message || "Notification marked as read.")
+      await refresh()
+    } catch {
+      showToast.error("Unable to update notifications.")
+    }
   }
 
   const unreadIds = items

@@ -176,6 +176,24 @@ const generateBarcode = () => {
   return `${base}${check}`
 }
 
+function buildDefaultUnitQuantityPayload(values: ProductFormValues) {
+  return {
+    unit_id: Number(values.unit_id),
+    barcode: values.barcode || "",
+    quantity:
+      values.product_type === "product" ? values.opening_stock || "0" : "0",
+    low_quantity:
+      values.product_type === "product" ? values.min_stock || "0" : "0",
+    sale_price: values.selling_price || "0",
+    sale_price_edit: values.selling_price || "0",
+    wholesale_price: values.wholesale_price || "0",
+    wholesale_price_edit: values.wholesale_price || "0",
+    cogs: values.purchase_price || "0",
+    stock_alert_enabled: values.product_type === "product",
+    visible: true,
+  }
+}
+
 function buildProductFormData(values: ProductFormValues, isEdit: boolean) {
   const formData = new FormData()
 
@@ -322,9 +340,12 @@ export default function ProductFormPage() {
       }
 
       const result = await getProductById({ id }).unwrap()
-      await getProductUnitQuantities({ productId: id })
+      const unitQuantitiesResponse = await getProductUnitQuantities({
+        productId: id,
+      }).unwrap()
       const record = result?.data
       if (!record) return
+      const primaryUnitQuantity = (unitQuantitiesResponse?.data || [])[0]
 
       setInitialImageUrl(record.image || "")
       setImageError("")
@@ -336,8 +357,22 @@ export default function ProductFormPage() {
         category_id: record.category_id ? String(record.category_id) : "",
         brand_id: record.brand_id ? String(record.brand_id) : "",
         tax_group_id: record.tax_group_id ? String(record.tax_group_id) : "",
-        unit_id: record.unit_id ? String(record.unit_id) : "",
-        is_tax_inclusive: Boolean(record.is_tax_inclusive),
+        unit_id: primaryUnitQuantity?.unit_id
+          ? String(primaryUnitQuantity.unit_id)
+          : "",
+        purchase_price: primaryUnitQuantity?.cogs
+          ? String(primaryUnitQuantity.cogs)
+          : "",
+        selling_price: primaryUnitQuantity?.sale_price
+          ? String(primaryUnitQuantity.sale_price)
+          : "",
+        wholesale_price: primaryUnitQuantity?.wholesale_price
+          ? String(primaryUnitQuantity.wholesale_price)
+          : "",
+        min_stock: primaryUnitQuantity?.low_quantity
+          ? String(primaryUnitQuantity.low_quantity)
+          : "",
+        is_tax_inclusive: record.tax_type === "inclusive",
       })
     }
 
@@ -448,7 +483,7 @@ export default function ProductFormPage() {
         barcode: unitQuantityForm.barcode,
         quantity: unitQuantityForm.quantity || "1",
         sale_price: unitQuantityForm.sale_price || "0",
-        purchase_price: unitQuantityForm.purchase_price || "0",
+        cogs: unitQuantityForm.purchase_price || "0",
         is_default: unitQuantityForm.is_default,
         scale_plu: unitQuantityForm.scale_plu,
       }
@@ -489,7 +524,7 @@ export default function ProductFormPage() {
       barcode: record.barcode || "",
       quantity: record.quantity ? String(record.quantity) : "",
       sale_price: record.sale_price ? String(record.sale_price) : "",
-      purchase_price: record.purchase_price ? String(record.purchase_price) : "",
+      purchase_price: record.cogs ? String(record.cogs) : "",
       is_default: Boolean(record.is_default),
       scale_plu: record.scale_plu || "",
     })
@@ -522,6 +557,13 @@ export default function ProductFormPage() {
         showToast.success(response?.message || "Product updated successfully.")
       } else {
         const response = await createProduct(payLoad).unwrap()
+        const productId = response?.data?.id
+        if (productId && formData.unit_id) {
+          await createProductUnitQuantity({
+            productId,
+            payLoad: buildDefaultUnitQuantityPayload(formData),
+          }).unwrap()
+        }
         showToast.success(response?.message || "Product created successfully.")
       }
       goBack()
@@ -936,7 +978,7 @@ export default function ProductFormPage() {
                               <p className="mt-1 text-xs font-semibold text-gray-700">
                                 Sale ₹{Number(record.sale_price || 0).toFixed(2)}
                                 {" · "}Buy ₹
-                                {Number(record.purchase_price || 0).toFixed(2)}
+                                {Number(record.cogs || 0).toFixed(2)}
                               </p>
                               {record.scale_plu ? (
                                 <p className="mt-1 text-xs font-medium text-gray-500">
