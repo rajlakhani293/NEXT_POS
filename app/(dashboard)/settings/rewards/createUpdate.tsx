@@ -16,7 +16,6 @@ type RewardSystemFormProps = {
 
 type RewardSystemFormValues = {
   name: string
-  code: string
   coupon_id: string
   target: string
   from_amount: string
@@ -27,7 +26,6 @@ type RewardSystemFormValues = {
 
 const initialValues: RewardSystemFormValues = {
   name: "",
-  code: "",
   coupon_id: "",
   target: "",
   from_amount: "",
@@ -45,16 +43,11 @@ const buildRewardFields = (couponOptions: any[]) => [
     required: true,
   },
   {
-    name: "code",
-    label: "Code",
-    type: "text",
-    placeholder: "Auto generated if empty",
-  },
-  {
     name: "coupon_id",
     label: "Reward Coupon",
     type: "select",
     placeholder: "Select coupon",
+    required: true,
     allowClear: true,
     options: couponOptions.map((coupon: any) => ({
       label: `${coupon.name} (${coupon.code})`,
@@ -66,6 +59,7 @@ const buildRewardFields = (couponOptions: any[]) => [
     label: "Target",
     type: "number",
     placeholder: "How many points needed to redeem coupon",
+    required: true,
   },
   {
     name: "from_amount",
@@ -127,12 +121,17 @@ export function RewardSystemForm({
     editId && record
       ? {
           name: record.name || "",
-          code: record.code || "",
           coupon_id: record.coupon_id ? String(record.coupon_id) : "",
           target: record.target ? String(record.target) : "",
-          from_amount: record.from_amount ? String(record.from_amount) : "",
-          to_amount: record.to_amount ? String(record.to_amount) : "",
-          reward: record.reward ? String(record.reward) : "",
+          from_amount: record.rules?.[0]?.from_amount
+            ? String(record.rules[0].from_amount)
+            : "",
+          to_amount: record.rules?.[0]?.to_amount
+            ? String(record.rules[0].to_amount)
+            : "",
+          reward: record.rules?.[0]?.reward
+            ? String(record.rules[0].reward)
+            : "",
           description: record.description || "",
         }
       : initialValues
@@ -140,12 +139,15 @@ export function RewardSystemForm({
   const handleSubmit = async (values: RewardSystemFormValues) => {
     const payLoad = {
       name: values.name,
-      code: values.code || undefined,
-      coupon_id: values.coupon_id ? Number(values.coupon_id) : undefined,
+      coupon_id: Number(values.coupon_id),
       target: values.target || "0",
-      from_amount: values.from_amount || "0",
-      to_amount: values.to_amount || "0",
-      reward: values.reward || "0",
+      rules: [
+        {
+          from_amount: values.from_amount || "0",
+          to_amount: values.to_amount || "0",
+          reward: values.reward || "0",
+        },
+      ],
       description: values.description || "",
     }
 

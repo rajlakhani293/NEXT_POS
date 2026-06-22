@@ -7,7 +7,7 @@ const endpointsConfig = {
   getDashboardSummary: { query: postMutation("dashboard-summary"), type: "query" },
   refreshDashboardSnapshot: { query: postMutation("dashboard-snapshot/refresh") },
   getCustomerDueReport: { query: postMutation("customer-due") },
-  getSupplierPayableReport: { query: postMutation("supplier-payable") },
+  getSupplierPayableReport: { query: postMutation("provider-payable") },
   getStockLedgerReport: { query: postMutation("stock-ledger") },
   getCustomerCreditLedgerReport: { query: postMutation("customer-credit-ledger") },
   getSaleReport: { query: postMutation("sale-report") },

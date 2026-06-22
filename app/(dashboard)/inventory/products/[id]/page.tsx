@@ -96,7 +96,7 @@ type ProductFormValues = {
   brand_id: string
   tax_group_id: string
   unit_id: string
-  product_type: "stock" | "service"
+  product_type: "product" | "service"
   description: string
   purchase_price: string
   selling_price: string
@@ -133,7 +133,7 @@ const initialValues: ProductFormValues = {
   brand_id: "",
   tax_group_id: "",
   unit_id: "",
-  product_type: "stock",
+  product_type: "product",
   description: "",
   purchase_price: "",
   selling_price: "",
@@ -187,14 +187,24 @@ function buildProductFormData(values: ProductFormValues, isEdit: boolean) {
   appendIfPresent(formData, "brand_id", values.brand_id)
   appendIfPresent(formData, "tax_group_id", values.tax_group_id)
   appendIfPresent(formData, "unit_id", values.unit_id)
-  appendIfPresent(formData, "product_type", values.product_type || "stock")
+  appendIfPresent(formData, "product_type", "product")
+  appendIfPresent(
+    formData,
+    "type",
+    values.product_type === "service" ? "dematerialized" : "materialized"
+  )
+  appendIfPresent(
+    formData,
+    "tax_type",
+    values.is_tax_inclusive ? "inclusive" : "exclusive"
+  )
   appendIfPresent(formData, "description", values.description)
   appendIfPresent(formData, "purchase_price", values.purchase_price || "0")
   appendIfPresent(formData, "selling_price", values.selling_price || "0")
   appendIfPresent(formData, "mrp", values.mrp || "0")
   appendIfPresent(formData, "wholesale_price", values.wholesale_price || "0")
 
-  if (values.product_type === "stock") {
+  if (values.product_type === "product") {
     appendIfPresent(formData, "min_stock", values.min_stock || "0")
     appendIfPresent(formData, "max_stock", values.max_stock || "0")
     if (!isEdit) {
@@ -205,7 +215,13 @@ function buildProductFormData(values: ProductFormValues, isEdit: boolean) {
   formData.append("is_tax_inclusive", String(Boolean(values.is_tax_inclusive)))
   formData.append(
     "track_stock",
-    String(values.product_type === "stock" && Boolean(values.track_stock))
+    String(values.product_type === "product" && Boolean(values.track_stock))
+  )
+  formData.append(
+    "stock_management",
+    values.product_type === "product" && values.track_stock
+      ? "enabled"
+      : "disabled"
   )
   formData.append(
     "allow_decimal_qty",
@@ -214,7 +230,15 @@ function buildProductFormData(values: ProductFormValues, isEdit: boolean) {
   formData.append(
     "expiry_tracking_enabled",
     String(
-      values.product_type === "stock" && Boolean(values.expiry_tracking_enabled)
+      values.product_type === "product" &&
+        Boolean(values.expiry_tracking_enabled)
+    )
+  )
+  formData.append(
+    "expires",
+    String(
+      values.product_type === "product" &&
+        Boolean(values.expiry_tracking_enabled)
     )
   )
 
@@ -308,7 +332,7 @@ export default function ProductFormPage() {
         ...initialValues,
         ...record,
         image: null,
-        product_type: record.product_type || "stock",
+        product_type: record.type === "dematerialized" ? "service" : "product",
         category_id: record.category_id ? String(record.category_id) : "",
         brand_id: record.brand_id ? String(record.brand_id) : "",
         tax_group_id: record.tax_group_id ? String(record.tax_group_id) : "",
@@ -329,7 +353,7 @@ export default function ProductFormPage() {
     isEdit,
   ])
 
-  const isStockProduct = formData.product_type === "stock"
+  const isStockProduct = formData.product_type === "product"
   const isLoading =
     categories.isLoading ||
     brands.isLoading ||
@@ -549,7 +573,7 @@ export default function ProductFormPage() {
                 <section className="rounded-lg border border-gray-200 bg-white p-4">
                   <ButtonGroup className="mb-4 overflow-hidden rounded-md bg-white">
                     {[
-                      { label: "Product", value: "stock" },
+                      { label: "Product", value: "product" },
                       { label: "Service", value: "service" },
                     ].map((item) => (
                       <Button
