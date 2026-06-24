@@ -4,12 +4,14 @@ import { Provider } from "react-redux"
 import { store } from "@/lib/redux/store"
 import { Toaster } from "react-hot-toast"
 import { SessionProvider } from "@/lib/redux/session-provider"
+import { TranslationProvider } from "@/lib/contexts/TranslationContext"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
-      <SessionProvider>
-        {children}
+      <TranslationProvider>
+        <SessionProvider>
+          {children}
         <Toaster
           position="top-right"
           toastOptions={{
@@ -35,6 +37,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           }}
         />
       </SessionProvider>
+      </TranslationProvider>
     </Provider>
   )
 }

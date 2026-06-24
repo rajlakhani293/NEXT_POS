@@ -86,6 +86,7 @@ interface BusinessSettings {
     unit_price_editable: boolean
     default_change_payment_type: string
     order_types: string[]
+    store_language?: string
   }
   order_types: {
     value: string

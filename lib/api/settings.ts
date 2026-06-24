@@ -43,8 +43,13 @@ const endpointsConfig = {
   editUser: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`accounts/users/${id}`, payLoad) },
   deleteUser: { query: deleteMutation("accounts/users/delete") },
   updateUserStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("accounts/users/status", payLoad) },
-  getUserById: { query: ({ id }: { id: number }) => getMutation(`accounts/users/${id}`) },
   assignRole: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`accounts/users/${id}/assign-role`)(payLoad) },
+
+  // Background queue / Workers
+  getPendingJobs: { query: postMutation("settings/jobs/pending/get-transactions") },
+  getFailedJobs: { query: postMutation("settings/jobs/failed/get-transactions") },
+  retryFailedJob: { query: ({ id }: { id: number | string }) => postMutation(`settings/jobs/failed/${id}/retry`)({}) },
+  deleteFailedJob: { query: ({ id }: { id: number | string }) => ({ url: `settings/jobs/failed/${id}`, method: "DELETE" }) },
 }
 
 export const settings = createApi({

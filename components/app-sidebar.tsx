@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { NavMain } from "@/components/nav-main"
 import { usePermissions } from "@/hooks/use-permissions"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS, type PermissionRequirement } from "@/lib/permissions"
 import {
   Sidebar,
@@ -308,6 +309,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
   const pathname = usePathname()
   const isSettingsMode = pathname.startsWith("/settings")
   const { hasPermission } = usePermissions()
+  const { t } = useTranslation()
 
   const filterNavItems = (sections: DashboardNavSection[]) =>
     sections.reduce<DashboardNavSection[]>((visibleItems, item) => {
@@ -349,8 +351,22 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
         })),
       }
     })
-  const mainNavItems = buildNavItems(filterNavItems(mainNavSections))
-  const settingsNavItems = buildNavItems(filterNavItems(settingsNavSections))
+  const translateNavItem = (item: any) => {
+    const key = item.title.toLowerCase().replace(/\s+/g, "_")
+    return {
+      ...item,
+      title: t(key),
+      items: item.items?.map((subItem: any) => {
+        const subKey = subItem.title.toLowerCase().replace(/\s+/g, "_")
+        return {
+          ...subItem,
+          title: t(subKey),
+        }
+      }),
+    }
+  }
+  const mainNavItems = buildNavItems(filterNavItems(mainNavSections)).map(translateNavItem)
+  const settingsNavItems = buildNavItems(filterNavItems(settingsNavSections)).map(translateNavItem)
 
   return (
     <Sidebar

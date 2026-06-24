@@ -40,6 +40,7 @@ const statusColors: Record<string, string> = {
   partially_refunded: "bg-indigo-50 text-indigo-700",
   hold: "bg-gray-100 text-gray-700",
   void: "bg-zinc-200 text-zinc-700",
+  order_void: "bg-zinc-200 text-zinc-700",
 }
 
 type ReturnLine = {
@@ -506,7 +507,7 @@ export default function SaleDetailPage() {
           <div className="flex items-center gap-3">
             {canCollectDue &&
             Number(sale.due_amount || 0) > 0 &&
-            !["void", "refunded"].includes(sale.payment_status) ? (
+            !["void", "order_void", "refunded"].includes(sale.payment_status) ? (
               <Button variant="outline" onClick={openCollectDueDialog}>
                 Collect Due
               </Button>
@@ -519,7 +520,7 @@ export default function SaleDetailPage() {
               Receipt
             </Button>
             {canVoidSale &&
-            !["void", "refunded", "partially_refunded"].includes(
+            !["void", "order_void", "refunded", "partially_refunded"].includes(
               sale.payment_status
             ) ? (
               <Button

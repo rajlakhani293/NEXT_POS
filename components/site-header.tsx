@@ -24,7 +24,8 @@ import { settings } from "@/lib/api/settings"
 import { useAppDispatch } from "@/lib/redux/hooks"
 import { useSession } from "@/lib/redux/session-provider"
 import { showToast } from "@/lib/toast"
-import { Building2, MapPin } from "lucide-react"
+import { Building2, MapPin, Globe } from "lucide-react"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 type SiteHeaderProps = {
   companyLogo?: string | null
@@ -150,6 +151,13 @@ export function SiteHeader({
   onLogout,
 }: SiteHeaderProps) {
   const { refreshSession } = useSession()
+  const { language, changeLanguage } = useTranslation()
+  const languagesList = [
+    { code: "en", label: "English" },
+    { code: "es", label: "Español" },
+    { code: "fr", label: "Français" },
+    { code: "ar", label: "العربية" },
+  ]
   const router = useRouter()
   const dispatch = useAppDispatch()
   const [isBranchFormOpen, setIsBranchFormOpen] = useState(false)
@@ -276,6 +284,29 @@ export function SiteHeader({
           <div className="ml-auto flex items-center gap-3">
             <SearchForm className="w-full max-w-xs sm:w-auto" />
             <HeaderNotifications />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Globe className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuLabel>Language</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {languagesList.map((lang) => (
+                  <DropdownMenuItem
+                    key={lang.code}
+                    onClick={() => changeLanguage(lang.code)}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
+                    <span>{lang.label}</span>
+                    {language === lang.code && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <div className="hidden sm:block">
               <NavUser
                 user={{

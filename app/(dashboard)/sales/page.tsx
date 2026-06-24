@@ -20,6 +20,7 @@ const paymentStatusColors: Record<string, string> = {
   partially_refunded: "bg-indigo-50 text-indigo-700",
   hold: "bg-gray-100 text-gray-700",
   void: "bg-zinc-200 text-zinc-700",
+  order_void: "bg-zinc-200 text-zinc-700",
 }
 
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
@@ -179,7 +180,7 @@ export default function SalesHistoryPage() {
           },
           ...(canCollectDue &&
           Number(record.due_amount || 0) > 0 &&
-          !["void", "refunded"].includes(record.payment_status)
+          !["void", "order_void", "refunded"].includes(record.payment_status)
             ? [
                 {
                   key: "collect_due",
@@ -190,7 +191,7 @@ export default function SalesHistoryPage() {
                 },
               ]
             : []),
-          ...(canVoidSale && !["void", "refunded", "partially_refunded"].includes(record.payment_status)
+          ...(canVoidSale && !["void", "order_void", "refunded", "partially_refunded"].includes(record.payment_status)
             ? [
                 {
                   key: "void",

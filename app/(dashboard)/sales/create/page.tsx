@@ -1,15 +1,21 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   BanknoteArrowDown,
   BanknoteArrowUp,
+  ChevronRight,
+  Folder,
+  Home,
   LogOut,
   Minus,
+  Package,
   Plus,
+  Search,
   ShoppingCart,
   Trash2,
+  X,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -30,6 +36,7 @@ import { customers } from "@/lib/api/customers"
 import { payments } from "@/lib/api/payments"
 import { promotions } from "@/lib/api/promotions"
 import { usePermissions } from "@/hooks/use-permissions"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
 import { useAppSelector } from "@/lib/redux/hooks"
 import { registers } from "@/lib/api/registers"
@@ -47,6 +54,45 @@ type CartItem = {
   price: number
   available_stock: number
   sku?: string
+}
+
+type POSCategory = {
+  id: number
+  name: string
+  preview_url?: string
+}
+
+type POSUnitQuantity = {
+  id: number
+  unit_id: number
+  unit_name?: string
+  unit_short_name?: string
+  unit_identifier?: string
+  sale_price: number
+  sale_price_gross?: number
+  sale_price_net?: number
+  quantity: number
+}
+
+type POSProduct = {
+  id: number
+  name: string
+  sku?: string
+  pinned?: boolean
+  stock_management?: string
+  type?: string
+  unit_id?: number
+  unit_name?: string
+  galleries?: { id: number; url: string; featured: boolean }[]
+  unit_quantities?: POSUnitQuantity[]
+}
+
+type POSGridData = {
+  categories: POSCategory[]
+  products: POSProduct[]
+  pinnedProducts: POSProduct[]
+  currentCategory?: POSCategory | null
+  previousCategory?: POSCategory | null
 }
 
 type PaymentRow = {
@@ -76,6 +122,7 @@ const emptyPaymentRow = (): PaymentRow => ({
 
 export default function SalesPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const loadedRef = useRef(false)
   const loadedShiftRef = useRef("")
   const loadedRewardCustomerRef = useRef("")
@@ -99,13 +146,25 @@ export default function SalesPage() {
 
   const [customerId, setCustomerId] = useState("")
   const [draftId, setDraftId] = useState("")
-  const [productId, setProductId] = useState("")
   const [barcode, setBarcode] = useState("")
-  const [selectedUnitQuantityId, setSelectedUnitQuantityId] = useState("")
   const [couponInput, setCouponInput] = useState("")
   const [selectedCouponId, setSelectedCouponId] = useState("")
   const [orderType, setOrderType] = useState("takeaway")
   const [saleNote, setSaleNote] = useState("")
+
+  // POS Grid state
+  const [gridData, setGridData] = useState<POSGridData>({
+    categories: [],
+    products: [],
+    pinnedProducts: [],
+    currentCategory: null,
+    previousCategory: null,
+  })
+  const [gridLoading, setGridLoading] = useState(false)
+  const [gridBreadcrumbs, setGridBreadcrumbs] = useState<POSCategory[]>([])
+  const [unitPickerProduct, setUnitPickerProduct] = useState<POSProduct | null>(null)
+  const [isUnitPickerOpen, setIsUnitPickerOpen] = useState(false)
+  const barcodeInputRef = useRef<HTMLInputElement>(null)
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [paymentsRows, setPaymentsRows] = useState<PaymentRow[]>([
     emptyPaymentRow(),
@@ -133,15 +192,12 @@ export default function SalesPage() {
   ] = (registers as any).useGetRegistersDropdownMutation()
   const [getCustomersDropdown, { data: customersData, isLoading: isCustomersLoading }] =
     (customers as any).useGetCustomersDropdownMutation()
-  const [getProductsDropdown, { data: productsData, isLoading: isProductsLoading }] =
-    (catalog as any).useGetProductsDropdownMutation()
   const [getPaymentTypesDropdown, { data: paymentTypesData, isLoading: isPaymentTypesLoading }] =
     (payments as any).useGetPaymentTypesDropdownMutation()
   const [getCouponsDropdown, { data: couponsData, isLoading: isCouponsLoading }] =
     (promotions as any).useGetCouponsDropdownMutation()
-  const [getProductUnitQuantities, unitQuantitiesState] = (
-    catalog as any
-  ).useGetProductUnitQuantitiesMutation()
+  const [getPOSGrid] = (catalog as any).useGetPOSGridMutation()
+  const [getPOSGridByCategory] = (catalog as any).useGetPOSGridByCategoryMutation()
   const [searchProductUsingBarcode, barcodeSearchState] = (
     catalog as any
   ).useSearchProductUsingBarcodeMutation()
@@ -164,19 +220,9 @@ export default function SalesPage() {
   const [deleteHeldSale] = (sales as any).useDeleteHeldSaleMutation()
 
   const customerOptions = customersData?.data || []
-  const productOptions = productsData?.data || []
   const paymentTypeOptions = paymentTypesData?.data || []
   const couponOptions = couponsData?.data || []
   const registerOptions = registersDropdownData?.data || []
-
-  const selectedProduct = productOptions.find(
-    (product: any) => String(product.id) === productId
-  )
-  const productUnitQuantities = unitQuantitiesState.data?.data || []
-  const selectedUnitQuantity = productUnitQuantities.find(
-    (unitQuantity: any) => String(unitQuantity.id) === selectedUnitQuantityId
-  )
-  const firstUnitQuantity = productUnitQuantities[0]
   const rewardBalances = rewardBalanceState.data?.data || []
   const redeemableReward = rewardBalances.find(
     (balance: any) =>
@@ -211,19 +257,34 @@ export default function SalesPage() {
     setIsOpenShiftDialogOpen(!activeShift)
   }
 
+  const loadGrid = useCallback(async (category?: POSCategory | null) => {
+    setGridLoading(true)
+    try {
+      const res = category?.id
+        ? await getPOSGridByCategory({ parentId: category.id }).unwrap()
+        : await getPOSGrid().unwrap()
+      const data: POSGridData = res?.data || { categories: [], products: [], pinnedProducts: [] }
+      setGridData(data)
+    } catch {
+      // silently ignore
+    } finally {
+      setGridLoading(false)
+    }
+  }, [getPOSGrid, getPOSGridByCategory])
+
   useEffect(() => {
     if (loadedRef.current) return
     loadedRef.current = true
     getCustomersDropdown()
-    getProductsDropdown()
     getPaymentTypesDropdown()
     getCouponsDropdown()
+    loadGrid()
   }, [
     getCouponsDropdown,
     getCurrentShift,
     getCustomersDropdown,
     getPaymentTypesDropdown,
-    getProductsDropdown,
+    loadGrid,
   ])
 
   useEffect(() => {
@@ -252,16 +313,18 @@ export default function SalesPage() {
     setSelectedCouponId("")
   }, [couponOptions, selectedCouponId])
 
-  useEffect(() => {
-    setSelectedUnitQuantityId("")
-    if (!productId) return
-    getProductUnitQuantities({ productId })
-  }, [getProductUnitQuantities, productId])
+  const drillIntoCategory = useCallback((category: POSCategory) => {
+    setGridBreadcrumbs((prev) => [...prev, category])
+    loadGrid(category)
+  }, [loadGrid])
 
-  useEffect(() => {
-    if (!productId || selectedUnitQuantityId || !firstUnitQuantity?.id) return
-    setSelectedUnitQuantityId(String(firstUnitQuantity.id))
-  }, [firstUnitQuantity?.id, productId, selectedUnitQuantityId])
+  const navigateBreadcrumb = useCallback((index: number) => {
+    // index -1 = root
+    const newBreadcrumbs = index < 0 ? [] : gridBreadcrumbs.slice(0, index + 1)
+    setGridBreadcrumbs(newBreadcrumbs)
+    const targetCategory = newBreadcrumbs.length > 0 ? newBreadcrumbs[newBreadcrumbs.length - 1] : null
+    loadGrid(targetCategory)
+  }, [gridBreadcrumbs, loadGrid])
 
   useEffect(() => {
     if (!customerId) {
@@ -350,7 +413,7 @@ export default function SalesPage() {
     showToast.success(response?.message || "Cash movement recorded.")
   }
 
-  const addProductToCart = (product: any, unitQuantity?: any) => {
+  const addProductToCart = (product: POSProduct | any, unitQuantity?: POSUnitQuantity | any, initialQty = 1) => {
     if (!product) return false
     const stockManaged =
       product.stock_management !== "disabled" && product.type !== "dematerialized"
@@ -380,7 +443,7 @@ export default function SalesPage() {
         return items.map((item) =>
           item.product_id === String(product.id) &&
           (item.unit_quantity_id || "") === unitQuantityId
-            ? { ...item, qty: item.qty + 1 }
+            ? { ...item, qty: item.qty + initialQty }
             : item
         )
       }
@@ -397,7 +460,7 @@ export default function SalesPage() {
               : undefined,
           unit_label: unitLabel,
           name: product.name,
-          qty: 1,
+          qty: initialQty,
           price,
           available_stock: availableStock,
           sku: product.sku,
@@ -407,16 +470,20 @@ export default function SalesPage() {
     return true
   }
 
-  const handleAddProduct = () => {
-    if (!selectedProduct) return
-    const added = addProductToCart(
-      selectedProduct,
-      selectedUnitQuantity || firstUnitQuantity
-    )
-    if (added) {
-      setProductId("")
-      setSelectedUnitQuantityId("")
+  const handleGridProductClick = (product: POSProduct) => {
+    const unitQuantities = product.unit_quantities || []
+    if (unitQuantities.length === 0) {
+      // No unit quantities — add directly with price 0
+      addProductToCart(product, undefined)
+      return
     }
+    if (unitQuantities.length === 1) {
+      addProductToCart(product, unitQuantities[0])
+      return
+    }
+    // Multiple units — open picker
+    setUnitPickerProduct(product)
+    setIsUnitPickerOpen(true)
   }
 
   const handleBarcodeSearch = async () => {
@@ -425,14 +492,14 @@ export default function SalesPage() {
     const response = await searchProductUsingBarcode({ reference }).unwrap()
     const product = response?.data
     if (!product) return
-    let matchedUnitQuantity = product.matched_unit_quantity
-    if (!matchedUnitQuantity?.id) {
-      const unitResponse = await getProductUnitQuantities({
-        productId: product.id,
-      }).unwrap()
-      matchedUnitQuantity = (unitResponse?.data || [])[0]
-    }
-    const added = addProductToCart(product, matchedUnitQuantity)
+    // Use matched_unit_quantity from barcode API, or first available unit_quantity
+    const matchedUnitQuantity =
+      product.matched_unit_quantity ||
+      (product.unit_quantities && product.unit_quantities.length > 0
+        ? product.unit_quantities[0]
+        : undefined)
+    const initialQty = product.scale_value !== undefined ? Number(product.scale_value) : 1
+    const added = addProductToCart(product, matchedUnitQuantity, initialQty)
     if (added) {
       setBarcode("")
       showToast.success(`${product.name} added to cart.`)
@@ -465,9 +532,7 @@ export default function SalesPage() {
   const resetSaleForm = () => {
     setDraftId("")
     setCustomerId("")
-    setProductId("")
     setBarcode("")
-    setSelectedUnitQuantityId("")
     setCouponInput("")
     setSelectedCouponId("")
     setOrderType("takeaway")
@@ -646,7 +711,6 @@ export default function SalesPage() {
     (cashRegistersEnabled && isCheckingShift) ||
     (cashRegistersEnabled && isRegistersLoading) ||
     isCustomersLoading ||
-    isProductsLoading ||
     isPaymentTypesLoading ||
     isCouponsLoading
 
@@ -675,7 +739,7 @@ export default function SalesPage() {
       <div className="flex h-full items-center justify-center">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Spinner />
-          Preparing sales screen...
+          {t("preparing_sales_screen")}
         </div>
       </div>
     )
@@ -685,19 +749,19 @@ export default function SalesPage() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-white px-4 py-3">
         <div>
-          <h1 className="text-lg font-bold text-gray-950">Sales Billing</h1>
+          <h1 className="text-lg font-bold text-gray-950">{t("sales_billing")}</h1>
           <p className="text-sm text-muted-foreground">
             {cashRegistersEnabled
               ? shift
-                ? `Active shift: ${shift.register_name || "Register"}`
-                : "Open a shift before starting sales."
-              : "Cash registers are disabled. Sales can be billed directly."}
+                ? `${t("active_shift")}: ${shift.register_name || "Register"}`
+                : t("open_shift_message")
+              : t("registers_disabled_message")}
           </p>
         </div>
         {cashRegistersEnabled && shift ? (
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Button variant="outline" onClick={handleOpenHeldSales}>
-              Held Carts
+              {t("held_carts")}
             </Button>
             {hasPermission(PERMISSIONS.cashRegister.cashIn) ? (
               <Button
@@ -705,7 +769,7 @@ export default function SalesPage() {
                 onClick={() => setShiftAction("cash_in")}
               >
                 <BanknoteArrowDown className="size-4" />
-                Cash In
+                {t("cash_in")}
               </Button>
             ) : null}
             {hasPermission(PERMISSIONS.cashRegister.cashOut) ? (
@@ -714,7 +778,7 @@ export default function SalesPage() {
                 onClick={() => setShiftAction("cash_out")}
               >
                 <BanknoteArrowUp className="size-4" />
-                Cash Out
+                {t("cash_out")}
               </Button>
             ) : null}
             {hasPermission(PERMISSIONS.cashRegister.close) ? (
@@ -726,33 +790,36 @@ export default function SalesPage() {
                 }}
               >
                 <LogOut className="size-4" />
-                Close Shift
+                {t("close_shift")}
               </Button>
             ) : null}
           </div>
         ) : cashRegistersEnabled ? (
           hasPermission(PERMISSIONS.cashRegister.open) ? (
             <Button onClick={() => setIsOpenShiftDialogOpen(true)}>
-              Open Shift
+              {t("open_shift")}
             </Button>
           ) : null
         ) : (
           <Button variant="outline" onClick={handleOpenHeldSales}>
-            Held Carts
+            {t("held_carts")}
           </Button>
         )}
       </div>
 
       {!cashRegistersEnabled || shift ? (
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
-          <div className="min-h-0 rounded-lg border border-gray-100 bg-white p-4">
-            <div className="grid gap-4 md:grid-cols-2">
+          {/* ======== LEFT: Product Grid ======== */}
+          <div className="flex min-h-0 flex-col rounded-lg border border-gray-100 bg-white overflow-hidden">
+            {/* Top bar: customer + barcode search */}
+            <div className="flex flex-col sm:flex-row gap-3 border-b border-gray-100 p-3">
               <UniFieldSelect
-                label="Customer"
+                label={t("customer")}
                 value={customerId}
                 onValueChange={setCustomerId}
                 placeholder="Walk-in customer"
                 allowClear
+                containerClassName="flex-1"
               >
                 {customerOptions.map((customer: any) => (
                   <SelectItem key={customer.id} value={String(customer.id)}>
@@ -763,80 +830,167 @@ export default function SalesPage() {
               </UniFieldSelect>
 
               <div className="flex items-end gap-2">
-                <UniFieldInput
-                  label="Barcode"
-                  value={barcode}
-                  onChange={(event) => setBarcode(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault()
-                      handleBarcodeSearch()
-                    }
-                  }}
-                  placeholder="Scan or enter barcode"
-                  containerClassName="flex-1"
-                />
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    ref={barcodeInputRef}
+                    value={barcode}
+                    onChange={(e) => setBarcode(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        handleBarcodeSearch()
+                      }
+                    }}
+                    placeholder={t("scan_barcode")}
+                    className="h-10 w-full rounded-md border border-gray-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleBarcodeSearch}
                   disabled={!barcode.trim() || barcodeSearchState.isLoading}
+                  className="shrink-0"
                 >
-                  {barcodeSearchState.isLoading ? <Spinner /> : "Add"}
-                </Button>
-              </div>
-
-              <div className="flex items-end gap-2">
-                <UniFieldSelect
-                  label="Product"
-                  value={productId}
-                  onValueChange={setProductId}
-                  placeholder="Select product"
-                  containerClassName="flex-1"
-                >
-                  {productOptions.map((product: any) => (
-                    <SelectItem key={product.id} value={String(product.id)}>
-                      {product.name}
-                    </SelectItem>
-                  ))}
-                </UniFieldSelect>
-                {productUnitQuantities.length ? (
-                  <UniFieldSelect
-                    label="Selling Unit"
-                    value={selectedUnitQuantityId}
-                    onValueChange={setSelectedUnitQuantityId}
-                    placeholder="Base unit"
-                    allowClear
-                    containerClassName="w-44"
-                  >
-                    {productUnitQuantities.map((unitQuantity: any) => (
-                      <SelectItem
-                        key={unitQuantity.id}
-                        value={String(unitQuantity.id)}
-                      >
-                        {unitQuantity.unit_name || unitQuantity.unit_short_name}
-                      </SelectItem>
-                    ))}
-                  </UniFieldSelect>
-                ) : null}
-                <Button
-                  type="button"
-                  onClick={handleAddProduct}
-                  disabled={!productId}
-                  className="mb-0"
-                >
-                  <Plus className="size-4" />
-                  Add
+                  {barcodeSearchState.isLoading ? <Spinner /> : t("search")}
                 </Button>
               </div>
             </div>
 
-            <div className="mt-6 overflow-hidden rounded-lg border">
-              <div className="grid grid-cols-[1.4fr_130px_110px_120px_56px] bg-gray-50 px-4 py-2 text-sm font-bold text-gray-700">
-                <span>Item</span>
-                <span>Qty</span>
-                <span>Price</span>
-                <span>Total</span>
+            {/* Breadcrumb navigation */}
+            <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-2 text-sm">
+              <button
+                onClick={() => navigateBreadcrumb(-1)}
+                className="flex items-center gap-1 rounded px-2 py-1 text-blue-600 hover:bg-blue-50"
+              >
+                <Home className="size-3.5" />
+                <span>Home</span>
+              </button>
+              {gridBreadcrumbs.map((crumb, i) => (
+                <span key={crumb.id} className="flex items-center gap-1">
+                  <ChevronRight className="size-3 text-gray-400" />
+                  <button
+                    onClick={() => navigateBreadcrumb(i)}
+                    className="rounded px-2 py-1 text-blue-600 hover:bg-blue-50"
+                  >
+                    {crumb.name}
+                  </button>
+                </span>
+              ))}
+              {gridLoading && <Spinner className="ml-2 size-3.5" />}
+            </div>
+
+            {/* Pinned products strip */}
+            {gridData.pinnedProducts.length > 0 && (
+              <div className="border-b border-gray-100 bg-amber-50/60 px-3 py-2">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">Pinned</p>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {gridData.pinnedProducts.map((product) => {
+                    const uq = product.unit_quantities?.[0]
+                    return (
+                      <button
+                        key={product.id}
+                        onClick={() => handleGridProductClick(product)}
+                        className="group relative flex h-20 w-28 shrink-0 flex-col items-center justify-end overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm transition hover:border-amber-400 hover:shadow-md"
+                      >
+                        {product.galleries && product.galleries.length > 0 ? (
+                          <img
+                            src={(product.galleries.find((g) => g.featured) || product.galleries[0]).url}
+                            alt={product.name}
+                            className="absolute inset-0 h-full w-full object-cover opacity-80 group-hover:opacity-100 transition"
+                          />
+                        ) : (
+                          <Package className="absolute top-2 size-8 text-gray-300" />
+                        )}
+                        <div className="relative z-10 w-full bg-gradient-to-t from-black/70 to-transparent px-1.5 pb-1.5 pt-4">
+                          <p className="truncate text-center text-xs font-semibold text-white">{product.name}</p>
+                          {uq && <p className="text-center text-xs text-amber-200">₹{Number(uq.sale_price).toFixed(2)}</p>}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Grid area: categories + products */}
+            <div className="flex-1 overflow-y-auto p-3">
+              {!gridLoading && gridData.categories.length === 0 && gridData.products.length === 0 && gridData.pinnedProducts.length === 0 && (
+                <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-400">
+                  <Package className="size-14 opacity-30" />
+                  <p className="text-sm font-medium">No categories or products found.</p>
+                  <p className="text-xs">Add products with <strong>displays_on_pos</strong> enabled.</p>
+                </div>
+              )}
+
+              {/* Category tiles */}
+              {gridData.categories.length > 0 && (
+                <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                  {gridData.categories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => drillIntoCategory(category)}
+                      className="group relative flex h-32 flex-col items-center justify-end overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:border-blue-400 hover:shadow-md"
+                    >
+                      {category.preview_url ? (
+                        <img
+                          src={category.preview_url}
+                          alt={category.name}
+                          className="absolute inset-0 h-full w-full object-cover opacity-70 group-hover:opacity-90 transition"
+                        />
+                      ) : (
+                        <Folder className="absolute top-4 size-10 text-blue-200 group-hover:text-blue-400 transition" />
+                      )}
+                      <div className="relative z-10 w-full bg-gradient-to-t from-black/60 to-transparent px-2 pb-2 pt-6">
+                        <p className="truncate text-center text-xs font-bold text-white">{category.name}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Product tiles (shown when no sub-categories) */}
+              {gridData.products.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                  {gridData.products.map((product) => {
+                    const uq = product.unit_quantities?.[0]
+                    return (
+                      <button
+                        key={product.id}
+                        onClick={() => handleGridProductClick(product)}
+                        className="group relative flex h-32 flex-col items-center justify-end overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:border-blue-400 hover:shadow-md"
+                      >
+                        {product.galleries && product.galleries.length > 0 ? (
+                          <img
+                            src={(product.galleries.find((g) => g.featured) || product.galleries[0]).url}
+                            alt={product.name}
+                            className="absolute inset-0 h-full w-full object-cover opacity-75 group-hover:opacity-100 transition"
+                          />
+                        ) : (
+                          <Package className="absolute top-4 size-10 text-gray-200 group-hover:text-gray-300 transition" />
+                        )}
+                        <div className="relative z-10 w-full bg-gradient-to-t from-black/65 to-transparent px-2 pb-2 pt-6">
+                          <p className="truncate text-center text-xs font-bold text-white">{product.name}</p>
+                          {uq && <p className="text-center text-xs text-blue-200">₹{Number(uq.sale_price).toFixed(2)}</p>}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ======== RIGHT: Cart + Checkout ======== */}
+          <div className="flex min-h-0 flex-col rounded-lg border border-gray-100 bg-white overflow-hidden">
+            {/* Cart items */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="grid grid-cols-[1.4fr_130px_110px_120px_56px] bg-gray-50 px-4 py-2 text-sm font-bold text-gray-700 sticky top-0">
+                <span>{t("item")}</span>
+                <span>{t("qty")}</span>
+                <span>{t("price")}</span>
+                <span>{t("total")}</span>
                 <span />
               </div>
               {cartItems.length ? (
@@ -848,8 +1002,8 @@ export default function SalesPage() {
                     <div>
                       <p className="font-semibold text-gray-900">{item.name}</p>
                       <p className="text-xs text-gray-500">
-                        SKU: {item.sku || "-"}
-                        {item.unit_label ? ` · Unit: ${item.unit_label}` : ""}
+                        {t("sku")}: {item.sku || "-"}
+                        {item.unit_label ? ` · ${t("unit")}: ${item.unit_label}` : ""}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -903,31 +1057,31 @@ export default function SalesPage() {
               ) : (
                 <div className="flex min-h-64 flex-col items-center justify-center gap-3 text-muted-foreground">
                   <ShoppingCart className="size-10" />
-                  <p className="text-sm font-semibold">No items in cart yet.</p>
+                  <p className="text-sm font-semibold">{t("no_items_in_cart")}</p>
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="rounded-lg border border-gray-100 bg-white p-4">
-            <h2 className="text-base font-bold">Bill Summary</h2>
+            {/* Bill summary + checkout */}
+            <div className="border-t border-gray-100 overflow-y-auto p-4">
+              <h2 className="text-base font-bold">{t("bill_summary")}</h2>
 
-            <div className="mt-4 space-y-4">
+              <div className="mt-4 space-y-4">
               <UniFieldSelect
-                label="Order Type"
+                label={t("order_type")}
                 value={orderType}
                 onValueChange={setOrderType}
-                placeholder="Choose order type"
+                placeholder={t("order_type_select")}
               >
-                <SelectItem value="takeaway">Take Order</SelectItem>
-                <SelectItem value="delivery">Delivery</SelectItem>
+                <SelectItem value="takeaway">{t("take_order")}</SelectItem>
+                <SelectItem value="delivery">{t("delivery")}</SelectItem>
               </UniFieldSelect>
 
               <UniFieldSelect
-                label="Suggested Coupon"
+                label={t("suggested_coupon")}
                 value={selectedCouponId}
                 onValueChange={setSelectedCouponId}
-                placeholder="Choose coupon"
+                placeholder={t("choose_coupon")}
                 allowClear
               >
                 {couponOptions.map((coupon: any) => (
@@ -938,10 +1092,10 @@ export default function SalesPage() {
               </UniFieldSelect>
 
               <UniFieldInput
-                label="Coupon Codes"
+                label={t("coupon_codes")}
                 value={couponInput}
                 onChange={(event) => setCouponInput(event.target.value)}
-                placeholder="Enter coupon codes separated by comma"
+                placeholder={t("coupon_codes_placeholder")}
               />
 
               {customerId ? (
@@ -949,14 +1103,14 @@ export default function SalesPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-bold text-blue-950">
-                        Customer Rewards
+                        {t("customer_rewards")}
                       </p>
                       <p className="mt-1 text-xs font-medium text-blue-700">
                         {rewardBalanceState.isLoading
-                          ? "Loading reward balance..."
+                          ? t("loading_reward_balance")
                           : redeemableReward
-                            ? `${redeemableReward.points} points available. Redeem ${redeemableReward.target_points} points for coupon.`
-                            : "No redeemable points right now."}
+                            ? `${redeemableReward.points} ${t("points_available")} ${redeemableReward.target_points} ${t("for_coupon")}`
+                            : t("no_redeemable_points")}
                       </p>
                     </div>
                     <Button
@@ -967,7 +1121,7 @@ export default function SalesPage() {
                       disabled={!redeemableReward || redeemRewardState.isLoading}
                       className="bg-white"
                     >
-                      {redeemRewardState.isLoading ? <Spinner /> : "Redeem"}
+                      {redeemRewardState.isLoading ? <Spinner /> : t("redeem")}
                     </Button>
                   </div>
                 </div>
@@ -975,9 +1129,9 @@ export default function SalesPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-900">Payments</p>
+                  <p className="text-sm font-semibold text-slate-900">{t("payments")}</p>
                   <Button type="button" variant="outline" size="sm" onClick={addPaymentRow}>
-                    Add Payment
+                    {t("add_payment")}
                   </Button>
                 </div>
                 {paymentsRows.map((row, index) => (
@@ -987,12 +1141,12 @@ export default function SalesPage() {
                   >
                     <div className="grid gap-3 md:grid-cols-[1fr_140px_44px]">
                       <UniFieldSelect
-                        label={index === 0 ? "Payment Type" : undefined}
+                        label={index === 0 ? t("payment_type") : undefined}
                         value={row.payment_type}
                         onValueChange={(value) =>
                           updatePaymentRow(row.id, "payment_type", value)
                         }
-                        placeholder="Choose payment type"
+                        placeholder={t("choose_payment_type")}
                       >
                         {paymentTypeOptions.map((payment: any) => (
                           <SelectItem
@@ -1004,7 +1158,7 @@ export default function SalesPage() {
                         ))}
                       </UniFieldSelect>
                       <UniFieldInput
-                        label={index === 0 ? "Amount" : undefined}
+                        label={index === 0 ? t("amount") : undefined}
                         value={row.amount}
                         onChange={(event) =>
                           updatePaymentRow(row.id, "amount", event.target.value)
@@ -1035,14 +1189,14 @@ export default function SalesPage() {
                             event.target.value
                           )
                         }
-                        placeholder="Reference number"
+                        placeholder={t("reference_number")}
                       />
                       <UniFieldInput
                         value={row.note}
                         onChange={(event) =>
                           updatePaymentRow(row.id, "note", event.target.value)
                         }
-                        placeholder="Payment note"
+                        placeholder={t("payment_note")}
                       />
                     </div>
                   </div>
@@ -1050,32 +1204,32 @@ export default function SalesPage() {
               </div>
 
               <UniFieldInput
-                label="Sale Note"
+                label={t("sale_note")}
                 value={saleNote}
                 onChange={(event) => setSaleNote(event.target.value)}
-                placeholder="Add note if needed"
+                placeholder={t("add_note_placeholder")}
               />
             </div>
 
             <div className="mt-6 space-y-3 text-sm font-semibold">
               <div className="flex justify-between">
-                <span>Subtotal</span>
+                <span>{t("subtotal")}</span>
                 <span>₹{subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Received</span>
+                <span>{t("received")}</span>
                 <span>₹{totalPaid.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-amber-600">
-                <span>Due</span>
+                <span>{t("due")}</span>
                 <span>₹{dueAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-green-600">
-                <span>Change</span>
+                <span>{t("change")}</span>
                 <span>₹{changeAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between border-t pt-3 text-lg font-bold">
-                <span>Total</span>
+                <span>{t("total")}</span>
                 <span>₹{subtotal.toFixed(2)}</span>
               </div>
             </div>
@@ -1085,15 +1239,16 @@ export default function SalesPage() {
               disabled={!cartItems.length || isHoldingSale}
               onClick={handleHoldSale}
             >
-              {isHoldingSale ? "Saving..." : "Hold Cart"}
+              {isHoldingSale ? t("saving") : t("hold_cart")}
             </Button>
             <Button
               className="mt-6 w-full"
               disabled={!cartItems.length || isCreatingSale}
               onClick={handleCompleteSale}
             >
-              {isCreatingSale ? "Creating Sale..." : "Complete Sale"}
+              {isCreatingSale ? t("completing_sale") : t("complete_sale")}
             </Button>
+            </div>
           </div>
         </div>
       ) : null}
@@ -1106,16 +1261,16 @@ export default function SalesPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Open Cashier Shift</DialogTitle>
+            <DialogTitle>{t("open_cashier_shift")}</DialogTitle>
             <DialogDescription>
-              Select a register and enter its opening drawer cash before billing.
+              {t("open_shift_description")}
             </DialogDescription>
           </DialogHeader>
           <UniFieldSelect
-            label="Cash Register"
+            label={t("cash_register")}
             value={selectedRegisterId}
             onValueChange={setSelectedRegisterId}
-            placeholder="Select cash register"
+            placeholder={t("select_cash_register")}
             required
           >
             {registerOptions.map((register: any) => (
@@ -1127,9 +1282,9 @@ export default function SalesPage() {
           </UniFieldSelect>
           {!isRegistersLoading && registerOptions.length === 0 ? (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-              <p className="font-semibold">No cash register is available.</p>
+              <p className="font-semibold">{t("no_register_available")}</p>
               <p className="mt-1">
-                Create a register before opening the sales screen.
+                {t("create_register_msg")}
               </p>
               <Button
                 type="button"
@@ -1138,12 +1293,12 @@ export default function SalesPage() {
                 className="mt-3 bg-white"
                 onClick={() => router.push("/registers")}
               >
-                Create Cash Register
+                {t("create_cash_register")}
               </Button>
             </div>
           ) : null}
           <UniFieldInput
-            label="Opening Cash"
+            label={t("opening_cash")}
             value={openingCash}
             onChange={(event) => setOpeningCash(event.target.value)}
             placeholder="Enter opening cash"
@@ -1152,17 +1307,17 @@ export default function SalesPage() {
           />
           <UniFieldInput
             as="textarea"
-            label="Note"
+            label={t("note")}
             value={openingNote}
             onChange={(event) => setOpeningNote(event.target.value)}
-            placeholder="Optional opening note"
+            placeholder={t("opening_note")}
           />
           <DialogFooter>
             <Button
               onClick={handleOpenShift}
               disabled={isOpeningShift || !selectedRegisterId}
             >
-              {isOpeningShift ? "Opening..." : "Open Shift"}
+              {isOpeningShift ? t("opening") : t("open_shift")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1181,16 +1336,16 @@ export default function SalesPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {shiftAction === "cash_out" ? "Cash Out" : "Cash In"}
+              {shiftAction === "cash_out" ? t("cash_movement_title_out") : t("cash_movement_title_in")}
             </DialogTitle>
             <DialogDescription>
               {shiftAction === "cash_out"
-                ? "Record cash removed from the active register."
-                : "Record additional cash placed into the active register."}
+                ? t("cash_movement_desc_out")
+                : t("cash_movement_desc_in")}
             </DialogDescription>
           </DialogHeader>
           <UniFieldInput
-            label="Amount"
+            label={t("amount")}
             value={movementAmount}
             onChange={(event) => setMovementAmount(event.target.value)}
             placeholder="Enter amount"
@@ -1199,10 +1354,10 @@ export default function SalesPage() {
           />
           <UniFieldInput
             as="textarea"
-            label="Note"
+            label={t("note")}
             value={movementNote}
             onChange={(event) => setMovementNote(event.target.value)}
-            placeholder="Why is this cash moving?"
+            placeholder={t("why_cash_moving")}
           />
           <DialogFooter>
             <Button
@@ -1210,10 +1365,10 @@ export default function SalesPage() {
               disabled={isCashingIn || isCashingOut}
             >
               {isCashingIn || isCashingOut
-                ? "Saving..."
+                ? t("saving")
                 : shiftAction === "cash_out"
-                  ? "Record Cash Out"
-                  : "Record Cash In"}
+                  ? t("record_cash_out")
+                  : t("record_cash_in")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1231,14 +1386,14 @@ export default function SalesPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Close Cashier Shift</DialogTitle>
+            <DialogTitle>{t("close_shift_dialog_title")}</DialogTitle>
             <DialogDescription>
-              Expected cash is ₹{Number(shift?.expected_cash || 0).toFixed(2)}.
-              Enter the physical cash counted in the drawer.
+              {t("expected_cash_prefix")} ₹{Number(shift?.expected_cash || 0).toFixed(2)}.
+              {t("physical_cash_desc")}
             </DialogDescription>
           </DialogHeader>
           <UniFieldInput
-            label="Declared Cash"
+            label={t("declared_cash")}
             value={declaredCash}
             onChange={(event) => setDeclaredCash(event.target.value)}
             placeholder="Enter counted cash"
@@ -1247,10 +1402,10 @@ export default function SalesPage() {
           />
           <UniFieldInput
             as="textarea"
-            label="Closing Note"
+            label={t("closing_note")}
             value={closingNote}
             onChange={(event) => setClosingNote(event.target.value)}
-            placeholder="Optional closing note"
+            placeholder={t("optional_closing_note")}
           />
           <DialogFooter>
             <Button
@@ -1258,7 +1413,7 @@ export default function SalesPage() {
               onClick={handleCloseShift}
               disabled={isClosingShift || declaredCash === ""}
             >
-              {isClosingShift ? "Closing..." : "Close Shift"}
+              {isClosingShift ? t("closing") : t("close_shift_btn")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1267,9 +1422,9 @@ export default function SalesPage() {
       <Dialog open={isHeldCartDialogOpen} onOpenChange={setIsHeldCartDialogOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Held Carts</DialogTitle>
+            <DialogTitle>{t("held_carts")}</DialogTitle>
             <DialogDescription>
-              Resume or delete held carts saved for this branch.
+              {t("held_carts_description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -1286,7 +1441,7 @@ export default function SalesPage() {
                       {heldSale.customer?.name || heldSale.customer__name || "Walk-in customer"}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {heldSale.total_items || 0} item(s) • ₹
+                      {heldSale.total_items || 0} {t("item_s")} • ₹
                       {Number(heldSale.total || 0).toFixed(2)}
                     </p>
                   </div>
@@ -1295,26 +1450,59 @@ export default function SalesPage() {
                       variant="outline"
                       onClick={() => handleResumeHeldSale(heldSale.id)}
                     >
-                      Resume
+                      {t("resume")}
                     </Button>
                     <Button
                       variant="ghost"
                       className="text-red-500 hover:text-red-600"
                       onClick={() => handleDeleteHeldSale(heldSale.id)}
                     >
-                      Delete
+                      {t("delete")}
                     </Button>
                   </div>
                 </div>
               ))
             ) : (
               <div className="rounded-xl border border-dashed border-gray-200 py-12 text-center text-sm text-slate-500">
-                No held carts found.
+                {t("no_held_carts")}
               </div>
             )}
           </div>
         </DialogContent>
       </Dialog>
+      {/* Unit Quantity Picker Dialog */}
+      <Dialog open={isUnitPickerOpen} onOpenChange={(open) => {
+        setIsUnitPickerOpen(open)
+        if (!open) setUnitPickerProduct(null)
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Select Selling Unit</DialogTitle>
+            <DialogDescription>
+              Choose the unit you want to add for <strong>{unitPickerProduct?.name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {(unitPickerProduct?.unit_quantities || []).map((uq) => (
+              <button
+                key={uq.id}
+                onClick={() => {
+                  if (unitPickerProduct) {
+                    addProductToCart(unitPickerProduct, uq)
+                  }
+                  setIsUnitPickerOpen(false)
+                  setUnitPickerProduct(null)
+                }}
+                className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold hover:border-blue-400 hover:bg-blue-50 transition"
+              >
+                <span>{uq.unit_name || uq.unit_short_name || uq.unit_identifier || `Unit ${uq.id}`}</span>
+                <span className="text-blue-600">₹{Number(uq.sale_price).toFixed(2)}</span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   )
 }
