@@ -2,13 +2,15 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, CheckIcon, ChevronDownIcon } from "lucide-react"
+import { ArrowLeft, CheckIcon, ChevronDownIcon, ReceiptText } from "lucide-react"
 
 import {
   CustomerAddressAddon,
   type AddressFormValues,
   type AddressType,
 } from "@/app/(dashboard)/customers/[id]/customerAddress"
+import DynamicTable from "@/components/DynamicTable"
+
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import {
@@ -117,6 +119,20 @@ function OpeningBalanceDropdown({
 const sanitizePhone = (value: string) => value.replace(/\D/g, "").slice(0, 10)
 const normalizeAmount = (value: any) => Math.abs(Number(value || 0)).toString()
 
+const paymentStatusColors: Record<string, string> = {
+  paid: "bg-green-50 text-green-700",
+  partially_paid: "bg-amber-50 text-amber-700",
+  unpaid: "bg-rose-50 text-rose-700",
+  refunded: "bg-sky-50 text-sky-700",
+  partially_refunded: "bg-indigo-50 text-indigo-700",
+  hold: "bg-gray-100 text-gray-700",
+  void: "bg-zinc-200 text-zinc-700",
+  order_void: "bg-zinc-200 text-zinc-700",
+}
+
+const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
+
+
 export default function CustomerFormPage() {
   const router = useRouter()
   const params = useParams()
@@ -133,6 +149,13 @@ export default function CustomerFormPage() {
   const [addressFormType, setAddressFormType] = useState<AddressType | null>(
     null
   )
+  const [activeTab, setActiveTab] = useState<"general" | "orders">("general")
+  const [ordersRows, setOrdersRows] = useState<any[]>([])
+  const [totalOrders, setTotalOrders] = useState(0)
+  const [ordersPage, setOrdersPage] = useState(1)
+  const [ordersSearch, setOrdersSearch] = useState("")
+  const lastOrderRequestRef = useRef("")
+
   const contentRef = useRef<HTMLDivElement>(null)
   const paginationSentinelRef = useRef<HTMLDivElement>(null)
   const loadKeyRef = useRef("")
@@ -142,6 +165,48 @@ export default function CustomerFormPage() {
   const [getCustomerById, customer] = (
     customers as any
   ).useGetCustomerByIdMutation()
+  const [getCustomerOrderHistory, orderHistoryState] = (
+    customers as any
+  ).useGetCustomerOrderHistoryMutation()
+
+  const loadOrderHistory = async (
+    targetPage = ordersPage,
+    search = ordersSearch,
+    force = false
+  ) => {
+    if (!id || id === "create") return
+
+    const requestKey = `${id}:${targetPage}:${search}`
+    if (!force && lastOrderRequestRef.current === requestKey) return
+    lastOrderRequestRef.current = requestKey
+
+    try {
+      const response = await getCustomerOrderHistory({
+        id,
+        payLoad: { page: targetPage, limit: 10, search },
+      }).unwrap()
+      const data = response?.data || {}
+      setOrdersRows(data.items || [])
+      setTotalOrders(data.total || 0)
+    } catch (err) {
+      console.error("Failed to load order history", err)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === "orders") {
+      loadOrderHistory(ordersPage, ordersSearch)
+    }
+  }, [activeTab, id, ordersPage, ordersSearch])
+
+  const handleOrdersFilterChange = (action: string, payload?: any) => {
+    if (action === "search") {
+      setOrdersPage(1)
+      setOrdersSearch(String(payload || ""))
+      loadOrderHistory(1, String(payload || ""), true)
+    }
+  }
+
 
   useEffect(() => {
     const loadKey = `${id}:${isEdit ? "edit" : "create"}`
@@ -304,8 +369,37 @@ export default function CustomerFormPage() {
               </h1>
             </div>
           </div>
+          {isEdit ? (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab("general")}
+                className={cn(
+                  "border-b-2 px-3 py-1.5 text-sm font-semibold transition-colors duration-150",
+                  activeTab === "general"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                )}
+              >
+                Details
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("orders")}
+                className={cn(
+                  "border-b-2 px-3 py-1.5 text-sm font-semibold transition-colors duration-150",
+                  activeTab === "orders"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                )}
+              >
+                Order History
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
+
 
       <div ref={contentRef} className="relative min-h-0 flex-1 overflow-y-auto">
         {customer.isLoading && isEdit ? (
@@ -317,7 +411,58 @@ export default function CustomerFormPage() {
           </div>
         ) : null}
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-5">
+        {activeTab === "orders" && isEdit ? (
+          <div className="p-4">
+            <DynamicTable
+              data={ordersRows}
+              columns={[
+                { key: "code", title: "Order Code" },
+                { key: "order_type", title: "Type" },
+                {
+                  key: "payment_status",
+                  title: "Payment Status",
+                  render: (value: string) => (
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-1 text-xs font-semibold",
+                        paymentStatusColors[value] || "bg-gray-100 text-gray-700"
+                      )}
+                    >
+                      {String(value || "-").replaceAll("_", " ")}
+                    </span>
+                  ),
+                },
+                { key: "delivery_status", title: "Delivery Status" },
+                { key: "subtotal", title: "Subtotal", render: (value: any) => formatMoney(value) },
+                { key: "tax_amount", title: "Tax", render: (value: any) => formatMoney(value) },
+                { key: "shipping", title: "Shipping", render: (value: any) => formatMoney(value) },
+                { key: "total", title: "Total", render: (value: any) => formatMoney(value) },
+                { key: "created_at", title: "Date", render: (value: any) => new Date(value).toLocaleDateString() },
+              ]}
+              tableTitle="Orders History"
+              showSearch
+              searchTerm={ordersSearch}
+              onFilterChange={handleOrdersFilterChange}
+              currentPage={ordersPage}
+              itemsPerPage={10}
+              totalItems={totalOrders}
+              onPageChange={setOrdersPage}
+              isLoading={orderHistoryState.isLoading}
+              onEdit={(record: any) => router.push(`/sales/${record.id}`)}
+              rowActions={(_, record) => [
+                {
+                  key: "receipt",
+                  label: "Receipt",
+                  labelText: "Receipt",
+                  icon: <ReceiptText className="size-4" />,
+                  onClick: () => router.push(`/sales/${record.id}/receipt`),
+                },
+              ]}
+            />
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} noValidate className="space-y-5">
+
           <div className="px-4 pt-4">
             <div className="space-y-5">
               <section className="rounded-lg border border-gray-200 bg-white p-4">
@@ -513,6 +658,7 @@ export default function CustomerFormPage() {
             </div>
           </footer>
         </form>
+        )}
       </div>
 
     </div>

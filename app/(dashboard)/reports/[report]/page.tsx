@@ -6,6 +6,13 @@ import { ArrowLeft } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { accounting } from "@/lib/api/accounting"
 import { reports } from "@/lib/api/reports"
 import { getDateRange } from "@/lib/utils"
@@ -37,6 +44,9 @@ export default function ReportViewPage() {
   const [dateFilters, setDateFilters] = useState(() =>
     getDateRange("This Month")
   )
+
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
+  const [annualTotals, setAnnualTotals] = useState<any>(null)
 
   const [getCustomerDueReport, customerDueState] = (
     reports as any
@@ -77,6 +87,9 @@ export default function ReportViewPage() {
   const [getTransactionHistoryData, accountingState] = (
     accounting as any
   ).useGetTransactionHistoryDataMutation()
+  const [getAnnualReport, annualState] = (
+    reports as any
+  ).useGetAnnualReportMutation()
 
   const isTableLoading =
     customerDueState.isLoading ||
@@ -91,18 +104,28 @@ export default function ReportViewPage() {
     lowStockState.isLoading ||
     stockState.isLoading ||
     cashierState.isLoading ||
-    accountingState.isLoading
+    accountingState.isLoading ||
+    annualState.isLoading
 
-  const rowsPayload = useMemo(
-    () => ({
+  const rowsPayload = useMemo(() => {
+    if (activeReport === "annual") {
+      return { year: selectedYear }
+    }
+    return {
       page,
       limit: 10,
       search: searchTerm || undefined,
       startDate: dateFilters.startDate,
       endDate: dateFilters.endDate,
-    }),
-    [dateFilters.endDate, dateFilters.startDate, page, searchTerm]
-  )
+    }
+  }, [activeReport, selectedYear, dateFilters.endDate, dateFilters.startDate, page, searchTerm])
+
+  useEffect(() => {
+    // Reset data when report type changes
+    setRows([])
+    setTotalItems(0)
+    setAnnualTotals(null)
+  }, [activeReport])
 
   useEffect(() => {
     const requestKey = JSON.stringify({ report: activeReport, rowsPayload })
@@ -123,20 +146,30 @@ export default function ReportViewPage() {
       stock_ledger: getStockLedgerReport,
       customer_credit: getCustomerCreditLedgerReport,
       accounting: getTransactionHistoryData,
+      annual: getAnnualReport,
     }
 
-    void mutationMap[activeReport]({ ...rowsPayload, limit: 10 })
+    const payload = activeReport === "annual" ? rowsPayload : { ...rowsPayload, limit: 10 }
+
+    void mutationMap[activeReport](payload)
       .unwrap()
       .then((response: any) => {
         const data = response?.data || {}
-        setRows(data.items || [])
-        setTotalItems(data.total || 0)
+        if (activeReport === "annual") {
+          setRows(data.months || [])
+          setTotalItems(12)
+          setAnnualTotals(data.totals || null)
+        } else {
+          setRows(data.items || [])
+          setTotalItems(data.total || 0)
+        }
       })
       .catch(() => {
         lastRowsRequestRef.current = ""
       })
   }, [
     activeReport,
+    getAnnualReport,
     getCashierReport,
     getCustomerCreditLedgerReport,
     getCustomerDueReport,
@@ -179,6 +212,43 @@ export default function ReportViewPage() {
     }
   }
 
+  const years = useMemo(() => {
+    const currentYear = new Date().getFullYear()
+    return Array.from({ length: 5 }, (_, i) => currentYear - i)
+  }, [])
+
+  const yearSelector = activeReport === "annual" ? (
+    <div className="flex items-center gap-2">
+      <span className="text-sm font-semibold text-gray-500">Year:</span>
+      <Select
+        value={String(selectedYear)}
+        onValueChange={(val) => setSelectedYear(Number(val))}
+      >
+        <SelectTrigger className="w-[120px] h-9">
+          <SelectValue placeholder="Select year" />
+        </SelectTrigger>
+        <SelectContent>
+          {years.map((y) => (
+            <SelectItem key={y} value={String(y)}>
+              {y}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  ) : undefined
+
+  const footerSummary = useMemo(() => {
+    if (activeReport !== "annual" || !annualTotals) return undefined
+    const formatMoney = (val: any) => `₹${Number(val || 0).toFixed(2)}`
+    return [
+      { label: "Total Sales", value: formatMoney(annualTotals.total_sales) },
+      { label: "Total Taxes", value: formatMoney(annualTotals.total_taxes) },
+      { label: "Total Expenses", value: formatMoney(annualTotals.total_expenses) },
+      { label: "Net Income", value: formatMoney(annualTotals.net_income) },
+    ]
+  }, [activeReport, annualTotals])
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
@@ -197,7 +267,9 @@ export default function ReportViewPage() {
               {tabLabels[activeReport]}
             </h1>
             <p className="text-sm font-medium text-gray-500">
-              Review this report with search, date filters and pagination.
+              {activeReport === "annual" 
+                ? "Monthly summary breakdown of sales, taxes, expenses, and net income."
+                : "Review this report with search, date filters and pagination."}
             </p>
           </div>
         </div>
@@ -208,18 +280,20 @@ export default function ReportViewPage() {
           data={rows}
           columns={reportColumns[activeReport]}
           tableTitle={tabLabels[activeReport]}
-          showSearch
-          showDateRange
+          showSearch={activeReport !== "annual"}
+          showDateRange={activeReport !== "annual"}
           searchTerm={searchTerm}
           selectedDateRange={selectedDateRange}
           dateFilters={dateFilters}
           currentPage={page}
-          itemsPerPage={10}
+          itemsPerPage={activeReport === "annual" ? 12 : 10}
           totalItems={totalItems}
           onPageChange={setPage}
           onFilterChange={handleFilterChange}
           isLoading={isTableLoading}
           hideActions
+          secondaryActionButton={yearSelector}
+          footerSummary={footerSummary}
         />
       </div>
     </div>

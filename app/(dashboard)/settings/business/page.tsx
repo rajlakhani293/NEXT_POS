@@ -16,6 +16,8 @@ import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { settings } from "@/lib/api/settings"
 import { showToast } from "@/lib/toast"
+import { useAppDispatch } from "@/lib/redux/hooks"
+import { setSessionData } from "@/lib/redux/sessionSlice"
 
 const initialSettings = {
   allow_partial_orders: false,
@@ -31,6 +33,17 @@ const initialSettings = {
   default_change_payment_type: "cash-payment",
   order_types: ["takeaway", "delivery"],
   store_language: "en",
+  registration_enabled: "no",
+  store_name: "POS",
+  scale_barcode_enabled: false,
+  scale_barcode_prefix: "2",
+  scale_barcode_product_length: 4,
+  orders_code_type: "sequential",
+  orders_allow_unpaid: false,
+  orders_strict_instalments: false,
+  orders_quotation_expiration: "never",
+  pos_tax_group: "",
+  pos_tax_type: "",
 }
 
 const orderTypeOptions = [
@@ -109,6 +122,7 @@ function OrderTypeMultiSelect({
 }
 
 export default function BusinessSettingsPage() {
+  const dispatch = useAppDispatch()
   const hasLoadedRef = useRef(false)
   const [businessSettings, setBusinessSettings] = useState(initialSettings)
 
@@ -125,6 +139,9 @@ export default function BusinessSettingsPage() {
       ...initialSettings,
       ...(response?.data?.settings || {}),
     })
+    if (response?.data) {
+      dispatch(setSessionData({ business_settings: response.data }))
+    }
   }
 
   useEffect(() => {
@@ -152,6 +169,9 @@ export default function BusinessSettingsPage() {
       ...initialSettings,
       ...(response?.data?.settings || {}),
     })
+    if (response?.data) {
+      dispatch(setSessionData({ business_settings: response.data }))
+    }
     showToast.success(response?.message || "Business settings updated.")
   }
 
@@ -328,6 +348,150 @@ export default function BusinessSettingsPage() {
                       updateBusinessField("order_types", nextValue)
                     }
                   />
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-gray-950">
+                  Store & Signup settings
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Manage store identities and customer registrations.
+                </p>
+              </div>
+              <div className="grid gap-3">
+                <div className="rounded-xl border border-gray-100 bg-white px-5 py-4">
+                  <UniFieldInput
+                    label="Store Name"
+                    value={businessSettings.store_name}
+                    onChange={(event) =>
+                      updateBusinessField("store_name", event.target.value)
+                    }
+                    containerClassName="max-w-xs"
+                  />
+                </div>
+                <div className="rounded-xl border border-gray-100 bg-white px-5 py-4">
+                  <UniFieldSelect
+                    label="Allow Signup Registration"
+                    value={businessSettings.registration_enabled}
+                    onValueChange={(value) =>
+                      updateBusinessField("registration_enabled", value)
+                    }
+                    containerClassName="max-w-xs"
+                  >
+                    <SelectItem value="yes">Enabled</SelectItem>
+                    <SelectItem value="no">Disabled</SelectItem>
+                  </UniFieldSelect>
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-gray-950">
+                  Weighing Scale Settings
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Configure integrated weighing scale scanner prefixes and lengths.
+                </p>
+              </div>
+              <div className="grid gap-3">
+                <SettingSwitch
+                  title="Enable Scale Barcode scanning"
+                  description="Identify barcode pattern scanning to parse item weight or price quantity automatically."
+                  checked={businessSettings.scale_barcode_enabled}
+                  onCheckedChange={(checked) =>
+                    updateBusinessField("scale_barcode_enabled", checked)
+                  }
+                />
+                {businessSettings.scale_barcode_enabled && (
+                  <>
+                    <div className="rounded-xl border border-gray-100 bg-white px-5 py-4">
+                      <UniFieldInput
+                        label="Scale Barcode Prefix"
+                        value={businessSettings.scale_barcode_prefix}
+                        onChange={(event) =>
+                          updateBusinessField("scale_barcode_prefix", event.target.value)
+                        }
+                        containerClassName="max-w-xs"
+                      />
+                    </div>
+                    <div className="rounded-xl border border-gray-100 bg-white px-5 py-4">
+                      <UniFieldInput
+                        label="PLU Code Length"
+                        type="number"
+                        min={1}
+                        max={10}
+                        value={businessSettings.scale_barcode_product_length}
+                        onChange={(event) =>
+                          updateBusinessField(
+                            "scale_barcode_product_length",
+                            Number(event.target.value)
+                          )
+                        }
+                        containerClassName="max-w-xs"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-gray-950">
+                  Checkout & Invoice Rules
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Configure order codes, unpaid checkout limits, and quotations.
+                </p>
+              </div>
+              <div className="grid gap-3">
+                <SettingSwitch
+                  title="Allow Unpaid Orders"
+                  description="Allow sales orders to remain unpaid/due without cashier error."
+                  checked={businessSettings.orders_allow_unpaid}
+                  onCheckedChange={(checked) =>
+                    updateBusinessField("orders_allow_unpaid", checked)
+                  }
+                />
+                <SettingSwitch
+                  title="Strict Instalment payments"
+                  description="Enforce payments on held/due invoice instalments strict dates."
+                  checked={businessSettings.orders_strict_instalments}
+                  onCheckedChange={(checked) =>
+                    updateBusinessField("orders_strict_instalments", checked)
+                  }
+                />
+                <div className="rounded-xl border border-gray-100 bg-white px-5 py-4">
+                  <UniFieldSelect
+                    label="Order Code Type"
+                    value={businessSettings.orders_code_type}
+                    onValueChange={(value) =>
+                      updateBusinessField("orders_code_type", value)
+                    }
+                    containerClassName="max-w-xs"
+                  >
+                    <SelectItem value="sequential">Sequential (ORD-0001)</SelectItem>
+                    <SelectItem value="random">Random Hash String</SelectItem>
+                  </UniFieldSelect>
+                </div>
+                <div className="rounded-xl border border-gray-100 bg-white px-5 py-4">
+                  <UniFieldSelect
+                    label="Quotation Expiration"
+                    value={businessSettings.orders_quotation_expiration}
+                    onValueChange={(value) =>
+                      updateBusinessField("orders_quotation_expiration", value)
+                    }
+                    containerClassName="max-w-xs"
+                  >
+                    <SelectItem value="never">Never Expires</SelectItem>
+                    <SelectItem value="3_days">3 Days</SelectItem>
+                    <SelectItem value="7_days">7 Days</SelectItem>
+                    <SelectItem value="30_days">30 Days</SelectItem>
+                  </UniFieldSelect>
                 </div>
               </div>
             </section>

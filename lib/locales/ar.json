@@ -24,6 +24,7 @@
   "brands": "العلامات التجارية",
   "unit_groups": "مجموعات الوحدات",
   "units": "الوحدات",
+  "print_labels": "طباعة الملصقات",
   "customer_groups": "مجموعات العملاء",
   "purchase_orders": "طلبات الشراء",
   "suppliers": "الموردين",
@@ -148,5 +149,7 @@
   "unpaid": "غير مدفوع",
   "void": "ملغي",
   "refunded": "مرتجع",
-  "partially_refunded": "مرتجع جزئياً"
+  "partially_refunded": "مرتجع جزئياً",
+  "background_jobs": "المهام الخلفية",
+  "reset_database": "إعادة ضبط قاعدة البيانات"
 }

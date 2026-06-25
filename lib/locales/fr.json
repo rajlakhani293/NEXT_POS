@@ -24,6 +24,7 @@
   "brands": "Marques",
   "unit_groups": "Groupes d'Unités",
   "units": "Unités",
+  "print_labels": "Imprimer des Étiquettes",
   "customer_groups": "Groupes de Clients",
   "purchase_orders": "Bons de Commande",
   "suppliers": "Fournisseurs",
@@ -148,5 +149,7 @@
   "unpaid": "Non Payé",
   "void": "Annulé",
   "refunded": "Remboursé",
-  "partially_refunded": "Partiellement Remboursé"
+  "partially_refunded": "Partiellement Remboursé",
+  "background_jobs": "Tâches en Arrière-plan",
+  "reset_database": "Réinitialiser la Base de Données"
 }

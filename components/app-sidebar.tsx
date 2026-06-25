@@ -30,7 +30,10 @@ import {
   StoreIcon,
   UsersIcon,
   WalletCardsIcon,
+  AlertTriangle,
+  Server,
 } from "lucide-react"
+
 import {
   MdOutlineArrowCircleLeft,
   MdOutlineArrowCircleRight,
@@ -93,6 +96,11 @@ const mainNavSections: DashboardNavSection[] = [
       {
         title: "Units",
         url: "/inventory/units",
+        permission: PERMISSIONS.products.view,
+      },
+      {
+        title: "Print Labels",
+        url: "/inventory/labels",
         permission: PERMISSIONS.products.view,
       },
     ],
@@ -278,8 +286,19 @@ const settingsNavSections: DashboardNavSection[] = [
     icon: <SparklesIcon />,
     permission: PERMISSIONS.rewards.view,
   },
+  {
+    title: "Background Jobs",
+    url: "/settings/workers",
+    icon: <Server />,
+    permission: PERMISSIONS.settings.view,
+  },
+  {
+    title: "Reset Database",
+    url: "/settings/reset",
+    icon: <AlertTriangle />,
+    permission: PERMISSIONS.settings.view,
+  },
 ]
-
 type AppSidebarProps = React.ComponentProps<typeof Sidebar>
 
 function SidebarCollapseButton() {

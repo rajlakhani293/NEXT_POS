@@ -54,7 +54,10 @@ type CartItem = {
   price: number
   available_stock: number
   sku?: string
+  discount_type?: "flat" | "percentage"
+  discount_value?: number
 }
+
 
 type POSCategory = {
   id: number
@@ -120,15 +123,30 @@ const emptyPaymentRow = (): PaymentRow => ({
   note: "",
 })
 
+const getCartItemDiscount = (item: CartItem) => {
+  const type = item.discount_type || "flat"
+  const val = item.discount_value || 0
+  if (type === "percentage") {
+    return ((item.qty * item.price) * val) / 100
+  }
+  return val
+}
+
+
 export default function SalesPage() {
   const router = useRouter()
   const { t } = useTranslation()
   const loadedRef = useRef(false)
   const loadedShiftRef = useRef("")
   const loadedRewardCustomerRef = useRef("")
-  const cashRegistersEnabled = useAppSelector(
-    (state) => state.session.businessSettings?.settings?.enable_cash_registers
+  const businessSettings = useAppSelector(
+    (state) => state.session.businessSettings?.settings
   )
+  const cashRegistersEnabled = businessSettings?.enable_cash_registers
+  const ordersAllowUnpaid = businessSettings?.orders_allow_unpaid
+  const allowDecimalQuantities = businessSettings?.allow_decimal_quantities
+  const showQuantity = businessSettings?.show_quantity !== false
+  const hideEmptyCategories = businessSettings?.hide_empty_categories
   const { hasPermission } = usePermissions()
 
   const [shift, setShift] = useState<any>(null)
@@ -170,6 +188,10 @@ export default function SalesPage() {
     emptyPaymentRow(),
   ])
   const [isHeldCartDialogOpen, setIsHeldCartDialogOpen] = useState(false)
+  const [activeDiscountItem, setActiveDiscountItem] = useState<CartItem | null>(null)
+  const [itemDiscountVal, setItemDiscountVal] = useState("")
+  const [itemDiscountType, setItemDiscountType] = useState<"flat" | "percentage">("flat")
+
 
   const [getCurrentShift, { isLoading: isCheckingShift }] = (
     registers as any
@@ -232,9 +254,14 @@ export default function SalesPage() {
   const heldSales = heldSalesState.data?.data?.items || []
 
   const subtotal = useMemo(
-    () => cartItems.reduce((total, item) => total + item.qty * item.price, 0),
+    () =>
+      cartItems.reduce(
+        (total, item) => total + (item.qty * item.price - getCartItemDiscount(item)),
+        0
+      ),
     [cartItems]
   )
+
   const couponCodes = useMemo(() => parseCouponCodes(couponInput), [couponInput])
   const totalPaid = useMemo(
     () =>
@@ -529,7 +556,35 @@ export default function SalesPage() {
     )
   }
 
+  const openItemDiscountDialog = (item: CartItem) => {
+    setActiveDiscountItem(item)
+    setItemDiscountVal(String(item.discount_value || ""))
+    setItemDiscountType(item.discount_type || "flat")
+  }
+
+  const handleApplyItemDiscount = () => {
+    if (!activeDiscountItem) return
+    const value = Math.max(Number(itemDiscountVal || 0), 0)
+    setCartItems((prev) =>
+      prev.map((item) => {
+        if (
+          item.product_id === activeDiscountItem.product_id &&
+          (item.unit_quantity_id || "") === (activeDiscountItem.unit_quantity_id || "")
+        ) {
+          return {
+            ...item,
+            discount_type: itemDiscountType,
+            discount_value: value,
+          }
+        }
+        return item
+      })
+    )
+    setActiveDiscountItem(null)
+  }
+
   const resetSaleForm = () => {
+
     setDraftId("")
     setCustomerId("")
     setBarcode("")
@@ -642,9 +697,10 @@ export default function SalesPage() {
         unit_id: item.unit_id ? Number(item.unit_id) : null,
         quantity: String(item.qty),
         unit_price: String(item.price),
-        discount_amount: "0",
+        discount_amount: String(getCartItemDiscount(item)),
         tax_amount: "0",
       })),
+
       payments: paymentsRows
         .filter((row) => money(row.amount) > 0)
         .map((row) => ({
@@ -670,6 +726,10 @@ export default function SalesPage() {
       showToast.error("Add at least one product to cart.")
       return
     }
+    if (ordersAllowUnpaid === false && totalPaid < subtotal) {
+      showToast.error(`Unpaid or partially paid orders are not allowed. Total paid (₹${totalPaid.toFixed(2)}) is less than subtotal (₹${subtotal.toFixed(2)}).`)
+      return
+    }
     const validPayments = paymentsRows.filter((row) => money(row.amount) > 0)
     const payLoad = {
       draft_id: draftId ? Number(draftId) : null,
@@ -686,9 +746,10 @@ export default function SalesPage() {
         unit_id: item.unit_id ? Number(item.unit_id) : null,
         quantity: String(item.qty),
         unit_price: String(item.price),
-        discount_amount: "0",
+        discount_amount: String(getCartItemDiscount(item)),
         tax_amount: "0",
       })),
+
       payments: validPayments.map((row) => ({
         payment_type: row.payment_type,
         amount: String(money(row.amount)),
@@ -905,7 +966,12 @@ export default function SalesPage() {
                         )}
                         <div className="relative z-10 w-full bg-gradient-to-t from-black/70 to-transparent px-1.5 pb-1.5 pt-4">
                           <p className="truncate text-center text-xs font-semibold text-white">{product.name}</p>
-                          {uq && <p className="text-center text-xs text-amber-200">₹{Number(uq.sale_price).toFixed(2)}</p>}
+                          {uq && (
+                            <div className="flex items-center justify-between text-[10px] text-amber-200">
+                              <span>₹{Number(uq.sale_price).toFixed(2)}</span>
+                              {showQuantity && <span>Qty: {uq.quantity}</span>}
+                            </div>
+                          )}
                         </div>
                       </button>
                     )
@@ -972,7 +1038,12 @@ export default function SalesPage() {
                         )}
                         <div className="relative z-10 w-full bg-gradient-to-t from-black/65 to-transparent px-2 pb-2 pt-6">
                           <p className="truncate text-center text-xs font-bold text-white">{product.name}</p>
-                          {uq && <p className="text-center text-xs text-blue-200">₹{Number(uq.sale_price).toFixed(2)}</p>}
+                          {uq && (
+                            <div className="flex items-center justify-between text-xs text-blue-200">
+                              <span>₹{Number(uq.sale_price).toFixed(2)}</span>
+                              {showQuantity && <span className="text-[10px] text-gray-300">Qty: {uq.quantity}</span>}
+                            </div>
+                          )}
                         </div>
                       </button>
                     )
@@ -1005,7 +1076,23 @@ export default function SalesPage() {
                         {t("sku")}: {item.sku || "-"}
                         {item.unit_label ? ` · ${t("unit")}: ${item.unit_label}` : ""}
                       </p>
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => openItemDiscountDialog(item)}
+                          className="text-xs text-blue-600 hover:text-blue-700 underline font-semibold flex items-center gap-0.5"
+                        >
+                          {item.discount_value && item.discount_value > 0 ? (
+                            <span className="text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5">
+                              Discount: {item.discount_type === "percentage" ? `${item.discount_value}%` : `${item.discount_value}`} (-₹{getCartItemDiscount(item).toFixed(2)})
+                            </span>
+                          ) : (
+                            "+ Add Discount"
+                          )}
+                        </button>
+                      </div>
                     </div>
+
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
@@ -1022,7 +1109,28 @@ export default function SalesPage() {
                       >
                         <Minus className="size-4" />
                       </Button>
-                      <span className="min-w-6 text-center">{item.qty}</span>
+                      <input
+                        type="number"
+                        step={allowDecimalQuantities ? "0.01" : "1"}
+                        min="0"
+                        value={item.qty}
+                        onChange={(e) => {
+                          const val = Number(e.target.value)
+                          if (val >= 0) {
+                            setCartItems((prev) =>
+                              prev
+                                .map((i) =>
+                                  i.product_id === item.product_id &&
+                                  (i.unit_quantity_id || "") === (item.unit_quantity_id || "")
+                                    ? { ...i, qty: val }
+                                    : i
+                                )
+                                .filter((i) => i.qty > 0)
+                            )
+                          }
+                        }}
+                        className="w-16 rounded border border-gray-200 px-2 py-1 text-center text-sm font-semibold focus:border-blue-400 focus:ring-1 focus:ring-blue-100 outline-none"
+                      />
                       <Button
                         type="button"
                         variant="outline"
@@ -1040,7 +1148,7 @@ export default function SalesPage() {
                       </Button>
                     </div>
                     <span>₹{item.price.toFixed(2)}</span>
-                    <span>₹{(item.qty * item.price).toFixed(2)}</span>
+                    <span>₹{(item.qty * item.price - getCartItemDiscount(item)).toFixed(2)}</span>
                     <Button
                       type="button"
                       variant="ghost"
@@ -1500,6 +1608,59 @@ export default function SalesPage() {
               </button>
             ))}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Item Discount Dialog */}
+      <Dialog
+        open={activeDiscountItem !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActiveDiscountItem(null)
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Item Discount</DialogTitle>
+            <DialogDescription>
+              Apply a flat or percentage discount to <strong>{activeDiscountItem?.name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <UniFieldSelect
+              label="Discount Type"
+              value={itemDiscountType}
+              onValueChange={(val: any) => setItemDiscountType(val)}
+              placeholder="Select discount type"
+              required
+            >
+              <SelectItem value="flat">Flat Amount (₹)</SelectItem>
+              <SelectItem value="percentage">Percentage (%)</SelectItem>
+            </UniFieldSelect>
+
+            <UniFieldInput
+              label="Discount Value"
+              value={itemDiscountVal}
+              onChange={(e) => setItemDiscountVal(e.target.value)}
+              placeholder="Enter discount value"
+              type="number"
+              prefix={itemDiscountType === "flat" ? "₹" : "%"}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setActiveDiscountItem(null)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleApplyItemDiscount}>
+              Apply Discount
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

@@ -24,6 +24,7 @@
   "brands": "Brands",
   "unit_groups": "Unit Groups",
   "units": "Units",
+  "print_labels": "Print Labels",
   "customer_groups": "Customer Groups",
   "purchase_orders": "Purchase Orders",
   "suppliers": "Suppliers",
@@ -148,5 +149,7 @@
   "unpaid": "Unpaid",
   "void": "Void",
   "refunded": "Refunded",
-  "partially_refunded": "Partially Refunded"
+  "partially_refunded": "Partially Refunded",
+  "background_jobs": "Background Jobs",
+  "reset_database": "Reset Database"
 }

@@ -50,6 +50,7 @@ const endpointsConfig = {
   getFailedJobs: { query: postMutation("settings/jobs/failed/get-transactions") },
   retryFailedJob: { query: ({ id }: { id: number | string }) => postMutation(`settings/jobs/failed/${id}/retry`)({}) },
   deleteFailedJob: { query: ({ id }: { id: number | string }) => ({ url: `settings/jobs/failed/${id}`, method: "DELETE" }) },
+  resetDatabase: { query: () => postMutation("settings/reset")({}) },
 }
 
 export const settings = createApi({

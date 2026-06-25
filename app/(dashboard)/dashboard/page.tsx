@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState, useEffect } from "react"
 import Link from "next/link"
 import {
   ArrowRight,
@@ -12,6 +12,7 @@ import {
   RotateCcw,
   Truck,
   Wallet,
+  AlertTriangle,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -23,6 +24,21 @@ const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
 export default function DashboardPage() {
   const [refreshDashboardSnapshot, refreshState] = (reports as any).useRefreshDashboardSnapshotMutation()
+  const [getLowStockReport, lowStockState] = (reports as any).useGetLowStockReportMutation()
+  const [lowStockItems, setLowStockItems] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchLowStock = async () => {
+      try {
+        const res = await getLowStockReport({ page: 1, limit: 5 }).unwrap()
+        setLowStockItems(res?.data?.items || [])
+      } catch (err) {
+        console.error("Failed to load low stock report", err)
+      }
+    }
+    fetchLowStock()
+  }, [getLowStockReport])
+
 
   const queryArgs = useMemo(() => {
     const now = new Date()
@@ -104,6 +120,40 @@ export default function DashboardPage() {
   const bestCashiers = summary?.best_cashiers || []
   const recentOrders = summary?.recent_orders || []
   const weeklySales = summary?.weekly_sales || []
+  const prevWeeklySales = summary?.prev_weekly_sales || []
+
+  const normalizedWeeklyData = useMemo(() => {
+    const data = []
+    const today = new Date()
+    const formatDate = (date: Date) => {
+      const offset = date.getTimezoneOffset()
+      const localDate = new Date(date.getTime() - offset * 60 * 1000)
+      return localDate.toISOString().split("T")[0]
+    }
+
+    for (let i = 6; i >= 0; i--) {
+      const currentDate = new Date(today)
+      currentDate.setDate(today.getDate() - i)
+      const currentDateStr = formatDate(currentDate)
+
+      const prevDate = new Date(currentDate)
+      prevDate.setDate(currentDate.getDate() - 7)
+      const prevDateStr = formatDate(prevDate)
+
+      const currentMatch = weeklySales.find((d: any) => String(d.day).startsWith(currentDateStr))
+      const prevMatch = prevWeeklySales.find((d: any) => String(d.day).startsWith(prevDateStr))
+
+      data.push({
+        day: currentDate.toLocaleDateString("en-US", { weekday: "short" }),
+        date: currentDateStr,
+        currentSales: Number(currentMatch?.total_sales || 0),
+        currentOrders: Number(currentMatch?.order_count || 0),
+        prevSales: Number(prevMatch?.total_sales || 0),
+        prevOrders: Number(prevMatch?.order_count || 0),
+      })
+    }
+    return data
+  }, [weeklySales, prevWeeklySales])
 
   const refreshSnapshot = async () => {
     const response = await refreshDashboardSnapshot({}).unwrap()
@@ -247,57 +297,107 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-950">Active Shift</h2>
-          <p className="text-sm text-slate-500">
-            Live cashier shift summary for this branch.
-          </p>
+        <div className="space-y-4">
+          {/* Active Shift Widget */}
+          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-950">Active Shift</h2>
+            <p className="text-sm text-slate-500">
+              Live cashier shift summary for this branch.
+            </p>
 
-          {!summary ? (
-            <div className="mt-6 flex items-center gap-3 text-sm text-slate-500">
-              <Spinner />
-              Loading shift summary...
-            </div>
-          ) : shift ? (
-            <div className="mt-5 space-y-3">
-              <div className="rounded-2xl border border-gray-100 bg-slate-50 p-4">
-                <p className="font-semibold text-slate-950">
-                  {shift.register__name || "Register"}
-                </p>
-                <p className="mt-1 text-sm text-slate-500">
-                  Cashier: {shift.cashier__full_name || "-"}
-                </p>
+            {!summary ? (
+              <div className="mt-6 flex items-center gap-3 text-sm text-slate-500">
+                <Spinner />
+                Loading shift summary...
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-gray-100 p-4">
-                  <p className="text-sm text-slate-500">Opening Cash</p>
-                  <p className="mt-1 font-bold text-slate-950">
-                    {formatMoney(shift.opening_cash)}
+            ) : shift ? (
+              <div className="mt-5 space-y-3">
+                <div className="rounded-2xl border border-gray-100 bg-slate-50 p-4">
+                  <p className="font-semibold text-slate-950">
+                    {shift.register__name || "Register"}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Cashier: {shift.cashier__full_name || "-"}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-gray-100 p-4">
-                  <p className="text-sm text-slate-500">Expected Cash</p>
-                  <p className="mt-1 font-bold text-slate-950">
-                    {formatMoney(shift.expected_cash)}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-gray-100 p-4">
-                  <p className="text-sm text-slate-500">Sales Collected</p>
-                  <p className="mt-1 font-bold text-slate-950">
-                    {formatMoney(shift.total_sales_amount)}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-gray-100 p-4">
-                  <p className="text-sm text-slate-500">Refund Out</p>
-                  <p className="mt-1 font-bold text-slate-950">
-                    {formatMoney(shift.total_refund_amount)}
-                  </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-gray-100 p-4">
+                    <p className="text-sm text-slate-500">Opening Cash</p>
+                    <p className="mt-1 font-bold text-slate-950">
+                      {formatMoney(shift.opening_cash)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-gray-100 p-4">
+                    <p className="text-sm text-slate-500">Expected Cash</p>
+                    <p className="mt-1 font-bold text-slate-950">
+                      {formatMoney(shift.expected_cash)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-gray-100 p-4">
+                    <p className="text-sm text-slate-500">Sales Collected</p>
+                    <p className="mt-1 font-bold text-slate-950">
+                      {formatMoney(shift.total_sales_amount)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-gray-100 p-4">
+                    <p className="text-sm text-slate-500">Refund Out</p>
+                    <p className="mt-1 font-bold text-slate-950">
+                      {formatMoney(shift.total_refund_amount)}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="mt-6 rounded-2xl border border-dashed border-gray-200 py-10 text-center text-sm text-slate-500">
-              No active cashier shift found.
+            ) : (
+              <div className="mt-6 rounded-2xl border border-dashed border-gray-200 py-10 text-center text-sm text-slate-500">
+                No active cashier shift found.
+              </div>
+            )}
+          </div>
+
+          {/* Cashier Stats Widget */}
+          {summary?.cashier_stats && (
+            <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+              <h2 className="text-lg font-bold text-slate-950">My Stats Today</h2>
+              <p className="text-sm text-slate-500 mb-4">
+                Personal cashier statistics for today.
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
+                  <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold uppercase text-sm">
+                    {summary.cashier_stats.cashier_name?.[0] || "C"}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-950">
+                      {summary.cashier_stats.cashier_name || "Cashier"}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Member since {summary.cashier_stats.member_since}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-3 grid-cols-2">
+                  <div className="rounded-2xl border border-gray-100 p-3 bg-slate-50/50">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase">Today's Orders</p>
+                    <p className="mt-1 font-bold text-slate-950">{summary.cashier_stats.today_orders}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{summary.cashier_stats.total_orders} total</p>
+                  </div>
+                  <div className="rounded-2xl border border-gray-100 p-3 bg-slate-50/50">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase">Today's Sales</p>
+                    <p className="mt-1 font-bold text-slate-950">{formatMoney(summary.cashier_stats.today_sales)}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{formatMoney(summary.cashier_stats.total_sales)} total</p>
+                  </div>
+                  <div className="rounded-2xl border border-gray-100 p-3 bg-slate-50/50">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase">Today's Refunds</p>
+                    <p className="mt-1 font-bold text-rose-600">{formatMoney(summary.cashier_stats.today_refunds)}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{formatMoney(summary.cashier_stats.total_refunds)} total</p>
+                  </div>
+                  <div className="rounded-2xl border border-gray-100 p-3 bg-slate-50/50">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase">New Customers</p>
+                    <p className="mt-1 font-bold text-slate-950">{summary.cashier_stats.today_customers}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{summary.cashier_stats.total_customers} total</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -379,36 +479,66 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-bold text-slate-950">Weekly Sales</h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 mb-4">
             Last 7 days sales snapshot for this branch.
           </p>
-          <div className="mt-5 space-y-3">
-            {weeklySales.length ? (
-              weeklySales.map((day: any, index: number) => (
-                <div
-                  key={`${day.day}-${index}`}
-                  className="flex items-center justify-between rounded-2xl border border-gray-100 bg-slate-50 px-4 py-3"
-                >
-                  <div>
-                    <p className="font-semibold text-slate-950">{day.day}</p>
-                    <p className="text-sm text-slate-500">
-                      {day.order_count || 0} orders
-                    </p>
-                  </div>
-                  <p className="font-bold text-slate-950">
-                    {formatMoney(day.total_sales)}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-2xl border border-dashed border-gray-200 py-10 text-center text-sm text-slate-500">
-                No weekly sales found.
-              </div>
-            )}
-          </div>
+          {weeklySales.length || prevWeeklySales.length ? (
+            <div className="mt-4 flex h-60 items-end justify-between gap-2 px-2 pb-2 border-b border-gray-100">
+              {(() => {
+                const maxVal = Math.max(
+                  ...normalizedWeeklyData.map((d) => Math.max(d.currentSales, d.prevSales)),
+                  1
+                );
+                return normalizedWeeklyData.map((day: any, index: number) => {
+                  const currentPct = (day.currentSales / maxVal) * 100;
+                  const prevPct = (day.prevSales / maxVal) * 100;
+                  return (
+                    <div key={`${day.date}-${index}`} className="group relative flex flex-1 flex-col items-center h-full justify-end">
+                      {/* Tooltip */}
+                      <div className="pointer-events-none absolute bottom-full mb-2 hidden flex-col items-center group-hover:flex z-30">
+                        <div className="rounded bg-slate-950 px-3 py-2 text-xs text-white shadow-md whitespace-nowrap">
+                          <p className="font-bold border-b border-slate-700 pb-1 mb-1 text-[10px]">{day.date} ({day.day})</p>
+                          <p className="text-[10px] flex items-center gap-1.5">
+                            <span className="inline-block size-2 rounded-full bg-blue-600"></span>
+                            This Week: <span className="font-semibold">{formatMoney(day.currentSales)}</span> ({day.currentOrders} orders)
+                          </p>
+                          <p className="text-[10px] flex items-center gap-1.5 mt-0.5">
+                            <span className="inline-block size-2 rounded-full bg-slate-400"></span>
+                            Last Week: <span className="font-semibold">{formatMoney(day.prevSales)}</span> ({day.prevOrders} orders)
+                          </p>
+                        </div>
+                        <div className="h-1.5 w-1.5 rotate-45 bg-slate-950"></div>
+                      </div>
+                      
+                      {/* Bars container */}
+                      <div className="flex w-full items-end gap-1 px-1 h-[85%]">
+                        {/* Current week bar */}
+                        <div 
+                          style={{ height: `${Math.max(currentPct, 2)}%` }} 
+                          className="flex-1 rounded-t bg-blue-600 transition group-hover:bg-blue-500"
+                        />
+                        {/* Previous week bar */}
+                        <div 
+                          style={{ height: `${Math.max(prevPct, 2)}%` }} 
+                          className="flex-1 rounded-t bg-slate-300 transition group-hover:bg-slate-400"
+                        />
+                      </div>
+                      
+                      {/* Label */}
+                      <span className="mt-2 text-[11px] font-semibold text-slate-500">{day.day}</span>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-gray-200 py-10 text-center text-sm text-slate-500">
+              No weekly sales found.
+            </div>
+          )}
         </div>
 
         <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -445,6 +575,49 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Low Stock Alert Widget */}
+      <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="size-5 text-amber-500" />
+          <h2 className="text-lg font-bold text-slate-950">Low Stock Alerts</h2>
+        </div>
+        <p className="text-sm text-slate-500 mt-1">
+          Products that have fallen below their minimum stock threshold.
+        </p>
+        <div className="mt-5">
+          {lowStockState.isLoading ? (
+            <div className="flex items-center gap-3 text-sm text-slate-500">
+              <Spinner />
+              Loading low stock report...
+            </div>
+          ) : lowStockItems.length ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {lowStockItems.map((item: any, idx: number) => (
+                <div key={`${item.id}-${idx}`} className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+                  <p className="font-semibold text-slate-950 truncate" title={item.name}>{item.name}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">SKU: {item.sku || "-"}</p>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-slate-400">Current Stock</p>
+                      <p className="text-sm font-bold text-rose-600">{Number(item.current_stock).toFixed(0)} units</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-slate-400">Min Alert</p>
+                      <p className="text-sm font-bold text-slate-700">{Number(item.min_stock).toFixed(0)} units</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-gray-200 py-6 text-center text-sm text-slate-500">
+              All products are sufficiently stocked.
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
+

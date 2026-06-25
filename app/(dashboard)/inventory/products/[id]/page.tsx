@@ -279,8 +279,54 @@ export default function ProductFormPage() {
   const [isFooterStuck, setIsFooterStuck] = useState(false)
   const [imageError, setImageError] = useState("")
   const [initialImageUrl, setInitialImageUrl] = useState("")
+  const [gallery, setGallery] = useState<any[]>([])
+  
+  const [addProductGalleryImage, { isLoading: isUploadingGallery }] = (
+    catalog as any
+  ).useAddProductGalleryImageMutation()
+  const [deleteProductGalleryImage] = (
+    catalog as any
+  ).useDeleteProductGalleryImageMutation()
+
+  const handleUploadGalleryImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const formDataPayload = new FormData()
+    formDataPayload.append("image", file)
+    try {
+      const response = await addProductGalleryImage({
+        productId: id,
+        payLoad: formDataPayload,
+      }).unwrap()
+      showToast.success(response?.message || "Gallery image uploaded successfully.")
+      // Refetch product data to refresh gallery list
+      const result = await getProductById({ id }).unwrap()
+      setGallery(result?.data?.gallery || [])
+    } catch (err) {
+      console.error(err)
+      showToast.error("Failed to upload gallery image.")
+    }
+  }
+
+  const handleDeleteGalleryImage = async (galleryId: any) => {
+    try {
+      const response = await deleteProductGalleryImage({
+        productId: id,
+        id: galleryId,
+      }).unwrap()
+      showToast.success(response?.message || "Gallery image deleted successfully.")
+      // Refetch product data to refresh gallery list
+      const result = await getProductById({ id }).unwrap()
+      setGallery(result?.data?.gallery || [])
+    } catch (err) {
+      console.error(err)
+      showToast.error("Failed to delete gallery image.")
+    }
+  }
+
   const [unitQuantityForm, setUnitQuantityForm] =
     useState<ProductUnitQuantityFormValues>(initialUnitQuantityValues)
+
   const [unitQuantityErrors, setUnitQuantityErrors] = useState<
     Record<string, string>
   >({})
@@ -374,6 +420,7 @@ export default function ProductFormPage() {
           : "",
         is_tax_inclusive: record.tax_type === "inclusive",
       })
+      setGallery(record.gallery || [])
     }
 
     load()
@@ -876,6 +923,53 @@ export default function ProductFormPage() {
                     }}
                   />
                 </section>
+
+                {isEdit ? (
+                  <section className="rounded-lg border border-gray-200 bg-white p-4">
+                    <h2 className="text-base font-semibold text-gray-900 mb-3">
+                      Product Gallery
+                    </h2>
+                    <div className="grid grid-cols-3 gap-2">
+                      {gallery.map((img: any) => (
+                        <div key={img.id} className="relative aspect-square rounded-md overflow-hidden border border-gray-100 bg-gray-50">
+                          <img src={img.url} alt={img.name || "Gallery"} className="object-cover w-full h-full" />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteGalleryImage(img.id)}
+                            className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors"
+                          >
+                            <Trash2 className="size-3" />
+                          </button>
+                          {img.featured ? (
+                            <span className="absolute bottom-1 left-1 px-1 py-0.5 text-[8px] bg-blue-600 text-white rounded font-bold uppercase">
+                              Cover
+                            </span>
+                          ) : null}
+                        </div>
+                      ))}
+                      
+                      {/* Upload button */}
+                      <label className="flex aspect-square flex-col items-center justify-center border-2 border-dashed border-gray-200 hover:border-gray-300 rounded-md cursor-pointer transition-colors bg-gray-50/50">
+                        {isUploadingGallery ? (
+                          <Spinner className="size-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Plus className="size-4 text-gray-400" />
+                            <span className="text-[10px] text-gray-400 mt-1">Upload</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleUploadGalleryImage}
+                          disabled={isUploadingGallery}
+                        />
+                      </label>
+                    </div>
+                  </section>
+                ) : null}
+
 
                 {isStockProduct ? (
                   <section className="rounded-lg border border-gray-200 bg-white p-4">

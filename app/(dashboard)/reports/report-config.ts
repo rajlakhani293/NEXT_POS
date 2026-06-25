@@ -12,6 +12,7 @@ export const reportTabs = [
   "stock_ledger",
   "customer_credit",
   "accounting",
+  "annual",
 ] as const
 
 export type ReportKey = (typeof reportTabs)[number]
@@ -30,6 +31,7 @@ export const tabLabels: Record<ReportKey, string> = {
   stock_ledger: "Stock Ledger",
   customer_credit: "Customer Credit",
   accounting: "Accounting",
+  annual: "Annual Report",
 }
 
 export const reportCards: Array<{
@@ -114,6 +116,12 @@ export const reportCards: Array<{
     key: "accounting",
     title: "Accounting",
     description: "Account transaction history with balance movement.",
+    group: "Finance",
+  },
+  {
+    key: "annual",
+    title: "Annual Report",
+    description: "Monthly breakdown of sales, taxes, expenses and net income for a chosen year.",
     group: "Finance",
   },
 ]
@@ -233,6 +241,14 @@ export const reportColumns: Record<ReportKey, any[]> = {
     { key: "amount", title: "Amount" },
     { key: "balance_after", title: "Balance" },
     { key: "source_type", title: "Source" },
+  ],
+  annual: [
+    { key: "label", title: "Month" },
+    { key: "total_sales", title: "Sales" },
+    { key: "total_taxes", title: "Taxes" },
+    { key: "total_expenses", title: "Expenses" },
+    { key: "net_income", title: "Net Income" },
+    { key: "order_count", title: "Orders" },
   ],
 }
 

@@ -21,6 +21,8 @@ const endpointsConfig = {
   getCustomerById: { query: ({ id }: { id: number }) => getMutation(`${id}`) },
   adjustCustomerCredit: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`${id}/credit-adjustment`)(payLoad) },
   getCustomerCreditLedger: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`${id}/credit-ledger`)(payLoad) },
+  getCustomerOrderHistory: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`${id}/orders`)(payLoad) },
+
 
   // Customer Groups
   getCustomerGroupsData: { query: postMutation("groups/get-transactions") },

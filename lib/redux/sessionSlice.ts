@@ -87,6 +87,17 @@ interface BusinessSettings {
     default_change_payment_type: string
     order_types: string[]
     store_language?: string
+    registration_enabled?: string
+    store_name?: string
+    scale_barcode_enabled?: boolean
+    scale_barcode_prefix?: string
+    scale_barcode_product_length?: number
+    orders_code_type?: string
+    orders_allow_unpaid?: boolean
+    orders_strict_instalments?: boolean
+    orders_quotation_expiration?: string
+    pos_tax_group?: string
+    pos_tax_type?: string
   }
   order_types: {
     value: string

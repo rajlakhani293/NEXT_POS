@@ -19,6 +19,7 @@ const endpointsConfig = {
   getStockReport: { query: postMutation("stock-report") },
   getCashierReport: { query: postMutation("cashier-report") },
   getCustomerStatement: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`customers-statement/${id}`)(payLoad) },
+  getAnnualReport: { query: postMutation("annual-report") },
 }
 
 export const reports = createApi({

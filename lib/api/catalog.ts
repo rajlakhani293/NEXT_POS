@@ -82,7 +82,10 @@ const endpointsConfig = {
   editProductUnitQuantity: { query: ({ productId, id, payLoad }: { productId: any; id: any; payLoad: any }) => putMutation(`products/${productId}/units/quantities/${id}`, payLoad) },
   deleteProductUnitQuantity: { query: ({ productId, id }: { productId: any; id: any }) => deleteMutation(`products/${productId}/units/quantities/${id}`)({}) },
   searchProductUsingBarcode: { query: ({ reference }: { reference: string }) => getMutation(`products/search/using-barcode/${reference}`) },
+  addProductGalleryImage: { query: ({ productId, payLoad }: { productId: any; payLoad: any }) => postMutation(`products/${productId}/gallery`)(payLoad) },
+  deleteProductGalleryImage: { query: ({ productId, id }: { productId: any; id: any }) => deleteMutation(`products/${productId}/gallery/${id}`)({}) },
 }
+
 
 export const catalog = createApi({
   reducerPath: "catalog",
