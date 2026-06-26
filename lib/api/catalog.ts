@@ -20,15 +20,6 @@ const endpointsConfig = {
   updateCategoryStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("categories/status", payLoad) },
   getCategoryById: { query: ({ id }: { id: number }) => getMutation(`categories/${id}`) },
 
-  // Brands
-  getBrandsDropdown: { query: () => getMutation("brands/dropdown-list") },
-  getBrandsData: { query: postMutation("brands/get-transactions") },
-  createBrand: { query: createMutation("brands/") },
-  editBrand: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`brands/${id}`, payLoad) },
-  deleteBrand: { query: deleteMutation("brands/delete") },
-  updateBrandStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("brands/status", payLoad) },
-  getBrandById: { query: ({ id }: { id: number }) => getMutation(`brands/${id}`) },
-
   // Unit groups
   getUnitGroupsDropdown: { query: () => getMutation("unit-groups/dropdown-list") },
   getUnitGroupsData: { query: postMutation("unit-groups/get-transactions") },

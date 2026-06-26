@@ -13,7 +13,6 @@ import {
   X,
 } from "lucide-react"
 
-import { BrandForm } from "@/app/(dashboard)/inventory/brands/createUpdate"
 import { CategoryForm } from "@/app/(dashboard)/inventory/categories/createUpdate"
 import { UnitForm } from "@/app/(dashboard)/inventory/units/createUpdate"
 import { TaxGroupForm } from "@/app/(dashboard)/settings/tax-groups/createUpdate"
@@ -93,7 +92,6 @@ type ProductFormValues = {
   image: File | null
   weight: string
   category_id: string
-  brand_id: string
   tax_group_id: string
   unit_id: string
   product_type: "product" | "service"
@@ -130,7 +128,6 @@ const initialValues: ProductFormValues = {
   image: null,
   weight: "",
   category_id: "",
-  brand_id: "",
   tax_group_id: "",
   unit_id: "",
   product_type: "product",
@@ -202,7 +199,6 @@ function buildProductFormData(values: ProductFormValues, isEdit: boolean) {
   appendIfPresent(formData, "barcode", values.barcode)
   appendIfPresent(formData, "weight", values.weight || "0")
   appendIfPresent(formData, "category_id", values.category_id)
-  appendIfPresent(formData, "brand_id", values.brand_id)
   appendIfPresent(formData, "tax_group_id", values.tax_group_id)
   appendIfPresent(formData, "unit_id", values.unit_id)
   appendIfPresent(formData, "product_type", "product")
@@ -332,7 +328,7 @@ export default function ProductFormPage() {
   >({})
   const [isSavingUnitQuantity, setIsSavingUnitQuantity] = useState(false)
   const [addFormOpen, setAddFormOpen] = useState<
-    "category" | "brand" | "unit" | "taxGroup" | null
+    "category" | "unit" | "taxGroup" | null
   >(null)
 
   const contentRef = useRef<HTMLDivElement>(null)
@@ -357,9 +353,6 @@ export default function ProductFormPage() {
   const [getCategoriesDropdown, categories] = (
     catalog as any
   ).useGetCategoriesDropdownMutation()
-  const [getBrandsDropdown, brands] = (
-    catalog as any
-  ).useGetBrandsDropdownMutation()
   const [getTaxGroupsDropdown, taxGroups] = (
     catalog as any
   ).useGetTaxGroupsDropdownMutation()
@@ -373,7 +366,6 @@ export default function ProductFormPage() {
     const load = async () => {
       await Promise.all([
         getCategoriesDropdown(),
-        getBrandsDropdown(),
         getTaxGroupsDropdown(),
         getUnitsDropdown(),
       ])
@@ -401,7 +393,6 @@ export default function ProductFormPage() {
         image: null,
         product_type: record.type === "dematerialized" ? "service" : "product",
         category_id: record.category_id ? String(record.category_id) : "",
-        brand_id: record.brand_id ? String(record.brand_id) : "",
         tax_group_id: record.tax_group_id ? String(record.tax_group_id) : "",
         unit_id: primaryUnitQuantity?.unit_id
           ? String(primaryUnitQuantity.unit_id)
@@ -425,7 +416,6 @@ export default function ProductFormPage() {
 
     load()
   }, [
-    getBrandsDropdown,
     getCategoriesDropdown,
     getProductById,
     getProductUnitQuantities,
@@ -438,7 +428,6 @@ export default function ProductFormPage() {
   const isStockProduct = formData.product_type === "product"
   const isLoading =
     categories.isLoading ||
-    brands.isLoading ||
     taxGroups.isLoading ||
     units.isLoading ||
     (isEdit && product.isLoading)
@@ -484,10 +473,9 @@ export default function ProductFormPage() {
   const goBack = () => router.push("/inventory/products")
 
   const handleAddFormSuccess = async (
-    type: "category" | "brand" | "unit" | "taxGroup"
+    type: "category" | "unit" | "taxGroup"
   ) => {
     if (type === "category") await getCategoriesDropdown()
-    if (type === "brand") await getBrandsDropdown()
     if (type === "unit") await getUnitsDropdown()
     if (type === "taxGroup") await getTaxGroupsDropdown()
     setAddFormOpen(null)
@@ -841,21 +829,6 @@ export default function ProductFormPage() {
                         </button>
                       }
                     />
-                    <UniFieldSelect
-                      label="Brand"
-                      value={formData.brand_id}
-                      onValueChange={(value) => updateField("brand_id", value)}
-                      placeholder="Select Brand"
-                      allowClear
-                      onAddNew={() => setAddFormOpen("brand")}
-                      addNewLabel="Add New Brand"
-                    >
-                      {toOption(brands.data?.data).map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </UniFieldSelect>
                     <UniFieldInput
                       label="MRP"
                       type="number"
@@ -1358,11 +1331,6 @@ export default function ProductFormPage() {
           isOpen={addFormOpen === "category"}
           onClose={() => setAddFormOpen(null)}
           onSuccess={() => handleAddFormSuccess("category")}
-        />
-        <BrandForm
-          isOpen={addFormOpen === "brand"}
-          onClose={() => setAddFormOpen(null)}
-          onSuccess={() => handleAddFormSuccess("brand")}
         />
         <UnitForm
           isOpen={addFormOpen === "unit"}

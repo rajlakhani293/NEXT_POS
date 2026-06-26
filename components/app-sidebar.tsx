@@ -84,11 +84,6 @@ const mainNavSections: DashboardNavSection[] = [
         permission: PERMISSIONS.products.view,
       },
       {
-        title: "Brands",
-        url: "/inventory/brands",
-        permission: PERMISSIONS.products.view,
-      },
-      {
         title: "Unit Groups",
         url: "/inventory/unit-groups",
         permission: PERMISSIONS.products.view,
