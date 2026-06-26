@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, CheckIcon, ChevronDownIcon, ReceiptText } from "lucide-react"
+import { ArrowLeft, ReceiptText } from "lucide-react"
 
 import {
   CustomerAddressAddon,
@@ -12,112 +12,92 @@ import {
 import DynamicTable from "@/components/DynamicTable"
 
 import { Button } from "@/components/ui/button"
-import { ButtonGroup } from "@/components/ui/button-group"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { customers } from "@/lib/api/customers"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
 type CustomerFormValues = {
-  name: string
+  first_name: string
+  last_name: string
   phone: string
   email: string
-  customer_type: string
-  company_name: string
-  gst_number: string
-  opening_balance: string
   credit_limit_amount: string
-  billing_address_line_1: string
-  billing_pincode: string
+  group_id: string
+  birth_date: string
+  pobox: string
+  gender: string
+
+  // Billing address
+  billing_first_name: string
+  billing_last_name: string
+  billing_phone: string
+  billing_email: string
+  billing_address_1: string
+  billing_address_2: string
+  billing_country: string
   billing_city: string
-  shipping_address_line_1: string
-  shipping_pincode: string
+  billing_pobox: string
+  billing_company_name: string
+
+  // Shipping address
+  shipping_first_name: string
+  shipping_last_name: string
+  shipping_phone: string
+  shipping_email: string
+  shipping_address_1: string
+  shipping_address_2: string
+  shipping_country: string
   shipping_city: string
+  shipping_pobox: string
+  shipping_company_name: string
 }
 
 const initialValues: CustomerFormValues = {
-  name: "",
+  first_name: "",
+  last_name: "",
   phone: "",
   email: "",
-  customer_type: "retail",
-  company_name: "",
-  gst_number: "",
-  opening_balance: "",
   credit_limit_amount: "",
-  billing_address_line_1: "",
-  billing_pincode: "",
+  group_id: "",
+  birth_date: "",
+  pobox: "",
+  gender: "",
+
+  // Billing address
+  billing_first_name: "",
+  billing_last_name: "",
+  billing_phone: "",
+  billing_email: "",
+  billing_address_1: "",
+  billing_address_2: "",
+  billing_country: "",
   billing_city: "",
-  shipping_address_line_1: "",
-  shipping_pincode: "",
+  billing_pobox: "",
+  billing_company_name: "",
+
+  // Shipping address
+  shipping_first_name: "",
+  shipping_last_name: "",
+  shipping_phone: "",
+  shipping_email: "",
+  shipping_address_1: "",
+  shipping_address_2: "",
+  shipping_country: "",
   shipping_city: "",
-}
-
-const customerTypes = [
-  { label: "Retail", value: "retail" },
-  { label: "Wholesale", value: "wholesale" },
-  { label: "Walk In", value: "walk_in" },
-]
-
-function OpeningBalanceDropdown({
-  value,
-  onChange,
-}: {
-  value: "debit" | "credit"
-  onChange: (value: "debit" | "credit") => void
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="h-10 min-w-28 border-2 bg-muted/30 px-3 text-sm font-semibold text-gray-700 shadow-none"
-        >
-          {value === "credit" ? "Credit" : "Debit"}
-          <ChevronDownIcon className="size-4 opacity-60" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-32">
-        <DropdownMenuItem
-          onClick={() => onChange("debit")}
-          className={cn(
-            value === "debit" && "bg-accent font-semibold text-accent-foreground"
-          )}
-        >
-          {value === "debit" ? (
-            <CheckIcon className="size-4" />
-          ) : (
-            <span className="size-4" />
-          )}
-          Debit
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => onChange("credit")}
-          className={cn(
-            value === "credit" && "bg-accent font-semibold text-accent-foreground"
-          )}
-        >
-          {value === "credit" ? (
-            <CheckIcon className="size-4" />
-          ) : (
-            <span className="size-4" />
-          )}
-          Credit
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
+  shipping_pobox: "",
+  shipping_company_name: "",
 }
 
 const sanitizePhone = (value: string) => value.replace(/\D/g, "").slice(0, 10)
-const normalizeAmount = (value: any) => Math.abs(Number(value || 0)).toString()
 
 const paymentStatusColors: Record<string, string> = {
   paid: "bg-green-50 text-green-700",
@@ -143,9 +123,6 @@ export default function CustomerFormPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isFooterStuck, setIsFooterStuck] = useState(false)
-  const [openingBalanceType, setOpeningBalanceType] = useState<
-    "debit" | "credit"
-  >("debit")
   const [addressFormType, setAddressFormType] = useState<AddressType | null>(
     null
   )
@@ -155,6 +132,8 @@ export default function CustomerFormPage() {
   const [ordersPage, setOrdersPage] = useState(1)
   const [ordersSearch, setOrdersSearch] = useState("")
   const lastOrderRequestRef = useRef("")
+
+  const [groups, setGroups] = useState<{ id: number; name: string }[]>([])
 
   const contentRef = useRef<HTMLDivElement>(null)
   const paginationSentinelRef = useRef<HTMLDivElement>(null)
@@ -168,6 +147,9 @@ export default function CustomerFormPage() {
   const [getCustomerOrderHistory, orderHistoryState] = (
     customers as any
   ).useGetCustomerOrderHistoryMutation()
+  const [getCustomerGroupsDropdown] = (
+    customers as any
+  ).useGetCustomerGroupsDropdownMutation()
 
   const loadOrderHistory = async (
     targetPage = ordersPage,
@@ -194,6 +176,18 @@ export default function CustomerFormPage() {
   }
 
   useEffect(() => {
+    const loadGroups = async () => {
+      try {
+        const response = await getCustomerGroupsDropdown().unwrap()
+        setGroups(response?.data || [])
+      } catch (err) {
+        console.error("Failed to load customer groups", err)
+      }
+    }
+    loadGroups()
+  }, [getCustomerGroupsDropdown])
+
+  useEffect(() => {
     if (activeTab === "orders") {
       loadOrderHistory(ordersPage, ordersSearch)
     }
@@ -207,7 +201,6 @@ export default function CustomerFormPage() {
     }
   }
 
-
   useEffect(() => {
     const loadKey = `${id}:${isEdit ? "edit" : "create"}`
     if (loadKeyRef.current === loadKey) return
@@ -216,7 +209,6 @@ export default function CustomerFormPage() {
     const load = async () => {
       if (!isEdit) {
         setValues(initialValues)
-        setOpeningBalanceType("debit")
         setErrors({})
         return
       }
@@ -227,27 +219,44 @@ export default function CustomerFormPage() {
 
       const billingAddress = record.addresses?.billing || record.address || {}
       const shippingAddress = record.addresses?.shipping || {}
-      const openingBalance = Number(record.opening_balance || 0)
 
       setValues({
-        name: record.name || "",
+        first_name: record.first_name || "",
+        last_name: record.last_name || "",
         phone: record.phone || "",
         email: record.email || "",
-        customer_type: record.customer_type || "retail",
-        company_name: record.company_name || "",
-        gst_number: record.gst_number || "",
-        opening_balance: openingBalance ? normalizeAmount(openingBalance) : "",
         credit_limit_amount: record.credit_limit_amount
           ? String(record.credit_limit_amount)
           : "",
-        billing_address_line_1: billingAddress.address_line_1 || "",
-        billing_pincode: billingAddress.pincode || "",
+        group_id: record.group_id ? String(record.group_id) : "",
+        birth_date: record.birth_date || "",
+        pobox: record.pobox || "",
+        gender: record.gender || "",
+
+        // Billing address
+        billing_first_name: billingAddress.first_name || "",
+        billing_last_name: billingAddress.last_name || "",
+        billing_phone: billingAddress.phone || "",
+        billing_email: billingAddress.email || "",
+        billing_address_1: billingAddress.address_1 || "",
+        billing_address_2: billingAddress.address_2 || "",
+        billing_country: billingAddress.country || "",
         billing_city: billingAddress.city || "",
-        shipping_address_line_1: shippingAddress.address_line_1 || "",
-        shipping_pincode: shippingAddress.pincode || "",
+        billing_pobox: billingAddress.pobox || "",
+        billing_company_name: billingAddress.company_name || "",
+
+        // Shipping address
+        shipping_first_name: shippingAddress.first_name || "",
+        shipping_last_name: shippingAddress.last_name || "",
+        shipping_phone: shippingAddress.phone || "",
+        shipping_email: shippingAddress.email || "",
+        shipping_address_1: shippingAddress.address_1 || "",
+        shipping_address_2: shippingAddress.address_2 || "",
+        shipping_country: shippingAddress.country || "",
         shipping_city: shippingAddress.city || "",
+        shipping_pobox: shippingAddress.pobox || "",
+        shipping_company_name: shippingAddress.company_name || "",
       })
-      setOpeningBalanceType(openingBalance < 0 ? "credit" : "debit")
       setErrors({})
     }
 
@@ -279,9 +288,16 @@ export default function CustomerFormPage() {
   }
 
   const getAddressValues = (type: AddressType): AddressFormValues => ({
-    address_line_1: values[`${type}_address_line_1` as keyof CustomerFormValues],
-    pincode: values[`${type}_pincode` as keyof CustomerFormValues],
+    first_name: values[`${type}_first_name` as keyof CustomerFormValues],
+    last_name: values[`${type}_last_name` as keyof CustomerFormValues],
+    phone: values[`${type}_phone` as keyof CustomerFormValues],
+    email: values[`${type}_email` as keyof CustomerFormValues],
+    address_1: values[`${type}_address_1` as keyof CustomerFormValues],
+    address_2: values[`${type}_address_2` as keyof CustomerFormValues],
+    country: values[`${type}_country` as keyof CustomerFormValues],
     city: values[`${type}_city` as keyof CustomerFormValues],
+    pobox: values[`${type}_pobox` as keyof CustomerFormValues],
+    company_name: values[`${type}_company_name` as keyof CustomerFormValues],
   })
 
   const handleAddressChange = (
@@ -290,26 +306,28 @@ export default function CustomerFormPage() {
   ) => {
     setValues((current) => ({
       ...current,
-      [`${addressType}_address_line_1`]: addressValues.address_line_1,
-      [`${addressType}_pincode`]: addressValues.pincode,
+      [`${addressType}_first_name`]: addressValues.first_name,
+      [`${addressType}_last_name`]: addressValues.last_name,
+      [`${addressType}_phone`]: addressValues.phone,
+      [`${addressType}_email`]: addressValues.email,
+      [`${addressType}_address_1`]: addressValues.address_1,
+      [`${addressType}_address_2`]: addressValues.address_2,
+      [`${addressType}_country`]: addressValues.country,
       [`${addressType}_city`]: addressValues.city,
+      [`${addressType}_pobox`]: addressValues.pobox,
+      [`${addressType}_company_name`]: addressValues.company_name,
     }))
   }
 
   const validate = () => {
     const nextErrors: Record<string, string> = {}
-    if (!values.name.trim()) nextErrors.name = "Name is required"
+    if (!values.first_name.trim()) nextErrors.first_name = "First name is required"
+    if (!values.group_id) nextErrors.group_id = "Group is required"
     if (values.phone && !/^[6-9]\d{9}$/.test(values.phone)) {
       nextErrors.phone = "Enter valid Indian phone number"
     }
     if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
       nextErrors.email = "Enter valid email"
-    }
-    if (values.billing_pincode && !/^\d{6}$/.test(values.billing_pincode)) {
-      nextErrors.billing_pincode = "Pincode must be 6 digits"
-    }
-    if (values.shipping_pincode && !/^\d{6}$/.test(values.shipping_pincode)) {
-      nextErrors.shipping_pincode = "Pincode must be 6 digits"
     }
 
     setErrors(nextErrors)
@@ -322,15 +340,9 @@ export default function CustomerFormPage() {
     event.preventDefault()
     if (!validate()) return
 
-    const openingBalanceAmount = Math.abs(Number(values.opening_balance || 0))
-    const signedOpeningBalance =
-      openingBalanceType === "credit"
-        ? -openingBalanceAmount
-        : openingBalanceAmount
-
     const payLoad = {
       ...values,
-      opening_balance: String(signedOpeningBalance),
+      group_id: values.group_id ? Number(values.group_id) : null,
       credit_limit_amount: values.credit_limit_amount || "0",
     }
 
@@ -473,35 +485,20 @@ export default function CustomerFormPage() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="md:col-span-2">
-                    <ButtonGroup className="mb-4 overflow-hidden rounded-md bg-white">
-                      {customerTypes.map((type) => (
-                        <Button
-                          key={type.value}
-                          type="button"
-                          variant="ghost"
-                          className={cn(
-                            "min-w-24 text-sm font-semibold border shadow-none hover:bg-gray-50",
-                            values.customer_type === type.value &&
-                            "bg-blue-600 text-white hover:bg-blue-600 hover:text-white border-0"
-                          )}
-                          onClick={() =>
-                            updateField("customer_type", type.value)
-                          }
-                        >
-                          {type.label}
-                        </Button>
-                      ))}
-                    </ButtonGroup>
-                  </div>
-
                   <UniFieldInput
-                    label="Name"
+                    label="First Name"
                     required
-                    placeholder="Enter customer name"
-                    value={values.name}
-                    error={errors.name}
-                    onChange={(event) => updateField("name", event.target.value)}
+                    placeholder="Enter first name"
+                    value={values.first_name}
+                    error={errors.first_name}
+                    onChange={(event) => updateField("first_name", event.target.value)}
+                  />
+                  <UniFieldInput
+                    label="Last Name"
+                    placeholder="Enter last name"
+                    value={values.last_name}
+                    error={errors.last_name}
+                    onChange={(event) => updateField("last_name", event.target.value)}
                   />
                   <UniFieldInput
                     label="Phone Number"
@@ -526,46 +523,59 @@ export default function CustomerFormPage() {
                       updateField("email", event.target.value)
                     }
                   />
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-gray-700">
+                      Group <span className="text-red-500">*</span>
+                    </label>
+                    <Select
+                      value={values.group_id}
+                      onValueChange={(val) => updateField("group_id", val)}
+                    >
+                      <SelectTrigger className="h-10 w-full border-2 bg-white">
+                        <SelectValue placeholder="Select Group" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {groups.map((g) => (
+                          <SelectItem key={g.id} value={String(g.id)}>
+                            {g.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.group_id && (
+                      <p className="text-xs text-red-500 font-semibold">{errors.group_id}</p>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-gray-700">
+                      Gender
+                    </label>
+                    <Select
+                      value={values.gender || "not_defined"}
+                      onValueChange={(val) => updateField("gender", val === "not_defined" ? "" : val)}
+                    >
+                      <SelectTrigger className="h-10 w-full border-2 bg-white">
+                        <SelectValue placeholder="Not Defined" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="not_defined">Not Defined</SelectItem>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <UniFieldInput
-                    label="Opening Balance"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    prefix="₹"
-                    className={cn(
-                      openingBalanceType === "credit"
-                        ? "text-emerald-700"
-                        : "text-red-600"
-                    )}
-                    prefixClassName={cn(
-                      openingBalanceType === "credit"
-                        ? "text-emerald-700"
-                        : "text-red-600"
-                    )}
-                    placeholder="Enter opening balance"
-                    value={values.opening_balance}
-                    onChange={(event) =>
-                      updateField("opening_balance", event.target.value)
-                    }
-                    addonAfter={
-                      <OpeningBalanceDropdown
-                        value={openingBalanceType}
-                        onChange={setOpeningBalanceType}
-                      />
-                    }
+                    label="Birth Date"
+                    type="date"
+                    value={values.birth_date ? values.birth_date.split(" ")[0] : ""}
+                    onChange={(event) => updateField("birth_date", event.target.value)}
                   />
-                  <p
-                    className={cn(
-                      "-mt-2 text-xs font-semibold md:col-start-2",
-                      openingBalanceType === "credit"
-                        ? "text-emerald-700"
-                        : "text-red-600"
-                    )}
-                  >
-                    {openingBalanceType === "credit"
-                      ? `Credit: customer has ₹${values.opening_balance || "0"} advance.`
-                      : `Debit: customer owes ₹${values.opening_balance || "0"}.`}
-                  </p>
+                  <UniFieldInput
+                    label="PO Box"
+                    placeholder="Enter PO Box"
+                    value={values.pobox}
+                    onChange={(event) => updateField("pobox", event.target.value)}
+                  />
                   <UniFieldInput
                     label="Credit Limit"
                     type="number"
@@ -576,30 +586,6 @@ export default function CustomerFormPage() {
                     value={values.credit_limit_amount}
                     onChange={(event) =>
                       updateField("credit_limit_amount", event.target.value)
-                    }
-                  />
-                </div>
-              </section>
-
-              <section className="rounded-lg border border-gray-200 bg-white p-4">
-                <h2 className="mb-4 text-base font-semibold text-gray-900">
-                  Company Details
-                </h2>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <UniFieldInput
-                    label="Company Name"
-                    placeholder="Enter company name"
-                    value={values.company_name}
-                    onChange={(event) =>
-                      updateField("company_name", event.target.value)
-                    }
-                  />
-                  <UniFieldInput
-                    label="GST Number"
-                    placeholder="Enter GST number"
-                    value={values.gst_number}
-                    onChange={(event) =>
-                      updateField("gst_number", event.target.value)
                     }
                   />
                 </div>
@@ -646,8 +632,8 @@ export default function CustomerFormPage() {
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
-                    <Spinner />
-                    Saving...
+                     <Spinner />
+                     Saving...
                   </span>
                 ) : isEdit ? (
                   "Update Customer"

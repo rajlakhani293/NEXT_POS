@@ -43,7 +43,6 @@ const buildFields = (rewardSystems: any[]) => [
     placeholder: "Enter minimum payment percentage",
     suffix: "%",
     min: 0,
-    max: 100,
   },
   {
     name: "reward_system_id",

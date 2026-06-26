@@ -9,9 +9,16 @@ import { cn } from "@/lib/utils"
 export type AddressType = "billing" | "shipping"
 
 export type AddressFormValues = {
-  address_line_1: string
-  pincode: string
+  first_name: string
+  last_name: string
+  phone: string
+  email: string
+  address_1: string
+  address_2: string
+  country: string
   city: string
+  pobox: string
+  company_name: string
 }
 
 type CustomerAddressAddonProps = {
@@ -23,15 +30,31 @@ type CustomerAddressAddonProps = {
 }
 
 const emptyAddressValues: AddressFormValues = {
-  address_line_1: "",
-  pincode: "",
+  first_name: "",
+  last_name: "",
+  phone: "",
+  email: "",
+  address_1: "",
+  address_2: "",
+  country: "",
   city: "",
+  pobox: "",
+  company_name: "",
 }
 
-const sanitizePincode = (value: string) => value.replace(/\D/g, "").slice(0, 6)
-
 const hasAddress = (address: AddressFormValues) =>
-  Boolean(address.address_line_1 || address.pincode || address.city)
+  Boolean(
+    address.first_name ||
+      address.last_name ||
+      address.phone ||
+      address.email ||
+      address.address_1 ||
+      address.address_2 ||
+      address.country ||
+      address.city ||
+      address.pobox ||
+      address.company_name
+  )
 
 export function CustomerAddressAddon({
   openType,
@@ -49,30 +72,64 @@ export function CustomerAddressAddon({
 
   const addressFields = [
     {
-      name: "address_line_1",
-      label: "Address Line 1",
+      name: "first_name",
+      label: "First Name",
       type: "text",
-      placeholder: `Enter ${openType || ""} address`,
+      placeholder: "Enter first name",
     },
     {
-      name: "pincode",
-      label: "Pincode",
+      name: "last_name",
+      label: "Last Name",
       type: "text",
-      placeholder: "Enter 6 digit pincode",
-      maxLength: 6,
-      inputMode: "numeric",
-      sanitize: sanitizePincode,
-      validate: (value: string) => {
-        if (!value) return ""
-        if (!/^\d{6}$/.test(value)) return "Pincode must be 6 digits"
-        return ""
-      },
+      placeholder: "Enter last name",
+    },
+    {
+      name: "phone",
+      label: "Phone",
+      type: "text",
+      placeholder: "Enter phone number",
+    },
+    {
+      name: "email",
+      label: "Email",
+      type: "email",
+      placeholder: "Enter email address",
+    },
+    {
+      name: "address_1",
+      label: "Address Line 1",
+      type: "text",
+      placeholder: "Enter address line 1",
+    },
+    {
+      name: "address_2",
+      label: "Address Line 2",
+      type: "text",
+      placeholder: "Enter address line 2",
+    },
+    {
+      name: "country",
+      label: "Country",
+      type: "text",
+      placeholder: "Enter country",
     },
     {
       name: "city",
       label: "City",
       type: "text",
       placeholder: "Enter city",
+    },
+    {
+      name: "pobox",
+      label: "PO.Box",
+      type: "text",
+      placeholder: "Enter postal address / PO box",
+    },
+    {
+      name: "company_name",
+      label: "Company",
+      type: "text",
+      placeholder: "Enter company name",
     },
   ]
 
@@ -121,10 +178,22 @@ export function CustomerAddressAddon({
 
         {isAdded ? (
           <div className="mt-4 rounded-md bg-gray-50 p-3 text-sm font-medium leading-6 text-gray-600">
-            {address.address_line_1 ? <div>{address.address_line_1}</div> : null}
+            {address.first_name || address.last_name || address.company_name ? (
+              <div className="font-semibold text-gray-900">
+                {`${address.first_name || ""} ${address.last_name || ""}`.trim()}
+                {address.company_name ? ` (${address.company_name})` : ""}
+              </div>
+            ) : null}
+            {address.address_1 ? <div>{address.address_1}</div> : null}
+            {address.address_2 ? <div>{address.address_2}</div> : null}
             <div>
-              {[address.city, address.pincode].filter(Boolean).join(", ")}
+              {[address.city, address.pobox, address.country].filter(Boolean).join(", ")}
             </div>
+            {address.phone || address.email ? (
+              <div className="mt-1 text-xs text-gray-500">
+                {[address.phone, address.email].filter(Boolean).join(" | ")}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>

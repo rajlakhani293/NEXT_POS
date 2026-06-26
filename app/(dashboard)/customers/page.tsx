@@ -10,14 +10,14 @@ import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 
 const columns = [
-  { key: "name", title: "Name" },
+  { key: "first_name", title: "First Name" },
+  { key: "last_name", title: "Last Name" },
+  { key: "group_name", title: "Group" },
   { key: "phone", title: "Phone" },
   { key: "email", title: "Email" },
-  { key: "customer_type", title: "Type" },
-  { key: "company_name", title: "Company" },
-  { key: "opening_balance", title: "Opening Balance" },
-  { key: "credit_limit_amount", title: "Credit Limit" },
-  { key: "owed_amount", title: "Owed" },
+  { key: "account_amount", title: "Account Credit" },
+  { key: "owed_amount", title: "Owed Amount" },
+  { key: "purchases_amount", title: "Purchase Amount" },
 ]
 
 export default function CustomersPage() {
