@@ -10,13 +10,12 @@ import { useTableData } from "@/hooks/useTableData"
 
 const columns = [
   { key: "name", title: "Name" },
-  { key: "code", title: "Code" },
   { key: "type", title: "Type" },
-  { key: "discount_value", title: "Value" },
-  { key: "minimum_cart_value", title: "Min Cart" },
-  { key: "maximum_cart_value", title: "Max Cart" },
-  { key: "limit_usage", title: "Usage Limit" },
-  { key: "target_summary", title: "Customer Target" },
+  { key: "discount_value", title: "Discount Value" },
+  { key: "valid_hours_start", title: "Valid From" },
+  { key: "valid_hours_end", title: "Valid Till" },
+  { key: "user_username", title: "Author" },
+  { key: "created_at", title: "Created On", render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 
 export default function CouponsPage() {

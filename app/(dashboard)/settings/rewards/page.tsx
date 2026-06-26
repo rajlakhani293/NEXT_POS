@@ -10,10 +10,10 @@ import { useTableData } from "@/hooks/useTableData"
 
 const columns = [
   { key: "name", title: "Name" },
-  { key: "code", title: "Code" },
   { key: "target", title: "Target" },
-  { key: "rule_summary", title: "Earn Rule" },
-  { key: "description", title: "Description" },
+  { key: "coupon_name", title: "Coupon" },
+  { key: "user_username", title: "Author" },
+  { key: "created_at", title: "Created On", render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 
 export default function RewardSystemsPage() {
