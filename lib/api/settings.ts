@@ -43,6 +43,7 @@ const endpointsConfig = {
   editUser: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`accounts/users/${id}`, payLoad) },
   deleteUser: { query: deleteMutation("accounts/users/delete") },
   updateUserStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("accounts/users/status", payLoad) },
+  getUserById: { query: ({ id }: { id: number | string }) => getMutation(`accounts/users/${id}`) },
   assignRole: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`accounts/users/${id}/assign-role`)(payLoad) },
 
   // Background queue / Workers

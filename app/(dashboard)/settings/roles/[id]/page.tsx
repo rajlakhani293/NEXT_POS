@@ -38,10 +38,9 @@ import { cn } from "@/lib/utils"
 
 const initialValues = {
   name: "",
-  code: "",
+  namespace: "",
   description: "",
-  is_cashier: false,
-  is_store_manager: false,
+  locked: false,
   permission_codenames: [] as string[],
 }
 
@@ -154,7 +153,7 @@ const actionAliases: Record<string, string> = {
   edit: "update",
 }
 
-function buildCode(value: string) {
+function buildNamespace(value: string) {
   return value
     .toLowerCase()
     .trim()
@@ -266,7 +265,8 @@ export default function RoleFormPage() {
       setValues({
         ...initialValues,
         ...record,
-        code: record.code || "",
+        namespace: record.namespace || "",
+        locked: record.locked || false,
         permission_codenames: record.permissions || [],
       })
       setErrors({})
@@ -348,7 +348,7 @@ export default function RoleFormPage() {
     setValues((current) => ({
       ...current,
       [name]: value,
-      ...(name === "name" && !isEdit && !current.code ? { code: buildCode(value) } : {}),
+      ...(name === "name" && !isEdit && !current.namespace ? { namespace: buildNamespace(value) } : {}),
     }))
     if (errors[name]) {
       setErrors((current) => ({ ...current, [name]: "" }))
@@ -463,6 +463,7 @@ export default function RoleFormPage() {
   const validate = () => {
     const nextErrors: Record<string, string> = {}
     if (!values.name.trim()) nextErrors.name = "Role name is required"
+    if (!values.namespace.trim()) nextErrors.namespace = "Namespace is required"
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
@@ -474,8 +475,10 @@ export default function RoleFormPage() {
     if (!validate()) return
 
     const payLoad = {
-      ...values,
-      code: values.code.trim() ? values.code : buildCode(values.name),
+      name: values.name,
+      namespace: values.namespace.trim() ? values.namespace.trim() : buildNamespace(values.name),
+      description: values.description,
+      permission_codenames: values.permission_codenames,
     }
 
     setIsSubmitting(true)
@@ -671,33 +674,21 @@ export default function RoleFormPage() {
                       onChange={(event) => updateField("description", event.target.value)}
                     />
                   </div>
-                  <div className="space-y-3">
-                    <label className="flex items-center justify-between gap-4 rounded-lg border p-3">
-                      <div>
-                        <div className="text-sm font-semibold">Cashier Role</div>
-                        <p className="text-xs text-muted-foreground">
-                          Use this for register and billing users.
-                        </p>
-                      </div>
-                      <Switch
-                        checked={values.is_cashier}
-                        onCheckedChange={(checked) => updateField("is_cashier", checked)}
-                      />
-                    </label>
-                    <label className="flex items-center justify-between gap-4 rounded-lg border p-3">
-                      <div>
-                        <div className="text-sm font-semibold">Store Manager Role</div>
-                        <p className="text-xs text-muted-foreground">
-                          Use this for branch manager users.
-                        </p>
-                      </div>
-                      <Switch
-                        checked={values.is_store_manager}
-                        onCheckedChange={(checked) =>
-                          updateField("is_store_manager", checked)
-                        }
-                      />
-                    </label>
+                  <div className="space-y-4">
+                    <UniFieldInput
+                      label="Namespace"
+                      placeholder="Enter namespace"
+                      value={values.namespace}
+                      disabled={values.locked}
+                      required
+                      error={errors.namespace}
+                      onChange={(event) => updateField("namespace", event.target.value)}
+                    />
+                    {values.locked && (
+                      <p className="text-xs text-muted-foreground">
+                        System roles are locked and their namespaces cannot be changed.
+                      </p>
+                    )}
                   </div>
                 </div>
               </section>

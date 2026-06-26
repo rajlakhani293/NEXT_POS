@@ -10,12 +10,11 @@ import { usePermissions } from "@/hooks/use-permissions"
 
 const columns = [
   { key: "name", title: "Name" },
-  { key: "code", title: "Code" },
-  { key: "description", title: "Description" },
+  { key: "namespace", title: "Namespace" },
   {
-    key: "permissions",
-    title: "Permissions",
-    render: (value: string[]) => value?.length || 0,
+    key: "created_at",
+    title: "Created At",
+    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
   },
 ]
 

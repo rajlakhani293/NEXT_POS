@@ -6,9 +6,10 @@ import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { catalog } from "@/lib/api/catalog"
 
 const initialValues = {
-  tax_group_id: "",
   name: "",
+  tax_group_id: "",
   rate: "",
+  description: "",
 }
 
 export function TaxForm(props: any) {
@@ -28,14 +29,6 @@ export function TaxForm(props: any) {
 
   const fields = [
     {
-      name: "tax_group_id",
-      label: "Tax Group",
-      type: "select",
-      placeholder: "Select tax group",
-      required: true,
-      options: taxGroupOptions,
-    },
-    {
       name: "name",
       label: "Name",
       type: "text",
@@ -43,11 +36,26 @@ export function TaxForm(props: any) {
       required: true,
     },
     {
+      name: "tax_group_id",
+      label: "Parent",
+      type: "select",
+      placeholder: "Select tax group",
+      required: true,
+      options: taxGroupOptions,
+    },
+    {
       name: "rate",
       label: "Rate (%)",
       type: "number",
       placeholder: "18",
       required: true,
+    },
+    {
+      name: "description",
+      label: "Description",
+      type: "textarea",
+      placeholder: "Enter description",
+      rows: 3,
     },
   ]
 
@@ -61,9 +69,10 @@ export function TaxForm(props: any) {
       editHook={(catalog as any).useEditTaxMutation}
       getByIdHook={(catalog as any).useGetTaxByIdMutation}
       buildPayload={(values) => ({
-        tax_group_id: Number(values.tax_group_id),
         name: values.name,
-        rate: values.rate || "0",
+        tax_group_id: Number(values.tax_group_id),
+        rate: Number(values.rate || "0"),
+        description: values.description || "",
       })}
     />
   )

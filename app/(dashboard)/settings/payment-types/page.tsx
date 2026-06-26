@@ -16,44 +16,44 @@ const initialValues = {
   label: "",
   identifier: "",
   description: "",
-  sort_order: "",
-  is_system: false,
+  priority: 0,
+  readonly: false,
 }
 
 const columns = [
-  { key: "label", title: "Label" },
   { key: "identifier", title: "Identifier" },
-  {
-    key: "is_system",
-    title: "Type",
-    render: (_value: any, context: any) => {
-      const record = context.row
-      return (
-        <span className="inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold text-gray-700">
-          {record.is_system ? "System" : "Custom"}
-        </span>
-      )
-    },
-  },
+  { key: "label", title: "Label" },
   {
     key: "status",
-    title: "Status",
+    title: "Active",
     render: (_value: any, context: any) => {
       const record = context.row
       const isActive = Number(record.status || 0) === 0
       return (
         <span
-          className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${isActive
-            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-            : "border-gray-200 bg-gray-50 text-gray-600"
-            }`}
+          className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${
+            isActive
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-gray-200 bg-gray-50 text-gray-600"
+          }`}
         >
-          {isActive ? "Active" : "Inactive"}
+          {isActive ? "Yes" : "No"}
         </span>
       )
     },
   },
-  { key: "sort_order", title: "Sort" },
+  { key: "priority", title: "Priority" },
+  {
+    key: "created_at",
+    title: "Created On",
+    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+  },
+  {
+    key: "readonly",
+    title: "Readonly",
+    render: (value: any) => (value ? "Yes" : "No"),
+  },
+  { key: "user_username", title: "Author" },
 ]
 
 function normalizeIdentifier(value: string) {
@@ -105,8 +105,8 @@ export default function PaymentTypesPage() {
       label: data.label || "",
       identifier: data.identifier || "",
       description: data.description || "",
-      sort_order: String(data.sort_order ?? 0),
-      is_system: Boolean(data.is_system),
+      priority: Number(data.priority ?? 0),
+      readonly: Boolean(data.readonly),
     })
     setIsFormOpen(true)
   }
@@ -114,11 +114,11 @@ export default function PaymentTypesPage() {
   const submitPaymentType = async (values: any) => {
     const payLoad = {
       label: values.label,
-      identifier: values.is_system
+      identifier: values.readonly
         ? values.identifier
         : normalizeIdentifier(values.identifier || values.label),
       description: values.description || "",
-      sort_order: Number(values.sort_order || 0),
+      priority: Number(values.priority || 0),
     }
 
     const response = editId
@@ -162,12 +162,12 @@ export default function PaymentTypesPage() {
           showEdit={canCreate}
           onEdit={openEdit}
           showDelete={canCreate}
-          canDeleteRow={(record) => !record?.is_system}
+          canDeleteRow={(record) => !record?.readonly}
           deleteMutation={deletePaymentType}
           deleteModalTitle="Delete Payment Type"
           deleteModalDescription="Are you sure you want to delete this payment type?"
           rowActions={(_id, record) =>
-            canCreate && !record?.is_system
+            canCreate && !record?.readonly
               ? [
                 {
                   key: "status",
@@ -208,7 +208,7 @@ export default function PaymentTypesPage() {
               label: "Identifier",
               placeholder: "cash-payment",
               required: true,
-              disabled: (values: any) => Boolean(values.is_system),
+              disabled: (values: any) => Boolean(values.readonly),
             },
             {
               name: "description",
@@ -218,8 +218,8 @@ export default function PaymentTypesPage() {
               placeholder: "Enter description",
             },
             {
-              name: "sort_order",
-              label: "Sort Order",
+              name: "priority",
+              label: "Priority",
               type: "number",
               placeholder: "0",
             },
