@@ -13,11 +13,27 @@ import { showToast } from "@/lib/toast"
 import { useTableData } from "@/hooks/useTableData"
 import { usePermissions } from "@/hooks/use-permissions"
 
+const money = (value: any) => `₹${Number(value || 0).toFixed(2)}`
+
 const registerColumns = [
-  { key: "name", title: "Register" },
-  { key: "code", title: "Code" },
-  { key: "location", title: "Location" },
-  { key: "is_open", title: "Open" },
+  { key: "name", title: "Name" },
+  {
+    key: "register_status",
+    title: "Status",
+    render: (value: string) => (
+      <span className="capitalize font-semibold text-xs">
+        {value || "closed"}
+      </span>
+    ),
+  },
+  { key: "cashier_username", title: "Used By", render: (value: any) => value || "Unused" },
+  { key: "balance", title: "Balance", render: money },
+  { key: "user_username", title: "Author" },
+  {
+    key: "created_at",
+    title: "Created At",
+    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+  },
 ]
 
 export default function RegistersPage() {
@@ -26,7 +42,7 @@ export default function RegistersPage() {
   const [editRegisterId, setEditRegisterId] = useState<number | string | null>(null)
   const [registerValues, setRegisterValues] = useState({
     name: "",
-    location: "",
+    description: "",
   })
   const [createRegister] = (registers as any).useCreateRegisterMutation()
   const [editRegister] = (registers as any).useEditRegisterMutation()
@@ -41,7 +57,7 @@ export default function RegistersPage() {
   const closeForm = () => {
     setIsRegisterFormOpen(false)
     setEditRegisterId(null)
-    setRegisterValues({ name: "", location: "" })
+    setRegisterValues({ name: "", description: "" })
   }
 
   const refresh = () => {
@@ -51,7 +67,7 @@ export default function RegistersPage() {
   const openRegisterForm = async (record?: any) => {
     if (!record) {
       setEditRegisterId(null)
-      setRegisterValues({ name: "", location: "" })
+      setRegisterValues({ name: "", description: "" })
       setIsRegisterFormOpen(true)
       return
     }
@@ -60,7 +76,7 @@ export default function RegistersPage() {
     const data = response?.data || record
     setRegisterValues({
       name: data.name || "",
-      location: data.location || "",
+      description: data.description || "",
     })
     setIsRegisterFormOpen(true)
   }
@@ -68,7 +84,7 @@ export default function RegistersPage() {
   const submitRegister = async (values: any) => {
     const payLoad = {
       name: values.name,
-      location: values.location || "",
+      description: values.description || "",
     }
     const response = editRegisterId
       ? await editRegister({ id: editRegisterId, payLoad }).unwrap()
@@ -138,9 +154,10 @@ export default function RegistersPage() {
               required: true,
             },
             {
-              name: "location",
-              label: "Location",
-              placeholder: "Counter / branch location",
+              name: "description",
+              label: "Description",
+              placeholder: "Provide more details about this cash register.",
+              type: "textarea",
             },
           ]}
           onSubmit={submitRegister}

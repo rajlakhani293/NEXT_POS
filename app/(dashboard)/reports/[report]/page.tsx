@@ -238,6 +238,84 @@ export default function ReportViewPage() {
     </div>
   ) : undefined
 
+  const formattedColumns = useMemo(() => {
+    const rawColumns = reportColumns[activeReport] || []
+    return rawColumns.map((col: any) => {
+      if (col.render) return col
+
+      const formatMoney = (val: any) => `₹${Number(val || 0).toFixed(2)}`
+
+      const moneyKeys = [
+        "total",
+        "tendered_amount",
+        "due_amount",
+        "subtotal",
+        "discount_amount",
+        "tax_amount",
+        "unit_price",
+        "cost_price",
+        "cost_total",
+        "profit_amount",
+        "amount",
+        "sold_amount",
+        "selling_price",
+        "purchase_price",
+        "owed_amount",
+        "credit_limit_amount",
+        "wallet_balance",
+        "payable_amount",
+        "unit_cost",
+        "balance_after",
+        "total_sales",
+        "total_taxes",
+        "total_expenses",
+        "net_income",
+      ]
+
+      if (moneyKeys.includes(col.key)) {
+        return {
+          ...col,
+          render: (val: any) => formatMoney(val),
+        }
+      }
+
+      if (col.key === "created_at" || col.key === "paid_at") {
+        return {
+          ...col,
+          render: (val: any) => (val ? new Date(val).toLocaleString() : "-"),
+        }
+      }
+
+      if (col.key === "customer__name") {
+        return {
+          ...col,
+          render: (val: any, record: any) => record.customer__full_name || record.customer__name || "Walk-in Customer",
+        }
+      }
+
+      if (col.key === "cashier__full_name") {
+        return {
+          ...col,
+          render: (val: any, record: any) => record.user__full_name || record.cashier__full_name || "-",
+        }
+      }
+
+      if (col.key === "due_amount") {
+        return {
+          ...col,
+          render: (_: any, record: any) => {
+            const total = Number(record.total || 0)
+            const paid = Number(record.tendered_amount || 0)
+            const due = Math.max(0, total - paid)
+            return formatMoney(due)
+          },
+        }
+      }
+
+      return col
+    })
+  }, [activeReport])
+
   const footerSummary = useMemo(() => {
     if (activeReport !== "annual" || !annualTotals) return undefined
     const formatMoney = (val: any) => `₹${Number(val || 0).toFixed(2)}`
@@ -278,7 +356,7 @@ export default function ReportViewPage() {
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <DynamicTable
           data={rows}
-          columns={reportColumns[activeReport]}
+          columns={formattedColumns}
           tableTitle={tabLabels[activeReport]}
           showSearch={activeReport !== "annual"}
           showDateRange={activeReport !== "annual"}

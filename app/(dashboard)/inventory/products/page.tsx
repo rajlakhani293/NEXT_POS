@@ -15,12 +15,16 @@ const money = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
 const columns = [
   { key: "name", title: "Name" },
+  { key: "type", title: "Type", render: (val: any) => val || "standard" },
   { key: "sku", title: "SKU" },
-  { key: "category_name", title: "Category" },
-  { key: "brand_name", title: "Brand" },
-  { key: "unit_name", title: "Unit" },
-  { key: "selling_price", title: "Selling Price", render: money },
-  { key: "current_stock", title: "Stock" },
+  { key: "category_name", title: "Category", render: (val: any) => val || "Unassigned" },
+  { key: "status", title: "Status", render: (val: any) => val === "available" ? "Available" : "Hidden" },
+  { key: "user_username", title: "Author" },
+  {
+    key: "created_at",
+    title: "Date",
+    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+  },
 ]
 
 export default function ProductsPage() {

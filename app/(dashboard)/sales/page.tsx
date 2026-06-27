@@ -23,20 +23,39 @@ const paymentStatusColors: Record<string, string> = {
   order_void: "bg-zinc-200 text-zinc-700",
 }
 
+const deliveryStatusColors: Record<string, string> = {
+  pending: "bg-gray-100 text-gray-700",
+  shipped: "bg-sky-50 text-sky-700",
+  delivered: "bg-green-50 text-green-700",
+}
+
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
 const columns = [
-  { key: "code", title: "Sale No" },
-  { key: "customer__name", title: "Customer" },
-  { key: "cashier__full_name", title: "Cashier" },
-  { key: "order_type", title: "Order Type" },
+  { key: "code", title: "Code" },
+  { key: "order_type", title: "Type", render: (value: string) => String(value || "-").replaceAll("_", " ") },
+  { key: "customer__full_name", title: "Customer", render: (value: any) => value || "Walk-in Customer" },
   {
-    key: "payment_status",
-    title: "Payment Status",
+    key: "delivery_status",
+    title: "Delivery",
     render: (value: string) => (
       <span
         className={cn(
-          "rounded-full px-2 py-1 text-xs font-semibold",
+          "rounded-full px-2 py-1 text-xs font-semibold uppercase",
+          deliveryStatusColors[value] || "bg-gray-100 text-gray-700"
+        )}
+      >
+        {value || "pending"}
+      </span>
+    ),
+  },
+  {
+    key: "payment_status",
+    title: "Payment",
+    render: (value: string) => (
+      <span
+        className={cn(
+          "rounded-full px-2 py-1 text-xs font-semibold uppercase",
           paymentStatusColors[value] || "bg-gray-100 text-gray-700"
         )}
       >
@@ -44,10 +63,14 @@ const columns = [
       </span>
     ),
   },
-  { key: "total_items", title: "Items" },
-  { key: "total", title: "Total" },
-  { key: "due_amount", title: "Due" },
-  { key: "created_at", title: "Created" },
+  { key: "tax_amount", title: "Tax", render: formatMoney },
+  { key: "total", title: "Total", render: formatMoney },
+  { key: "author_username", title: "Author" },
+  {
+    key: "created_at",
+    title: "Created At",
+    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+  },
 ]
 
 export default function SalesHistoryPage() {
