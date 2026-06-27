@@ -6,11 +6,13 @@ import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { catalog } from "@/lib/api/catalog"
 
 const initialValues = {
-  unit_group_id: "",
+  group_id: "",
   name: "",
-  short_name: "",
-  factor: "1",
-  is_base_unit: false,
+  identifier: "",
+  value: "1",
+  base_unit: false,
+  preview_url: "",
+  description: "",
 }
 
 export function UnitForm(props: any) {
@@ -28,7 +30,7 @@ export function UnitForm(props: any) {
 
   const fields = [
     {
-      name: "unit_group_id",
+      name: "group_id",
       label: "Unit Group",
       type: "select",
       placeholder: "Select unit group",
@@ -43,24 +45,36 @@ export function UnitForm(props: any) {
       required: true,
     },
     {
-      name: "short_name",
-      label: "Short Name",
+      name: "identifier",
+      label: "Identifier (Short Name)",
       type: "text",
       placeholder: "e.g. kg, pc, ltr",
       required: true,
     },
     {
-      name: "factor",
-      label: "Factor",
+      name: "value",
+      label: "Value",
       type: "number",
       placeholder: "1",
       required: true,
     },
     {
-      name: "is_base_unit",
+      name: "base_unit",
       label: "Base Unit",
       type: "switch",
       note: "Only one base unit is allowed inside one unit group.",
+    },
+    {
+      name: "preview_url",
+      label: "Preview URL",
+      type: "text",
+      placeholder: "Enter preview URL",
+    },
+    {
+      name: "description",
+      label: "Description",
+      type: "textarea",
+      placeholder: "Enter description",
     },
   ]
 
@@ -74,11 +88,10 @@ export function UnitForm(props: any) {
       editHook={(catalog as any).useEditUnitMutation}
       getByIdHook={(catalog as any).useGetUnitByIdMutation}
       buildPayload={(values) => ({
-        unit_group_id: Number(values.unit_group_id),
-        name: values.name,
-        short_name: values.short_name,
-        factor: values.factor || "1",
-        is_base_unit: Boolean(values.is_base_unit),
+        ...values,
+        group_id: Number(values.group_id),
+        value: Number(values.value || 1),
+        base_unit: Boolean(values.base_unit),
       })}
     />
   )

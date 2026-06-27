@@ -6,13 +6,18 @@ import { UnitForm } from "./createUpdate"
 
 const columns = [
   { key: "name", title: "Name" },
-  { key: "short_name", title: "Short Name" },
-  { key: "unit_group_id", title: "Unit Group" },
-  { key: "factor", title: "Factor" },
+  { key: "value", title: "Value" },
   {
-    key: "is_base_unit",
+    key: "base_unit",
     title: "Base Unit",
     render: (value: boolean) => (value ? "Yes" : "No"),
+  },
+  { key: "group_name", title: "Group" },
+  { key: "user_username", title: "Author" },
+  {
+    key: "created_at",
+    title: "Created At",
+    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
   },
 ]
 
