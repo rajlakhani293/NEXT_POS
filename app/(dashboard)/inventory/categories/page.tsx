@@ -11,7 +11,23 @@ import { useTableData } from "@/hooks/useTableData"
 
 const columns = [
   { key: "name", title: "Name" },
-  { key: "description", title: "Description" },
+  {
+    key: "parent_name",
+    title: "Parent",
+    render: (value: any) => value || "No Parent",
+  },
+  { key: "total_items", title: "Total Products", render: (val: any) => val ?? 0 },
+  {
+    key: "displays_on_pos",
+    title: "Displays On POS",
+    render: (value: any) => (value ? "Yes" : "No"),
+  },
+  { key: "user_username", title: "Author" },
+  {
+    key: "created_at",
+    title: "Created At",
+    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+  },
 ]
 
 export default function CategoriesPage() {

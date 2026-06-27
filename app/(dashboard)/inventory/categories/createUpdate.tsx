@@ -15,30 +15,19 @@ type CategoryFormProps = {
 
 type CategoryFormValues = {
   name: string
+  parent_id: string
+  displays_on_pos: boolean
+  preview_url: string
   description: string
 }
 
 const initialValues: CategoryFormValues = {
   name: "",
+  parent_id: "",
+  displays_on_pos: true,
+  preview_url: "",
   description: "",
 }
-
-const categoryFields = [
-  {
-    name: "name",
-    label: "Name",
-    type: "text",
-    placeholder: "Enter category name",
-    required: true,
-  },
-  {
-    name: "description",
-    label: "Description",
-    type: "textarea",
-    placeholder: "Enter description",
-    rows: 3,
-  },
-]
 
 export function CategoryForm({
   isOpen,
@@ -51,18 +40,37 @@ export function CategoryForm({
   const [getCategoryById, { data, isLoading }] = (
     catalog as any
   ).useGetCategoryByIdMutation()
+  const [getCategoriesDropdown, categories] = (
+    catalog as any
+  ).useGetCategoriesDropdownMutation()
 
   useEffect(() => {
-    if (isOpen && editId) {
-      getCategoryById({ id: editId })
+    if (isOpen) {
+      void getCategoriesDropdown()
+      if (editId) {
+        void getCategoryById({ id: editId })
+      }
     }
-  }, [editId, getCategoryById, isOpen])
+  }, [editId, getCategoryById, getCategoriesDropdown, isOpen])
+
+  const categoryOptions = [
+    { label: "No Parent", value: "" },
+    ...(categories.data?.data || [])
+      .filter((c: any) => String(c.id) !== String(editId))
+      .map((c: any) => ({
+        label: c.name,
+        value: String(c.id),
+      })),
+  ]
 
   const record = data?.data
   const formValues: CategoryFormValues =
     editId && record
       ? {
           name: record.name || "",
+          parent_id: record.parent_id ? String(record.parent_id) : "",
+          displays_on_pos: record.displays_on_pos !== false,
+          preview_url: record.preview_url || "",
           description: record.description || "",
         }
       : initialValues
@@ -70,6 +78,9 @@ export function CategoryForm({
   const handleSubmit = async (values: CategoryFormValues) => {
     const payLoad = {
       name: values.name,
+      parent_id: values.parent_id ? Number(values.parent_id) : null,
+      displays_on_pos: values.displays_on_pos,
+      preview_url: values.preview_url || null,
       description: values.description || "",
     }
 
@@ -85,10 +96,46 @@ export function CategoryForm({
     onClose()
   }
 
+  const fields = [
+    {
+      name: "name",
+      label: "Name",
+      type: "text",
+      placeholder: "Enter category name",
+      required: true,
+    },
+    {
+      name: "parent_id",
+      label: "Parent Category",
+      type: "select",
+      options: categoryOptions,
+      placeholder: "Select parent category",
+    },
+    {
+      name: "displays_on_pos",
+      label: "Displays On POS",
+      type: "switch",
+      required: true,
+    },
+    {
+      name: "preview_url",
+      label: "Preview URL",
+      type: "text",
+      placeholder: "Enter preview URL",
+    },
+    {
+      name: "description",
+      label: "Description",
+      type: "textarea",
+      placeholder: "Enter description",
+      rows: 3,
+    },
+  ]
+
   return (
     <DynamicForm
       key={editId || "create-category"}
-      fields={categoryFields as any}
+      fields={fields as any}
       initialValues={formValues}
       onSubmit={handleSubmit}
       onClose={onClose}
