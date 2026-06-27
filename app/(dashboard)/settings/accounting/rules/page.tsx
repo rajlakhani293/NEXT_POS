@@ -14,18 +14,18 @@ import { showToast } from "@/lib/toast"
 
 type Rule = {
   id?: number
-  event_key: string
+  on: string
   action: "increase" | "decrease"
   account_id: string
-  offset_action: "increase" | "decrease"
+  do: "increase" | "decrease"
   offset_account_id: string
 }
 
 const emptyRule: Rule = {
-  event_key: "",
+  on: "",
   action: "increase",
   account_id: "",
-  offset_action: "increase",
+  do: "increase",
   offset_account_id: "",
 }
 
@@ -44,10 +44,10 @@ export default function AccountingRulesPage() {
     setRules(
       rulesQuery.data.data.map((rule: any) => ({
         id: rule.id,
-        event_key: rule.event_key,
+        on: rule.on || "",
         action: rule.action,
         account_id: String(rule.account_id),
-        offset_action: rule.offset_action,
+        do: rule.do || "increase",
         offset_account_id: String(rule.offset_account_id),
       }))
     )
@@ -57,7 +57,7 @@ export default function AccountingRulesPage() {
   const accountOptions = accounts.data?.data || []
   const isSaving = createState.isLoading || editState.isLoading
   const canSave = (rule: Rule) =>
-    rule.event_key && rule.account_id && rule.offset_account_id
+    rule.on && rule.account_id && rule.offset_account_id
 
   const updateRule = (index: number, changes: Partial<Rule>) => {
     setRules((current) =>
@@ -73,10 +73,10 @@ export default function AccountingRulesPage() {
       return
     }
     const payLoad = {
-      event_key: rule.event_key,
+      on: rule.on,
       action: rule.action,
       account_id: Number(rule.account_id),
-      offset_action: rule.offset_action,
+      do: rule.do,
       offset_account_id: Number(rule.offset_account_id),
     }
     const response = rule.id
@@ -118,8 +118,8 @@ export default function AccountingRulesPage() {
         className="grid gap-3 rounded-xl border bg-white p-3 shadow-sm xl:grid-cols-[minmax(220px,1.15fr)_150px_minmax(190px,1fr)_150px_minmax(190px,1fr)_auto]"
       >
         <UniFieldSelect
-          value={rule.event_key}
-          onValueChange={(value) => updateRule(index, { event_key: value })}
+          value={rule.on}
+          onValueChange={(value) => updateRule(index, { on: value })}
           placeholder="Choose action"
         >
           {actionOptions.map((option: any) => (
@@ -149,9 +149,9 @@ export default function AccountingRulesPage() {
           ))}
         </UniFieldSelect>
         <UniFieldSelect
-          value={rule.offset_action}
+          value={rule.do}
           onValueChange={(value) =>
-            updateRule(index, { offset_action: value as Rule["offset_action"] })
+            updateRule(index, { do: value as Rule["do"] })
           }
         >
           <SelectItem value="increase">Increase</SelectItem>
