@@ -12,12 +12,13 @@ import { usePermissions } from "@/hooks/use-permissions"
 import { ExpenseForm } from "./createUpdate"
 
 const columns = [
+  { key: "name", title: "Name" },
   { key: "category__name", title: "Category" },
-  { key: "amount", title: "Amount" },
+  { key: "amount", title: "Amount", render: (val: any) => `₹${Number(val || 0).toFixed(2)}` },
   { key: "expense_date", title: "Date" },
   { key: "payment_type", title: "Payment" },
   { key: "shift__register__name", title: "Register" },
-  { key: "shift__shift_status", title: "Shift Status" },
+  { key: "user_username", title: "Author" },
   { key: "reference_number", title: "Reference" },
   { key: "note", title: "Note" },
 ]

@@ -8,6 +8,7 @@ import { payments } from "@/lib/api/payments"
 import { showToast } from "@/lib/toast"
 
 const getInitialValues = () => ({
+  name: "",
   category_id: "",
   amount: "",
   expense_date: new Date().toISOString().slice(0, 10),
@@ -57,6 +58,7 @@ export function ExpenseForm({
         if (!data) return
 
         setFormValues({
+          name: data.name || "",
           category_id: data.category_id ? String(data.category_id) : "",
           amount: data.amount ? String(data.amount) : "",
           expense_date:
@@ -108,6 +110,12 @@ export function ExpenseForm({
       initialValues={formValues}
       isLoading={Boolean(editId && expense.isLoading)}
       fields={[
+        {
+          name: "name",
+          label: "Name",
+          type: "text",
+          placeholder: "Enter expense name (optional)",
+        },
         {
           name: "category_id",
           label: "Category",

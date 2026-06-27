@@ -7,8 +7,14 @@ import { ExpenseCategoryForm } from "./createUpdate"
 
 const columns = [
   { key: "name", title: "Name" },
-  { key: "code", title: "Code" },
+  { key: "account", title: "Account" },
   { key: "description", title: "Description" },
+  { key: "user_username", title: "Author" },
+  {
+    key: "created_at",
+    title: "Created At",
+    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+  },
 ]
 
 export default function ExpenseCategoriesPage() {

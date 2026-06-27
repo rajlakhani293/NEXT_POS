@@ -5,11 +5,10 @@ import { accounting } from "@/lib/api/accounting"
 
 const initialValues = {
   name: "",
-  code: "",
-  account_type: "asset",
-  parent_id: "",
+  account: "",
+  category_identifier: "assets",
+  sub_category_id: "",
   description: "",
-  opening_balance: "",
 }
 
 export function TransactionAccountForm(props: any) {
@@ -21,23 +20,23 @@ export function TransactionAccountForm(props: any) {
       entityName="Transaction Account"
       fields={[
         { name: "name", label: "Account Name", placeholder: "Enter account name", type: "text", required: true },
-        { name: "code", label: "Code", placeholder: "Auto generated if empty", type: "text" },
+        { name: "account", label: "Account Code", placeholder: "Auto generated if empty", type: "text" },
         {
-          name: "account_type",
-          label: "Account Type",
-          placeholder: "Select account type",
+          name: "category_identifier",
+          label: "Account Category",
+          placeholder: "Select category",
           type: "select",
           required: true,
           options: [
-            { label: "Asset", value: "asset" },
-            { label: "Liability", value: "liability" },
-            { label: "Income", value: "income" },
-            { label: "Expense", value: "expense" },
+            { label: "Assets", value: "assets" },
+            { label: "Liabilities", value: "liabilities" },
+            { label: "Revenues", value: "revenues" },
+            { label: "Expenses", value: "expenses" },
             { label: "Equity", value: "equity" },
           ],
         },
         {
-          name: "parent_id",
+          name: "sub_category_id",
           label: "Sub Account Of",
           placeholder: "Select parent account",
           type: "select",
@@ -46,7 +45,6 @@ export function TransactionAccountForm(props: any) {
             value: String(account.id),
           })),
         },
-        { name: "opening_balance", label: "Opening Balance", placeholder: "Enter opening balance", type: "number" },
         { name: "description", label: "Description", placeholder: "Enter description", type: "textarea" },
       ]}
       initialValues={initialValues}
@@ -55,8 +53,7 @@ export function TransactionAccountForm(props: any) {
       getByIdHook={(accounting as any).useGetAccountByIdMutation}
       buildPayload={(values) => ({
         ...values,
-        parent_id: values.parent_id ? Number(values.parent_id) : null,
-        opening_balance: values.opening_balance || "0",
+        sub_category_id: values.sub_category_id ? Number(values.sub_category_id) : null,
       })}
     />
   )

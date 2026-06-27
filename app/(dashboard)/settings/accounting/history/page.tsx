@@ -7,13 +7,21 @@ import { accounting } from "@/lib/api/accounting"
 import { PERMISSIONS } from "@/lib/permissions"
 
 const columns = [
-  { key: "transaction__name", title: "Transaction" },
-  { key: "account__name", title: "Account" },
-  { key: "action_type", title: "Action" },
-  { key: "amount", title: "Amount" },
-  { key: "balance_before", title: "Before" },
-  { key: "balance_after", title: "After" },
-  { key: "source_type", title: "Source" },
+  { key: "name", title: "Name" },
+  { key: "category_identifier", title: "Main Account" },
+  { key: "account_name", title: "Sub Account" },
+  { key: "operation", title: "Operation" },
+  {
+    key: "value",
+    title: "Value",
+    render: (val: any) => `₹${Number(val || 0).toFixed(2)}`,
+  },
+  { key: "user_username", title: "Author" },
+  {
+    key: "created_at",
+    title: "Triggered On",
+    render: (val: any) => (val ? new Date(val).toLocaleDateString() : "-"),
+  },
 ]
 
 export default function TransactionHistoryPage() {

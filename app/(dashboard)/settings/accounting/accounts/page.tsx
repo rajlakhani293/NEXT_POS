@@ -6,15 +6,20 @@ import { PERMISSIONS } from "@/lib/permissions"
 import { TransactionAccountForm } from "./createUpdate"
 
 const columns = [
-  { key: "account_type", title: "Category" },
+  { key: "category_identifier", title: "Category" },
   {
-    key: "parent__name",
+    key: "sub_category__name",
     title: "Sub Account",
-    render: (value: string) => value || "Undefined",
+    render: (value: string) => value || "-",
   },
   { key: "name", title: "Name" },
-  { key: "code", title: "Account" },
-  { key: "current_balance", title: "Balance" },
+  { key: "account", title: "Account" },
+  { key: "user_username", title: "Author" },
+  {
+    key: "created_at",
+    title: "Created At",
+    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+  },
 ]
 
 export default function TransactionAccountsPage() {
