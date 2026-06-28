@@ -9,15 +9,30 @@ import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 
+const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
+
 const columns = [
   { key: "first_name", title: "First Name" },
   { key: "last_name", title: "Last Name" },
   { key: "group_name", title: "Group" },
   { key: "phone", title: "Phone" },
   { key: "email", title: "Email" },
-  { key: "account_amount", title: "Account Credit" },
-  { key: "owed_amount", title: "Owed Amount" },
-  { key: "purchases_amount", title: "Purchase Amount" },
+  {
+    key: "account_amount",
+    title: "Account Credit",
+    render: (value: any) => formatMoney(value),
+  },
+  {
+    key: "owed_amount",
+    title: "Owed Amount",
+    render: (value: any) => formatMoney(value),
+  },
+  {
+    key: "purchases_amount",
+    title: "Purchase Amount",
+    render: (value: any) => formatMoney(value),
+  },
+  { key: "user_username", title: "Author" },
 ]
 
 export default function CustomersPage() {

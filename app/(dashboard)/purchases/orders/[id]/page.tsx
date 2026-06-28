@@ -22,17 +22,20 @@ type PurchaseItemForm = {
   ordered_quantity: string
   cost_price: string
   tax_amount: string
+  unit_id: string
 }
 
 type PurchaseFormValues = {
   supplier_id: string
   code: string
+  invoice_reference: string
   order_date: string
   expected_date: string
   workflow_status: string
   discount_amount: string
   shipping_amount: string
   note: string
+  automatic_approval: boolean
 }
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -43,17 +46,20 @@ const emptyItem = (): PurchaseItemForm => ({
   ordered_quantity: "",
   cost_price: "",
   tax_amount: "",
+  unit_id: "",
 })
 
 const initialValues: PurchaseFormValues = {
   supplier_id: "",
   code: "",
+  invoice_reference: "",
   order_date: today(),
   expected_date: "",
   workflow_status: "ordered",
   discount_amount: "",
   shipping_amount: "",
   note: "",
+  automatic_approval: true,
 }
 
 const money = (value: string | number | null | undefined) =>
@@ -85,6 +91,8 @@ export default function PurchaseOrderFormPage() {
   const [getSuppliersDropdown, suppliers] = (purchases as any).useGetSuppliersDropdownMutation()
   const [getProductsDropdown, products] = (catalog as any).useGetProductsDropdownMutation()
   const [getPaymentTypesDropdown, paymentTypes] = (payments as any).useGetPaymentTypesDropdownMutation()
+  const [getUnitsDropdown, units] = (catalog as any).useGetUnitsDropdownMutation()
+  const [getProductById] = (catalog as any).useGetProductByIdMutation()
   const [getPurchaseOrderById, purchaseOrder] = (purchases as any).useGetPurchaseOrderByIdMutation()
   const [createPurchaseOrder] = (purchases as any).useCreatePurchaseOrderMutation()
   const [editPurchaseOrder] = (purchases as any).useEditPurchaseOrderMutation()
@@ -105,14 +113,16 @@ export default function PurchaseOrderFormPage() {
 
   const hydratePurchase = (purchase: any) => {
     setFormData({
-      supplier_id: purchase.supplier_id ? String(purchase.supplier_id) : "",
+      supplier_id: purchase.provider_id ? String(purchase.provider_id) : "",
       code: purchase.code || "",
-      order_date: purchase.order_date || today(),
-      expected_date: purchase.expected_date || "",
-      workflow_status: purchase.workflow_status || "ordered",
+      invoice_reference: purchase.invoice_reference || "",
+      order_date: purchase.invoice_date ? purchase.invoice_date.slice(0, 10) : today(),
+      expected_date: purchase.delivery_time ? purchase.delivery_time.slice(0, 10) : "",
+      workflow_status: purchase.delivery_status || "ordered",
       discount_amount: String(purchase.discount_amount || ""),
       shipping_amount: String(purchase.shipping_amount || ""),
-      note: purchase.note || "",
+      note: purchase.description || "",
+      automatic_approval: purchase.automatic_approval !== undefined ? Boolean(purchase.automatic_approval) : true,
     })
 
     setItems(
@@ -120,9 +130,10 @@ export default function PurchaseOrderFormPage() {
         id: crypto.randomUUID(),
         purchase_item_id: item.id,
         product_id: item.product_id ? String(item.product_id) : "",
-        ordered_quantity: String(item.ordered_quantity || ""),
-        cost_price: String(item.cost_price || ""),
-        tax_amount: String(item.tax_amount || ""),
+        ordered_quantity: String(item.quantity || item.ordered_quantity || ""),
+        cost_price: String(item.purchase_price || item.cost_price || ""),
+        tax_amount: String(item.tax_value || item.tax_amount || ""),
+        unit_id: item.unit_id ? String(item.unit_id) : "",
       }))
     )
 
@@ -156,6 +167,7 @@ export default function PurchaseOrderFormPage() {
         getSuppliersDropdown(),
         getProductsDropdown(),
         getPaymentTypesDropdown(),
+        getUnitsDropdown(),
       ])
       if (!isEdit) {
         setFormData(initialValues)
@@ -172,6 +184,7 @@ export default function PurchaseOrderFormPage() {
     getProductsDropdown,
     getPurchaseOrderById,
     getSuppliersDropdown,
+    getUnitsDropdown,
     id,
     isEdit,
   ])
@@ -213,7 +226,7 @@ export default function PurchaseOrderFormPage() {
     }
   }, [isEdit, isLoading, items.length, orderItems.length])
 
-  const updateField = (name: keyof PurchaseFormValues, value: string) => {
+  const updateField = (name: keyof PurchaseFormValues, value: any) => {
     setFormData((current) => ({ ...current, [name]: value }))
     if (errors[name]) setErrors((current) => ({ ...current, [name]: "" }))
   }
@@ -230,6 +243,35 @@ export default function PurchaseOrderFormPage() {
     )
   }
 
+  const updateProductItemSelection = async (rowId: string, productId: string) => {
+    updateItem(rowId, "product_id", productId)
+    if (!productId) return
+
+    try {
+      const response = await getProductById({ id: Number(productId) }).unwrap()
+      const product = response?.data
+      if (product) {
+        const primaryUnit = product.unit_quantities?.[0]?.unit_id
+        const primaryCost = product.unit_quantities?.[0]?.cogs || 0
+
+        setItems((current) =>
+          current.map((item) =>
+            item.id === rowId
+              ? {
+                  ...item,
+                  product_id: productId,
+                  unit_id: primaryUnit ? String(primaryUnit) : "",
+                  cost_price: primaryCost ? String(primaryCost) : "",
+                }
+              : item
+          )
+        )
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const validate = () => {
     const nextErrors: Record<string, string> = {}
     if (!formData.supplier_id) nextErrors.supplier_id = "Supplier is required"
@@ -237,6 +279,7 @@ export default function PurchaseOrderFormPage() {
     if (items.length) {
       items.forEach((item, index) => {
         if (!item.product_id) nextErrors[`product_${index}`] = "Product is required"
+        if (!item.unit_id) nextErrors[`unit_${index}`] = "Unit is required"
         if (!item.ordered_quantity)
           nextErrors[`quantity_${index}`] = "Quantity is required"
         if (!item.cost_price) nextErrors[`cost_${index}`] = "Cost is required"
@@ -255,18 +298,23 @@ export default function PurchaseOrderFormPage() {
     setIsSubmitting(true)
     try {
       const payLoad: any = {
-        ...formData,
-        supplier_id: Number(formData.supplier_id),
-        discount_amount: formData.discount_amount || "0",
-        shipping_amount: formData.shipping_amount || "0",
+        provider_id: Number(formData.supplier_id),
+        name: formData.code || undefined,
+        invoice_reference: formData.invoice_reference || undefined,
+        invoice_date: formData.order_date || undefined,
+        delivery_time: formData.expected_date || undefined,
+        delivery_status: formData.workflow_status,
+        automatic_approval: formData.automatic_approval,
+        description: formData.note || undefined,
       }
 
       if (!isEdit) {
-        payLoad.items = items.map((item) => ({
+        payLoad.products = items.map((item) => ({
           product_id: Number(item.product_id),
-          ordered_quantity: item.ordered_quantity || "0",
-          cost_price: item.cost_price || "0",
-          tax_amount: item.tax_amount || "0",
+          unit_id: Number(item.unit_id),
+          purchase_price: item.cost_price || "0",
+          quantity: item.ordered_quantity || "0",
+          tax_value: item.tax_amount || "0",
         }))
         const response = await createPurchaseOrder(payLoad).unwrap()
         showToast.success(response?.message || "Purchase order created.")
@@ -275,12 +323,13 @@ export default function PurchaseOrderFormPage() {
         await bulkUpdatePurchaseOrderProducts({
           id,
           payLoad: {
-            items: items.map((item) => ({
+            products: items.map((item) => ({
               purchase_item_id: item.purchase_item_id,
               product_id: Number(item.product_id),
-              ordered_quantity: item.ordered_quantity || "0",
-              cost_price: item.cost_price || "0",
-              tax_amount: item.tax_amount || "0",
+              unit_id: Number(item.unit_id),
+              purchase_price: item.cost_price || "0",
+              quantity: item.ordered_quantity || "0",
+              tax_value: item.tax_amount || "0",
             })),
           },
         }).unwrap()
@@ -449,11 +498,11 @@ export default function PurchaseOrderFormPage() {
             <section className="rounded-lg border border-gray-200 bg-white p-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <UniFieldSelect
-                  label="Supplier"
+                  label="Provider"
                   required
                   value={formData.supplier_id}
                   onValueChange={(value) => updateField("supplier_id", value)}
-                  placeholder="Select Supplier"
+                  placeholder="Select Provider"
                   error={errors.supplier_id}
                 >
                   {supplierOptions.map((supplier: any) => (
@@ -463,13 +512,19 @@ export default function PurchaseOrderFormPage() {
                   ))}
                 </UniFieldSelect>
                 <UniFieldInput
-                  label="Purchase Code"
+                  label="Procurement Name"
                   placeholder="Auto generated if empty"
                   value={formData.code}
                   onChange={(event) => updateField("code", event.target.value)}
                 />
                 <UniFieldInput
-                  label="Order Date"
+                  label="Invoice Number"
+                  placeholder="External Invoice reference"
+                  value={formData.invoice_reference}
+                  onChange={(event) => updateField("invoice_reference", event.target.value)}
+                />
+                <UniFieldInput
+                  label="Invoice Date"
                   required
                   type="date"
                   value={formData.order_date}
@@ -479,7 +534,7 @@ export default function PurchaseOrderFormPage() {
                   error={errors.order_date}
                 />
                 <UniFieldInput
-                  label="Expected Date"
+                  label="Delivery Time"
                   type="date"
                   value={formData.expected_date}
                   onChange={(event) =>
@@ -487,7 +542,7 @@ export default function PurchaseOrderFormPage() {
                   }
                 />
                 <UniFieldSelect
-                  label="Workflow Status"
+                  label="Delivery Status"
                   value={formData.workflow_status}
                   onValueChange={(value) => updateField("workflow_status", value)}
                 >
@@ -496,6 +551,17 @@ export default function PurchaseOrderFormPage() {
                   <SelectItem value="partial">Partial</SelectItem>
                   <SelectItem value="received">Received</SelectItem>
                 </UniFieldSelect>
+                
+                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50/50 px-3 py-2">
+                  <span className="text-sm font-semibold text-gray-700">Automatic Approval</span>
+                  <input
+                    type="checkbox"
+                    checked={formData.automatic_approval}
+                    onChange={(event) => updateField("automatic_approval", event.target.checked)}
+                    className="size-4 rounded border-gray-300 text-black focus:ring-black"
+                  />
+                </div>
+
                 <UniFieldInput
                   label="Shipping Amount"
                   type="number"
@@ -520,11 +586,11 @@ export default function PurchaseOrderFormPage() {
                     updateField("discount_amount", event.target.value)
                   }
                 />
-                <div className="md:col-span-2">
+                <div className="md:col-span-3">
                   <UniFieldInput
                     as="textarea"
-                    label="Note"
-                    placeholder="Enter purchase note"
+                    label="Description"
+                    placeholder="Enter description note"
                     value={formData.note}
                     onChange={(event) => updateField("note", event.target.value)}
                   />
@@ -558,14 +624,14 @@ export default function PurchaseOrderFormPage() {
                   {items.map((item, index) => (
                     <div
                       key={item.id}
-                      className="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1.5fr_1fr_1fr_1fr_auto]"
+                      className="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.8fr_auto]"
                     >
                       <UniFieldSelect
                         label={index === 0 ? "Product" : undefined}
                         required
                         value={item.product_id}
                         onValueChange={(value) =>
-                          updateItem(item.id, "product_id", value)
+                          updateProductItemSelection(item.id, value)
                         }
                         placeholder="Select product"
                         error={errors[`product_${index}`]}
@@ -573,6 +639,22 @@ export default function PurchaseOrderFormPage() {
                         {productOptions.map((product: any) => (
                           <SelectItem key={product.id} value={String(product.id)}>
                             {product.name}
+                          </SelectItem>
+                        ))}
+                      </UniFieldSelect>
+                      <UniFieldSelect
+                        label={index === 0 ? "Unit" : undefined}
+                        required
+                        value={item.unit_id}
+                        onValueChange={(value) =>
+                          updateItem(item.id, "unit_id", value)
+                        }
+                        placeholder="Select unit"
+                        error={errors[`unit_${index}`]}
+                      >
+                        {(units.data?.data || []).map((unit: any) => (
+                          <SelectItem key={unit.id} value={String(unit.id)}>
+                            {unit.name}
                           </SelectItem>
                         ))}
                       </UniFieldSelect>
@@ -680,14 +762,14 @@ export default function PurchaseOrderFormPage() {
                       return (
                         <div
                           key={item.id}
-                          className="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.8fr_auto]"
+                          className="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr_0.8fr_0.8fr_auto]"
                         >
                           <UniFieldSelect
                             label={index === 0 ? "Product" : undefined}
                             required
                             value={item.product_id}
                             onValueChange={(value) =>
-                              updateItem(item.id, "product_id", value)
+                              updateProductItemSelection(item.id, value)
                             }
                             placeholder="Select product"
                             error={errors[`product_${index}`]}
@@ -695,6 +777,22 @@ export default function PurchaseOrderFormPage() {
                             {productOptions.map((product: any) => (
                               <SelectItem key={product.id} value={String(product.id)}>
                                 {product.name}
+                              </SelectItem>
+                            ))}
+                          </UniFieldSelect>
+                          <UniFieldSelect
+                            label={index === 0 ? "Unit" : undefined}
+                            required
+                            value={item.unit_id}
+                            onValueChange={(value) =>
+                              updateItem(item.id, "unit_id", value)
+                            }
+                            placeholder="Select unit"
+                            error={errors[`unit_${index}`]}
+                          >
+                            {(units.data?.data || []).map((unit: any) => (
+                              <SelectItem key={unit.id} value={String(unit.id)}>
+                                {unit.name}
                               </SelectItem>
                             ))}
                           </UniFieldSelect>

@@ -18,16 +18,20 @@ const workflowLabels: Record<string, string> = {
   received: "Received",
 }
 
+const paymentLabels: Record<string, string> = {
+  unpaid: "Unpaid",
+  partially_paid: "Partially Paid",
+  paid: "Paid",
+}
+
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
 const columns = [
-  { key: "code", title: "Code" },
-  { key: "supplier__name", title: "Supplier" },
-  { key: "order_date", title: "Order Date" },
-  { key: "expected_date", title: "Expected Date" },
+  { key: "code", title: "Name" },
+  { key: "supplier_name", title: "Provider" },
   {
     key: "workflow_status",
-    title: "Status",
+    title: "Delivery Status",
     render: (value: string) => (
       <span
         className={cn(
@@ -42,8 +46,43 @@ const columns = [
       </span>
     ),
   },
-  { key: "total", title: "Total" },
-  { key: "paid_amount", title: "Paid" },
+  {
+    key: "payment_status",
+    title: "Payment Status",
+    render: (value: string) => (
+      <span
+        className={cn(
+          "rounded-full px-2 py-1 text-xs font-semibold",
+          value === "paid" && "bg-green-50 text-green-700",
+          value === "partially_paid" && "bg-amber-50 text-amber-700",
+          value === "unpaid" && "bg-red-50 text-red-700"
+        )}
+      >
+        {paymentLabels[value] || value}
+      </span>
+    ),
+  },
+  {
+    key: "invoice_date",
+    title: "Invoice Date",
+    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+  },
+  {
+    key: "total",
+    title: "Sale Value",
+    render: (value: any) => formatMoney(value),
+  },
+  {
+    key: "cost",
+    title: "Purchase Value",
+    render: (value: any) => formatMoney(value),
+  },
+  {
+    key: "tax_value",
+    title: "Taxes",
+    render: (value: any) => formatMoney(value),
+  },
+  { key: "user_username", title: "Author" },
 ]
 
 export default function PurchaseOrdersPage() {

@@ -5,13 +5,28 @@ import { purchases } from "@/lib/api/purchases"
 import { PERMISSIONS } from "@/lib/permissions"
 import { SupplierForm } from "./createUpdate"
 
+const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
+
 const columns = [
-  { key: "name", title: "Name" },
-  { key: "code", title: "Code" },
-  { key: "phone", title: "Phone" },
+  { key: "first_name", title: "First Name" },
   { key: "email", title: "Email" },
-  { key: "contact_person", title: "Contact Person" },
-  { key: "payable_amount", title: "Payable" },
+  { key: "phone", title: "Phone" },
+  {
+    key: "amount_due",
+    title: "Amount Due",
+    render: (value: any) => formatMoney(value),
+  },
+  {
+    key: "amount_paid",
+    title: "Amount Paid",
+    render: (value: any) => formatMoney(value),
+  },
+  { key: "user_username", title: "Author" },
+  {
+    key: "created_at",
+    title: "Created At",
+    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+  },
 ]
 
 export default function SuppliersPage() {

@@ -8,10 +8,26 @@ import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 
+const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
+
 const columns = [
   { key: "name", title: "Name" },
-  { key: "type", title: "Type" },
-  { key: "discount_value", title: "Discount Value" },
+  {
+    key: "type",
+    title: "Type",
+    render: (value: any) =>
+      value === "percentage_discount"
+        ? "Percentage Discount"
+        : value === "flat_discount"
+          ? "Flat Discount"
+          : value,
+  },
+  {
+    key: "discount_value",
+    title: "Discount Value",
+    render: (value: any, record: any) =>
+      record.type === "percentage_discount" ? `${value}%` : formatMoney(value),
+  },
   { key: "valid_hours_start", title: "Valid From" },
   { key: "valid_hours_end", title: "Valid Till" },
   { key: "user_username", title: "Author" },

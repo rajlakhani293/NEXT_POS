@@ -12,8 +12,7 @@ import { useTableData } from "@/hooks/useTableData"
 const columns = [
   { key: "name", title: "Name" },
   { key: "reward_name", title: "Reward System" },
-  { key: "minimal_credit_payment", title: "Minimum Credit Payment %" },
-  { key: "description", title: "Description" },
+  { key: "user_username", title: "Author" },
   { key: "created_at", title: "Created On", render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 

@@ -4,12 +4,13 @@ import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { purchases } from "@/lib/api/purchases"
 
 const initialValues = {
-  name: "",
+  first_name: "",
+  last_name: "",
   email: "",
   phone: "",
-  contact_person: "",
-  tax_number: "",
-  address: "",
+  address_1: "",
+  address_2: "",
+  description: "",
 }
 
 export function SupplierForm(props: any) {
@@ -19,16 +20,16 @@ export function SupplierForm(props: any) {
       entityName="Supplier"
       fields={[
         {
-          name: "name",
-          label: "Supplier Name",
-          placeholder: "Enter supplier name",
+          name: "first_name",
+          label: "First Name",
+          placeholder: "Enter first name",
           type: "text",
           required: true,
         },
         {
-          name: "contact_person",
-          label: "Contact Person",
-          placeholder: "Enter contact person",
+          name: "last_name",
+          label: "Last Name",
+          placeholder: "Enter last name",
           type: "text",
         },
         {
@@ -44,15 +45,21 @@ export function SupplierForm(props: any) {
           type: "email",
         },
         {
-          name: "tax_number",
-          label: "GST / Tax Number",
-          placeholder: "Enter GST or tax number",
+          name: "address_1",
+          label: "Address 1",
+          placeholder: "Enter address line 1",
           type: "text",
         },
         {
-          name: "address",
-          label: "Address",
-          placeholder: "Enter supplier address",
+          name: "address_2",
+          label: "Address 2",
+          placeholder: "Enter address line 2",
+          type: "text",
+        },
+        {
+          name: "description",
+          label: "Description",
+          placeholder: "Enter supplier details...",
           type: "textarea",
         },
       ]}
