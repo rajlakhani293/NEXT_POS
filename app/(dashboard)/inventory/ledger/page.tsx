@@ -6,15 +6,35 @@ import DynamicTable from "@/components/DynamicTable"
 import { inventory } from "@/lib/api/inventory"
 import { useTableData } from "@/hooks/useTableData"
 
+const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
+
 const columns = [
   { key: "product_name", title: "Product" },
-  { key: "entry_type", title: "Entry Type" },
+  {
+    key: "entry_type",
+    title: "Entry Type",
+    render: (value: string) => String(value || "-").replaceAll("_", " "),
+  },
   { key: "quantity", title: "Quantity" },
-  { key: "unit_cost", title: "Unit Cost" },
+  { key: "unit_cost", title: "Unit Cost", render: formatMoney },
   { key: "balance_after", title: "Balance After" },
-  { key: "reference_type", title: "Reference" },
-  { key: "reference_id", title: "Ref ID" },
-  { key: "created_at", title: "Created At" },
+  {
+    key: "reference_type",
+    title: "Reference",
+    render: (value: string, record: any) =>
+      value === "sale_order"
+        ? `Sale #${record.reference_id}`
+        : value === "purchase_order"
+          ? `Procurement #${record.reference_id}`
+          : `History #${record.reference_id}`,
+  },
+  { key: "user_username", title: "Author" },
+  {
+    key: "created_at",
+    title: "Created At",
+    render: (value: any) =>
+      value ? new Date(value).toLocaleDateString() : "-",
+  },
 ]
 
 export default function StockLedgerPage() {
