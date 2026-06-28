@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { useSession } from "@/lib/redux/session-provider"
 import { useAppSelector } from "@/lib/redux/hooks"
 
@@ -23,6 +24,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const { t } = useTranslation()
   const { clearSession } = useSession()
   const user = useAppSelector((state) => state.session.user)
   const branch = useAppSelector((state) => state.session.branch)
@@ -86,8 +88,8 @@ export default function DashboardLayout({
             <SidebarInset className="min-h-0 overflow-hidden bg-[#F9F9F9]">
               <div
                 className={[
-                  "thin-scrollbar m-2 flex min-h-0 flex-1 flex-col rounded-lg border border-gray-100 bg-white",
-                  isNoPaddingPage ? "overflow-hidden p-0" : "overflow-y-auto p-6",
+                  "thin-scrollbar flex min-h-0 flex-1 flex-col",
+                  isNoPaddingPage ? "overflow-hidden p-0" : "overflow-y-auto p-4",
                 ].join(" ")}
               >
                 <RoutePermissionGuard>{children}</RoutePermissionGuard>
@@ -106,11 +108,10 @@ export default function DashboardLayout({
             <div className="flex flex-col items-center space-y-4 text-center">
               <div>
                 <DialogTitle className="text-xl font-medium tracking-tight text-slate-900">
-                  Connection Lost
+                  {t("Connection Lost")}
                 </DialogTitle>
                 <DialogDescription className="text-sm leading-relaxed text-slate-500">
-                  We&apos;re having trouble reaching the server. Please check
-                  your internet connection and try again.
+                  {t("We're having trouble reaching the server. Please check your internet connection and try again.")}
                 </DialogDescription>
               </div>
 
@@ -128,7 +129,7 @@ export default function DashboardLayout({
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
               </span>
               <span className="text-[11px] font-semibold tracking-widest text-slate-400 uppercase">
-                Attempting to reconnect
+                {t("Attempting to reconnect")}
               </span>
             </div>
           </div>

@@ -4,30 +4,31 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Cookies from "js-cookie"
 import { BiLoaderCircle } from "react-icons/bi"
-import { GalleryVerticalEnd } from "lucide-react"
 
 import { auth, type AuthUser } from "@/lib/api/auth"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { useAppDispatch } from "@/lib/redux/hooks"
 import { useSession } from "@/lib/redux/session-provider"
 import { setSessionData } from "@/lib/redux/sessionSlice"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import {
   Field,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 
 const defaultDeviceName = "Web App"
+const registrationEnabled = false
+const recoveryEnabled = true
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter()
+  const { t } = useTranslation()
   const dispatch = useAppDispatch()
   const { refreshSession } = useSession()
   const [mode, setMode] = useState<"login" | "register">("login")
@@ -49,18 +50,18 @@ export function LoginForm({
 
   const validate = () => {
     const nextErrors: Record<string, string> = {}
-    if (username.trim().length < 3) {
-      nextErrors.username = "Username must contain at least 3 characters."
+    if (username.trim().length < 5) {
+      nextErrors.username = t("Username must contain at least 5 characters.")
     }
-    if (password.length < 8) {
-      nextErrors.password = "Password must contain at least 8 characters."
+    if (password.length < 6) {
+      nextErrors.password = t("Password must contain at least 6 characters.")
     }
     if (mode === "register") {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-        nextErrors.email = "Enter a valid email address."
+        nextErrors.email = t("Enter a valid email address.")
       }
       if (password !== passwordConfirm) {
-        nextErrors.passwordConfirm = "Password confirmation does not match."
+        nextErrors.passwordConfirm = t("Password confirmation does not match.")
       }
     }
     setErrors(nextErrors)
@@ -95,33 +96,28 @@ export function LoginForm({
 
   return (
     <div
-      className={cn("flex w-full max-w-md flex-col gap-6 px-4", className)}
+      className={cn("flex w-full max-w-md flex-col gap-6", className)}
       {...props}
     >
-      <Card className="w-full">
-        <CardContent>
-          <form onSubmit={handleSubmit}>
+      <div className="flex justify-center py-6">
+        <div className="flex h-14 min-w-32 items-center justify-center rounded bg-white px-6 text-2xl font-semibold tracking-tight text-slate-950 shadow-sm">
+          {t("POS")}
+        </div>
+      </div>
+      <div className="overflow-hidden rounded bg-white shadow">
+        <div className="p-3">
+          <form id="auth-form" onSubmit={handleSubmit} onKeyUp={(event) => {
+            if (event.key === "Enter") {
+              event.currentTarget.requestSubmit()
+            }
+          }}>
             <FieldGroup>
-              <div className="flex flex-col items-center gap-3 text-center">
-                <div className="flex size-11 items-center justify-center rounded-2xl bg-[#3155f6] text-white shadow-sm">
-                  <GalleryVerticalEnd className="size-6" />
-                </div>
-                <div className="space-y-1">
-                  <h1 className="text-2xl font-bold tracking-tight text-zinc-950">
-                    {mode === "login" ? "Welcome back" : "Create your account"}
-                  </h1>
-                  <FieldDescription>
-                    Sign in securely with your username and password.
-                  </FieldDescription>
-                </div>
-              </div>
-
               <Field>
-                <FieldLabel htmlFor="username">Username</FieldLabel>
+                <FieldLabel htmlFor="username">{t("Username")}</FieldLabel>
                 <UniFieldInput
                   id="username"
                   value={username}
-                  placeholder="Enter username"
+                  placeholder={t("Provide your username.")}
                   autoComplete="username"
                   disabled={isLoading}
                   error={errors.username}
@@ -134,12 +130,12 @@ export function LoginForm({
 
               {mode === "register" ? (
                 <Field>
-                  <FieldLabel htmlFor="email">Email</FieldLabel>
+                  <FieldLabel htmlFor="email">{t("Email")}</FieldLabel>
                   <UniFieldInput
                     id="email"
                     type="email"
                     value={email}
-                    placeholder="Enter email address"
+                    placeholder={t("Provide your email.")}
                     autoComplete="email"
                     disabled={isLoading}
                     error={errors.email}
@@ -152,12 +148,12 @@ export function LoginForm({
               ) : null}
 
               <Field>
-                <FieldLabel htmlFor="password">Password</FieldLabel>
+                <FieldLabel htmlFor="password">{t("Password")}</FieldLabel>
                 <UniFieldInput
                   id="password"
                   type="password"
                   value={password}
-                  placeholder="Enter password"
+                  placeholder={t("Provide your password.")}
                   autoComplete={
                     mode === "login" ? "current-password" : "new-password"
                   }
@@ -173,13 +169,13 @@ export function LoginForm({
               {mode === "register" ? (
                 <Field>
                   <FieldLabel htmlFor="password-confirm">
-                    Confirm Password
+                    {t("Password Confirm")}
                   </FieldLabel>
                   <UniFieldInput
                     id="password-confirm"
                     type="password"
                     value={passwordConfirm}
-                    placeholder="Confirm password"
+                    placeholder={t("Should be the same as the password.")}
                     autoComplete="new-password"
                     disabled={isLoading}
                     error={errors.passwordConfirm}
@@ -194,45 +190,49 @@ export function LoginForm({
                 </Field>
               ) : null}
 
-              <Field>
-                <Button
-                  type="submit"
-                  variant="blue"
-                  size="lg"
-                  disabled={isLoading}
-                  className="w-full text-base font-semibold"
-                >
-                  {isLoading ? (
-                    <BiLoaderCircle className="size-5 animate-spin" />
-                  ) : mode === "login" ? (
-                    "Login"
-                  ) : (
-                    "Create Account"
-                  )}
-                </Button>
-              </Field>
-
-              <FieldDescription className="text-center">
-                {mode === "login"
-                  ? "Don't have an account?"
-                  : "Already have an account?"}{" "}
-                <button
-                  type="button"
-                  className="font-semibold text-[#3155f6] hover:underline"
-                  onClick={() => {
-                    setMode((current) =>
-                      current === "login" ? "register" : "login"
-                    )
-                    setErrors({})
-                  }}
-                >
-                  {mode === "login" ? "Sign up" : "Login"}
-                </button>
-              </FieldDescription>
+              {recoveryEnabled ? (
+                <div className="flex w-full items-center justify-center py-4">
+                  <a href="/password-lost" className="text-sm text-blue-600 hover:underline">
+                    {t("Password Forgotten ?")}
+                  </a>
+                  {registrationEnabled ? (
+                    <>
+                      <div className="mx-4 h-[15px] border-l" />
+                      <button
+                        type="button"
+                        className="text-sm text-blue-600 hover:underline"
+                        onClick={() => {
+                          setMode((current) =>
+                            current === "login" ? "register" : "login"
+                          )
+                          setErrors({})
+                        }}
+                      >
+                        {mode === "login" ? t("Register") : t("Sign In")}
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
             </FieldGroup>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+        <div className="flex items-center justify-end border-t bg-slate-50 p-3">
+          <Button
+            type="button"
+            variant="blue"
+            disabled={isLoading}
+            className="justify-between"
+            onClick={() => {
+              const form = document.querySelector<HTMLFormElement>("#auth-form")
+              form?.requestSubmit()
+            }}
+          >
+            {isLoading ? <BiLoaderCircle className="mr-2 size-5 animate-spin" /> : null}
+            <span>{mode === "login" ? t("Sign In") : t("Register")}</span>
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
