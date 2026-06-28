@@ -80,6 +80,9 @@ interface BusinessSettings {
     enable_cash_registers: boolean
     allow_decimal_quantities: boolean
     quick_product_enabled: boolean
+    cart_discount?: boolean
+    products_discount?: boolean
+    edit_settings?: boolean
     show_quantity: boolean
     currency_symbol?: string
     currency_iso?: string

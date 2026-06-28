@@ -5,16 +5,25 @@ import { useRouter } from "next/navigation"
 import {
   BanknoteArrowDown,
   BanknoteArrowUp,
+  Ban,
   ChevronRight,
+  CreditCard,
   Folder,
   Home,
   LogOut,
+  MessageSquare,
   Minus,
   Package,
+  Pause,
+  Percent,
   Plus,
+  PlusCircle,
   Search,
+  Settings,
   ShoppingCart,
+  Tags,
   Trash2,
+  WalletCards,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -201,9 +210,17 @@ export default function SalesPage() {
     emptyPaymentRow(),
   ])
   const [isHeldCartDialogOpen, setIsHeldCartDialogOpen] = useState(false)
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false)
+  const [isCouponsDialogOpen, setIsCouponsDialogOpen] = useState(false)
+  const [isOrderSettingsOpen, setIsOrderSettingsOpen] = useState(false)
+  const [isTaxesDialogOpen, setIsTaxesDialogOpen] = useState(false)
+  const [isQuickProductDialogOpen, setIsQuickProductDialogOpen] = useState(false)
+  const [isCartDiscountDialogOpen, setIsCartDiscountDialogOpen] = useState(false)
   const [activeDiscountItem, setActiveDiscountItem] = useState<CartItem | null>(null)
   const [itemDiscountVal, setItemDiscountVal] = useState("")
   const [itemDiscountType, setItemDiscountType] = useState<"flat" | "percentage">("flat")
+  const [cartDiscountVal, setCartDiscountVal] = useState("")
+  const [cartDiscountType, setCartDiscountType] = useState<"flat" | "percentage">("flat")
 
 
   const [getCurrentShift, { isLoading: isCheckingShift }] = (
@@ -272,7 +289,7 @@ export default function SalesPage() {
       })
     : gridData.categories
 
-  const subtotal = useMemo(
+  const itemsSubtotal = useMemo(
     () =>
       cartItems.reduce(
         (total, item) => total + (item.qty * item.price - getCartItemDiscount(item)),
@@ -280,6 +297,14 @@ export default function SalesPage() {
       ),
     [cartItems]
   )
+  const cartDiscount = useMemo(() => {
+    const value = Math.max(Number(cartDiscountVal || 0), 0)
+    if (cartDiscountType === "percentage") {
+      return (itemsSubtotal * value) / 100
+    }
+    return Math.min(value, itemsSubtotal)
+  }, [cartDiscountType, cartDiscountVal, itemsSubtotal])
+  const subtotal = Math.max(itemsSubtotal - cartDiscount, 0)
   const enabledOrderTypes = useMemo(() => {
     const configured = posOptions.order_types.length ? posOptions.order_types : ["takeaway", "delivery"]
     return [
@@ -586,6 +611,10 @@ export default function SalesPage() {
   }
 
   const openItemDiscountDialog = (item: CartItem) => {
+    if (!posOptions.products_discount) {
+      showToast.error(t("You're not allowed to add a discount on the product."))
+      return
+    }
     setActiveDiscountItem(item)
     setItemDiscountVal(String(item.discount_value || ""))
     setItemDiscountType(item.discount_type || "flat")
@@ -612,6 +641,37 @@ export default function SalesPage() {
     setActiveDiscountItem(null)
   }
 
+  const openCartDiscountDialog = () => {
+    if (!posOptions.cart_discount) {
+      showToast.error(t("You're not allowed to add a discount on the cart."))
+      return
+    }
+    setIsCartDiscountDialogOpen(true)
+  }
+
+  const handleApplyCartDiscount = () => {
+    setCartDiscountVal(String(Math.max(Number(cartDiscountVal || 0), 0)))
+    setIsCartDiscountDialogOpen(false)
+    showToast.success(t("The discount has been set to the cart subtotal."))
+  }
+
+  const openOrderSettingsDialog = () => {
+    if (!posOptions.edit_settings) {
+      showToast.error(t("You're not allowed to edit the order settings."))
+      return
+    }
+    setIsOrderSettingsOpen(true)
+  }
+
+  const handleVoidCart = () => {
+    if (!cartItems.length) {
+      resetSaleForm()
+      return
+    }
+    resetSaleForm()
+    showToast.success(t("The cart has been cleared."))
+  }
+
   const resetSaleForm = () => {
 
     setDraftId("")
@@ -621,6 +681,8 @@ export default function SalesPage() {
     setSelectedCouponId("")
     setOrderType("takeaway")
     setSaleNote("")
+    setCartDiscountVal("")
+    setCartDiscountType("flat")
     setCartItems([])
     setPaymentsRows([emptyPaymentRow()])
   }
@@ -713,11 +775,17 @@ export default function SalesPage() {
       showToast.error("Add at least one product before holding cart.")
       return
     }
+    if (paymentsRows.some((row) => money(row.amount) > 0)) {
+      showToast.error(t("Unable to hold an order which payment status has been updated already."))
+      return
+    }
 
     const payLoad = {
       customer_id: customerId ? Number(customerId) : null,
       coupon_codes: couponCodes,
       note: saleNote,
+      discount_amount: cartDiscountType === "flat" ? String(money(cartDiscountVal)) : "0",
+      discount_percentage: cartDiscountType === "percentage" ? String(money(cartDiscountVal)) : "0",
       items: cartItems.map((item) => ({
         product_id: Number(item.product_id),
         unit_quantity_id: item.unit_quantity_id
@@ -767,6 +835,8 @@ export default function SalesPage() {
       order_type: activeOrderType,
       note: saleNote,
       coupon_codes: couponCodes,
+      discount_amount: cartDiscountType === "flat" ? String(money(cartDiscountVal)) : "0",
+      discount_percentage: cartDiscountType === "percentage" ? String(money(cartDiscountVal)) : "0",
       items: cartItems.map((item) => ({
         product_id: Number(item.product_id),
         unit_quantity_id: item.unit_quantity_id
@@ -1143,6 +1213,57 @@ export default function SalesPage() {
                 {t("Products")}
               </button>
             </div>
+            <div className="border-b border-gray-100 p-2">
+              <div className="flex flex-wrap overflow-hidden rounded border border-gray-200 bg-white">
+                <button
+                  type="button"
+                  onClick={() => setIsNoteDialogOpen(true)}
+                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  <MessageSquare className="size-4" />
+                  {t("Comments")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsCouponsDialogOpen(true)}
+                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  <Tags className="size-4" />
+                  {t("Coupons")}
+                  {couponCodes.length ? (
+                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs text-white">
+                      {couponCodes.length}
+                    </span>
+                  ) : null}
+                </button>
+                {posOptions.quick_product_enabled ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickProductDialogOpen(true)}
+                    className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  >
+                    <PlusCircle className="size-4" />
+                    {t("Product")}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={openOrderSettingsDialog}
+                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  <Settings className="size-4" />
+                  {t("Settings")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsTaxesDialogOpen(true)}
+                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  <WalletCards className="size-4" />
+                  {t("Taxes")}
+                </button>
+              </div>
+            </div>
             {/* Cart items */}
             <div className="flex-1 overflow-y-auto">
               <div className="sticky top-0 grid grid-cols-[1.4fr_130px_110px_120px_56px] bg-gray-50 px-4 py-2 text-sm font-bold text-gray-700">
@@ -1413,6 +1534,16 @@ export default function SalesPage() {
             <div className="mt-6 space-y-3 text-sm font-semibold">
               <div className="flex justify-between">
                 <span>{t("subtotal")}</span>
+                <span>{formatMoney(itemsSubtotal)}</span>
+              </div>
+              {cartDiscount > 0 ? (
+                <div className="flex justify-between text-emerald-700">
+                  <span>{t("Cart Discount")}</span>
+                  <span>-{formatMoney(cartDiscount)}</span>
+                </div>
+              ) : null}
+              <div className="flex justify-between">
+                <span>{t("total")}</span>
                 <span>{formatMoney(subtotal)}</span>
               </div>
               <div className="flex justify-between">
@@ -1433,20 +1564,42 @@ export default function SalesPage() {
               </div>
             </div>
 
-            <Button
-              variant="outline"
-              disabled={!cartItems.length || isHoldingSale}
-              onClick={handleHoldSale}
-            >
-              {isHoldingSale ? t("saving") : t("hold_cart")}
-            </Button>
-            <Button
-              className="mt-6 w-full"
-              disabled={!cartItems.length || isCreatingSale}
-              onClick={handleCompleteSale}
-            >
-              {isCreatingSale ? t("completing_sale") : t("complete_sale")}
-            </Button>
+            <div className="mt-6 grid grid-cols-4 overflow-hidden rounded border border-gray-200 text-sm font-bold">
+              <button
+                type="button"
+                onClick={openCartDiscountDialog}
+                className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-gray-50 px-2 py-2 text-gray-700 hover:bg-gray-100"
+              >
+                <Percent className="size-5" />
+                {t("Discount")}
+              </button>
+              <button
+                type="button"
+                disabled={!cartItems.length || isHoldingSale}
+                onClick={handleHoldSale}
+                className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-blue-600 px-2 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Pause className="size-5" />
+                {isHoldingSale ? t("Saving") : t("Hold")}
+              </button>
+              <button
+                type="button"
+                disabled={!cartItems.length || isCreatingSale}
+                onClick={handleCompleteSale}
+                className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-green-600 px-2 py-2 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <CreditCard className="size-5" />
+                {isCreatingSale ? t("Completing") : t("Pay")}
+              </button>
+              <button
+                type="button"
+                onClick={handleVoidCart}
+                className="flex min-h-16 flex-col items-center justify-center gap-1 bg-red-600 px-2 py-2 text-white hover:bg-red-700"
+              >
+                <Ban className="size-5" />
+                {t("Void")}
+              </button>
+            </div>
             </div>
           </div>
           </div>
@@ -1703,6 +1856,193 @@ export default function SalesPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Comments")}</DialogTitle>
+            <DialogDescription>
+              {t("Add a note to the current order.")}
+            </DialogDescription>
+          </DialogHeader>
+          <textarea
+            value={saleNote}
+            onChange={(event) => setSaleNote(event.target.value)}
+            placeholder={t("add_note_placeholder")}
+            className="min-h-32 w-full rounded border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNoteDialogOpen(false)}>
+              {t("Cancel")}
+            </Button>
+            <Button onClick={() => setIsNoteDialogOpen(false)}>
+              {t("Save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCouponsDialogOpen} onOpenChange={setIsCouponsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Coupons")}</DialogTitle>
+            <DialogDescription>
+              {t("Input the coupon code that should apply to the POS. If a coupon is issued for a customer, that customer must be selected priorly.")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <UniFieldSelect
+              label={t("suggested_coupon")}
+              value={selectedCouponId}
+              onValueChange={setSelectedCouponId}
+              placeholder={t("choose_coupon")}
+              allowClear
+            >
+              {couponOptions.map((coupon: { id: number | string; name?: string; code?: string }) => (
+                <SelectItem key={coupon.id} value={String(coupon.id)}>
+                  {coupon.name} - {coupon.code}
+                </SelectItem>
+              ))}
+            </UniFieldSelect>
+            <UniFieldInput
+              label={t("coupon_codes")}
+              value={couponInput}
+              onChange={(event) => setCouponInput(event.target.value)}
+              placeholder={t("coupon_codes_placeholder")}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCouponsDialogOpen(false)}>
+              {t("Cancel")}
+            </Button>
+            <Button onClick={() => setIsCouponsDialogOpen(false)}>
+              {t("Apply")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isQuickProductDialogOpen} onOpenChange={setIsQuickProductDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Product")}</DialogTitle>
+            <DialogDescription>
+              {t("Create a new product and add it from the product grid once saved.")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsQuickProductDialogOpen(false)}>
+              {t("Cancel")}
+            </Button>
+            <Button
+              onClick={() => {
+                setIsQuickProductDialogOpen(false)
+                router.push("/inventory/products/create")
+              }}
+            >
+              {t("Add Product")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isOrderSettingsOpen} onOpenChange={setIsOrderSettingsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Settings")}</DialogTitle>
+            <DialogDescription>
+              {t("Change the current order settings.")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <UniFieldSelect
+              label={t("order_type")}
+              value={activeOrderType}
+              onValueChange={setOrderType}
+              placeholder={t("order_type_select")}
+            >
+              {enabledOrderTypes.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </UniFieldSelect>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsOrderSettingsOpen(false)}>
+              {t("Cancel")}
+            </Button>
+            <Button onClick={() => setIsOrderSettingsOpen(false)}>
+              {t("Save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isTaxesDialogOpen} onOpenChange={setIsTaxesDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Taxes")}</DialogTitle>
+            <DialogDescription>
+              {t("Set the taxes to apply to the cart.")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm font-medium text-gray-700">
+            <div className="flex justify-between">
+              <span>{t("Tax Type")}</span>
+              <span>{String(posOptions.pos_tax_type || "-")}</span>
+            </div>
+            <div className="mt-2 flex justify-between">
+              <span>{t("Tax Group")}</span>
+              <span>{String(posOptions.pos_tax_group || "-")}</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsTaxesDialogOpen(false)}>
+              {t("Close")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCartDiscountDialogOpen} onOpenChange={setIsCartDiscountDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Cart Discount")}</DialogTitle>
+            <DialogDescription>
+              {t("Apply a flat or percentage discount to the cart subtotal.")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <UniFieldSelect
+              label={t("Discount Type")}
+              value={cartDiscountType}
+              onValueChange={(val) => setCartDiscountType(val as "flat" | "percentage")}
+              placeholder={t("Select discount type")}
+              required
+            >
+              <SelectItem value="flat">{t("Flat Amount")} ({posOptions.currency_symbol})</SelectItem>
+              <SelectItem value="percentage">{t("Percentage")} (%)</SelectItem>
+            </UniFieldSelect>
+            <UniFieldInput
+              label={t("Discount Value")}
+              value={cartDiscountVal}
+              onChange={(event) => setCartDiscountVal(event.target.value)}
+              placeholder={t("Enter discount value")}
+              type="number"
+              prefix={cartDiscountType === "flat" ? posOptions.currency_symbol : "%"}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCartDiscountDialogOpen(false)}>
+              {t("Cancel")}
+            </Button>
+            <Button onClick={handleApplyCartDiscount}>
+              {t("Apply Discount")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Item Discount Dialog */}
       <Dialog
         open={activeDiscountItem !== null}
@@ -1724,7 +2064,7 @@ export default function SalesPage() {
             <UniFieldSelect
               label="Discount Type"
               value={itemDiscountType}
-              onValueChange={(val: any) => setItemDiscountType(val)}
+              onValueChange={(val) => setItemDiscountType(val as "flat" | "percentage")}
               placeholder="Select discount type"
               required
             >
