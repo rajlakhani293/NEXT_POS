@@ -7,7 +7,7 @@ import { settings } from "@/lib/api/settings"
 import { customers } from "@/lib/api/customers"
 import { PERMISSIONS } from "@/lib/permissions"
 
-// NexoPOS UserCrud::getColumns
+// Source user columns
 const columns = [
   { key: "username", title: "Username" },
   { key: "account_amount", title: "Wallet" },
@@ -68,7 +68,7 @@ function UserForm(props: any) {
       entityName="User"
       formWidth="w-[560px]"
       fields={[
-        // General tab fields matching NexoPOS getForm
+        // General tab fields matching the source form
         {
           name: "username",
           label: "Username",

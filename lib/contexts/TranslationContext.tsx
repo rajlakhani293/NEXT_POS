@@ -1,17 +1,38 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect } from "react"
+import { isRtlLanguage, isSupportedLanguage } from "@/lib/i18n/languages"
 import { useAppSelector } from "@/lib/redux/hooks"
 import en from "../locales/en.json"
 import es from "../locales/es.json"
 import fr from "../locales/fr.json"
 import ar from "../locales/ar.json"
+import sourceAr from "../locales/source/ar.json"
+import sourceDe from "../locales/source/de.json"
+import sourceEn from "../locales/source/en.json"
+import sourceEs from "../locales/source/es.json"
+import sourceFr from "../locales/source/fr.json"
+import sourceId from "../locales/source/id.json"
+import sourceIt from "../locales/source/it.json"
+import sourceKm from "../locales/source/km.json"
+import sourcePt from "../locales/source/pt.json"
+import sourceSq from "../locales/source/sq.json"
+import sourceTr from "../locales/source/tr.json"
+import sourceVi from "../locales/source/vi.json"
 
 const translations: Record<string, Record<string, string>> = {
-  en,
-  es,
-  fr,
-  ar,
+  en: { ...sourceEn, ...en },
+  de: sourceDe,
+  fr: { ...sourceFr, ...fr },
+  es: { ...sourceEs, ...es },
+  it: sourceIt,
+  id: sourceId,
+  ar: { ...sourceAr, ...ar },
+  pt: sourcePt,
+  tr: sourceTr,
+  km: sourceKm,
+  vi: sourceVi,
+  sq: sourceSq,
 }
 
 type TranslationContextType = {
@@ -23,6 +44,12 @@ type TranslationContextType = {
 
 const TranslationContext = createContext<TranslationContextType | undefined>(undefined)
 
+const updateDocumentDirection = (lang: string) => {
+  const isRtl = isRtlLanguage(lang)
+  document.documentElement.dir = isRtl ? "rtl" : "ltr"
+  document.documentElement.lang = lang
+}
+
 export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<string>("en")
   const storeLanguage = useAppSelector(
@@ -31,26 +58,18 @@ export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem("pos_lang")
-    if (savedLanguage) {
-      setLanguage(savedLanguage)
-      updateDocumentDirection(savedLanguage)
-    } else if (storeLanguage) {
-      setLanguage(storeLanguage)
-      updateDocumentDirection(storeLanguage)
-    } else {
-      setLanguage("en")
-      updateDocumentDirection("en")
+    let nextLanguage = "en"
+    if (savedLanguage && isSupportedLanguage(savedLanguage)) {
+      nextLanguage = savedLanguage
+    } else if (storeLanguage && isSupportedLanguage(storeLanguage)) {
+      nextLanguage = storeLanguage
     }
+    updateDocumentDirection(nextLanguage)
+    queueMicrotask(() => setLanguage(nextLanguage))
   }, [storeLanguage])
 
-  const updateDocumentDirection = (lang: string) => {
-    const isRtl = lang === "ar"
-    document.documentElement.dir = isRtl ? "rtl" : "ltr"
-    document.documentElement.lang = lang
-  }
-
   const changeLanguage = (lang: string) => {
-    if (!translations[lang]) return
+    if (!isSupportedLanguage(lang)) return
     setLanguage(lang)
     localStorage.setItem("pos_lang", lang)
     updateDocumentDirection(lang)
@@ -58,10 +77,10 @@ export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const t = (key: string): string => {
     const langDict = translations[language] || en
-    return langDict[key] || key
+    return langDict[key] || translations.en[key] || key
   }
 
-  const isRtl = language === "ar"
+  const isRtl = isRtlLanguage(language)
 
   return (
     <TranslationContext.Provider value={{ language, t, changeLanguage, isRtl }}>

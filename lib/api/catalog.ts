@@ -56,7 +56,7 @@ const endpointsConfig = {
   updateTaxStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("taxes/status", payLoad) },
   getTaxById: { query: ({ id }: { id: number }) => getMutation(`taxes/${id}`) },
 
-  // POS Grid (NexoPOS-style category/product navigation)
+  // POS grid category/product navigation
   getPOSGrid: { query: () => getMutation("categories/pos") },
   getPOSGridByCategory: { query: ({ parentId }: { parentId: number }) => getMutation(`categories/pos/${parentId}`) },
 

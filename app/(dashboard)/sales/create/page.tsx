@@ -37,8 +37,8 @@ import { payments } from "@/lib/api/payments"
 import { promotions } from "@/lib/api/promotions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
-import { useAppSelector } from "@/lib/redux/hooks"
 import { registers } from "@/lib/api/registers"
 import { rewards } from "@/lib/api/rewards"
 import { sales } from "@/lib/api/sales"
@@ -139,14 +139,12 @@ export default function SalesPage() {
   const loadedRef = useRef(false)
   const loadedShiftRef = useRef("")
   const loadedRewardCustomerRef = useRef("")
-  const businessSettings = useAppSelector(
-    (state) => state.session.businessSettings?.settings
-  )
-  const cashRegistersEnabled = businessSettings?.enable_cash_registers
-  const ordersAllowUnpaid = businessSettings?.orders_allow_unpaid
-  const allowDecimalQuantities = businessSettings?.allow_decimal_quantities
-  const showQuantity = businessSettings?.show_quantity !== false
-  const hideEmptyCategories = businessSettings?.hide_empty_categories
+  const posOptions = usePosOptions()
+  const cashRegistersEnabled = posOptions.enable_cash_registers
+  const ordersAllowUnpaid = posOptions.orders_allow_unpaid
+  const allowDecimalQuantities = posOptions.allow_decimal_quantities
+  const showQuantity = posOptions.show_quantity
+  const hideEmptyCategories = posOptions.hide_empty_categories
   const { hasPermission } = usePermissions()
 
   const [shift, setShift] = useState<any>(null)

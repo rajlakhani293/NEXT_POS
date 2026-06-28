@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { settings } from "@/lib/api/settings"
+import { supportedLanguages } from "@/lib/i18n/languages"
 import { showToast } from "@/lib/toast"
 import { useAppDispatch } from "@/lib/redux/hooks"
 import { setSessionData } from "@/lib/redux/sessionSlice"
@@ -314,10 +315,11 @@ export default function BusinessSettingsPage() {
                     }
                     containerClassName="max-w-xs"
                   >
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="es">Español</SelectItem>
-                    <SelectItem value="fr">Français</SelectItem>
-                    <SelectItem value="ar">العربية</SelectItem>
+                    {supportedLanguages.map((language) => (
+                      <SelectItem key={language.code} value={language.code}>
+                        {language.label}
+                      </SelectItem>
+                    ))}
                   </UniFieldSelect>
                 </div>
               </div>

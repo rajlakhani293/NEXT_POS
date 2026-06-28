@@ -26,6 +26,7 @@ import { useSession } from "@/lib/redux/session-provider"
 import { showToast } from "@/lib/toast"
 import { Building2, MapPin, Globe } from "lucide-react"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { supportedLanguages } from "@/lib/i18n/languages"
 
 type SiteHeaderProps = {
   companyLogo?: string | null
@@ -151,13 +152,7 @@ export function SiteHeader({
   onLogout,
 }: SiteHeaderProps) {
   const { refreshSession } = useSession()
-  const { language, changeLanguage } = useTranslation()
-  const languagesList = [
-    { code: "en", label: "English" },
-    { code: "es", label: "Español" },
-    { code: "fr", label: "Français" },
-    { code: "ar", label: "العربية" },
-  ]
+  const { language, changeLanguage, t } = useTranslation()
   const router = useRouter()
   const dispatch = useAppDispatch()
   const [isBranchFormOpen, setIsBranchFormOpen] = useState(false)
@@ -173,7 +168,7 @@ export function SiteHeader({
     dispatch(settings.util.resetApiState())
     await refreshSession()
     router.push("/dashboard")
-    showToast.success(response?.message || "Branch switched successfully.")
+    showToast.success(response?.message || t("Branch switched successfully."))
   }
 
   const handleBranchCreated = async () => {
@@ -214,10 +209,10 @@ export function SiteHeader({
               )}
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900">
-                  {companyName || "Enter your company name"}
+                  {companyName || t("Enter your company name")}
                 </p>
                 <p className="truncate text-[10px] font-medium text-slate-500">
-                  {companyCode ? `Company · ${companyCode}` : "Company"}
+                  {companyCode ? `${t("Company")} · ${companyCode}` : t("Company")}
                 </p>
               </div>
             </button>
@@ -235,10 +230,10 @@ export function SiteHeader({
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-slate-900">
-                      {branchName || "Main Branch"}
+                      {branchName || t("Main Branch")}
                     </p>
                     <p className="truncate text-[10px] font-medium text-slate-500">
-                      {branchCode ? `Current Branch · ${branchCode}` : "Current Branch"}
+                      {branchCode ? `${t("Current Branch")} · ${branchCode}` : t("Current Branch")}
                     </p>
                   </div>
                 </button>
@@ -257,16 +252,16 @@ export function SiteHeader({
                       <div className="min-w-0">
                         <div className="truncate font-medium">{branch.name}</div>
                         <div className="truncate text-xs text-muted-foreground">
-                          {[branch.code, branch.city].filter(Boolean).join(" · ") || "Branch"}
+                          {[branch.code, branch.city].filter(Boolean).join(" · ") || t("Branch")}
                         </div>
                       </div>
                       {branch.id === branchId ? (
-                        <span className="text-xs font-semibold text-emerald-600">Active</span>
+                        <span className="text-xs font-semibold text-emerald-600">{t("Active")}</span>
                       ) : null}
                     </DropdownMenuItem>
                   ))
                 ) : (
-                  <DropdownMenuItem disabled>No branches found</DropdownMenuItem>
+                  <DropdownMenuItem disabled>{t("No branches found")}</DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 <Button
@@ -275,7 +270,7 @@ export function SiteHeader({
                   className="w-full"
                   onClick={() => setIsBranchFormOpen(true)}
                 >
-                  Add Branch
+                  {t("Add Branch")}
                 </Button>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -291,9 +286,9 @@ export function SiteHeader({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuLabel>Language</DropdownMenuLabel>
+                <DropdownMenuLabel>{t("Language")}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {languagesList.map((lang) => (
+                {supportedLanguages.map((lang) => (
                   <DropdownMenuItem
                     key={lang.code}
                     onClick={() => changeLanguage(lang.code)}
