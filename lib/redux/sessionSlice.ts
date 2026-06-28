@@ -81,6 +81,10 @@ interface BusinessSettings {
     allow_decimal_quantities: boolean
     quick_product_enabled: boolean
     show_quantity: boolean
+    currency_symbol?: string
+    currency_iso?: string
+    currency_position?: string
+    currency_preferred?: string
     currency_precision: number
     hide_empty_categories: boolean
     unit_price_editable: boolean

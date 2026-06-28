@@ -15,7 +15,6 @@ import {
   Search,
   ShoppingCart,
   Trash2,
-  X,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -145,6 +144,21 @@ export default function SalesPage() {
   const allowDecimalQuantities = posOptions.allow_decimal_quantities
   const showQuantity = posOptions.show_quantity
   const hideEmptyCategories = posOptions.hide_empty_categories
+  const formatMoney = useCallback((value: number | string | null | undefined) => {
+    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
+    const indicator = posOptions.currency_preferred === "iso"
+      ? posOptions.currency_iso
+      : posOptions.currency_symbol
+    return posOptions.currency_position === "after"
+      ? `${amount}${indicator}`
+      : `${indicator}${amount}`
+  }, [
+    posOptions.currency_iso,
+    posOptions.currency_position,
+    posOptions.currency_precision,
+    posOptions.currency_preferred,
+    posOptions.currency_symbol,
+  ])
   const { hasPermission } = usePermissions()
 
   const [shift, setShift] = useState<any>(null)
@@ -178,6 +192,7 @@ export default function SalesPage() {
   })
   const [gridLoading, setGridLoading] = useState(false)
   const [gridBreadcrumbs, setGridBreadcrumbs] = useState<POSCategory[]>([])
+  const [visibleSection, setVisibleSection] = useState<"both" | "cart" | "grid">("both")
   const [unitPickerProduct, setUnitPickerProduct] = useState<POSProduct | null>(null)
   const [isUnitPickerOpen, setIsUnitPickerOpen] = useState(false)
   const barcodeInputRef = useRef<HTMLInputElement>(null)
@@ -250,6 +265,12 @@ export default function SalesPage() {
       Number(balance.target_points || 0) > 0
   )
   const heldSales = heldSalesState.data?.data?.items || []
+  const categoriesForGrid = hideEmptyCategories
+    ? gridData.categories.filter((category: POSCategory & { products_count?: number; products?: unknown[]; children_count?: number }) => {
+        if (category.products_count === undefined && category.children_count === undefined && category.products === undefined) return true
+        return Boolean(category.products_count || category.children_count || category.products?.length)
+      })
+    : gridData.categories
 
   const subtotal = useMemo(
     () =>
@@ -259,6 +280,16 @@ export default function SalesPage() {
       ),
     [cartItems]
   )
+  const enabledOrderTypes = useMemo(() => {
+    const configured = posOptions.order_types.length ? posOptions.order_types : ["takeaway", "delivery"]
+    return [
+      { value: "takeaway", label: t("Take Away") },
+      { value: "delivery", label: t("Delivery") },
+    ].filter((item) => configured.includes(item.value))
+  }, [posOptions.order_types, t])
+  const activeOrderType = enabledOrderTypes.some((type) => type.value === orderType)
+    ? orderType
+    : enabledOrderTypes[0]?.value || orderType
 
   const couponCodes = useMemo(() => parseCouponCodes(couponInput), [couponInput])
   const totalPaid = useMemo(
@@ -725,7 +756,7 @@ export default function SalesPage() {
       return
     }
     if (ordersAllowUnpaid === false && totalPaid < subtotal) {
-      showToast.error(`Unpaid or partially paid orders are not allowed. Total paid (₹${totalPaid.toFixed(2)}) is less than subtotal (₹${subtotal.toFixed(2)}).`)
+      showToast.error(`${t("Unpaid or partially paid orders are not allowed.")} ${t("Total paid")} (${formatMoney(totalPaid)}) ${t("is less than subtotal")} (${formatMoney(subtotal)}).`)
       return
     }
     const validPayments = paymentsRows.filter((row) => money(row.amount) > 0)
@@ -733,7 +764,7 @@ export default function SalesPage() {
       draft_id: draftId ? Number(draftId) : null,
       customer_id: customerId ? Number(customerId) : null,
       shift_id: cashRegistersEnabled ? shift.id : null,
-      order_type: orderType,
+      order_type: activeOrderType,
       note: saleNote,
       coupon_codes: couponCodes,
       items: cartItems.map((item) => ({
@@ -805,23 +836,52 @@ export default function SalesPage() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
-      <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-white px-4 py-3">
-        <div>
-          <h1 className="text-lg font-bold text-gray-950">{t("sales_billing")}</h1>
-          <p className="text-sm text-muted-foreground">
-            {cashRegistersEnabled
-              ? shift
-                ? `${t("active_shift")}: ${shift.register_name || "Register"}`
-                : t("open_shift_message")
-              : t("registers_disabled_message")}
-          </p>
-        </div>
-        {cashRegistersEnabled && shift ? (
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <Button variant="outline" onClick={handleOpenHeldSales}>
-              {t("held_carts")}
+    <div className="flex h-full min-h-0 flex-col" id="pos-container">
+      <div className="flex shrink-0 overflow-hidden px-2 pt-2">
+        <div className="-mx-2 flex overflow-x-auto pb-1">
+          <div className="flex shrink-0 px-2">
+            <Button variant="outline" onClick={() => router.push("/dashboard")}>
+              <Home className="size-4" />
+              {t("Dashboard")}
             </Button>
+          </div>
+          <div className="flex shrink-0 px-2">
+            <Button variant="outline" onClick={handleOpenHeldSales}>
+              <ShoppingCart className="size-4" />
+              {t("Pending Orders")}
+            </Button>
+          </div>
+          <div className="flex shrink-0 px-2">
+            <Button variant="outline" onClick={() => setVisibleSection("cart")}>
+              {t("Cart")}
+            </Button>
+          </div>
+          <div className="flex shrink-0 px-2">
+            <Button variant="outline" onClick={() => setVisibleSection("grid")}>
+              {t("Products")}
+            </Button>
+          </div>
+          <div className="flex shrink-0 px-2">
+            <Button variant="outline" onClick={resetSaleForm}>
+              {t("Reset")}
+            </Button>
+          </div>
+          {cashRegistersEnabled && shift ? (
+            <>
+              <div className="flex shrink-0 px-2">
+                <Button variant="outline" onClick={() => setVisibleSection("both")}>
+                  {t("Both")}
+                </Button>
+              </div>
+              <div className="flex shrink-0 px-2">
+                <Button variant="outline" onClick={handleOpenHeldSales}>
+                  {t("held_carts")}
+                </Button>
+              </div>
+            </>
+          ) : null}
+          {cashRegistersEnabled && shift ? (
+            <>
             {hasPermission(PERMISSIONS.cashRegister.cashIn) ? (
               <Button
                 variant="outline"
@@ -852,7 +912,7 @@ export default function SalesPage() {
                 {t("close_shift")}
               </Button>
             ) : null}
-          </div>
+            </>
         ) : cashRegistersEnabled ? (
           hasPermission(PERMISSIONS.cashRegister.open) ? (
             <Button onClick={() => setIsOpenShiftDialogOpen(true)}>
@@ -864,14 +924,30 @@ export default function SalesPage() {
             {t("held_carts")}
           </Button>
         )}
+        </div>
       </div>
 
       {!cashRegistersEnabled || shift ? (
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
+        <div className="flex-auto overflow-hidden p-2">
+          <div className="-m-2 flex h-full min-h-0 flex-auto overflow-hidden">
           {/* ======== LEFT: Product Grid ======== */}
-          <div className="flex min-h-0 flex-col rounded-lg border border-gray-100 bg-white overflow-hidden">
+          <div className={[
+            "order-2 flex min-h-0 overflow-hidden p-2",
+            visibleSection === "both" ? "hidden lg:flex lg:w-1/2" : visibleSection === "grid" ? "flex w-full" : "hidden",
+          ].join(" ")}>
+          <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded shadow bg-white">
+            <div className="flex pl-2 lg:hidden">
+              <button type="button" onClick={() => setVisibleSection("cart")} className="cursor-pointer rounded-tl-lg rounded-tr-lg border-l border-r border-t px-3 py-2">
+                <span>{t("Cart")}</span>
+                <span className="ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-sm">{cartItems.length}</span>
+              </button>
+              <button type="button" onClick={() => setVisibleSection("grid")} className="cursor-pointer rounded-tl-lg rounded-tr-lg px-3 py-2 font-semibold">
+                {t("Products")}
+              </button>
+            </div>
             {/* Top bar: customer + barcode search */}
-            <div className="flex flex-col sm:flex-row gap-3 border-b border-gray-100 p-3">
+            <div className="border-b p-2">
+              <div className="flex flex-col gap-3 sm:flex-row">
               <UniFieldSelect
                 label={t("customer")}
                 value={customerId}
@@ -915,6 +991,7 @@ export default function SalesPage() {
                   {barcodeSearchState.isLoading ? <Spinner /> : t("search")}
                 </Button>
               </div>
+              </div>
             </div>
 
             {/* Breadcrumb navigation */}
@@ -941,7 +1018,7 @@ export default function SalesPage() {
             </div>
 
             {/* Pinned products strip */}
-            {gridData.pinnedProducts.length > 0 && (
+              {gridData.pinnedProducts.length > 0 && (
               <div className="border-b border-gray-100 bg-amber-50/60 px-3 py-2">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">Pinned</p>
                 <div className="flex gap-2 overflow-x-auto pb-1">
@@ -966,7 +1043,7 @@ export default function SalesPage() {
                           <p className="truncate text-center text-xs font-semibold text-white">{product.name}</p>
                           {uq && (
                             <div className="flex items-center justify-between text-[10px] text-amber-200">
-                              <span>₹{Number(uq.sale_price).toFixed(2)}</span>
+                              <span>{formatMoney(uq.sale_price)}</span>
                               {showQuantity && <span>Qty: {uq.quantity}</span>}
                             </div>
                           )}
@@ -980,22 +1057,21 @@ export default function SalesPage() {
 
             {/* Grid area: categories + products */}
             <div className="flex-1 overflow-y-auto p-3">
-              {!gridLoading && gridData.categories.length === 0 && gridData.products.length === 0 && gridData.pinnedProducts.length === 0 && (
+              {!gridLoading && categoriesForGrid.length === 0 && gridData.products.length === 0 && gridData.pinnedProducts.length === 0 && (
                 <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-400">
                   <Package className="size-14 opacity-30" />
-                  <p className="text-sm font-medium">No categories or products found.</p>
-                  <p className="text-xs">Add products with <strong>displays_on_pos</strong> enabled.</p>
+                  <p className="text-sm font-medium">{t("Looks like there is either no products and no categories. How about creating those first to get started ?")}</p>
                 </div>
               )}
 
               {/* Category tiles */}
-              {gridData.categories.length > 0 && (
-                <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-                  {gridData.categories.map((category) => (
+              {categoriesForGrid.length > 0 && (
+                <div className="mb-4 grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                  {categoriesForGrid.map((category) => (
                     <button
                       key={category.id}
                       onClick={() => drillIntoCategory(category)}
-                      className="group relative flex h-32 flex-col items-center justify-end overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:border-blue-400 hover:shadow-md"
+                      className="cell-item group relative flex h-36 flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400"
                     >
                       {category.preview_url ? (
                         <img
@@ -1016,14 +1092,14 @@ export default function SalesPage() {
 
               {/* Product tiles (shown when no sub-categories) */}
               {gridData.products.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
                   {gridData.products.map((product) => {
                     const uq = product.unit_quantities?.[0]
                     return (
                       <button
                         key={product.id}
                         onClick={() => handleGridProductClick(product)}
-                        className="group relative flex h-32 flex-col items-center justify-end overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:border-blue-400 hover:shadow-md"
+                        className="cell-item group relative flex h-36 flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400"
                       >
                         {product.galleries && product.galleries.length > 0 ? (
                           <img
@@ -1038,7 +1114,7 @@ export default function SalesPage() {
                           <p className="truncate text-center text-xs font-bold text-white">{product.name}</p>
                           {uq && (
                             <div className="flex items-center justify-between text-xs text-blue-200">
-                              <span>₹{Number(uq.sale_price).toFixed(2)}</span>
+                              <span>{formatMoney(uq.sale_price)}</span>
                               {showQuantity && <span className="text-[10px] text-gray-300">Qty: {uq.quantity}</span>}
                             </div>
                           )}
@@ -1050,12 +1126,26 @@ export default function SalesPage() {
               )}
             </div>
           </div>
+          </div>
 
           {/* ======== RIGHT: Cart + Checkout ======== */}
-          <div className="flex min-h-0 flex-col rounded-lg border border-gray-100 bg-white overflow-hidden">
+          <div className={[
+            "order-1 flex min-h-0 overflow-hidden p-2",
+            visibleSection === "both" ? "hidden lg:flex lg:w-1/2" : visibleSection === "cart" ? "flex w-full" : "hidden",
+          ].join(" ")}>
+          <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded shadow bg-white">
+            <div className="flex pl-2 lg:hidden">
+              <button type="button" onClick={() => setVisibleSection("cart")} className="cursor-pointer rounded-tl-lg rounded-tr-lg px-3 py-2 font-semibold">
+                <span>{t("Cart")}</span>
+                <span className="ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-sm text-white">{cartItems.length}</span>
+              </button>
+              <button type="button" onClick={() => setVisibleSection("grid")} className="cursor-pointer rounded-tl-lg rounded-tr-lg border-l border-r border-t px-3 py-2">
+                {t("Products")}
+              </button>
+            </div>
             {/* Cart items */}
             <div className="flex-1 overflow-y-auto">
-              <div className="grid grid-cols-[1.4fr_130px_110px_120px_56px] bg-gray-50 px-4 py-2 text-sm font-bold text-gray-700 sticky top-0">
+              <div className="sticky top-0 grid grid-cols-[1.4fr_130px_110px_120px_56px] bg-gray-50 px-4 py-2 text-sm font-bold text-gray-700">
                 <span>{t("item")}</span>
                 <span>{t("qty")}</span>
                 <span>{t("price")}</span>
@@ -1082,10 +1172,10 @@ export default function SalesPage() {
                         >
                           {item.discount_value && item.discount_value > 0 ? (
                             <span className="text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5">
-                              Discount: {item.discount_type === "percentage" ? `${item.discount_value}%` : `${item.discount_value}`} (-₹{getCartItemDiscount(item).toFixed(2)})
+                              {t("Discount")}: {item.discount_type === "percentage" ? `${item.discount_value}%` : formatMoney(item.discount_value)} (-{formatMoney(getCartItemDiscount(item))})
                             </span>
                           ) : (
-                            "+ Add Discount"
+                            t("Discount")
                           )}
                         </button>
                       </div>
@@ -1145,8 +1235,8 @@ export default function SalesPage() {
                         <Plus className="size-4" />
                       </Button>
                     </div>
-                    <span>₹{item.price.toFixed(2)}</span>
-                    <span>₹{(item.qty * item.price - getCartItemDiscount(item)).toFixed(2)}</span>
+                    <span>{formatMoney(item.price)}</span>
+                    <span>{formatMoney(item.qty * item.price - getCartItemDiscount(item))}</span>
                     <Button
                       type="button"
                       variant="ghost"
@@ -1175,12 +1265,15 @@ export default function SalesPage() {
               <div className="mt-4 space-y-4">
               <UniFieldSelect
                 label={t("order_type")}
-                value={orderType}
+                value={activeOrderType}
                 onValueChange={setOrderType}
                 placeholder={t("order_type_select")}
               >
-                <SelectItem value="takeaway">{t("take_order")}</SelectItem>
-                <SelectItem value="delivery">{t("delivery")}</SelectItem>
+                {enabledOrderTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
               </UniFieldSelect>
 
               <UniFieldSelect
@@ -1270,7 +1363,7 @@ export default function SalesPage() {
                           updatePaymentRow(row.id, "amount", event.target.value)
                         }
                         placeholder="0.00"
-                        prefix="₹"
+                        prefix={posOptions.currency_symbol}
                         type="number"
                       />
                       <div className="flex items-end">
@@ -1320,23 +1413,23 @@ export default function SalesPage() {
             <div className="mt-6 space-y-3 text-sm font-semibold">
               <div className="flex justify-between">
                 <span>{t("subtotal")}</span>
-                <span>₹{subtotal.toFixed(2)}</span>
+                <span>{formatMoney(subtotal)}</span>
               </div>
               <div className="flex justify-between">
                 <span>{t("received")}</span>
-                <span>₹{totalPaid.toFixed(2)}</span>
+                <span>{formatMoney(totalPaid)}</span>
               </div>
               <div className="flex justify-between text-amber-600">
                 <span>{t("due")}</span>
-                <span>₹{dueAmount.toFixed(2)}</span>
+                <span>{formatMoney(dueAmount)}</span>
               </div>
               <div className="flex justify-between text-green-600">
                 <span>{t("change")}</span>
-                <span>₹{changeAmount.toFixed(2)}</span>
+                <span>{formatMoney(changeAmount)}</span>
               </div>
               <div className="flex justify-between border-t pt-3 text-lg font-bold">
                 <span>{t("total")}</span>
-                <span>₹{subtotal.toFixed(2)}</span>
+                <span>{formatMoney(subtotal)}</span>
               </div>
             </div>
 
@@ -1355,6 +1448,8 @@ export default function SalesPage() {
               {isCreatingSale ? t("completing_sale") : t("complete_sale")}
             </Button>
             </div>
+          </div>
+          </div>
           </div>
         </div>
       ) : null}
@@ -1408,7 +1503,7 @@ export default function SalesPage() {
             value={openingCash}
             onChange={(event) => setOpeningCash(event.target.value)}
             placeholder="Enter opening cash"
-            prefix="₹"
+            prefix={posOptions.currency_symbol}
             type="number"
           />
           <UniFieldInput
@@ -1455,7 +1550,7 @@ export default function SalesPage() {
             value={movementAmount}
             onChange={(event) => setMovementAmount(event.target.value)}
             placeholder="Enter amount"
-            prefix="₹"
+            prefix={posOptions.currency_symbol}
             type="number"
           />
           <UniFieldInput
@@ -1494,7 +1589,7 @@ export default function SalesPage() {
           <DialogHeader>
             <DialogTitle>{t("close_shift_dialog_title")}</DialogTitle>
             <DialogDescription>
-              {t("expected_cash_prefix")} ₹{Number(shift?.expected_cash || 0).toFixed(2)}.
+              {t("expected_cash_prefix")} {formatMoney(shift?.expected_cash || 0)}.
               {t("physical_cash_desc")}
             </DialogDescription>
           </DialogHeader>
@@ -1503,7 +1598,7 @@ export default function SalesPage() {
             value={declaredCash}
             onChange={(event) => setDeclaredCash(event.target.value)}
             placeholder="Enter counted cash"
-            prefix="₹"
+            prefix={posOptions.currency_symbol}
             type="number"
           />
           <UniFieldInput
@@ -1547,8 +1642,7 @@ export default function SalesPage() {
                       {heldSale.customer?.name || heldSale.customer__name || "Walk-in customer"}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {heldSale.total_items || 0} {t("item_s")} • ₹
-                      {Number(heldSale.total || 0).toFixed(2)}
+                      {heldSale.total_items || 0} {t("item_s")} • {formatMoney(heldSale.total || 0)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1602,7 +1696,7 @@ export default function SalesPage() {
                 className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold hover:border-blue-400 hover:bg-blue-50 transition"
               >
                 <span>{uq.unit_name || uq.unit_short_name || uq.unit_identifier || `Unit ${uq.id}`}</span>
-                <span className="text-blue-600">₹{Number(uq.sale_price).toFixed(2)}</span>
+                <span className="text-blue-600">{formatMoney(uq.sale_price)}</span>
               </button>
             ))}
           </div>
@@ -1634,7 +1728,7 @@ export default function SalesPage() {
               placeholder="Select discount type"
               required
             >
-              <SelectItem value="flat">Flat Amount (₹)</SelectItem>
+              <SelectItem value="flat">{t("Flat Amount")} ({posOptions.currency_symbol})</SelectItem>
               <SelectItem value="percentage">Percentage (%)</SelectItem>
             </UniFieldSelect>
 
@@ -1644,7 +1738,7 @@ export default function SalesPage() {
               onChange={(e) => setItemDiscountVal(e.target.value)}
               placeholder="Enter discount value"
               type="number"
-              prefix={itemDiscountType === "flat" ? "₹" : "%"}
+              prefix={itemDiscountType === "flat" ? posOptions.currency_symbol : "%"}
             />
           </div>
 
