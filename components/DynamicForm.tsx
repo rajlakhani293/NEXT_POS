@@ -145,7 +145,9 @@ const DynamicForm = <T extends Record<string, any>>({
 
     if (
       field.required &&
-      (!value || (typeof value === "string" && value.trim() === ""))
+      (!value ||
+        (typeof value === "string" && value.trim() === "") ||
+        (Array.isArray(value) && value.length === 0))
     ) {
       return field.custom_msg || `${field.label} is required`
     }
@@ -296,6 +298,51 @@ const DynamicForm = <T extends Record<string, any>>({
                     name={field.name}
                     value={formData[field.name] || ""}
                   />
+                ) : field.type === "select" && field.options && field.multiple ? (
+                  <div className="space-y-2 rounded-md border p-3">
+                    <div className="text-sm font-medium">
+                      {field.label}
+                      {field.required && <span className="text-red-500">*</span>}
+                    </div>
+                    {field.placeholder && (
+                      <p className="text-xs text-muted-foreground">
+                        {field.placeholder}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {field.options
+                        ?.filter(
+                          (option) => option != null && option.value != null
+                        )
+                        .map((option) => {
+                          const current = Array.isArray(formData[field.name])
+                            ? formData[field.name]
+                            : []
+                          const value = option.value.toString()
+                          const selected = current.map(String).includes(value)
+                          return (
+                            <Button
+                              key={option.value}
+                              type="button"
+                              variant={selected ? "secondary" : "outline"}
+                              size="sm"
+                              disabled={isFieldDisabled}
+                              onClick={() => {
+                                const next = selected
+                                  ? current.filter((item: any) => String(item) !== value)
+                                  : [...current, value]
+                                handleChange(field.name, next)
+                              }}
+                            >
+                              {option.label}
+                            </Button>
+                          )
+                        })}
+                    </div>
+                    {errors[field.name] && (
+                      <p className="text-sm text-red-500">{errors[field.name]}</p>
+                    )}
+                  </div>
                 ) : field.type === "select" && field.options ? (
                   <UniFieldSelect
                     label={field.label}

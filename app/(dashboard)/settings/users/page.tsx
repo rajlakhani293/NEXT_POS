@@ -30,6 +30,7 @@ const initialValues = {
   password: "",
   password_confirm: "",
   active: true,
+  roles: [],
   role_id: "",
   group_id: "",
   birth_date: "",
@@ -39,7 +40,7 @@ const initialValues = {
   pobox: "",
 }
 
-function UserForm(props: any) {
+export function UserForm(props: any) {
   const hasLoadedRef = useRef(false)
 
   const [getRoles, roles] = (settings as any).useGetRolesMutation()
@@ -72,39 +73,40 @@ function UserForm(props: any) {
         {
           name: "username",
           label: "Username",
-          placeholder: "Enter username",
+          placeholder: "Provide a name to the resource.",
           type: "text",
           required: true,
         },
         {
           name: "email",
           label: "Email",
-          placeholder: "Enter email address",
+          placeholder: "Will be used for various purposes such as email recovery.",
           type: "email",
+          required: true,
         },
         {
           name: "first_name",
           label: "First Name",
-          placeholder: "Enter first name",
+          placeholder: "Provide the user first name.",
           type: "text",
         },
         {
           name: "last_name",
           label: "Last Name",
-          placeholder: "Enter last name",
+          placeholder: "Provide the user last name.",
           type: "text",
         },
         {
           name: "password",
           label: "Password",
-          placeholder: "Enter password",
-          type: "text",
+          placeholder: "Make a unique and secure password.",
+          type: "password",
         },
         {
           name: "password_confirm",
           label: "Confirm Password",
-          placeholder: "Re-enter password",
-          type: "text",
+          placeholder: "Should be the same as the password.",
+          type: "password",
           validate: (value: any, values: any) =>
             value && value !== values.password
               ? "Passwords do not match"
@@ -117,12 +119,12 @@ function UserForm(props: any) {
           note: "Define whether the user can use the application.",
         },
         {
-          name: "role_id",
-          label: "Role",
-          placeholder: "Select role",
+          name: "roles",
+          label: "Roles",
+          placeholder: "Define what roles applies to the user",
           type: "select",
+          multiple: true,
           options: roleOptions,
-          allowClear: true,
         },
         {
           name: "group_id",
@@ -140,7 +142,7 @@ function UserForm(props: any) {
         {
           name: "credit_limit_amount",
           label: "Credit Limit",
-          placeholder: "Set the credit limit",
+          placeholder: "Set the limit that can't be exceeded by the user.",
           type: "number",
         },
         {
@@ -158,13 +160,13 @@ function UserForm(props: any) {
         {
           name: "phone",
           label: "Phone",
-          placeholder: "Enter phone number",
+          placeholder: "Set the user phone number.",
           type: "text",
         },
         {
           name: "pobox",
           label: "PO Box",
-          placeholder: "Enter PO Box",
+          placeholder: "Set the user PO Box.",
           type: "text",
         },
       ]}
@@ -174,7 +176,10 @@ function UserForm(props: any) {
       getByIdHook={(settings as any).useGetUserByIdMutation}
       buildPayload={(values) => ({
         ...values,
-        role_id: values.role_id ? Number(values.role_id) : undefined,
+        roles: Array.isArray(values.roles)
+          ? values.roles.map((role: any) => Number(role)).filter(Boolean)
+          : [],
+        role_id: undefined,
         group_id: values.group_id ? Number(values.group_id) : undefined,
         credit_limit_amount: values.credit_limit_amount
           ? Number(values.credit_limit_amount)
@@ -191,15 +196,15 @@ function UserForm(props: any) {
 export default function UsersPage() {
   return (
     <CatalogPageShell
-      tableTitle="Users"
-      addTitle="Add User"
+      tableTitle="Users List"
+      addTitle="Add a new user"
       columns={columns}
       getDataHook={(settings as any).useGetUsersDataMutation}
       deleteHook={(settings as any).useDeleteUserMutation}
       statusHook={(settings as any).useUpdateUserStatusMutation}
       FormComponent={UserForm}
       deleteTitle="Delete User"
-      deleteDescription="Are you sure you want to delete this user?"
+      deleteDescription="Would you like to delete this ?"
       permissions={PERMISSIONS.users}
     />
   )

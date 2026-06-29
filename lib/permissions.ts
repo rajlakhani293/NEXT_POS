@@ -100,6 +100,7 @@ export const PERMISSIONS = {
     viewProfitReport: "view_profit_report",
     shiftDifferenceClose: "shift_difference_close",
     manageModules: "manage.modules",
+    manageProfile: "manage.profile",
   },
 } as const
 

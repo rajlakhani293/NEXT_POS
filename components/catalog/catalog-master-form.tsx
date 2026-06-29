@@ -52,6 +52,7 @@ export function CatalogMasterForm({
       (current, field) => {
         if (
           field.type === "select" &&
+          !field.multiple &&
           current[field.name] !== undefined &&
           current[field.name] !== null
         ) {
