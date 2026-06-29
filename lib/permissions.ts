@@ -99,6 +99,7 @@ export const PERMISSIONS = {
     manualDiscount: "manual_discount",
     viewProfitReport: "view_profit_report",
     shiftDifferenceClose: "shift_difference_close",
+    manageModules: "manage.modules",
   },
 } as const
 

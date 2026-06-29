@@ -52,6 +52,13 @@ const endpointsConfig = {
   retryFailedJob: { query: ({ id }: { id: number | string }) => postMutation(`settings/jobs/failed/${id}/retry`)({}) },
   deleteFailedJob: { query: ({ id }: { id: number | string }) => ({ url: `settings/jobs/failed/${id}`, method: "DELETE" }) },
   resetDatabase: { query: () => postMutation("settings/reset")({}) },
+
+  // Modules
+  getModules: { query: ({ segment = "" }: { segment?: string } = {}) => getMutation(`modules${segment ? `/${segment}` : ""}`) },
+  uploadModule: { query: ({ payLoad }: { payLoad: FormData }) => ({ url: "modules", method: "POST", body: payLoad }) },
+  enableModule: { query: ({ namespace }: { namespace: string }) => putMutation(`modules/${namespace}/enable`, {}) },
+  disableModule: { query: ({ namespace }: { namespace: string }) => putMutation(`modules/${namespace}/disable`, {}) },
+  deleteModule: { query: ({ namespace }: { namespace: string }) => ({ url: `modules/${namespace}/delete`, method: "DELETE" }) },
 }
 
 export const settings = createApi({
