@@ -43,6 +43,7 @@ export const PERMISSIONS = {
     view: "purchases_view",
     create: "purchases_create",
     update: "purchases_update",
+    delete: "purchases_delete",
     receive: "purchases_receive",
     pay: "purchases_pay",
   },

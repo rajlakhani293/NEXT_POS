@@ -18,6 +18,19 @@ const endpointsConfig = {
   deleteSupplier: { query: deleteMutation("suppliers/delete") },
   updateSupplierStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("suppliers/status", payLoad) },
   getSupplierById: { query: ({ id }: { id: number }) => getMutation(`suppliers/${id}`) },
+  getProvidersData: { query: postMutation("../providers/get-transactions") },
+  createProvider: { query: createMutation("../providers/") },
+  editProvider: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`../providers/${id}`, payLoad) },
+  deleteProvider: { query: ({ id }: { id: any }) => deleteMutation(`../providers/${id}`)({}) },
+  getProviderById: { query: ({ id }: { id: number | string }) => getMutation(`../providers/${id}`) },
+  getProviderProcurements: {
+    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
+      postMutation(`../providers/${id}/procurements/get-transactions`)(payLoad),
+  },
+  getProviderProducts: {
+    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
+      postMutation(`../providers/${id}/products/get-transactions`)(payLoad),
+  },
 
   getPurchaseOrdersData: { query: postMutation("orders/get-transactions") },
   getProcurementProductsData: { query: postMutation("products/get-transactions") },
