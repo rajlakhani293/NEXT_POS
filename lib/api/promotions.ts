@@ -36,6 +36,17 @@ const endpointsConfig = {
         `customers/${customerId}/coupons/${customerCouponId}/history/get-transactions`
       )(payLoad),
   },
+  getGeneratedCustomerCouponsData: {
+    query: postMutation("customers/coupons-generated/get-transactions"),
+  },
+  getGeneratedCustomerCouponById: {
+    query: ({ id }: { id: number | string }) =>
+      getMutation(`customers/coupons-generated/${id}`),
+  },
+  editGeneratedCustomerCoupon: {
+    query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
+      putMutation(`customers/coupons-generated/${id}`, payLoad),
+  },
 }
 
 export const promotions = createApi({

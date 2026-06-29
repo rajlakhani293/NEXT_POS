@@ -10,11 +10,11 @@ import { customers } from "@/lib/api/customers"
 import { showToast } from "@/lib/toast"
 
 const columns = [
+  { key: "operation", title: "Operation" },
+  { key: "previous_amount", title: "Before" },
   { key: "amount", title: "Amount" },
-  { key: "direction", title: "Direction" },
-  { key: "balance_after", title: "Balance After" },
-  { key: "reason", title: "Reason" },
-  { key: "reference_type", title: "Reference Type" },
+  { key: "next_amount", title: "After" },
+  { key: "description", title: "Description" },
   { key: "created_at", title: "Created" },
 ]
 
@@ -29,10 +29,10 @@ export default function CustomerCreditPage() {
   const [totalItems, setTotalItems] = useState(0)
   const [page, setPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState("")
-  const [getCustomerCreditLedger, ledgerState] = (customers as any).useGetCustomerCreditLedgerMutation()
-  const [adjustCustomerCredit] = (
+  const [getCustomerAccountHistory, ledgerState] = (customers as any).useGetCustomerAccountHistoryMutation()
+  const [recordCustomerAccountHistory] = (
     customers as any
-  ).useAdjustCustomerCreditMutation()
+  ).useRecordCustomerAccountHistoryMutation()
 
   const loadLedger = async (
     targetCustomerId = customerId,
@@ -50,7 +50,7 @@ export default function CustomerCreditPage() {
     if (!force && lastLedgerRequestRef.current === requestKey) return
     lastLedgerRequestRef.current = requestKey
 
-    const response = await getCustomerCreditLedger({
+    const response = await getCustomerAccountHistory({
       id: targetCustomerId,
       payLoad: { page: nextPage, limit: 10, search },
     }).unwrap()
@@ -64,16 +64,17 @@ export default function CustomerCreditPage() {
   }, [customerId, page, searchTerm])
 
   const submitAdjustment = async (values: any) => {
-    const response = await adjustCustomerCredit({
+    const response = await recordCustomerAccountHistory({
       id: customerId,
       payLoad: {
-        amount: values.amount,
-        direction: values.direction,
-        reason: values.reason,
-        note: values.note || "",
+        general: {
+          operation: values.operation,
+          amount: values.amount,
+          description: values.description || "",
+        },
       },
     }).unwrap()
-    showToast.success(response?.message || "Credit adjusted successfully.")
+    showToast.success(response?.message || "Account history stored successfully.")
     setIsFormOpen(false)
     await loadLedger(customerId, 1, searchTerm, true)
   }
@@ -122,7 +123,7 @@ export default function CustomerCreditPage() {
       <DynamicTable
         data={rows}
         columns={columns}
-        tableTitle="Credit Ledger"
+        tableTitle="Account History"
         showSearch
         searchTerm={searchTerm}
         onFilterChange={handleFilterChange}
@@ -133,7 +134,7 @@ export default function CustomerCreditPage() {
         isLoading={ledgerState.isLoading}
         secondaryActionButton={
           <Button disabled={!customerId} onClick={() => setIsFormOpen(true)}>
-            Adjust Credit
+            Add History
           </Button>
         }
         hideActions
@@ -142,12 +143,11 @@ export default function CustomerCreditPage() {
       <DynamicForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title="Adjust Customer Credit"
+        title="Customer Account History"
         initialValues={{
           amount: "",
-          direction: "credit",
-          reason: "manual_adjustment",
-          note: "",
+          operation: "add",
+          description: "",
         }}
         fields={[
           {
@@ -159,22 +159,23 @@ export default function CustomerCreditPage() {
             prefix: "₹",
           },
           {
-            name: "direction",
-            label: "Direction",
+            name: "operation",
+            label: "Operation",
             type: "radio",
             required: true,
             options: [
-              { label: "Credit", value: "credit" },
-              { label: "Debit", value: "debit" },
+              { label: "Add", value: "add" },
+              { label: "Deduct", value: "deduct" },
+              { label: "Refund", value: "refund" },
+              { label: "Payment", value: "payment" },
             ],
           },
           {
-            name: "reason",
-            label: "Reason",
-            placeholder: "Enter reason",
+            name: "description",
+            label: "Description",
+            placeholder: "Enter description",
             required: true,
           },
-          { name: "note", label: "Note", type: "textarea", placeholder: "Enter note" },
         ]}
         onSubmit={submitAdjustment}
       />

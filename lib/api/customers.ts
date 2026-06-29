@@ -19,8 +19,16 @@ const endpointsConfig = {
   deleteCustomer: { query: deleteMutation("delete") },
   updateCustomerStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("status", payLoad) },
   getCustomerById: { query: ({ id }: { id: number }) => getMutation(`${id}`) },
+  searchCustomers: { query: postMutation("search") },
+  getRecentlyActiveCustomers: { query: ({ limit = 10 }: { limit?: number } = {}) => getMutation("recently-active", { limit }) },
+  getCustomerAddresses: { query: ({ id }: { id: any }) => getMutation(`${id}/addresses`) },
+  getCustomerGroup: { query: ({ id }: { id: any }) => getMutation(`${id}/group`) },
+  getCustomerCoupons: { query: ({ id }: { id: any }) => getMutation(`${id}/coupons`) },
+  getCustomerRewards: { query: ({ id }: { id: any }) => getMutation(`${id}/rewards`) },
   adjustCustomerCredit: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`${id}/credit-adjustment`)(payLoad) },
   getCustomerCreditLedger: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`${id}/credit-ledger`)(payLoad) },
+  getCustomerAccountHistory: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`${id}/account-history/get-transactions`)(payLoad) },
+  recordCustomerAccountHistory: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`${id}/crud/account-history`)(payLoad) },
   getCustomerOrderHistory: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`${id}/orders`)(payLoad) },
 
 
@@ -31,6 +39,8 @@ const endpointsConfig = {
   deleteCustomerGroup: { query: deleteMutation("groups/delete") },
   updateCustomerGroupStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("groups/status", payLoad) },
   getCustomerGroupById: { query: ({ id }: { id: number }) => getMutation(`groups/${id}`) },
+  getCustomerGroupCustomers: { query: ({ id }: { id: number }) => getMutation(`groups/${id}/customers`) },
+  transferCustomerGroupCustomers: { query: postMutation("groups/transfer-customers") },
 }
 
 export const customers = createApi({

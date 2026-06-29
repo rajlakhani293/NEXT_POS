@@ -137,7 +137,8 @@ export default function CustomerRewardsHistoryPage() {
           currentPage={1}
           itemsPerPage={balances.length || 10}
           totalItems={balances.length}
-          hideActions
+          showEdit
+          onEdit={(record: any) => router.push(`/customers/${id}/rewards/edit/${record.id}`)}
         />
       ) : (
         <DynamicTable
