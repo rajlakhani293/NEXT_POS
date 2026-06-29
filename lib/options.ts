@@ -40,8 +40,12 @@ const defaultOptions: OptionMap = {
   scale_barcode_product_length: 4,
   orders_code_type: "sequential",
   orders_allow_unpaid: false,
+  orders_allow_partial: false,
   orders_strict_instalments: false,
   orders_quotation_expiration: "7",
+  printing_document: "receipt",
+  printing_enabled_for: "only_paid_orders",
+  printing_gateway: "default",
   pos_tax_group: "",
   pos_tax_type: "exclusive",
 }
@@ -82,6 +86,7 @@ export function usePosOptions() {
       unit_price_editable: normalizeBoolOption(options.unit_price_editable, true),
       scale_barcode_enabled: normalizeBoolOption(options.scale_barcode_enabled),
       orders_allow_unpaid: normalizeBoolOption(options.orders_allow_unpaid),
+      orders_allow_partial: normalizeBoolOption(options.orders_allow_partial),
       orders_strict_instalments: normalizeBoolOption(options.orders_strict_instalments),
       currency_symbol: String(options.currency_symbol || "₹"),
       currency_iso: String(options.currency_iso || "INR"),
@@ -92,6 +97,9 @@ export function usePosOptions() {
       order_types: Array.isArray(options.order_types) ? options.order_types : ["takeaway", "delivery"],
       preferred_price: String(options.preferred_price || "net_prices"),
       pos_vat: String(options.pos_vat || "disabled"),
+      printing_document: String(options.printing_document || "receipt"),
+      printing_enabled_for: String(options.printing_enabled_for || "only_paid_orders"),
+      printing_gateway: String(options.printing_gateway || "default"),
     }
   }, [settings])
 }

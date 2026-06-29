@@ -107,8 +107,12 @@ interface BusinessSettings {
     scale_barcode_product_length?: number
     orders_code_type?: string
     orders_allow_unpaid?: boolean
+    orders_allow_partial?: boolean
     orders_strict_instalments?: boolean
     orders_quotation_expiration?: string
+    printing_document?: string
+    printing_enabled_for?: string
+    printing_gateway?: string
     pos_tax_group?: string
     pos_tax_type?: string
     pos_vat?: string

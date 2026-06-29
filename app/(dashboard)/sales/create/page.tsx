@@ -160,6 +160,7 @@ export default function SalesPage() {
   const posOptions = usePosOptions()
   const cashRegistersEnabled = posOptions.enable_cash_registers
   const ordersAllowUnpaid = posOptions.orders_allow_unpaid
+  const ordersAllowPartial = posOptions.orders_allow_partial
   const allowDecimalQuantities = posOptions.allow_decimal_quantities
   const showQuantity = posOptions.show_quantity
   const hideEmptyCategories = posOptions.hide_empty_categories
@@ -228,6 +229,10 @@ export default function SalesPage() {
   const [paymentsRows, setPaymentsRows] = useState<PaymentRow[]>([
     emptyPaymentRow(),
   ])
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
+  const [activePaymentType, setActivePaymentType] = useState("cash-payment")
+  const [paymentAmountInput, setPaymentAmountInput] = useState("")
+  const [showPaymentList, setShowPaymentList] = useState(false)
   const [isHeldCartDialogOpen, setIsHeldCartDialogOpen] = useState(false)
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false)
   const [isCouponsDialogOpen, setIsCouponsDialogOpen] = useState(false)
@@ -380,6 +385,18 @@ export default function SalesPage() {
   )
   const dueAmount = Math.max(subtotal - totalPaid, 0)
   const changeAmount = Math.max(totalPaid - subtotal, 0)
+  const estimatedPaymentStatus =
+    totalPaid >= subtotal && subtotal > 0
+      ? "paid"
+      : totalPaid > 0
+        ? "partially_paid"
+        : "unpaid"
+  const activePaymentLabel = useMemo(() => {
+    const payment = paymentTypeOptions.find(
+      (item: any) => (item.value || item.identifier) === activePaymentType
+    )
+    return payment?.label || activePaymentType || t("Payment")
+  }, [activePaymentType, paymentTypeOptions, t])
 
   const loadShift = async () => {
     if (!cashRegistersEnabled) {
@@ -471,6 +488,12 @@ export default function SalesPage() {
     })
     setSelectedCouponId("")
   }, [couponOptions, selectedCouponId])
+
+  useEffect(() => {
+    if (activePaymentType || !paymentTypeOptions.length) return
+    const firstPayment = paymentTypeOptions[0]
+    setActivePaymentType(firstPayment.value || firstPayment.identifier || "cash-payment")
+  }, [activePaymentType, paymentTypeOptions])
 
   const drillIntoCategory = useCallback((category: POSCategory) => {
     setGridBreadcrumbs((prev) => [...prev, category])
@@ -1010,7 +1033,19 @@ export default function SalesPage() {
     await refreshHeldSales()
   }
 
-  const handleCompleteSale = async () => {
+  const shouldOpenReceipt = (paymentStatus: string) => {
+    if (posOptions.printing_enabled_for === "disabled") return false
+    if (posOptions.printing_enabled_for === "all_orders") return true
+    if (
+      posOptions.printing_enabled_for === "partially_paid_orders" &&
+      ["paid", "partially_paid"].includes(paymentStatus)
+    ) {
+      return true
+    }
+    return posOptions.printing_enabled_for === "only_paid_orders" && paymentStatus === "paid"
+  }
+
+  const handleCompleteSale = async (submitOptions: { paymentStatus?: string } = {}) => {
     if (cashRegistersEnabled && !shift?.id) {
       showToast.error("Open shift is required before billing.")
       return
@@ -1019,8 +1054,18 @@ export default function SalesPage() {
       showToast.error("Add at least one product to cart.")
       return
     }
-    if (ordersAllowUnpaid === false && totalPaid < subtotal) {
+    const requestedPaymentStatus = submitOptions.paymentStatus || estimatedPaymentStatus
+    if (
+      totalPaid < subtotal &&
+      requestedPaymentStatus !== "unpaid" &&
+      ordersAllowUnpaid === false &&
+      ordersAllowPartial === false
+    ) {
       showToast.error(`${t("Unpaid or partially paid orders are not allowed.")} ${t("Total paid")} (${formatMoney(totalPaid)}) ${t("is less than subtotal")} (${formatMoney(subtotal)}).`)
+      return
+    }
+    if (requestedPaymentStatus === "unpaid" && !ordersAllowUnpaid) {
+      showToast.error(t("Unpaid orders are not allowed."))
       return
     }
     const validPayments = paymentsRows.filter((row) => money(row.amount) > 0)
@@ -1031,6 +1076,7 @@ export default function SalesPage() {
       order_type: activeOrderType,
       note: saleNote,
       coupon_codes: couponCodes,
+      payment_status: requestedPaymentStatus,
       discount_amount: cartDiscountType === "flat" ? String(money(cartDiscountVal)) : "0",
       discount_percentage: cartDiscountType === "percentage" ? String(money(cartDiscountVal)) : "0",
       items: cartItems.map((item) => ({
@@ -1057,9 +1103,11 @@ export default function SalesPage() {
     const sale = response?.data
     showToast.success(response?.message || "Sale created successfully.")
     resetSaleForm()
+    setIsPaymentDialogOpen(false)
     await loadShift()
     if (sale?.id) {
-      router.push(`/sales/${sale.id}`)
+      const paymentStatus = sale.payment_status || requestedPaymentStatus
+      router.push(shouldOpenReceipt(paymentStatus) ? `/sales/${sale.id}/receipt` : `/sales/${sale.id}`)
     }
   }
 
@@ -1082,6 +1130,55 @@ export default function SalesPage() {
 
   const addPaymentRow = () => {
     setPaymentsRows((current) => [...current, emptyPaymentRow()])
+  }
+
+  const addPaymentFromPopup = (amount: number) => {
+    if (!amount || amount <= 0) {
+      showToast.error(t("Please provide a valid payment amount."))
+      return
+    }
+    setPaymentsRows((current) => {
+      const emptyIndex = current.findIndex((row) => !row.amount || money(row.amount) === 0)
+      if (emptyIndex >= 0) {
+        return current.map((row, index) =>
+          index === emptyIndex
+            ? { ...row, payment_type: activePaymentType, amount: amount.toFixed(2) }
+            : row
+        )
+      }
+      return [
+        ...current,
+        {
+          ...emptyPaymentRow(),
+          payment_type: activePaymentType,
+          amount: amount.toFixed(2),
+        },
+      ]
+    })
+    setPaymentAmountInput("")
+    setShowPaymentList(true)
+  }
+
+  const makeFullPaymentFromPopup = () => {
+    const remaining = Math.max(subtotal - totalPaid, 0)
+    if (!remaining) {
+      handleCompleteSale()
+      return
+    }
+    addPaymentFromPopup(remaining)
+  }
+
+  const handleOpenPaymentDialog = () => {
+    if (!cartItems.length) {
+      showToast.error("Add at least one product to cart.")
+      return
+    }
+    setIsPaymentDialogOpen(true)
+    setShowPaymentList(false)
+    const firstPayment = paymentTypeOptions[0]
+    if (!activePaymentType && firstPayment) {
+      setActivePaymentType(firstPayment.value || firstPayment.identifier || "cash-payment")
+    }
   }
 
   const removePaymentRow = (rowId: string) => {
@@ -1803,7 +1900,7 @@ export default function SalesPage() {
               <button
                 type="button"
                 disabled={!cartItems.length || isCreatingSale}
-                onClick={handleCompleteSale}
+                onClick={handleOpenPaymentDialog}
                 className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-green-600 px-2 py-2 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <CreditCard className="size-5" />
@@ -1886,6 +1983,253 @@ export default function SalesPage() {
                   <Spinner />
                 </div>
               ) : null}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent className="h-[92vh] max-w-6xl overflow-hidden p-0">
+          <div className="flex h-full flex-col overflow-hidden lg:flex-row">
+            <div className="flex w-full shrink-0 items-center justify-between border-b bg-gray-50 px-3 py-2 lg:h-full lg:w-60 lg:flex-col lg:items-stretch lg:border-b-0 lg:border-r">
+              <h3 className="text-lg font-bold">
+                {t("Gateway")}
+                {activePaymentLabel ? `: ${activePaymentLabel}` : ""}
+              </h3>
+              <div className="hidden flex-1 py-4 lg:block">
+                {paymentTypeOptions.length ? (
+                  <ul className="space-y-1">
+                    {paymentTypeOptions.map((payment: any) => {
+                      const identifier = payment.value || payment.identifier
+                      return (
+                        <li key={identifier}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActivePaymentType(identifier)
+                              setShowPaymentList(false)
+                            }}
+                            className={[
+                              "w-full rounded px-3 py-2 text-left text-sm font-semibold hover:bg-white",
+                              activePaymentType === identifier && !showPaymentList
+                                ? "bg-white text-blue-700 shadow-sm"
+                                : "text-gray-700",
+                            ].join(" ")}
+                          >
+                            {payment.label}
+                          </button>
+                        </li>
+                      )
+                    })}
+                    <li className="border-t pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowPaymentList(true)}
+                        className={[
+                          "flex w-full items-center justify-between rounded px-3 py-2 text-left text-sm font-semibold hover:bg-white",
+                          showPaymentList ? "bg-white text-blue-700 shadow-sm" : "text-gray-700",
+                        ].join(" ")}
+                      >
+                        <span>{t("Payment List")}</span>
+                        <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-blue-600 px-2 text-xs text-white">
+                          {paymentsRows.filter((row) => money(row.amount) > 0).length}
+                        </span>
+                      </button>
+                    </li>
+                  </ul>
+                ) : null}
+              </div>
+              <Button variant="ghost" onClick={() => setIsPaymentDialogOpen(false)}>
+                {t("Close")}
+              </Button>
+            </div>
+
+            <div className="flex min-h-0 flex-auto flex-col overflow-hidden">
+              <div className="flex items-center justify-between border-b px-4 py-3">
+                <h3 className="text-xl font-bold">
+                  {showPaymentList ? t("List Of Payments") : activePaymentLabel}
+                </h3>
+                <div className="lg:hidden">
+                  <UniFieldSelect
+                    value={showPaymentList ? "payment-list" : activePaymentType}
+                    onValueChange={(value) => {
+                      if (value === "payment-list") {
+                        setShowPaymentList(true)
+                      } else {
+                        setActivePaymentType(value)
+                        setShowPaymentList(false)
+                      }
+                    }}
+                    placeholder={t("Payment Type")}
+                  >
+                    {paymentTypeOptions.map((payment: any) => (
+                      <SelectItem
+                        key={payment.value || payment.identifier}
+                        value={payment.value || payment.identifier}
+                      >
+                        {payment.label}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="payment-list">{t("Payment List")}</SelectItem>
+                  </UniFieldSelect>
+                </div>
+              </div>
+
+              {!paymentTypeOptions.length ? (
+                <div className="flex flex-auto items-center justify-center p-6 text-center">
+                  <div>
+                    <h3 className="text-3xl font-bold">{t("Unable to Proceed")}</h3>
+                    <p className="mt-2 text-sm text-gray-500">
+                      {t("Your system doesn't have any valid Payment Type. Consider creating one and try again.")}
+                    </p>
+                  </div>
+                </div>
+              ) : showPaymentList ? (
+                <div className="flex-auto overflow-y-auto p-4">
+                  <h3 className="py-2 text-center font-bold">{t("List Of Payments")}</h3>
+                  <ul className="space-y-2">
+                    {paymentsRows.filter((row) => money(row.amount) > 0).length ? (
+                      paymentsRows
+                        .filter((row) => money(row.amount) > 0)
+                        .map((row) => (
+                          <li
+                            key={row.id}
+                            className="flex items-center justify-between rounded border border-gray-100 bg-gray-50 p-3"
+                          >
+                            <span className="font-semibold">
+                              {
+                                paymentTypeOptions.find(
+                                  (payment: any) =>
+                                    (payment.value || payment.identifier) === row.payment_type
+                                )?.label || row.payment_type
+                              }
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span>{formatMoney(row.amount)}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="text-red-500 hover:text-red-600"
+                                onClick={() => removePaymentRow(row.id)}
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </div>
+                          </li>
+                        ))
+                    ) : (
+                      <li className="p-2 text-center font-semibold">
+                        {t("No Payment added.")}
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              ) : (
+                <div className="flex-auto overflow-y-auto p-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex h-16 items-center justify-between border bg-blue-50 p-2 text-xl font-bold text-blue-950">
+                      <span>{t("Total")}:</span>
+                      <span>{formatMoney(subtotal)}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={openCartDiscountDialog}
+                      className="flex h-16 items-center justify-between border bg-red-50 p-2 text-xl font-bold text-red-700"
+                    >
+                      <span>{t("Discount")}:</span>
+                      <span>{formatMoney(cartDiscount)}</span>
+                    </button>
+                    <div className="flex h-16 items-center justify-between border bg-green-50 p-2 text-xl font-bold text-green-700">
+                      <span>{t("Paid")}:</span>
+                      <span>{formatMoney(totalPaid)}</span>
+                    </div>
+                    <div className="flex h-16 items-center justify-between border bg-amber-50 p-2 text-xl font-bold text-amber-700">
+                      <span>{t("Change")}:</span>
+                      <span>{formatMoney(changeAmount)}</span>
+                    </div>
+                    <div className="col-span-2 flex h-16 items-center justify-between border bg-gray-50 p-2 text-xl font-bold">
+                      <span>{t("Screen")}:</span>
+                      <span>{formatMoney(paymentAmountInput || 0)}</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-[1fr_180px]">
+                    <UniFieldInput
+                      label={t("Amount")}
+                      value={paymentAmountInput}
+                      onChange={(event) => setPaymentAmountInput(event.target.value)}
+                      type="number"
+                      min="0"
+                      prefix={posOptions.currency_symbol}
+                    />
+                    <div className="flex items-end">
+                      <Button
+                        type="button"
+                        className="w-full"
+                        onClick={() => addPaymentFromPopup(money(paymentAmountInput))}
+                      >
+                        {t("Add Payment")}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+                    {[5, 10, 20, 50].map((amount) => (
+                      <Button
+                        key={amount}
+                        type="button"
+                        variant="outline"
+                        onClick={() =>
+                          setPaymentAmountInput(String(money(paymentAmountInput) + amount))
+                        }
+                      >
+                        {formatMoney(amount)}
+                      </Button>
+                    ))}
+                    <Button
+                      type="button"
+                      className="col-span-2 md:col-span-4"
+                      onClick={makeFullPaymentFromPopup}
+                    >
+                      {t("Full Payment")}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap justify-end gap-2 border-t p-3">
+                {totalPaid >= subtotal ? (
+                  <Button onClick={() => handleCompleteSale()} disabled={isCreatingSale}>
+                    {isCreatingSale ? <Spinner /> : t("Submit Payment")}
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleCompleteSale({ paymentStatus: "unpaid" })}
+                      disabled={isCreatingSale || (!ordersAllowUnpaid && !ordersAllowPartial)}
+                    >
+                      {totalPaid === 0
+                        ? `${t("Layaway")} - ${formatMoney(subtotal)}`
+                        : t("Update")}
+                    </Button>
+                    {totalPaid === 0 ? (
+                      <Button
+                        variant="outline"
+                        onClick={() => handleCompleteSale({ paymentStatus: "unpaid" })}
+                        disabled={isCreatingSale || !ordersAllowUnpaid}
+                      >
+                        {t("Save As Unpaid")}
+                      </Button>
+                    ) : null}
+                  </>
+                )}
+                <Button variant="outline" onClick={() => setShowPaymentList(true)}>
+                  {t("Payment List")}
+                  <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs text-white">
+                    {paymentsRows.filter((row) => money(row.amount) > 0).length}
+                  </span>
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
