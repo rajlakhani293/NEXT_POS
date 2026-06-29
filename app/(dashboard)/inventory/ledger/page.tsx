@@ -10,24 +10,14 @@ const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
 const columns = [
   { key: "product_name", title: "Product" },
-  {
-    key: "entry_type",
-    title: "Entry Type",
-    render: (value: string) => String(value || "-").replaceAll("_", " "),
-  },
+  { key: "procurement_name", title: "Procurement" },
+  { key: "order_code", title: "Order" },
+  { key: "operation_type", title: "Operation Type", render: (value: string) => String(value || "-").replaceAll("-", " ") },
+  { key: "unit_name", title: "Unit" },
+  { key: "before_quantity", title: "Initial Quantity" },
   { key: "quantity", title: "Quantity" },
-  { key: "unit_cost", title: "Unit Cost", render: formatMoney },
-  { key: "balance_after", title: "Balance After" },
-  {
-    key: "reference_type",
-    title: "Reference",
-    render: (value: string, record: any) =>
-      value === "sale_order"
-        ? `Sale #${record.reference_id}`
-        : value === "purchase_order"
-          ? `Procurement #${record.reference_id}`
-          : `History #${record.reference_id}`,
-  },
+  { key: "after_quantity", title: "New Quantity" },
+  { key: "total_price", title: "Total Price", render: formatMoney },
   { key: "user_username", title: "Author" },
   {
     key: "created_at",

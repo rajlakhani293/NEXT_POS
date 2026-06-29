@@ -47,6 +47,8 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/inventory/units", permission: PERMISSIONS.products.view },
   { path: "/inventory/adjustments", permission: PERMISSIONS.inventory.view },
   { path: "/inventory/ledger", permission: PERMISSIONS.inventory.view },
+  { path: "/products/stock-adjustment", permission: PERMISSIONS.inventory.adjust },
+  { path: "/products/stock-flow-records", permission: PERMISSIONS.inventory.view },
   { path: "/settings/company", permission: PERMISSIONS.settings.view },
   { path: "/settings/business", permission: PERMISSIONS.settings.view },
   { path: "/settings/accounting/accounts", permission: PERMISSIONS.reports.view },
