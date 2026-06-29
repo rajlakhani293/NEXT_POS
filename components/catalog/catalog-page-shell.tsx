@@ -7,6 +7,7 @@ import { PermissionGuard } from "@/components/permission-guard"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/permissions"
 import { useTableData } from "@/hooks/useTableData"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 type CatalogPageShellProps = {
   tableTitle: string
@@ -50,9 +51,14 @@ export function CatalogPageShell({
   const [deleteRecord] = deleteHook()
   const [updateStatus] = statusHook()
   const { hasPermission } = usePermissions()
+  const { t } = useTranslation()
   const canCreate = hasPermission(permissions.create)
   const canUpdate = hasPermission(permissions.update)
   const canDelete = hasPermission(permissions.delete)
+  const translatedColumns = columns.map((column) => ({
+    ...column,
+    title: t(column.title),
+  }))
 
   const {
     orders,
@@ -95,9 +101,9 @@ export function CatalogPageShell({
       <div className="h-full space-y-4">
         <DynamicTable
           data={orders}
-          columns={columns}
-          tableTitle={tableTitle}
-          title={canCreate ? addTitle : undefined}
+          columns={translatedColumns}
+          tableTitle={t(tableTitle)}
+          title={canCreate ? t(addTitle) : undefined}
           showSearch
           searchTerm={searchTerm}
           currentPage={currentPage}
@@ -119,8 +125,8 @@ export function CatalogPageShell({
             updateStatus({ payLoad: { ids, status } })
           }
           triggerRefresh={triggerRefresh}
-          deleteModalTitle={deleteTitle}
-          deleteModalDescription={deleteDescription}
+          deleteModalTitle={t(deleteTitle)}
+          deleteModalDescription={t(deleteDescription)}
           showDateRange={showDateRange}
           selectedDateRange={selectedDateRange}
           dateFilters={dateFilters}

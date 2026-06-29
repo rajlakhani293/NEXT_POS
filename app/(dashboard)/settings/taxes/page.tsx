@@ -19,15 +19,15 @@ const columns = [
 export default function TaxesPage() {
   return (
     <CatalogPageShell
-      tableTitle="Taxes"
-      addTitle="Add Tax"
+      tableTitle="Taxes List"
+      addTitle="Add a new tax"
       columns={columns}
       getDataHook={(catalog as any).useGetTaxesDataMutation}
       deleteHook={(catalog as any).useDeleteTaxMutation}
       statusHook={(catalog as any).useUpdateTaxStatusMutation}
       FormComponent={TaxForm}
       deleteTitle="Delete Tax"
-      deleteDescription="Are you sure you want to delete this tax?"
+      deleteDescription="Would you like to delete this tax?"
     />
   )
 }

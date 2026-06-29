@@ -8,14 +8,14 @@ const fields = [
     name: "name",
     label: "Name",
     type: "text",
-    placeholder: "Enter tax group name",
+    placeholder: "Provide a name to the resource.",
     required: true,
   },
   {
     name: "description",
     label: "Description",
     type: "textarea",
-    placeholder: "Enter description",
+    placeholder: "Provide a short description to the tax group.",
     rows: 3,
   },
 ]

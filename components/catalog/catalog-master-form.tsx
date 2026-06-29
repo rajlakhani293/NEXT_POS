@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 
 import DynamicForm from "@/components/DynamicForm"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { showToast } from "@/lib/toast"
 
 type CatalogMasterFormProps = {
@@ -37,6 +38,7 @@ export function CatalogMasterForm({
   const [createRecord] = createHook()
   const [editRecord] = editHook()
   const [getRecordById, { data, isLoading }] = getByIdHook()
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (isOpen && editId) {
@@ -64,6 +66,12 @@ export function CatalogMasterForm({
   const formValues = normalizeValues(
     editId && record ? { ...initialValues, ...record } : initialValues
   )
+  const translatedFields = fields.map((field) => ({
+    ...field,
+    label: field.label ? t(field.label) : field.label,
+    placeholder: field.placeholder ? t(field.placeholder) : field.placeholder,
+    description: field.description ? t(field.description) : field.description,
+  }))
 
   const handleSubmit = async (values: Record<string, any>) => {
     const payLoad = buildPayload ? buildPayload(values) : values
@@ -71,12 +79,12 @@ export function CatalogMasterForm({
     if (editId) {
       const response = await editRecord({ id: editId, payLoad }).unwrap()
       showToast.success(
-        response?.message || `${entityName} updated successfully.`
+        response?.message || t(`${entityName} updated successfully.`)
       )
     } else {
       const response = await createRecord(payLoad).unwrap()
       showToast.success(
-        response?.message || `${entityName} created successfully.`
+        response?.message || t(`${entityName} created successfully.`)
       )
     }
 
@@ -87,12 +95,12 @@ export function CatalogMasterForm({
   return (
     <DynamicForm
       key={editId || `create-${entityName}`}
-      fields={fields}
+      fields={translatedFields}
       initialValues={formValues}
       onSubmit={handleSubmit}
       onClose={onClose}
       onSuccess={onSuccess}
-      title={editId ? `Edit ${entityName}` : `Create ${entityName}`}
+      title={editId ? t(`Edit ${entityName}`) : t(`Create ${entityName}`)}
       isOpen={isOpen}
       formWidth={formWidth}
       isLoading={Boolean(editId) && isLoading}

@@ -17,15 +17,15 @@ const columns = [
 export default function TaxGroupsPage() {
   return (
     <CatalogPageShell
-      tableTitle="Tax Groups"
-      addTitle="Add Tax Group"
+      tableTitle="Taxes Groups List"
+      addTitle="Add a new tax group"
       columns={columns}
       getDataHook={(catalog as any).useGetTaxGroupsDataMutation}
       deleteHook={(catalog as any).useDeleteTaxGroupMutation}
       statusHook={(catalog as any).useUpdateTaxGroupStatusMutation}
       FormComponent={TaxGroupForm}
       deleteTitle="Delete Tax Group"
-      deleteDescription="Are you sure you want to delete this tax group?"
+      deleteDescription="Would you like to delete this tax group?"
     />
   )
 }
