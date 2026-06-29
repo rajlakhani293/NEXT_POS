@@ -89,6 +89,11 @@ type POSUnitQuantity = {
   quantity: number
 }
 
+type PendingCartProduct = {
+  product: POSProduct | any
+  unitQuantity?: POSUnitQuantity | any
+}
+
 type POSProduct = {
   id: number
   name: string
@@ -96,6 +101,7 @@ type POSProduct = {
   pinned?: boolean
   stock_management?: string
   type?: string
+  accurate_tracking?: boolean | number
   unit_id?: number
   unit_name?: string
   galleries?: { id: number; url: string; featured: boolean }[]
@@ -213,6 +219,10 @@ export default function SalesPage() {
   const [visibleSection, setVisibleSection] = useState<"both" | "cart" | "grid">("both")
   const [unitPickerProduct, setUnitPickerProduct] = useState<POSProduct | null>(null)
   const [isUnitPickerOpen, setIsUnitPickerOpen] = useState(false)
+  const [pendingCartProduct, setPendingCartProduct] = useState<PendingCartProduct | null>(null)
+  const [quantityInput, setQuantityInput] = useState("1")
+  const [priceEditItem, setPriceEditItem] = useState<CartItem | null>(null)
+  const [priceInput, setPriceInput] = useState("")
   const barcodeInputRef = useRef<HTMLInputElement>(null)
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [paymentsRows, setPaymentsRows] = useState<PaymentRow[]>([
@@ -562,6 +572,45 @@ export default function SalesPage() {
     showToast.success(response?.message || "Cash movement recorded.")
   }
 
+  const getCartStockUsage = (productId: number | string, unitQuantityId?: number | string) =>
+    cartItems.reduce((total, item) => {
+      if (
+        item.product_id === String(productId) &&
+        (item.unit_quantity_id || "") === (unitQuantityId ? String(unitQuantityId) : "")
+      ) {
+        return total + Number(item.qty || 0)
+      }
+      return total
+    }, 0)
+
+  const validateProductQuantity = (
+    product: POSProduct | any,
+    unitQuantity: POSUnitQuantity | any,
+    quantity: number
+  ) => {
+    if (!quantity || quantity <= 0) {
+      showToast.error(t("Please provide a quantity"))
+      return false
+    }
+
+    const stockManaged =
+      product.stock_management !== "disabled" && product.type !== "dematerialized"
+    if (!stockManaged || !unitQuantity?.id) return true
+
+    const holdQuantity = getCartStockUsage(product.id, unitQuantity.id)
+    const remaining = Number(unitQuantity.quantity || 0) - holdQuantity
+    if (quantity > remaining) {
+      showToast.error(
+        t("Unable to add the product, there is not enough stock. Remaining %s").replace(
+          "%s",
+          String(Math.max(remaining, 0))
+        )
+      )
+      return false
+    }
+    return true
+  }
+
   const addProductToCart = (product: POSProduct | any, unitQuantity?: POSUnitQuantity | any, initialQty = 1) => {
     if (!product) return false
     const stockManaged =
@@ -571,6 +620,7 @@ export default function SalesPage() {
       showToast.error("Select a selling unit before adding this product.")
       return false
     }
+    if (!validateProductQuantity(product, unitQuantity, initialQty)) return false
 
     const price = getDisplayPrice(unitQuantity)
     const availableStock = Number(unitQuantity?.quantity || 0)
@@ -623,17 +673,40 @@ export default function SalesPage() {
   const handleGridProductClick = (product: POSProduct) => {
     const unitQuantities = product.unit_quantities || []
     if (unitQuantities.length === 0) {
-      // No unit quantities — add directly with price 0
-      addProductToCart(product, undefined)
+      openQuantityDialog(product, undefined)
       return
     }
     if (unitQuantities.length === 1) {
-      addProductToCart(product, unitQuantities[0])
+      openQuantityDialog(product, unitQuantities[0])
       return
     }
     // Multiple units — open picker
     setUnitPickerProduct(product)
     setIsUnitPickerOpen(true)
+  }
+
+  const openQuantityDialog = (product: POSProduct | any, unitQuantity?: POSUnitQuantity | any, initialQty = 1) => {
+    if (!showQuantity) {
+      const added = addProductToCart(product, unitQuantity, initialQty)
+      if (added) showToast.success(`${product.name} added to cart.`)
+      return
+    }
+    setPendingCartProduct({ product, unitQuantity })
+    setQuantityInput(String(initialQty || product.quantity || 1))
+  }
+
+  const handleConfirmQuantity = () => {
+    if (!pendingCartProduct) return
+    const quantity = Number(quantityInput || 0)
+    const added = addProductToCart(
+      pendingCartProduct.product,
+      pendingCartProduct.unitQuantity,
+      quantity
+    )
+    if (!added) return
+    showToast.success(`${pendingCartProduct.product.name} added to cart.`)
+    setPendingCartProduct(null)
+    setQuantityInput("1")
   }
 
   const handleBarcodeSearch = async () => {
@@ -674,6 +747,13 @@ export default function SalesPage() {
   }
 
   const handleProductSearchPick = async (product: POSProduct | any) => {
+    if (Number(product.accurate_tracking || 0) === 1) {
+      showToast.error(
+        t("The product \"{product}\" can't be added from a search field, as \"Accurate Tracking\" is enabled. Would you like to learn more ?")
+          .replace("{product}", product.name)
+      )
+      return
+    }
     const response = await getProductById({ id: product.id }).unwrap()
     const fullProduct = response?.data || product
     setIsProductSearchOpen(false)
@@ -736,6 +816,24 @@ export default function SalesPage() {
       })
     )
     setActiveDiscountItem(null)
+  }
+
+  const openPriceEditDialog = (item: CartItem) => {
+    if (!posOptions.unit_price_editable) return
+    setPriceEditItem(item)
+    setPriceInput(String(item.price || ""))
+  }
+
+  const handleApplyProductPrice = () => {
+    if (!priceEditItem) return
+    const price = Math.max(Number(priceInput || 0), 0)
+    setCartItems((items) =>
+      items.map((item) =>
+        item.line_id === priceEditItem.line_id ? { ...item, price } : item
+      )
+    )
+    setPriceEditItem(null)
+    setPriceInput("")
   }
 
   const openCartDiscountDialog = () => {
@@ -1467,7 +1565,16 @@ export default function SalesPage() {
                         <Plus className="size-4" />
                       </Button>
                     </div>
-                    <span>{formatMoney(item.price)}</span>
+                    <button
+                      type="button"
+                      onClick={() => openPriceEditDialog(item)}
+                      className={[
+                        "text-left font-semibold",
+                        posOptions.unit_price_editable ? "cursor-pointer border-b border-dashed border-blue-300 text-blue-700" : "cursor-default",
+                      ].join(" ")}
+                    >
+                      {formatMoney(item.price)}
+                    </button>
                     <span>{formatMoney(item.qty * item.price - getCartItemDiscount(item))}</span>
                     <Button
                       type="button"
@@ -2017,19 +2124,128 @@ export default function SalesPage() {
               <button
                 key={uq.id}
                 onClick={() => {
-                  if (unitPickerProduct) {
-                    addProductToCart(unitPickerProduct, uq)
-                  }
                   setIsUnitPickerOpen(false)
                   setUnitPickerProduct(null)
+                  if (unitPickerProduct) {
+                    openQuantityDialog(unitPickerProduct, uq)
+                  }
                 }}
                 className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold hover:border-blue-400 hover:bg-blue-50 transition"
               >
                 <span>{uq.unit_name || uq.unit_short_name || uq.unit_identifier || `Unit ${uq.id}`}</span>
-                <span className="text-blue-600">{formatMoney(uq.sale_price)}</span>
+                <span className="text-blue-600">{formatMoney(getDisplayPrice(uq))}</span>
               </button>
             ))}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(pendingCartProduct)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingCartProduct(null)
+            setQuantityInput("1")
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Define Quantity")}</DialogTitle>
+            <DialogDescription>
+              {pendingCartProduct?.product?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex h-24 items-center justify-center rounded bg-blue-50 text-3xl font-bold text-blue-950">
+              {quantityInput || "0"}
+            </div>
+            <UniFieldInput
+              label={t("Quantity")}
+              value={quantityInput}
+              onChange={(event) => setQuantityInput(event.target.value)}
+              type="number"
+              step={allowDecimalQuantities ? "0.01" : "1"}
+              min="0"
+            />
+            {pendingCartProduct?.unitQuantity ? (
+              <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm font-medium text-gray-700">
+                <div className="flex justify-between">
+                  <span>{t("Unit")}</span>
+                  <span>
+                    {pendingCartProduct.unitQuantity.unit_name ||
+                      pendingCartProduct.unitQuantity.unit_short_name ||
+                      pendingCartProduct.unitQuantity.unit_identifier ||
+                      `Unit ${pendingCartProduct.unitQuantity.id}`}
+                  </span>
+                </div>
+                <div className="mt-2 flex justify-between">
+                  <span>{t("Available")}</span>
+                  <span>{pendingCartProduct.unitQuantity.quantity}</span>
+                </div>
+              </div>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPendingCartProduct(null)
+                setQuantityInput("1")
+              }}
+            >
+              {t("Cancel")}
+            </Button>
+            <Button onClick={handleConfirmQuantity}>
+              {t("Apply")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(priceEditItem)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPriceEditItem(null)
+            setPriceInput("")
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Product Price")}</DialogTitle>
+            <DialogDescription>
+              {priceEditItem?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex h-16 items-center justify-center rounded bg-blue-50 text-2xl font-bold text-blue-950">
+              {formatMoney(priceInput || priceEditItem?.price || 0)}
+            </div>
+            <UniFieldInput
+              label={t("Price")}
+              value={priceInput}
+              onChange={(event) => setPriceInput(event.target.value)}
+              type="number"
+              min="0"
+              prefix={posOptions.currency_symbol}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPriceEditItem(null)
+                setPriceInput("")
+              }}
+            >
+              {t("Cancel")}
+            </Button>
+            <Button onClick={handleApplyProductPrice}>
+              {t("Apply")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
