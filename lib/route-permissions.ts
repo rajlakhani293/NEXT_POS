@@ -54,6 +54,10 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/users/create", permission: PERMISSIONS.users.create },
   { path: "/users/edit", permission: PERMISSIONS.users.update },
   { path: "/users/profile", permission: PERMISSIONS.special.manageProfile },
+  { path: "/users/roles/permissions-manager", permission: PERMISSIONS.roles.update },
+  { path: "/users/roles/create", permission: PERMISSIONS.roles.create },
+  { path: "/users/roles/edit", permission: PERMISSIONS.roles.update },
+  { path: "/users/roles", permission: PERMISSIONS.roles.view },
   { path: "/users", permission: PERMISSIONS.users.view },
   { path: "/taxes/groups/create", permission: PERMISSIONS.products.create },
   { path: "/taxes/groups/edit", permission: PERMISSIONS.products.update },
@@ -92,6 +96,16 @@ export function resolveRoutePermission(
 
   const roleEditMatch = pathname.match(/^\/settings\/roles\/([^/]+)$/)
   if (roleEditMatch && roleEditMatch[1] !== "create") {
+    return { permission: PERMISSIONS.roles.update }
+  }
+
+  const sourceRoleEditMatch = pathname.match(/^\/users\/roles\/edit\/([^/]+)$/)
+  if (sourceRoleEditMatch) {
+    return { permission: PERMISSIONS.roles.update }
+  }
+
+  const sourceRoleCreateMatch = pathname.match(/^\/users\/roles\/([^/]+)$/)
+  if (sourceRoleCreateMatch && sourceRoleCreateMatch[1] !== "create") {
     return { permission: PERMISSIONS.roles.update }
   }
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, usePathname, useRouter } from "next/navigation"
 import {
   ArrowLeft,
   BadgeCheck,
@@ -33,6 +33,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { settings } from "@/lib/api/settings"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
@@ -224,9 +225,12 @@ function buildPermissionRows(permissions: PermissionItem[], moduleKeys: string[]
 
 export default function RoleFormPage() {
   const router = useRouter()
+  const pathname = usePathname()
+  const { t } = useTranslation()
   const params = useParams()
   const id = params.id as string
   const isEdit = id !== "create"
+  const rolesListPath = pathname.startsWith("/users/roles") ? "/users/roles" : "/settings/roles"
 
   const [values, setValues] = useState<RoleFormValues>(initialValues)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -462,13 +466,13 @@ export default function RoleFormPage() {
 
   const validate = () => {
     const nextErrors: Record<string, string> = {}
-    if (!values.name.trim()) nextErrors.name = "Role name is required"
-    if (!values.namespace.trim()) nextErrors.namespace = "Namespace is required"
+    if (!values.name.trim()) nextErrors.name = t("Name is required")
+    if (!values.namespace.trim()) nextErrors.namespace = t("Namespace is required")
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
 
-  const goBack = () => router.push("/settings/roles")
+  const goBack = () => router.push(rolesListPath)
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -485,10 +489,10 @@ export default function RoleFormPage() {
     try {
       if (isEdit) {
         const response = await editRole({ id, payLoad }).unwrap()
-        showToast.success(response?.message || "Role updated successfully.")
+        showToast.success(response?.message || t("Role updated successfully."))
       } else {
         const response = await createRole(payLoad).unwrap()
-        showToast.success(response?.message || "Role created successfully.")
+        showToast.success(response?.message || t("Role created successfully."))
       }
       goBack()
     } finally {
@@ -504,21 +508,21 @@ export default function RoleFormPage() {
             <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
               <tr>
                 <th className="w-[280px] border-b border-r px-4 py-4 text-left font-bold">
-                  Title
+                  {t("Title")}
                 </th>
                 <th className="border-b border-r px-4 py-4 text-center font-bold">
-                  Full
+                  {t("Full")}
                 </th>
                 {actionColumns.map((column) => (
                   <th
                     key={column.key}
                     className="border-b border-r px-4 py-4 text-center font-bold"
                   >
-                    {column.label}
+                    {t(column.label)}
                   </th>
                 ))}
                 <th className="border-b px-4 py-4 text-left font-bold">
-                  Other
+                  {t("Other")}
                 </th>
               </tr>
             </thead>
@@ -532,10 +536,10 @@ export default function RoleFormPage() {
                 return (
                   <tr key={row.key} className="border-b last:border-b-0">
                     <td className="border-r px-4 py-4">
-                      <div className="font-semibold text-gray-900">{row.title}</div>
+                      <div className="font-semibold text-gray-900">{t(row.title)}</div>
                       <div className="mt-0.5 text-xs text-muted-foreground">
-                        {row.permissions.length} permission
-                        {row.permissions.length === 1 ? "" : "s"}
+                        {row.permissions.length}{" "}
+                        {row.permissions.length === 1 ? t("permission") : t("permissions")}
                       </div>
                     </td>
                     <td className="border-r px-4 py-4 text-center">
@@ -575,7 +579,7 @@ export default function RoleFormPage() {
                               size="sm"
                               className="h-8 text-xs font-semibold"
                             >
-                              More actions
+                              {t("More actions")}
                               <span className="ml-1 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-600">
                                 {row.other.length}
                               </span>
@@ -583,7 +587,7 @@ export default function RoleFormPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-72">
                             <DropdownMenuLabel className="text-xs text-muted-foreground">
-                              {row.title} actions
+                              {t(row.title)} {t("actions")}
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             {row.other.map((permission) => {
@@ -596,7 +600,7 @@ export default function RoleFormPage() {
                                   className="cursor-pointer gap-3 text-sm"
                                 >
                                   <Checkbox checked={checked} />
-                                  <span>{permission.name || titleCase(permission.codename)}</span>
+                                  <span>{t(permission.name || titleCase(permission.codename))}</span>
                                 </DropdownMenuItem>
                               )
                             })}
@@ -627,15 +631,17 @@ export default function RoleFormPage() {
               <ArrowLeft className="size-4" />
             </Button>
             <div>
-              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{isEdit ? "Edit Role" : "Create Role"}</h1>
+              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+                {isEdit ? t("Edit role") : t("Create a new role")}
+              </h1>
             </div>
           </div>
           <div className="flex flex-none justify-end gap-2 sm:gap-3">
             <Button type="button" variant="outline" onClick={goBack} disabled={isSubmitting}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button type="submit" disabled={isSubmitting || isLoading}>
-              {isSubmitting ? <Spinner /> : "Save Role"}
+              {isSubmitting ? <Spinner /> : t("Save Role")}
             </Button>
           </div>
         </div>
@@ -647,20 +653,20 @@ export default function RoleFormPage() {
           {isLoading ? (
             <div className="flex h-64 items-center justify-center gap-2 text-sm text-muted-foreground">
               <Spinner />
-              Loading role data...
+              {t("Loading role data...")}
             </div>
           ) : (
             <div className="space-y-3 lg:space-y-5">
               <section className="rounded-xl border bg-white p-3 sm:p-4 lg:p-5">
                 <div className="mb-4 flex items-center gap-2">
                   <BadgeCheck className="size-5 text-blue-600" />
-                  <h2 className="text-base font-semibold">Role Information</h2>
+                  <h2 className="text-base font-semibold">{t("Role Information")}</h2>
                 </div>
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-5">
                   <div className="space-y-4">
                     <UniFieldInput
-                      label="Role Name"
-                      placeholder="Enter role name"
+                      label={t("Name")}
+                      placeholder={t("Provide a name to the role.")}
                       value={values.name}
                       required
                       error={errors.name}
@@ -668,16 +674,16 @@ export default function RoleFormPage() {
                     />
                     <UniFieldInput
                       as="textarea"
-                      label="Description"
-                      placeholder="Enter role description"
+                      label={t("Description")}
+                      placeholder={t("Provide more details about what this role is about.")}
                       value={values.description}
                       onChange={(event) => updateField("description", event.target.value)}
                     />
                   </div>
                   <div className="space-y-4">
                     <UniFieldInput
-                      label="Namespace"
-                      placeholder="Enter namespace"
+                      label={t("Namespace")}
+                      placeholder={t("Should be a unique value with no spaces or special character")}
                       value={values.namespace}
                       disabled={values.locked}
                       required
@@ -686,7 +692,7 @@ export default function RoleFormPage() {
                     />
                     {values.locked && (
                       <p className="text-xs text-muted-foreground">
-                        System roles are locked and their namespaces cannot be changed.
+                        {t("System roles are locked and their namespaces cannot be changed.")}
                       </p>
                     )}
                   </div>
@@ -701,7 +707,7 @@ export default function RoleFormPage() {
                   <div className="relative mb-4">
                     <UniFieldInput
                       prefix={<Search className="size-4" />}
-                      placeholder="Search permissions..."
+                      placeholder={t("Search permissions...")}
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
                       allowClear
@@ -710,7 +716,7 @@ export default function RoleFormPage() {
                   </div>
                   <div className="mb-3 flex items-center gap-2 text-sm font-bold text-gray-800">
                     <Building2 className="size-4" />
-                    Modules
+                    {t("Modules")}
                   </div>
                   <div className="space-y-1">
                     {sections.map((section) => {
@@ -732,7 +738,7 @@ export default function RoleFormPage() {
                         >
                           <span className="flex items-center gap-2">
                             <Icon className="size-4" />
-                            {section.title}
+                            {t(section.title)}
                           </span>
                           <span
                             className={cn(
@@ -767,7 +773,7 @@ export default function RoleFormPage() {
                                 <Icon className="size-5" />
                               </div>
                               <div>
-                                <h2 className="text-base font-bold">{section.title}</h2>
+                                <h2 className="text-base font-bold">{t(section.title)}</h2>
                               </div>
                             </div>
                             <label className="flex items-center gap-2 rounded-lg border px-2 py-1.5 text-sm font-semibold">
@@ -777,7 +783,7 @@ export default function RoleFormPage() {
                                   toggleSection(section, Boolean(value))
                                 }
                               />
-                              Full Access
+                              {t("Full Access")}
                             </label>
                           </div>
                           {renderPermissionTable(section.rows)}
@@ -786,7 +792,7 @@ export default function RoleFormPage() {
                     })}
                     {!filteredSections.length ? (
                       <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
-                        No permissions found for this search.
+                        {t("No permissions found for this search.")}
                       </div>
                     ) : null}
                   </div>
