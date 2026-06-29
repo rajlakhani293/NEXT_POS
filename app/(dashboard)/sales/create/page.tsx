@@ -7,9 +7,11 @@ import {
   BanknoteArrowUp,
   Ban,
   ChevronRight,
+  ChevronsDownUp,
   CreditCard,
   Folder,
   Home,
+  ImageIcon,
   LogOut,
   MessageSquare,
   Minus,
@@ -18,6 +20,7 @@ import {
   Percent,
   Plus,
   PlusCircle,
+  ScanBarcode,
   Search,
   Settings,
   ShoppingCart,
@@ -53,6 +56,7 @@ import { sales } from "@/lib/api/sales"
 import { showToast } from "@/lib/toast"
 
 type CartItem = {
+  line_id: string
   product_id: string
   unit_quantity_id?: string
   unit_id?: string
@@ -153,6 +157,11 @@ export default function SalesPage() {
   const allowDecimalQuantities = posOptions.allow_decimal_quantities
   const showQuantity = posOptions.show_quantity
   const hideEmptyCategories = posOptions.hide_empty_categories
+  const hideExhaustedProducts = posOptions.hide_exhausted_products
+  const pinnedProductsEnabled = posOptions.enable_pinned_products
+  const pinnedPreviewEnabled = posOptions.show_preview_pinned_products
+  const [itemsMergeEnabled, setItemsMergeEnabled] = useState(Boolean(posOptions.items_merge))
+  const [forceAutoFocus, setForceAutoFocus] = useState(Boolean(posOptions.force_autofocus))
   const formatMoney = useCallback((value: number | string | null | undefined) => {
     const amount = Number(value || 0).toFixed(posOptions.currency_precision)
     const indicator = posOptions.currency_preferred === "iso"
@@ -216,6 +225,9 @@ export default function SalesPage() {
   const [isTaxesDialogOpen, setIsTaxesDialogOpen] = useState(false)
   const [isQuickProductDialogOpen, setIsQuickProductDialogOpen] = useState(false)
   const [isCartDiscountDialogOpen, setIsCartDiscountDialogOpen] = useState(false)
+  const [isProductSearchOpen, setIsProductSearchOpen] = useState(false)
+  const [productSearchTerm, setProductSearchTerm] = useState("")
+  const [productSearchResults, setProductSearchResults] = useState<POSProduct[]>([])
   const [activeDiscountItem, setActiveDiscountItem] = useState<CartItem | null>(null)
   const [itemDiscountVal, setItemDiscountVal] = useState("")
   const [itemDiscountType, setItemDiscountType] = useState<"flat" | "percentage">("flat")
@@ -250,6 +262,8 @@ export default function SalesPage() {
     (promotions as any).useGetCouponsDropdownMutation()
   const [getPOSGrid] = (catalog as any).useGetPOSGridMutation()
   const [getPOSGridByCategory] = (catalog as any).useGetPOSGridByCategoryMutation()
+  const [getProductsData, productSearchState] = (catalog as any).useGetProductsDataMutation()
+  const [getProductById] = (catalog as any).useGetProductByIdMutation()
   const [searchProductUsingBarcode, barcodeSearchState] = (
     catalog as any
   ).useSearchProductUsingBarcodeMutation()
@@ -288,6 +302,38 @@ export default function SalesPage() {
         return Boolean(category.products_count || category.children_count || category.products?.length)
       })
     : gridData.categories
+  const productsForGrid = hideExhaustedProducts
+    ? gridData.products.filter((product) => {
+        const quantities = product.unit_quantities || []
+        if (!quantities.length) return true
+        return quantities.some((quantity) => Number(quantity.quantity || 0) > 0)
+      })
+    : gridData.products
+  const pinnedProductsForGrid = pinnedProductsEnabled
+    ? (
+        hideExhaustedProducts
+          ? gridData.pinnedProducts.filter((product) => {
+              const quantities = product.unit_quantities || []
+              if (!quantities.length) return true
+              return quantities.some((quantity) => Number(quantity.quantity || 0) > 0)
+            })
+          : gridData.pinnedProducts
+      )
+    : []
+
+  const getFeaturedImage = (product: POSProduct) => {
+    const galleries = product.galleries || []
+    return (galleries.find((gallery) => gallery.featured) || galleries[0])?.url || ""
+  }
+
+  const getDisplayPrice = (unitQuantity?: POSUnitQuantity) => {
+    if (!unitQuantity) return 0
+    if (posOptions.pos_vat === "disabled") return Number(unitQuantity.sale_price || 0)
+    if (posOptions.preferred_price === "gross_prices") {
+      return Number(unitQuantity.sale_price_gross ?? unitQuantity.sale_price ?? 0)
+    }
+    return Number(unitQuantity.sale_price_net ?? unitQuantity.sale_price ?? 0)
+  }
 
   const itemsSubtotal = useMemo(
     () =>
@@ -367,6 +413,28 @@ export default function SalesPage() {
     getPaymentTypesDropdown,
     loadGrid,
   ])
+
+  useEffect(() => {
+    setItemsMergeEnabled(Boolean(posOptions.items_merge))
+    setForceAutoFocus(Boolean(posOptions.force_autofocus))
+  }, [posOptions.force_autofocus, posOptions.items_merge])
+
+  useEffect(() => {
+    if (!forceAutoFocus || !barcode.trim()) return
+    const searchTimer = window.setTimeout(() => {
+      handleBarcodeSearch()
+    }, 200)
+    return () => window.clearTimeout(searchTimer)
+  }, [barcode, forceAutoFocus])
+
+  useEffect(() => {
+    if (!forceAutoFocus) return
+    const focusTimer = window.setInterval(() => {
+      if (document.querySelector('[role="dialog"]')) return
+      barcodeInputRef.current?.focus()
+    }, 500)
+    return () => window.clearInterval(focusTimer)
+  }, [forceAutoFocus])
 
   useEffect(() => {
     if (cashRegistersEnabled === undefined) return
@@ -504,7 +572,7 @@ export default function SalesPage() {
       return false
     }
 
-    const price = Number(unitQuantity?.sale_price || 0)
+    const price = getDisplayPrice(unitQuantity)
     const availableStock = Number(unitQuantity?.quantity || 0)
     const unitQuantityId = unitQuantity?.id ? String(unitQuantity.id) : ""
     const unitLabel =
@@ -520,7 +588,7 @@ export default function SalesPage() {
           item.product_id === String(product.id) &&
           (item.unit_quantity_id || "") === unitQuantityId
       )
-      if (existing) {
+      if (existing && itemsMergeEnabled) {
         return items.map((item) =>
           item.product_id === String(product.id) &&
           (item.unit_quantity_id || "") === unitQuantityId
@@ -532,6 +600,7 @@ export default function SalesPage() {
       return [
         ...items,
         {
+          line_id: crypto.randomUUID(),
           product_id: String(product.id),
           unit_quantity_id: unitQuantityId || undefined,
           unit_id: unitQuantity?.unit_id
@@ -587,12 +656,45 @@ export default function SalesPage() {
     }
   }
 
-  const updateQuantity = (product_id: string, delta: number, unit_quantity_id = "") => {
+  const handleProductSearch = async () => {
+    const search = productSearchTerm.trim()
+    if (!search) return
+    const response = await getProductsData({
+      page: 1,
+      limit: 20,
+      search,
+    }).unwrap()
+    const products = response?.data?.items || response?.data || []
+    setProductSearchResults(products)
+    if (products.length === 1) {
+      await handleProductSearchPick(products[0])
+    } else if (!products.length) {
+      showToast.error(t("No result to result match the search value provided."))
+    }
+  }
+
+  const handleProductSearchPick = async (product: POSProduct | any) => {
+    const response = await getProductById({ id: product.id }).unwrap()
+    const fullProduct = response?.data || product
+    setIsProductSearchOpen(false)
+    setProductSearchTerm("")
+    setProductSearchResults([])
+    handleGridProductClick(fullProduct)
+  }
+
+  useEffect(() => {
+    if (!isProductSearchOpen || !productSearchTerm.trim()) return
+    const searchTimer = window.setTimeout(() => {
+      handleProductSearch()
+    }, 500)
+    return () => window.clearTimeout(searchTimer)
+  }, [isProductSearchOpen, productSearchTerm])
+
+  const updateQuantity = (lineId: string, delta: number) => {
     setCartItems((items) =>
       items
         .map((item) =>
-          item.product_id === product_id &&
-          (item.unit_quantity_id || "") === unit_quantity_id
+          item.line_id === lineId
             ? { ...item, qty: Math.max(item.qty + delta, 0) }
             : item
         )
@@ -600,14 +702,8 @@ export default function SalesPage() {
     )
   }
 
-  const removeItem = (product_id: string, unit_quantity_id = "") => {
-    setCartItems((items) =>
-      items.filter(
-        (item) =>
-          item.product_id !== product_id ||
-          (item.unit_quantity_id || "") !== unit_quantity_id
-      )
-    )
+  const removeItem = (lineId: string) => {
+    setCartItems((items) => items.filter((item) => item.line_id !== lineId))
   }
 
   const openItemDiscountDialog = (item: CartItem) => {
@@ -627,7 +723,8 @@ export default function SalesPage() {
       prev.map((item) => {
         if (
           item.product_id === activeDiscountItem.product_id &&
-          (item.unit_quantity_id || "") === (activeDiscountItem.unit_quantity_id || "")
+          (item.unit_quantity_id || "") === (activeDiscountItem.unit_quantity_id || "") &&
+          item.line_id === activeDiscountItem.line_id
         ) {
           return {
             ...item,
@@ -723,6 +820,7 @@ export default function SalesPage() {
     setCartItems(
       (heldSale.items || []).map((item: any) => ({
         product_id: String(item.product_id),
+        line_id: crypto.randomUUID(),
         unit_quantity_id: item.unit_quantity_id ? String(item.unit_quantity_id) : undefined,
         name: item.product_name,
         qty: Number(item.quantity || 0),
@@ -1015,28 +1113,40 @@ export default function SalesPage() {
                 {t("Products")}
               </button>
             </div>
-            {/* Top bar: customer + barcode search */}
+            {/* Top bar: product tools + customer */}
             <div className="border-b p-2">
-              <div className="flex flex-col gap-3 sm:flex-row">
-              <UniFieldSelect
-                label={t("customer")}
-                value={customerId}
-                onValueChange={setCustomerId}
-                placeholder="Walk-in customer"
-                allowClear
-                containerClassName="flex-1"
-              >
-                {customerOptions.map((customer: any) => (
-                  <SelectItem key={customer.id} value={String(customer.id)}>
-                    {customer.name}
-                    {customer.phone ? ` - ${customer.phone}` : ""}
-                  </SelectItem>
-                ))}
-              </UniFieldSelect>
-
-              <div className="flex items-end gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
+              <div className="overflow-hidden rounded border border-gray-200">
+                <div className="flex">
+                  <button
+                    type="button"
+                    title={t("Search for products.")}
+                    onClick={() => setIsProductSearchOpen(true)}
+                    className="flex h-10 w-10 items-center justify-center border-r border-gray-200 hover:bg-gray-50"
+                  >
+                    <Search className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    title={t("Toggle merging similar products.")}
+                    onClick={() => setItemsMergeEnabled((current) => !current)}
+                    className={[
+                      "flex h-10 w-10 items-center justify-center border-r border-gray-200 hover:bg-gray-50",
+                      itemsMergeEnabled ? "bg-blue-50 text-blue-700" : "",
+                    ].join(" ")}
+                  >
+                    <ChevronsDownUp className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    title={t("Toggle auto focus.")}
+                    onClick={() => setForceAutoFocus((current) => !current)}
+                    className={[
+                      "flex h-10 w-10 items-center justify-center border-r border-gray-200 hover:bg-gray-50",
+                      forceAutoFocus ? "bg-blue-50 text-blue-700" : "",
+                    ].join(" ")}
+                  >
+                    <ScanBarcode className="size-4" />
+                  </button>
                   <input
                     ref={barcodeInputRef}
                     value={barcode}
@@ -1048,19 +1158,30 @@ export default function SalesPage() {
                       }
                     }}
                     placeholder={t("scan_barcode")}
-                    className="h-10 w-full rounded-md border border-gray-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    className="h-10 min-w-0 flex-auto bg-white px-3 text-sm outline-none"
                   />
+                  {barcodeSearchState.isLoading ? (
+                    <span className="flex h-10 w-10 items-center justify-center border-l border-gray-200">
+                      <Spinner />
+                    </span>
+                  ) : null}
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleBarcodeSearch}
-                  disabled={!barcode.trim() || barcodeSearchState.isLoading}
-                  className="shrink-0"
-                >
-                  {barcodeSearchState.isLoading ? <Spinner /> : t("search")}
-                </Button>
               </div>
+              <div className="mt-3">
+                <UniFieldSelect
+                  label={t("customer")}
+                  value={customerId}
+                  onValueChange={setCustomerId}
+                  placeholder="Walk-in customer"
+                  allowClear
+                >
+                  {customerOptions.map((customer: any) => (
+                    <SelectItem key={customer.id} value={String(customer.id)}>
+                      {customer.name}
+                      {customer.phone ? ` - ${customer.phone}` : ""}
+                    </SelectItem>
+                  ))}
+                </UniFieldSelect>
               </div>
             </div>
 
@@ -1088,35 +1209,36 @@ export default function SalesPage() {
             </div>
 
             {/* Pinned products strip */}
-              {gridData.pinnedProducts.length > 0 && (
+              {pinnedProductsForGrid.length > 0 && (
               <div className="border-b border-gray-100 bg-amber-50/60 px-3 py-2">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">Pinned</p>
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {gridData.pinnedProducts.map((product) => {
+                <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  {pinnedProductsForGrid.map((product) => {
                     const uq = product.unit_quantities?.[0]
+                    const featuredImage = getFeaturedImage(product)
                     return (
                       <button
                         key={product.id}
                         onClick={() => handleGridProductClick(product)}
-                        className="group relative flex h-20 w-28 shrink-0 flex-col items-center justify-end overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm transition hover:border-amber-400 hover:shadow-md"
+                        className={[
+                          "cell-item group relative flex flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400",
+                          pinnedPreviewEnabled ? "h-36" : "h-20",
+                        ].join(" ")}
                       >
-                        {product.galleries && product.galleries.length > 0 ? (
+                        {pinnedPreviewEnabled && featuredImage ? (
                           <img
-                            src={(product.galleries.find((g) => g.featured) || product.galleries[0]).url}
+                            src={featuredImage}
                             alt={product.name}
-                            className="absolute inset-0 h-full w-full object-cover opacity-80 group-hover:opacity-100 transition"
+                            className="absolute inset-0 h-full w-full object-cover opacity-80 transition group-hover:opacity-100"
                           />
-                        ) : (
-                          <Package className="absolute top-2 size-8 text-gray-300" />
-                        )}
-                        <div className="relative z-10 w-full bg-gradient-to-t from-black/70 to-transparent px-1.5 pb-1.5 pt-4">
-                          <p className="truncate text-center text-xs font-semibold text-white">{product.name}</p>
-                          {uq && (
-                            <div className="flex items-center justify-between text-[10px] text-amber-200">
-                              <span>{formatMoney(uq.sale_price)}</span>
-                              {showQuantity && <span>Qty: {uq.quantity}</span>}
-                            </div>
-                          )}
+                        ) : pinnedPreviewEnabled ? (
+                          <ImageIcon className="absolute top-4 size-10 text-gray-300" />
+                        ) : null}
+                        <div className="relative z-10 flex h-20 w-full flex-col items-center justify-center bg-gradient-to-t from-black/70 to-transparent p-2 text-white">
+                          <p className="w-full truncate text-center text-sm font-semibold">{product.name}</p>
+                          {product.unit_quantities?.length === 1 && uq ? (
+                            <span className="text-sm">{formatMoney(getDisplayPrice(uq))}</span>
+                          ) : null}
                         </div>
                       </button>
                     )
@@ -1127,7 +1249,7 @@ export default function SalesPage() {
 
             {/* Grid area: categories + products */}
             <div className="flex-1 overflow-y-auto p-3">
-              {!gridLoading && categoriesForGrid.length === 0 && gridData.products.length === 0 && gridData.pinnedProducts.length === 0 && (
+              {!gridLoading && categoriesForGrid.length === 0 && productsForGrid.length === 0 && pinnedProductsForGrid.length === 0 && (
                 <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-400">
                   <Package className="size-14 opacity-30" />
                   <p className="text-sm font-medium">{t("Looks like there is either no products and no categories. How about creating those first to get started ?")}</p>
@@ -1161,33 +1283,31 @@ export default function SalesPage() {
               )}
 
               {/* Product tiles (shown when no sub-categories) */}
-              {gridData.products.length > 0 && (
+              {categoriesForGrid.length === 0 && productsForGrid.length > 0 && (
                 <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-                  {gridData.products.map((product) => {
+                  {productsForGrid.map((product) => {
                     const uq = product.unit_quantities?.[0]
+                    const featuredImage = getFeaturedImage(product)
                     return (
                       <button
                         key={product.id}
                         onClick={() => handleGridProductClick(product)}
                         className="cell-item group relative flex h-36 flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400"
                       >
-                        {product.galleries && product.galleries.length > 0 ? (
+                        {featuredImage ? (
                           <img
-                            src={(product.galleries.find((g) => g.featured) || product.galleries[0]).url}
+                            src={featuredImage}
                             alt={product.name}
                             className="absolute inset-0 h-full w-full object-cover opacity-75 group-hover:opacity-100 transition"
                           />
                         ) : (
-                          <Package className="absolute top-4 size-10 text-gray-200 group-hover:text-gray-300 transition" />
+                          <ImageIcon className="absolute top-4 size-10 text-gray-200 group-hover:text-gray-300 transition" />
                         )}
                         <div className="relative z-10 w-full bg-gradient-to-t from-black/65 to-transparent px-2 pb-2 pt-6">
                           <p className="truncate text-center text-xs font-bold text-white">{product.name}</p>
-                          {uq && (
-                            <div className="flex items-center justify-between text-xs text-blue-200">
-                              <span>{formatMoney(uq.sale_price)}</span>
-                              {showQuantity && <span className="text-[10px] text-gray-300">Qty: {uq.quantity}</span>}
-                            </div>
-                          )}
+                          {product.unit_quantities?.length === 1 && uq ? (
+                            <span className="block text-center text-sm text-blue-200">{formatMoney(getDisplayPrice(uq))}</span>
+                          ) : null}
                         </div>
                       </button>
                     )
@@ -1276,7 +1396,7 @@ export default function SalesPage() {
               {cartItems.length ? (
                 cartItems.map((item) => (
                   <div
-                    key={`${item.product_id}:${item.unit_quantity_id || "base"}`}
+                    key={item.line_id}
                     className="grid grid-cols-[1.4fr_130px_110px_120px_56px] items-center border-t px-4 py-3 text-sm font-semibold"
                   >
                     <div>
@@ -1309,11 +1429,7 @@ export default function SalesPage() {
                         size="icon"
                         className="size-8"
                         onClick={() =>
-                          updateQuantity(
-                            item.product_id,
-                            -1,
-                            item.unit_quantity_id || ""
-                          )
+                          updateQuantity(item.line_id, -1)
                         }
                       >
                         <Minus className="size-4" />
@@ -1329,8 +1445,7 @@ export default function SalesPage() {
                             setCartItems((prev) =>
                               prev
                                 .map((i) =>
-                                  i.product_id === item.product_id &&
-                                  (i.unit_quantity_id || "") === (item.unit_quantity_id || "")
+                                  i.line_id === item.line_id
                                     ? { ...i, qty: val }
                                     : i
                                 )
@@ -1346,11 +1461,7 @@ export default function SalesPage() {
                         size="icon"
                         className="size-8"
                         onClick={() =>
-                          updateQuantity(
-                            item.product_id,
-                            1,
-                            item.unit_quantity_id || ""
-                          )
+                          updateQuantity(item.line_id, 1)
                         }
                       >
                         <Plus className="size-4" />
@@ -1364,7 +1475,7 @@ export default function SalesPage() {
                       size="icon"
                       className="size-8 text-red-500 hover:text-red-600"
                       onClick={() =>
-                        removeItem(item.product_id, item.unit_quantity_id || "")
+                        removeItem(item.line_id)
                       }
                     >
                       <Trash2 className="size-4" />
@@ -1606,6 +1717,72 @@ export default function SalesPage() {
           </div>
         </div>
       ) : null}
+
+      <Dialog open={isProductSearchOpen} onOpenChange={setIsProductSearchOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{t("Search Product")}</DialogTitle>
+          </DialogHeader>
+          <div className="flex min-h-[360px] flex-col overflow-hidden">
+            <div className="border-b pb-3">
+              <div className="flex overflow-hidden rounded border-2 border-gray-200">
+                <input
+                  value={productSearchTerm}
+                  onChange={(event) => setProductSearchTerm(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault()
+                      handleProductSearch()
+                    }
+                    if (event.key === "Escape") {
+                      setIsProductSearchOpen(false)
+                    }
+                  }}
+                  placeholder={t("Search Product")}
+                  autoFocus
+                  className="min-w-0 flex-auto p-2 text-sm outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleProductSearch}
+                  className="border-l px-3 text-sm font-semibold hover:bg-gray-50"
+                >
+                  {productSearchState.isLoading ? <Spinner /> : t("Search")}
+                </button>
+              </div>
+            </div>
+            <div className="relative flex-auto overflow-y-auto">
+              {productSearchResults.length ? (
+                <ul>
+                  {productSearchResults.map((product) => (
+                    <li key={product.id}>
+                      <button
+                        type="button"
+                        onClick={() => handleProductSearchPick(product)}
+                        className="flex w-full cursor-pointer justify-between border-b p-2 text-left hover:bg-gray-50"
+                      >
+                        <div>
+                          <h2 className="text-sm font-semibold text-gray-900">{product.name}</h2>
+                          <small className="text-xs text-gray-500">{product.sku || t("Unassigned")}</small>
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="p-2 text-center text-sm text-gray-500">
+                  {t("There is nothing to display. Have you started the search ?")}
+                </p>
+              )}
+              {productSearchState.isLoading ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-100/50">
+                  <Spinner />
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={isOpenShiftDialogOpen}

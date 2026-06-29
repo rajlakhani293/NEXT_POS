@@ -84,6 +84,12 @@ interface BusinessSettings {
     products_discount?: boolean
     edit_settings?: boolean
     show_quantity: boolean
+    items_merge?: boolean
+    force_autofocus?: boolean
+    enable_pinned_products?: boolean
+    show_preview_pinned_products?: boolean
+    hide_exhausted_products?: boolean
+    preferred_price?: string
     currency_symbol?: string
     currency_iso?: string
     currency_position?: string
@@ -105,6 +111,7 @@ interface BusinessSettings {
     orders_quotation_expiration?: string
     pos_tax_group?: string
     pos_tax_type?: string
+    pos_vat?: string
   }
   order_types: {
     value: string
