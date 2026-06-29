@@ -97,6 +97,20 @@ export function resolveRoutePermission(
     }
   }
 
+  const supplierEditMatch = pathname.match(/^\/purchases\/suppliers\/([^/]+)$/)
+  if (supplierEditMatch) {
+    return {
+      permission:
+        supplierEditMatch[1] === "create"
+          ? PERMISSIONS.purchases.create
+          : PERMISSIONS.purchases.update,
+    }
+  }
+
+  if (pathname === "/sales/instalments") {
+    return { permission: PERMISSIONS.payments.collectDue }
+  }
+
   const saleDetailMatch = pathname.match(/^\/sales\/([^/]+)$/)
   if (saleDetailMatch && saleDetailMatch[1] !== "history") {
     return { permission: PERMISSIONS.sales.view }

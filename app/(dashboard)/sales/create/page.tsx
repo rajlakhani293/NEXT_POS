@@ -234,6 +234,12 @@ export default function SalesPage() {
   const [paymentAmountInput, setPaymentAmountInput] = useState("")
   const [showPaymentList, setShowPaymentList] = useState(false)
   const [isHeldCartDialogOpen, setIsHeldCartDialogOpen] = useState(false)
+  const [pendingOrdersTab, setPendingOrdersTab] = useState<"hold" | "unpaid" | "partially_paid">("hold")
+  const [pendingOrderSearch, setPendingOrderSearch] = useState("")
+  const [pendingOrders, setPendingOrders] = useState<any[]>([])
+  const [previewPendingOrder, setPreviewPendingOrder] = useState<any | null>(null)
+  const [isHoldReferenceDialogOpen, setIsHoldReferenceDialogOpen] = useState(false)
+  const [holdReference, setHoldReference] = useState("")
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false)
   const [isCouponsDialogOpen, setIsCouponsDialogOpen] = useState(false)
   const [isOrderSettingsOpen, setIsOrderSettingsOpen] = useState(false)
@@ -291,6 +297,8 @@ export default function SalesPage() {
   const [createSale, { isLoading: isCreatingSale }] = (
     sales as any
   ).useCreateSaleMutation()
+  const [getSalesData] = (sales as any).useGetSalesDataMutation()
+  const [getSaleById] = (sales as any).useGetSaleByIdMutation()
   const [holdSale, { isLoading: isHoldingSale }] = (
     sales as any
   ).useHoldSaleMutation()
@@ -905,20 +913,51 @@ export default function SalesPage() {
     setPaymentsRows([emptyPaymentRow()])
   }
 
-  const refreshHeldSales = async () => {
-    await getHeldSalesData({
+  const refreshPendingOrders = async (
+    tab = pendingOrdersTab,
+    search = pendingOrderSearch
+  ) => {
+    if (tab === "hold") {
+      const response = await getHeldSalesData({
+        page: 1,
+        limit: 20,
+        search: search || undefined,
+      }).unwrap()
+      setPendingOrders(response?.data?.items || [])
+      return
+    }
+
+    const response = await getSalesData({
       page: 1,
       limit: 20,
-      search: undefined,
+      search: search || undefined,
+      filter: { payment_status: tab },
     }).unwrap()
+    setPendingOrders(response?.data?.items || [])
   }
 
   const handleOpenHeldSales = async () => {
-    await refreshHeldSales()
+    setPendingOrdersTab("hold")
+    setPendingOrderSearch("")
+    await refreshPendingOrders("hold", "")
     setIsHeldCartDialogOpen(true)
   }
 
+  const handlePendingTabChange = async (tab: "hold" | "unpaid" | "partially_paid") => {
+    setPendingOrdersTab(tab)
+    setPendingOrderSearch("")
+    await refreshPendingOrders(tab, "")
+  }
+
+  const handleSearchPendingOrders = async () => {
+    await refreshPendingOrders(pendingOrdersTab, pendingOrderSearch)
+  }
+
   const handleResumeHeldSale = async (heldSaleId: number | string) => {
+    if (cartItems.length) {
+      const proceed = window.confirm(t("The cart is not empty. Opening an order will clear your cart would you proceed ?"))
+      if (!proceed) return
+    }
     const response = await getHeldSaleById({ id: heldSaleId }).unwrap()
     const heldSale = response?.data
     if (!heldSale) return
@@ -954,10 +993,36 @@ export default function SalesPage() {
     showToast.success("Held cart loaded successfully.")
   }
 
+  const handleOpenPendingOrder = async (order: any) => {
+    if (pendingOrdersTab === "hold") {
+      await handleResumeHeldSale(order.id)
+      return
+    }
+    if (cartItems.length) {
+      const proceed = window.confirm(t("The cart is not empty. Opening an order will clear your cart would you proceed ?"))
+      if (!proceed) return
+    }
+    setIsHeldCartDialogOpen(false)
+    router.push(`/sales/${order.id}`)
+  }
+
+  const handlePreviewPendingOrder = async (order: any) => {
+    const response =
+      pendingOrdersTab === "hold"
+        ? await getHeldSaleById({ id: order.id }).unwrap()
+        : await getSaleById({ id: order.id }).unwrap()
+    setPreviewPendingOrder(response?.data || order)
+  }
+
+  const handlePrintPendingOrder = (order: any) => {
+    setIsHeldCartDialogOpen(false)
+    router.push(`/sales/${order.id}/receipt`)
+  }
+
   const handleDeleteHeldSale = async (heldSaleId: number | string) => {
     const response = await deleteHeldSale({ id: heldSaleId }).unwrap()
     showToast.success(response?.message || "Held cart deleted successfully.")
-    await refreshHeldSales()
+    await refreshPendingOrders("hold", pendingOrderSearch)
   }
 
   const handleRedeemReward = async () => {
@@ -1002,7 +1067,9 @@ export default function SalesPage() {
     const payLoad = {
       customer_id: customerId ? Number(customerId) : null,
       coupon_codes: couponCodes,
-      note: saleNote,
+      note: [holdReference ? `${t("Order Reference")}: ${holdReference}` : "", saleNote]
+        .filter(Boolean)
+        .join("\n"),
       discount_amount: cartDiscountType === "flat" ? String(money(cartDiscountVal)) : "0",
       discount_percentage: cartDiscountType === "percentage" ? String(money(cartDiscountVal)) : "0",
       items: cartItems.map((item) => ({
@@ -1030,7 +1097,9 @@ export default function SalesPage() {
     const response = await holdSale(payLoad).unwrap()
     showToast.success(response?.message || "Held cart saved successfully.")
     resetSaleForm()
-    await refreshHeldSales()
+    setHoldReference("")
+    setIsHoldReferenceDialogOpen(false)
+    await refreshPendingOrders("hold", pendingOrderSearch)
   }
 
   const shouldOpenReceipt = (paymentStatus: string) => {
@@ -1891,7 +1960,7 @@ export default function SalesPage() {
               <button
                 type="button"
                 disabled={!cartItems.length || isHoldingSale}
-                onClick={handleHoldSale}
+                onClick={() => setIsHoldReferenceDialogOpen(true)}
                 className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-blue-600 px-2 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Pause className="size-5" />
@@ -2402,53 +2471,232 @@ export default function SalesPage() {
       </Dialog>
 
       <Dialog open={isHeldCartDialogOpen} onOpenChange={setIsHeldCartDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="flex h-[75vh] max-w-4xl flex-col overflow-hidden">
           <DialogHeader>
-            <DialogTitle>{t("held_carts")}</DialogTitle>
-            <DialogDescription>
-              {t("held_carts_description")}
-            </DialogDescription>
+            <DialogTitle>{t("Orders")}</DialogTitle>
           </DialogHeader>
 
-          <div className="max-h-[420px] space-y-3 overflow-auto">
-            {heldSales.length ? (
-              heldSales.map((heldSale: any) => (
+          <div className="flex min-h-0 flex-auto flex-col overflow-hidden">
+            <div className="flex border-b">
+              {[
+                { value: "hold", label: t("On Hold") },
+                { value: "unpaid", label: t("Unpaid") },
+                { value: "partially_paid", label: t("Partially Paid") },
+              ].map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => handlePendingTabChange(tab.value as "hold" | "unpaid" | "partially_paid")}
+                  className={[
+                    "px-4 py-2 text-sm font-semibold",
+                    pendingOrdersTab === tab.value ? "border-b-2 border-blue-600 text-blue-700" : "text-gray-600",
+                  ].join(" ")}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-1">
+              <div className="flex overflow-hidden rounded border-2 border-gray-200">
+                <input
+                  value={pendingOrderSearch}
+                  onChange={(event) => setPendingOrderSearch(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault()
+                      handleSearchPendingOrders()
+                    }
+                  }}
+                  className="min-w-0 flex-auto p-2 text-sm outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleSearchPendingOrders}
+                  className="w-20 border-l text-sm font-semibold hover:bg-gray-50"
+                >
+                  {t("Search")}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-auto overflow-y-auto p-2">
+              {pendingOrders.length ? (
+                pendingOrders.map((order: any) => (
+                  <div
+                    key={order.id}
+                    className="border-b py-3"
+                  >
+                    <h3 className="font-semibold text-gray-900">
+                      {order.title || order.code || t("Untitled Order")}
+                    </h3>
+                    <div className="mt-2 grid gap-2 px-2 text-sm text-gray-700 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <p><strong>{t("Code")}</strong>: {order.code || "-"}</p>
+                        <p><strong>{t("Cashier")}</strong>: {order.user__full_name || order.user_username || order.author_username || "-"}</p>
+                        <p><strong>{t("Total")}</strong>: {formatMoney(order.total || 0)}</p>
+                        <p><strong>{t("Tendered")}</strong>: {formatMoney(order.tendered_amount || order.tendered || 0)}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p><strong>{t("Customer")}</strong>: {order.customer__full_name || order.customer__name || order.customer?.name || "Walk-in customer"}</p>
+                        <p><strong>{t("Date")}</strong>: {order.created_at ? new Date(order.created_at).toLocaleString() : "-"}</p>
+                        <p><strong>{t("Type")}</strong>: {order.order_type || order.type || "-"}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex justify-end">
+                      <div className="flex overflow-hidden rounded-lg border">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenPendingOrder(order)}
+                          className="bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700"
+                        >
+                          {t("Open")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePreviewPendingOrder(order)}
+                          className="bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700"
+                        >
+                          {t("Products")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePrintPendingOrder(order)}
+                          className="bg-amber-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-600"
+                        >
+                          {t("Print")}
+                        </button>
+                        {pendingOrdersTab === "hold" ? (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteHeldSale(order.id)}
+                            className="bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700"
+                          >
+                            {t("delete")}
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <h3 className="font-semibold text-gray-500">{t("Nothing to display...")}</h3>
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsHeldCartDialogOpen(false)}>
+              {t("Close")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isHoldReferenceDialogOpen} onOpenChange={setIsHoldReferenceDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Hold Order")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex h-16 items-center justify-center border-b text-4xl font-bold">
+              {formatMoney(subtotal)}
+            </div>
+            <UniFieldInput
+              label={t("Order Reference")}
+              value={holdReference}
+              onChange={(event) => setHoldReference(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault()
+                  handleHoldSale()
+                }
+              }}
+              placeholder={t("Order Reference")}
+              autoFocus
+            />
+            <p className="text-sm text-gray-500">
+              {t("The current order will be set on hold. You can retrieve this order from the pending order button. Providing a reference to it might help you to identify the order more quickly.")}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsHoldReferenceDialogOpen(false)}
+            >
+              {t("Cancel")}
+            </Button>
+            <Button onClick={handleHoldSale} disabled={isHoldingSale}>
+              {isHoldingSale ? <Spinner /> : t("Confirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(previewPendingOrder)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewPendingOrder(null)
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("Products")}</DialogTitle>
+            <DialogDescription>
+              {previewPendingOrder?.code || previewPendingOrder?.title || t("Untitled Order")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[420px] overflow-y-auto">
+            {(
+              previewPendingOrder?.items ||
+              previewPendingOrder?.products ||
+              []
+            ).length ? (
+              (
+                previewPendingOrder?.items ||
+                previewPendingOrder?.products ||
+                []
+              ).map((item: any, index: number) => (
                 <div
-                  key={heldSale.id}
-                  className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+                  key={`${item.id || item.product_id || index}`}
+                  className="flex items-center justify-between border-b py-3 text-sm"
                 >
                   <div>
-                    <p className="font-semibold text-slate-900">{heldSale.code}</p>
-                    <p className="text-sm text-slate-500">
-                      {heldSale.customer?.name || heldSale.customer__name || "Walk-in customer"}
+                    <p className="font-semibold">
+                      {item.product_name || item.name || item.product?.name || t("Product")}
                     </p>
-                    <p className="text-xs text-slate-500">
-                      {heldSale.total_items || 0} {t("item_s")} • {formatMoney(heldSale.total || 0)}
+                    <p className="text-xs text-gray-500">
+                      {t("Quantity")}: {item.quantity || item.qty || 0}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleResumeHeldSale(heldSale.id)}
-                    >
-                      {t("resume")}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="text-red-500 hover:text-red-600"
-                      onClick={() => handleDeleteHeldSale(heldSale.id)}
-                    >
-                      {t("delete")}
-                    </Button>
-                  </div>
+                  <span className="font-semibold">
+                    {formatMoney(item.total_price || item.total || item.unit_price || 0)}
+                  </span>
                 </div>
               ))
             ) : (
-              <div className="rounded-xl border border-dashed border-gray-200 py-12 text-center text-sm text-slate-500">
-                {t("no_held_carts")}
+              <div className="py-10 text-center text-sm text-gray-500">
+                {t("Nothing to display...")}
               </div>
             )}
           </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewPendingOrder(null)}>
+              {t("Close")}
+            </Button>
+            {previewPendingOrder ? (
+              <Button
+                onClick={() => {
+                  const order = previewPendingOrder
+                  setPreviewPendingOrder(null)
+                  handleOpenPendingOrder(order)
+                }}
+              >
+                {t("Open")}
+              </Button>
+            ) : null}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       {/* Unit Quantity Picker Dialog */}

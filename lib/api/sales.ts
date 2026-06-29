@@ -10,6 +10,7 @@ import {
 
 const endpointsConfig = {
   getSalesData: { query: postMutation("get-transactions") },
+  getInstallmentsData: { query: postMutation("instalments/get-transactions") },
   createSale: { query: createMutation("") },
   holdSale: { query: createMutation("hold") },
   getHeldSalesData: { query: postMutation("drafts/get-transactions") },
