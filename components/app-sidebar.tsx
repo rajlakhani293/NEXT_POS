@@ -82,7 +82,7 @@ const mainNavSections: DashboardNavSection[] = [
   },
   {
     title: "Inventory",
-    url: "/products",
+    url: "/inventory/products",
     icon: <BoxesIcon />,
     permission: [
       PERMISSIONS.products.view,
@@ -93,7 +93,7 @@ const mainNavSections: DashboardNavSection[] = [
     items: [
       {
         title: "Products",
-        url: "/products",
+        url: "/inventory/products",
         permission: PERMISSIONS.products.view,
       },
       {
@@ -103,52 +103,52 @@ const mainNavSections: DashboardNavSection[] = [
       },
       {
         title: "Print Labels",
-        url: "/products/print-labels",
+        url: "/inventory/labels",
         permission: PERMISSIONS.products.view,
       },
       {
         title: "Categories",
-        url: "/products/categories",
+        url: "/inventory/categories",
         permission: PERMISSIONS.products.view,
       },
       {
         title: "Create Category",
-        url: "/products/categories?create=1",
+        url: "/inventory/categories?create=1",
         permission: PERMISSIONS.products.create,
       },
       {
         title: "Units",
-        url: "/units",
+        url: "/inventory/units",
         permission: PERMISSIONS.products.view,
       },
       {
         title: "Create Unit",
-        url: "/units?create=1",
+        url: "/inventory/units?create=1",
         permission: PERMISSIONS.products.create,
       },
       {
         title: "Unit Groups",
-        url: "/units/groups",
+        url: "/inventory/unit-groups",
         permission: PERMISSIONS.products.view,
       },
       {
         title: "Create Unit Groups",
-        url: "/units/groups?create=1",
+        url: "/inventory/unit-groups?create=1",
         permission: PERMISSIONS.products.create,
       },
       {
         title: "Stock Adjustment",
-        url: "/products/stock-adjustment",
+        url: "/inventory/adjustments",
         permission: PERMISSIONS.inventory.adjust,
       },
       {
         title: "Scale Range",
-        url: "/products/scale-range",
+        url: "/inventory/scale-range",
         permission: PERMISSIONS.inventory.adjust,
       },
       {
         title: "Stock Flow Records",
-        url: "/products/stock-flow-records",
+        url: "/inventory/ledger",
         permission: PERMISSIONS.products.view,
       },
     ],
