@@ -72,7 +72,7 @@ export default function CreateAccountingTransactionPage() {
           <div>
             <h1 className="text-xl font-semibold">Create Expense Transaction</h1>
             <p className="text-sm text-muted-foreground">
-              Record a manual or recurring accounting movement.
+              Register a new transaction and save it.
             </p>
           </div>
         </div>
@@ -101,16 +101,7 @@ export default function CreateAccountingTransactionPage() {
               error={errors.name}
               placeholder="Enter transaction name"
             />
-            <UniFieldSelect
-              label="Transaction Type"
-              value={values.transaction_type}
-              onValueChange={(value) => setValue("transaction_type", value)}
-            >
-              <SelectItem value="income">Income</SelectItem>
-              <SelectItem value="expense">Expense</SelectItem>
-              <SelectItem value="transfer">Transfer</SelectItem>
-              <SelectItem value="adjustment">Adjustment</SelectItem>
-            </UniFieldSelect>
+            <input type="hidden" value={values.transaction_type} readOnly />
             <UniFieldSelect
               label="Action"
               value={values.action_type}

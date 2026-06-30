@@ -35,7 +35,7 @@ export default function TransactionHistoryPage() {
       <DynamicTable
         data={table.orders}
         columns={columns}
-        tableTitle="Transaction History"
+        tableTitle="Transactions History List"
         showSearch
         searchTerm={table.searchTerm}
         currentPage={table.currentPage}

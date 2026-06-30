@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Plus } from "lucide-react"
+import { Clock, Play, Plus } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { PermissionGuard } from "@/components/permission-guard"
@@ -11,13 +11,14 @@ import { PERMISSIONS } from "@/lib/permissions"
 import { useTableData } from "@/hooks/useTableData"
 
 const columns = [
-  { key: "name", title: "Transaction" },
-  { key: "account__name", title: "Account" },
-  { key: "transaction_type", title: "Type" },
-  { key: "source_type", title: "Source" },
-  { key: "event_key", title: "Event" },
-  { key: "value", title: "Amount" },
-  { key: "transaction_date", title: "Date" },
+  { key: "name", title: "Name" },
+  { key: "type", title: "Type" },
+  { key: "account__name", title: "Account Name" },
+  { key: "value", title: "Value" },
+  { key: "recurring", title: "Recurring", render: (value: any) => (value ? "Yes" : "No") },
+  { key: "occurrence", title: "Occurrence" },
+  { key: "user_username", title: "Author" },
+  { key: "created_at", title: "Created At" },
 ]
 
 export default function TransactionsPage() {
@@ -32,7 +33,7 @@ export default function TransactionsPage() {
       <DynamicTable
         data={table.orders}
         columns={columns}
-        tableTitle="Transactions"
+        tableTitle="Transactions List"
         showSearch
         searchTerm={table.searchTerm}
         currentPage={table.currentPage}
@@ -44,10 +45,25 @@ export default function TransactionsPage() {
         onSort={table.handleSort}
         sortableFields={table.sortableFields}
         isLoading={table.isLoading}
-        hideActions
+        rowActions={(_, record) => [
+          {
+            key: "history",
+            label: "History",
+            labelText: "History",
+            icon: <Clock className="size-4" />,
+            onClick: () => router.push(`/accounting/transactions/history/${record.id}`),
+          },
+          {
+            key: "trigger",
+            label: "Trigger",
+            labelText: "Trigger",
+            icon: <Play className="size-4" />,
+            onClick: () => router.push(`/accounting/transactions/history/${record.id}?trigger=1`),
+          },
+        ]}
         showDateRange
         secondaryActionButton={
-          <Button onClick={() => router.push("/settings/accounting/transactions/create")}>
+          <Button onClick={() => router.push("/accounting/transactions/create")}>
             <Plus className="size-4" />
             Create Expense
           </Button>

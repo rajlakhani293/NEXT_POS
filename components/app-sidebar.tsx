@@ -205,20 +205,44 @@ const mainNavSections: DashboardNavSection[] = [
     ],
   },
   {
-    title: "Expenses",
-    url: "/expenses",
+    title: "Accounting",
+    url: "/accounting/transactions",
     icon: <WalletCardsIcon />,
-    permission: PERMISSIONS.settings.view,
+    permission: [
+      PERMISSIONS.reports.view,
+      PERMISSIONS.settings.update,
+    ],
+    permissionMatch: "any",
     items: [
       {
         title: "Expenses",
-        url: "/expenses",
-        permission: PERMISSIONS.settings.view,
+        url: "/accounting/transactions",
+        permission: PERMISSIONS.reports.view,
       },
       {
-        title: "Categories",
-        url: "/expenses/categories",
-        permission: PERMISSIONS.settings.view,
+        title: "Create Expense",
+        url: "/accounting/transactions/create",
+        permission: PERMISSIONS.settings.update,
+      },
+      {
+        title: "Transaction History",
+        url: "/accounting/transactions/history",
+        permission: PERMISSIONS.reports.view,
+      },
+      {
+        title: "Rules",
+        url: "/accounting/rules",
+        permission: PERMISSIONS.settings.update,
+      },
+      {
+        title: "Accounts",
+        url: "/accounting/accounts",
+        permission: PERMISSIONS.reports.view,
+      },
+      {
+        title: "Create Account",
+        url: "/accounting/accounts?create=1",
+        permission: PERMISSIONS.settings.update,
       },
     ],
   },
@@ -273,39 +297,6 @@ const settingsNavSections: DashboardNavSection[] = [
     url: "/settings/payment-types",
     icon: <WalletCardsIcon />,
     permission: PERMISSIONS.payments.view,
-  },
-  {
-    title: "Accounting",
-    url: "/settings/accounting/accounts",
-    icon: <WalletCardsIcon />,
-    permission: PERMISSIONS.reports.view,
-    items: [
-      {
-        title: "Accounts",
-        url: "/settings/accounting/accounts",
-        permission: PERMISSIONS.reports.view,
-      },
-      {
-        title: "Rules",
-        url: "/settings/accounting/rules",
-        permission: PERMISSIONS.reports.view,
-      },
-      {
-        title: "Transactions",
-        url: "/settings/accounting/transactions",
-        permission: PERMISSIONS.reports.view,
-      },
-      {
-        title: "History",
-        url: "/settings/accounting/history",
-        permission: PERMISSIONS.reports.view,
-      },
-      {
-        title: "Configuration",
-        url: "/settings/accounting/configuration",
-        permission: PERMISSIONS.reports.view,
-      },
-    ],
   },
   {
     title: "Media",

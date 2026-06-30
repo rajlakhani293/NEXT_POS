@@ -33,6 +33,7 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/accounting/transactions/edit", permission: PERMISSIONS.settings.update },
   { path: "/accounting/transactions/history", permission: PERMISSIONS.reports.view },
   { path: "/accounting/transactions", permission: PERMISSIONS.reports.view },
+  { path: "/accounting/accounts", permission: PERMISSIONS.reports.view },
   { path: "/accounting/rules", permission: PERMISSIONS.reports.view },
   { path: "/expenses/categories", permission: PERMISSIONS.expenses.view },
   { path: "/expenses", permission: PERMISSIONS.expenses.view },

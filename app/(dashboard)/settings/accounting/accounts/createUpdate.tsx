@@ -17,13 +17,11 @@ export function TransactionAccountForm(props: any) {
   return (
     <CatalogMasterForm
       {...props}
-      entityName="Transaction Account"
+      entityName="Account"
       fields={[
-        { name: "name", label: "Account Name", placeholder: "Enter account name", type: "text", required: true },
-        { name: "account", label: "Account Code", placeholder: "Auto generated if empty", type: "text" },
         {
           name: "category_identifier",
-          label: "Account Category",
+          label: "Main Account",
           placeholder: "Select category",
           type: "select",
           required: true,
@@ -37,7 +35,7 @@ export function TransactionAccountForm(props: any) {
         },
         {
           name: "sub_category_id",
-          label: "Sub Account Of",
+          label: "Sub Account",
           placeholder: "Select parent account",
           type: "select",
           options: (accounts.data?.data || []).map((account: any) => ({
@@ -45,6 +43,8 @@ export function TransactionAccountForm(props: any) {
             value: String(account.id),
           })),
         },
+        { name: "name", label: "Name", placeholder: "Enter account name", type: "text", required: true },
+        { name: "account", label: "Account", placeholder: "Auto generated if empty", type: "text" },
         { name: "description", label: "Description", placeholder: "Enter description", type: "textarea" },
       ]}
       initialValues={initialValues}
