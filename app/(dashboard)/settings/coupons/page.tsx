@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
 import { promotions } from "@/lib/api/promotions"
@@ -36,6 +37,7 @@ const columns = [
 ]
 
 export default function CouponsPage() {
+  const searchParams = useSearchParams()
   const [formState, setFormState] = useState<{
     isOpen: boolean
     editId?: number | string | null
@@ -77,13 +79,19 @@ export default function CouponsPage() {
     setFormState({ isOpen: false, editId: null })
   }
 
+  useEffect(() => {
+    if (searchParams.get("create") === "1" && canCreate) {
+      setFormState({ isOpen: true, editId: null })
+    }
+  }, [canCreate, searchParams])
+
   return (
     <div className="h-full space-y-4">
       <DynamicTable
         data={orders}
         columns={columns}
-        tableTitle="Coupons"
-        title={canCreate ? "Add Coupon" : undefined}
+        tableTitle="Coupons List"
+        title={canCreate ? "Create Coupon" : undefined}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}
@@ -106,7 +114,7 @@ export default function CouponsPage() {
         }
         triggerRefresh={triggerRefresh}
         deleteModalTitle="Delete Coupon"
-        deleteModalDescription="Are you sure you want to delete this coupon?"
+        deleteModalDescription="Would you like to delete this ?"
       />
       <CouponForm
         isOpen={formState.isOpen}

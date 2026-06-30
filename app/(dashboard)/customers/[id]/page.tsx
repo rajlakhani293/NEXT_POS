@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, ReceiptText } from "lucide-react"
 
 import {
@@ -116,6 +116,7 @@ const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 export default function CustomerFormPage() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const id = params.id as string
   const isEdit = id !== "create"
 
@@ -150,6 +151,12 @@ export default function CustomerFormPage() {
   const [getCustomerGroupsDropdown] = (
     customers as any
   ).useGetCustomerGroupsDropdownMutation()
+
+  useEffect(() => {
+    if (searchParams.get("tab") === "orders") {
+      setActiveTab("orders")
+    }
+  }, [searchParams])
 
   const loadOrderHistory = async (
     targetPage = ordersPage,

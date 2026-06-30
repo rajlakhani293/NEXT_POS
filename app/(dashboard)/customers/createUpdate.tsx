@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 import DynamicForm from "@/components/DynamicForm"
 import { customers } from "@/lib/api/customers"
@@ -14,57 +14,106 @@ type CustomerFormProps = {
 }
 
 type CustomerFormValues = {
-  name: string
+  first_name: string
+  last_name: string
   phone: string
   email: string
-  customer_type: string
-  company_name: string
-  gst_number: string
-  opening_balance: string
   credit_limit_amount: string
-  billing_address_line_1: string
-  billing_pincode: string
+  group_id: string
+  birth_date: string
+  pobox: string
+  gender: string
+  billing_first_name: string
+  billing_last_name: string
+  billing_phone: string
+  billing_email: string
+  billing_address_1: string
+  billing_address_2: string
+  billing_country: string
   billing_city: string
-  shipping_address_line_1: string
-  shipping_pincode: string
+  billing_pobox: string
+  billing_company_name: string
+  shipping_first_name: string
+  shipping_last_name: string
+  shipping_phone: string
+  shipping_email: string
+  shipping_address_1: string
+  shipping_address_2: string
+  shipping_country: string
   shipping_city: string
+  shipping_pobox: string
+  shipping_company_name: string
 }
 
 const initialValues: CustomerFormValues = {
-  name: "",
+  first_name: "",
+  last_name: "",
   phone: "",
   email: "",
-  customer_type: "retail",
-  company_name: "",
-  gst_number: "",
-  opening_balance: "",
   credit_limit_amount: "",
-  billing_address_line_1: "",
-  billing_pincode: "",
+  group_id: "",
+  birth_date: "",
+  pobox: "",
+  gender: "",
+  billing_first_name: "",
+  billing_last_name: "",
+  billing_phone: "",
+  billing_email: "",
+  billing_address_1: "",
+  billing_address_2: "",
+  billing_country: "",
   billing_city: "",
-  shipping_address_line_1: "",
-  shipping_pincode: "",
+  billing_pobox: "",
+  billing_company_name: "",
+  shipping_first_name: "",
+  shipping_last_name: "",
+  shipping_phone: "",
+  shipping_email: "",
+  shipping_address_1: "",
+  shipping_address_2: "",
+  shipping_country: "",
   shipping_city: "",
+  shipping_pobox: "",
+  shipping_company_name: "",
 }
 
-const buildCustomerFields = () => [
+const buildCustomerFields = (groups: { id: number | string; name: string }[]) => [
   {
-    name: "customer_type",
-    label: "Customer Type",
-    type: "radio",
+    name: "first_name",
+    label: "Customer Name",
+    type: "text",
+    placeholder: "Provide a unique name for the customer.",
     required: true,
-    options: [
-      { label: "Retail", value: "retail" },
-      { label: "Wholesale", value: "wholesale" },
-      { label: "Walk In", value: "walk_in" },
-    ],
   },
   {
-    name: "name",
-    label: "Name",
+    name: "last_name",
+    label: "Last Name",
     type: "text",
-    placeholder: "Enter customer name",
+    placeholder: "Provide the customer last name",
+  },
+  {
+    name: "credit_limit_amount",
+    label: "Credit Limit",
+    type: "number",
+    placeholder: "Set what should be the limit of the purchase on credit.",
+    prefix: "₹",
+  },
+  {
+    name: "group_id",
+    label: "Group",
+    type: "select",
+    placeholder: "Assign the customer to a group",
     required: true,
+    options: groups.map((group) => ({
+      label: group.name,
+      value: group.id,
+    })),
+  },
+  {
+    name: "birth_date",
+    label: "Birth Date",
+    type: "date",
+    placeholder: "Displays the customer birth date",
   },
   {
     name: "phone",
@@ -78,7 +127,7 @@ const buildCustomerFields = () => [
     sanitize: (value: string) => value.replace(/\D/g, "").slice(0, 10),
     validate: (value: string) => {
       if (!value) return ""
-      if (!/^[6-9]\d{9}$/.test(value)) return "Enter valid Indian phone number"
+      if (value.length > 0 && value.length < 6) return "The phone number provided is too short."
       return ""
     },
   },
@@ -94,82 +143,122 @@ const buildCustomerFields = () => [
     },
   },
   {
-    name: "company_name",
-    label: "Company Name",
+    name: "pobox",
+    label: "PO Box",
     type: "text",
-    placeholder: "Enter company name for B2B customer",
+    placeholder: "Provide the customer PO.Box",
   },
   {
-    name: "gst_number",
-    label: "GST Number",
+    name: "gender",
+    label: "Gender",
+    type: "select",
+    placeholder: "Provide the customer gender",
+    allowClear: true,
+    options: [
+      { label: "Not Defined", value: "not_defined" },
+      { label: "Male", value: "male" },
+      { label: "Female", value: "female" },
+    ],
+  },
+  {
+    name: "billing_first_name",
+    label: "Billing First Name",
     type: "text",
-    placeholder: "Enter GST number",
   },
   {
-    name: "opening_balance",
-    label: "Opening Balance",
-    type: "number",
-    placeholder: "Enter opening balance",
-    prefix: "₹",
-  },
-  {
-    name: "credit_limit_amount",
-    label: "Credit Limit",
-    type: "number",
-    placeholder: "Enter credit limit",
-    prefix: "₹",
-  },
-  {
-    name: "billing_address_line_1",
-    label: "Billing Address Line 1",
+    name: "billing_last_name",
+    label: "Billing Last Name",
     type: "text",
-    placeholder: "Enter billing address",
   },
   {
-    name: "billing_pincode",
-    label: "Billing Pincode",
+    name: "billing_phone",
+    label: "Billing Phone",
     type: "text",
-    placeholder: "Enter 6 digit pincode",
-    maxLength: 6,
-    inputMode: "numeric",
-    sanitize: (value: string) => value.replace(/\D/g, "").slice(0, 6),
-    validate: (value: string) => {
-      if (!value) return ""
-      if (!/^\d{6}$/.test(value)) return "Pincode must be 6 digits"
-      return ""
-    },
+  },
+  {
+    name: "billing_email",
+    label: "Billing Email",
+    type: "email",
+  },
+  {
+    name: "billing_address_1",
+    label: "Billing Address 1",
+    type: "text",
+  },
+  {
+    name: "billing_address_2",
+    label: "Billing Address 2",
+    type: "text",
+  },
+  {
+    name: "billing_country",
+    label: "Billing Country",
+    type: "text",
   },
   {
     name: "billing_city",
     label: "Billing City",
     type: "text",
-    placeholder: "Enter city",
   },
   {
-    name: "shipping_address_line_1",
-    label: "Shipping Address Line 1",
+    name: "billing_pobox",
+    label: "Billing PO.Box",
     type: "text",
-    placeholder: "Enter shipping address",
   },
   {
-    name: "shipping_pincode",
-    label: "Shipping Pincode",
+    name: "billing_company_name",
+    label: "Billing Company",
     type: "text",
-    placeholder: "Enter 6 digit pincode",
-    maxLength: 6,
-    inputMode: "numeric",
-    sanitize: (value: string) => value.replace(/\D/g, "").slice(0, 6),
-    validate: (value: string) => {
-      if (!value) return ""
-      if (!/^\d{6}$/.test(value)) return "Pincode must be 6 digits"
-      return ""
-    },
+  },
+  {
+    name: "shipping_first_name",
+    label: "Shipping First Name",
+    type: "text",
+  },
+  {
+    name: "shipping_last_name",
+    label: "Shipping Last Name",
+    type: "text",
+  },
+  {
+    name: "shipping_phone",
+    label: "Shipping Phone",
+    type: "text",
+  },
+  {
+    name: "shipping_email",
+    label: "Shipping Email",
+    type: "email",
+  },
+  {
+    name: "shipping_address_1",
+    label: "Shipping Address 1",
+    type: "text",
+  },
+  {
+    name: "shipping_address_2",
+    label: "Shipping Address 2",
+    type: "text",
+  },
+  {
+    name: "shipping_country",
+    label: "Shipping Country",
+    type: "text",
   },
   {
     name: "shipping_city",
     label: "Shipping City",
     type: "text",
-    placeholder: "Enter city",
+  },
+  {
+    name: "shipping_pobox",
+    label: "Shipping PO.Box",
+    type: "text",
+  },
+  {
+    name: "shipping_company_name",
+    label: "Shipping Company",
+    type: "text",
   },
 ]
 
@@ -184,6 +273,10 @@ export function CustomerForm({
   const [getCustomerById, { data, isLoading }] = (
     customers as any
   ).useGetCustomerByIdMutation()
+  const [getCustomerGroupsDropdown] = (
+    customers as any
+  ).useGetCustomerGroupsDropdownMutation()
+  const [groups, setGroups] = useState<{ id: number | string; name: string }[]>([])
 
   useEffect(() => {
     if (isOpen && editId) {
@@ -191,39 +284,64 @@ export function CustomerForm({
     }
   }, [editId, getCustomerById, isOpen])
 
+  useEffect(() => {
+    if (!isOpen) return
+
+    const loadGroups = async () => {
+      const response = await getCustomerGroupsDropdown().unwrap()
+      setGroups(response?.data || [])
+    }
+
+    loadGroups()
+  }, [getCustomerGroupsDropdown, isOpen])
+
   const record = data?.data
   const billingAddress = record?.addresses?.billing || record?.address || {}
   const shippingAddress = record?.addresses?.shipping || {}
-  const customerFields = buildCustomerFields()
+  const customerFields = buildCustomerFields(groups)
   const formValues: CustomerFormValues =
     editId && record
       ? {
-          name: record.name || "",
+          first_name: record.first_name || "",
+          last_name: record.last_name || "",
           phone: record.phone || "",
           email: record.email || "",
-          customer_type: record.customer_type || "retail",
-          company_name: record.company_name || "",
-          gst_number: record.gst_number || "",
-          opening_balance: record.opening_balance
-            ? String(record.opening_balance)
-            : "",
           credit_limit_amount: record.credit_limit_amount
             ? String(record.credit_limit_amount)
             : "",
-          billing_address_line_1: billingAddress.address_line_1 || "",
-          billing_pincode: billingAddress.pincode || "",
+          group_id: record.group_id ? String(record.group_id) : "",
+          birth_date: record.birth_date ? String(record.birth_date).split(" ")[0] : "",
+          pobox: record.pobox || "",
+          gender: record.gender || "not_defined",
+          billing_first_name: billingAddress.first_name || "",
+          billing_last_name: billingAddress.last_name || "",
+          billing_phone: billingAddress.phone || "",
+          billing_email: billingAddress.email || "",
+          billing_address_1: billingAddress.address_1 || "",
+          billing_address_2: billingAddress.address_2 || "",
+          billing_country: billingAddress.country || "",
           billing_city: billingAddress.city || "",
-          shipping_address_line_1: shippingAddress.address_line_1 || "",
-          shipping_pincode: shippingAddress.pincode || "",
+          billing_pobox: billingAddress.pobox || "",
+          billing_company_name: billingAddress.company_name || "",
+          shipping_first_name: shippingAddress.first_name || "",
+          shipping_last_name: shippingAddress.last_name || "",
+          shipping_phone: shippingAddress.phone || "",
+          shipping_email: shippingAddress.email || "",
+          shipping_address_1: shippingAddress.address_1 || "",
+          shipping_address_2: shippingAddress.address_2 || "",
+          shipping_country: shippingAddress.country || "",
           shipping_city: shippingAddress.city || "",
+          shipping_pobox: shippingAddress.pobox || "",
+          shipping_company_name: shippingAddress.company_name || "",
         }
       : initialValues
 
   const handleSubmit = async (values: CustomerFormValues) => {
     const payLoad = {
       ...values,
-      opening_balance: values.opening_balance || "0",
+      group_id: values.group_id ? Number(values.group_id) : null,
       credit_limit_amount: values.credit_limit_amount || "0",
+      gender: values.gender === "not_defined" ? "" : values.gender,
     }
 
     if (editId) {
@@ -246,7 +364,7 @@ export function CustomerForm({
       onSubmit={handleSubmit}
       onClose={onClose}
       onSuccess={onSuccess}
-      title={editId ? "Edit Customer" : "Create Customer"}
+      title={editId ? "Edit customer" : "Create a new customer"}
       isOpen={isOpen}
       formWidth="w-[640px]"
       isLoading={Boolean(editId) && isLoading}

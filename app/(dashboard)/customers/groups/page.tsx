@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
 import { CustomerGroupForm } from "@/app/(dashboard)/customers/groups/createUpdate"
@@ -17,6 +18,7 @@ const columns = [
 ]
 
 export default function CustomerGroupsPage() {
+  const searchParams = useSearchParams()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editId, setEditId] = useState<number | string | null>(null)
   const [deleteCustomerGroup] = (customers as any).useDeleteCustomerGroupMutation()
@@ -61,13 +63,20 @@ export default function CustomerGroupsPage() {
     setEditId(null)
   }
 
+  useEffect(() => {
+    if (searchParams.get("create") === "1" && canCreate) {
+      setEditId(null)
+      setIsFormOpen(true)
+    }
+  }, [canCreate, searchParams])
+
   return (
     <div className="h-full space-y-4">
       <DynamicTable
         data={orders}
         columns={columns}
-        tableTitle="Customer Groups"
-        title={canCreate ? "Add Customer Group" : undefined}
+        tableTitle="Customer Groups List"
+        title={canCreate ? "Add a new Customers Group" : undefined}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}
@@ -91,7 +100,7 @@ export default function CustomerGroupsPage() {
         }
         triggerRefresh={triggerRefresh}
         deleteModalTitle="Delete Customer Group"
-        deleteModalDescription="Are you sure you want to delete this customer group?"
+        deleteModalDescription="Would you like to delete this ?"
       />
 
       <CustomerGroupForm

@@ -21,7 +21,11 @@ const endpointsConfig = {
   getProvidersData: { query: postMutation("../providers/get-transactions") },
   createProvider: { query: createMutation("../providers/") },
   editProvider: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`../providers/${id}`, payLoad) },
-  deleteProvider: { query: ({ id }: { id: any }) => deleteMutation(`../providers/${id}`)({}) },
+  deleteProvider: {
+    query: ({ id, ids }: { id?: any; ids?: any[] }) =>
+      deleteMutation(`../providers/${id || ids?.[0]}`)({}),
+  },
+  updateProviderStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("../providers/status", payLoad) },
   getProviderById: { query: ({ id }: { id: number | string }) => getMutation(`../providers/${id}`) },
   getProviderProcurements: {
     query: ({ id, payLoad }: { id: any; payLoad: any }) =>

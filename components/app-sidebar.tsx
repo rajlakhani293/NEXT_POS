@@ -117,17 +117,77 @@ const mainNavSections: DashboardNavSection[] = [
     title: "Customers",
     url: "/customers",
     icon: <UsersIcon />,
-    permission: PERMISSIONS.customers.view,
+    permission: [
+      PERMISSIONS.customers.view,
+      PERMISSIONS.customers.create,
+      PERMISSIONS.rewards.view,
+      PERMISSIONS.rewards.create,
+      PERMISSIONS.promotions.view,
+      PERMISSIONS.promotions.create,
+    ],
+    permissionMatch: "any",
     items: [
       {
-        title: "Customers",
+        title: "List",
         url: "/customers",
         permission: PERMISSIONS.customers.view,
       },
       {
-        title: "Customer Groups",
+        title: "Create Customer",
+        url: "/customers?create=1",
+        permission: PERMISSIONS.customers.create,
+      },
+      {
+        title: "Customers Groups",
         url: "/customers/groups",
         permission: PERMISSIONS.customers.view,
+      },
+      {
+        title: "Create Group",
+        url: "/customers/groups?create=1",
+        permission: PERMISSIONS.customers.create,
+      },
+      {
+        title: "Reward Systems",
+        url: "/customers/rewards-system",
+        permission: PERMISSIONS.rewards.view,
+      },
+      {
+        title: "Create Reward",
+        url: "/customers/rewards-system?create=1",
+        permission: PERMISSIONS.rewards.create,
+      },
+      {
+        title: "List Coupons",
+        url: "/customers/coupons",
+        permission: PERMISSIONS.promotions.view,
+      },
+      {
+        title: "Create Coupon",
+        url: "/customers/coupons?create=1",
+        permission: PERMISSIONS.promotions.create,
+      },
+    ],
+  },
+  {
+    title: "Providers",
+    url: "/providers",
+    icon: <UsersIcon />,
+    permission: [
+      PERMISSIONS.purchases.view,
+      PERMISSIONS.purchases.create,
+    ],
+    permissionMatch: "any",
+    items: [
+      {
+        title: "List",
+        url: "/providers",
+        permission: PERMISSIONS.purchases.view,
+      },
+      {
+        title: "Create A Provider",
+        url: "/providers?create=1",
+        permission: PERMISSIONS.purchases.create,
       },
     ],
   },
@@ -140,11 +200,6 @@ const mainNavSections: DashboardNavSection[] = [
       {
         title: "Purchase Orders",
         url: "/purchases",
-        permission: PERMISSIONS.purchases.view,
-      },
-      {
-        title: "Suppliers",
-        url: "/purchases/suppliers",
         permission: PERMISSIONS.purchases.view,
       },
     ],
@@ -379,15 +434,17 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
     }, [])
 
   const matchesUrl = (url: string) => {
-    if (url === "/pos") {
+    const itemPath = url.split("?")[0]
+
+    if (itemPath === "/pos") {
       return pathname === "/pos" || pathname === "/sales/create"
     }
 
-    if (url === "/sales") {
+    if (itemPath === "/sales") {
       return pathname === "/sales" || (pathname.startsWith("/sales/") && pathname !== "/sales/create")
     }
 
-    return pathname === url || pathname.startsWith(`${url}/`)
+    return pathname === itemPath || pathname.startsWith(`${itemPath}/`)
   }
 
   const buildNavItems = (sections: DashboardNavSection[]) =>

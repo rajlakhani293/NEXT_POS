@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Gift, TicketPercent, Wallet } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Gift, ReceiptText, TicketPercent, Wallet } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { customers } from "@/lib/api/customers"
@@ -39,6 +39,7 @@ const columns = [
 
 export default function CustomersPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [deleteCustomer] = (customers as any).useDeleteCustomerMutation()
   const [updateCustomerStatus] = (
@@ -75,13 +76,19 @@ export default function CustomersPage() {
     router.push(`/customers/${record.id}`)
   }
 
+  useEffect(() => {
+    if (searchParams.get("create") === "1" && canCreate) {
+      setIsFormOpen(true)
+    }
+  }, [canCreate, searchParams])
+
   return (
     <div className="h-full space-y-4">
       <DynamicTable
         data={orders}
         columns={columns}
-        tableTitle="Customers"
-        title={canCreate ? "Add Customer" : undefined}
+        tableTitle="Customers List"
+        title={canCreate ? "Add a new customer" : undefined}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}
@@ -105,17 +112,21 @@ export default function CustomersPage() {
         }
         triggerRefresh={triggerRefresh}
         deleteModalTitle="Delete Customer"
-        deleteModalDescription="Are you sure you want to delete this customer?"
+        deleteModalDescription="Would you like to delete this ?"
         rowActions={(_, record) => [
           {
+            key: "orders",
+            label: "Orders",
+            labelText: "Orders",
+            icon: <ReceiptText className="size-4" />,
+            onClick: () => router.push(`/customers/${record.id}?tab=orders`),
+          },
+          {
             key: "credit",
-            label: "Credit History",
-            labelText: "Credit History",
+            label: "Wallet History",
+            labelText: "Wallet History",
             icon: <Wallet className="size-4" />,
-            onClick: () =>
-              router.push(
-                `/customers/credit?customer_id=${record.id}&customer_name=${encodeURIComponent(record.name || record.phone || "")}`
-              ),
+            onClick: () => router.push(`/customers/${record.id}/account-history`),
           },
           {
             key: "rewards",

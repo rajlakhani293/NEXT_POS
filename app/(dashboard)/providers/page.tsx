@@ -1,16 +1,16 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Boxes, PackageSearch } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
+import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { PermissionGuard } from "@/components/permission-guard"
 import { purchases } from "@/lib/api/purchases"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
-import { SupplierForm } from "../purchases/suppliers/createUpdate"
 
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
@@ -24,14 +24,84 @@ const columns = [
   { key: "created_at", title: "Created At", render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 
+const providerInitialValues = {
+  first_name: "",
+  last_name: "",
+  email: "",
+  phone: "",
+  address_1: "",
+  address_2: "",
+  description: "",
+}
+
+function ProviderForm(props: any) {
+  return (
+    <CatalogMasterForm
+      {...props}
+      entityName="provider"
+      fields={[
+        {
+          name: "first_name",
+          label: "First Name",
+          placeholder: "Provide a name to the resource.",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "email",
+          label: "Email",
+          placeholder: "Provide the provider email. Might be used to send automated email.",
+          type: "email",
+        },
+        {
+          name: "last_name",
+          label: "Last Name",
+          placeholder: "Provider last name if necessary.",
+          type: "text",
+        },
+        {
+          name: "phone",
+          label: "Phone",
+          placeholder: "Contact phone number for the provider. Might be used to send automated SMS notifications.",
+          type: "text",
+        },
+        {
+          name: "address_1",
+          label: "Address 1",
+          placeholder: "First address of the provider.",
+          type: "text",
+        },
+        {
+          name: "address_2",
+          label: "Address 2",
+          placeholder: "Second address of the provider.",
+          type: "text",
+        },
+        {
+          name: "description",
+          label: "Description",
+          placeholder: "Further details about the provider",
+          type: "textarea",
+        },
+      ]}
+      initialValues={providerInitialValues}
+      createHook={(purchases as any).useCreateProviderMutation}
+      editHook={(purchases as any).useEditProviderMutation}
+      getByIdHook={(purchases as any).useGetProviderByIdMutation}
+      formWidth="w-[560px]"
+    />
+  )
+}
+
 export default function ProvidersPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formState, setFormState] = useState<{
     isOpen: boolean
     editId?: number | string | null
   }>({ isOpen: false, editId: null })
-  const [deleteSupplier] = (purchases as any).useDeleteSupplierMutation()
-  const [updateSupplierStatus] = (purchases as any).useUpdateSupplierStatusMutation()
+  const [deleteProvider] = (purchases as any).useDeleteProviderMutation()
+  const [updateProviderStatus] = (purchases as any).useUpdateProviderStatusMutation()
   const { hasPermission } = usePermissions()
   const canCreate = hasPermission(PERMISSIONS.purchases.create)
   const canUpdate = hasPermission(PERMISSIONS.purchases.update)
@@ -57,14 +127,20 @@ export default function ProvidersPage() {
     itemsPerPage: 10,
   })
 
+  useEffect(() => {
+    if (searchParams.get("create") === "1" && canCreate) {
+      setFormState({ isOpen: true, editId: null })
+    }
+  }, [canCreate, searchParams])
+
   return (
     <PermissionGuard permission={PERMISSIONS.purchases.view}>
       <div className="h-full space-y-4">
         <DynamicTable
           data={orders}
           columns={columns}
-          tableTitle="Providers"
-          title={canCreate ? "Add Provider" : undefined}
+          tableTitle="Providers List"
+          title={canCreate ? "Add a new provider" : undefined}
           showSearch
           searchTerm={searchTerm}
           currentPage={currentPage}
@@ -84,12 +160,12 @@ export default function ProvidersPage() {
           showEdit={canUpdate}
           onEdit={(record: any) => setFormState({ isOpen: true, editId: record.id })}
           showDelete={canDelete}
-          deleteMutation={deleteSupplier}
+          deleteMutation={deleteProvider}
           showStatus={canUpdate}
-          statusChangeMutation={({ ids, status }: any) => updateSupplierStatus({ payLoad: { ids, status } })}
+          statusChangeMutation={({ ids, status }: any) => updateProviderStatus({ payLoad: { ids, status } })}
           triggerRefresh={triggerRefresh}
           deleteModalTitle="Delete Provider"
-          deleteModalDescription="Are you sure you want to delete this provider?"
+          deleteModalDescription="Would you like to delete this ?"
           selectedDateRange={selectedDateRange}
           dateFilters={dateFilters}
           rowActions={(_, record) => [
@@ -109,7 +185,7 @@ export default function ProvidersPage() {
             },
           ]}
         />
-        <SupplierForm
+        <ProviderForm
           isOpen={formState.isOpen}
           editId={formState.editId}
           onClose={() => setFormState({ isOpen: false, editId: null })}

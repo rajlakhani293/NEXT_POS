@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
 import { rewards } from "@/lib/api/rewards"
@@ -18,6 +19,7 @@ const columns = [
 ]
 
 export default function RewardSystemsPage() {
+  const searchParams = useSearchParams()
   const [formState, setFormState] = useState<{
     isOpen: boolean
     editId?: number | string | null
@@ -61,13 +63,19 @@ export default function RewardSystemsPage() {
     setFormState({ isOpen: false, editId: null })
   }
 
+  useEffect(() => {
+    if (searchParams.get("create") === "1" && canCreate) {
+      setFormState({ isOpen: true, editId: null })
+    }
+  }, [canCreate, searchParams])
+
   return (
     <div className="h-full space-y-4">
       <DynamicTable
         data={orders}
         columns={columns}
         tableTitle="Reward Systems"
-        title={canCreate ? "Add Reward" : undefined}
+        title={canCreate ? "Create Reward" : undefined}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}
@@ -90,7 +98,7 @@ export default function RewardSystemsPage() {
         }
         triggerRefresh={triggerRefresh}
         deleteModalTitle="Delete Reward System"
-        deleteModalDescription="Are you sure you want to delete this reward system?"
+        deleteModalDescription="Would you like to delete this ?"
       />
       <RewardSystemForm
         isOpen={formState.isOpen}
