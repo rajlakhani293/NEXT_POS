@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, Printer } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -24,27 +24,60 @@ const formatLabel = (value: any) =>
 export default function SaleReceiptPage() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const { t } = useTranslation()
   const id = params.id as string
+  const documentType = searchParams.get("doc") || "receipt"
+  const refundId = searchParams.get("refund_id")
   const loadKeyRef = useRef("")
 
   const [getSaleReceipt, receiptState] = (sales as any).useGetSaleReceiptMutation()
+  const [getSaleInvoice, invoiceState] = (sales as any).useGetSaleInvoiceMutation()
+  const [getSaleRefundReceipt, refundReceiptState] = (sales as any).useGetSaleRefundReceiptMutation()
 
   useEffect(() => {
     if (!id) return
-    if (loadKeyRef.current === id) return
-    loadKeyRef.current = id
+    const loadKey = `${documentType}:${id}:${refundId || ""}`
+    if (loadKeyRef.current === loadKey) return
+    loadKeyRef.current = loadKey
+    if (documentType === "invoice") {
+      getSaleInvoice({ id })
+      return
+    }
+    if (documentType === "refund" && refundId) {
+      getSaleRefundReceipt({ id: refundId })
+      return
+    }
     getSaleReceipt({ id })
-  }, [getSaleReceipt, id])
+  }, [documentType, getSaleInvoice, getSaleReceipt, getSaleRefundReceipt, id, refundId])
 
-  const receipt = receiptState.data?.data
+  const activeState =
+    documentType === "invoice"
+      ? invoiceState
+      : documentType === "refund"
+        ? refundReceiptState
+        : receiptState
+  const receipt = activeState.data?.data
+  const order = receipt?.sale_order || receipt
+  const documentTitle =
+    documentType === "invoice"
+      ? t("invoice")
+      : documentType === "refund"
+        ? t("refund_receipt")
+        : t("receipt")
+  const documentSubtitle =
+    documentType === "invoice"
+      ? t("order_invoice")
+      : documentType === "refund"
+        ? t("order_refund_receipt")
+        : t("sale_receipt")
 
-  if (receiptState.isLoading && !receipt) {
+  if (activeState.isLoading && !receipt) {
     return (
       <div className="flex h-full items-center justify-center bg-gray-50">
         <div className="flex items-center gap-3 text-sm font-medium text-gray-600">
           <Spinner className="h-5 w-5" />
-          Loading receipt...
+          {t("Loading receipt...")}
         </div>
       </div>
     )
@@ -72,14 +105,14 @@ export default function SaleReceiptPage() {
             variant="outline"
             size="icon"
             className="size-11 rounded-2xl"
-            onClick={() => router.push(`/sales/${receipt.id}`)}
+            onClick={() => router.push(`/sales/${order.id}`)}
           >
             <ArrowLeft className="size-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">{t("receipt")}</h1>
+            <h1 className="text-2xl font-bold text-slate-900">{documentTitle}</h1>
             <p className="text-sm text-slate-500">
-              Sale {receipt.code} printable receipt view.
+              {t("Order")} {order.code} {t("printable document")}.
             </p>
           </div>
         </div>
@@ -93,14 +126,14 @@ export default function SaleReceiptPage() {
         <div className="border-b border-dashed border-gray-200 pb-6 text-center">
           <h2 className="text-3xl font-bold text-slate-950">NEXT POS</h2>
           <p className="mt-2 text-sm font-semibold text-slate-500">
-            {t("sale_receipt")}
+            {documentSubtitle}
           </p>
           <p className="mt-1 text-sm font-bold text-slate-800">
-            {t("receipt_code")}: {receipt.code}
+            {t("receipt_code")}: {order.code}
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            {receipt.created_at
-              ? new Date(receipt.created_at).toLocaleString()
+            {(receipt.created_at || order.created_at)
+              ? new Date(receipt.created_at || order.created_at).toLocaleString()
               : "-"}
           </p>
         </div>
@@ -111,21 +144,21 @@ export default function SaleReceiptPage() {
               {t("customer")}
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-900">
-              {receipt.customer?.name || "Walk-in customer"}
+              {receipt.customer?.name || order.customer?.name || "Walk-in customer"}
             </p>
-            <p className="text-sm text-slate-500">{receipt.customer?.phone || "-"}</p>
+            <p className="text-sm text-slate-500">{receipt.customer?.phone || order.customer?.phone || "-"}</p>
           </div>
           <div className="text-left md:text-right">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               {t("order_type")}
             </p>
             <p className="mt-1 text-sm font-semibold capitalize text-slate-900">
-              {receipt.order_type === "takeaway"
+              {order.order_type === "takeaway"
                 ? t("take_order")
-                : formatLabel(receipt.order_type)}
+                : formatLabel(order.order_type)}
             </p>
             <p className="text-sm text-slate-500">
-              {t("status")}: {t(receipt.payment_status) !== receipt.payment_status ? t(receipt.payment_status) : formatLabel(receipt.payment_status)}
+              {t("status")}: {t(order.payment_status) !== order.payment_status ? t(order.payment_status) : formatLabel(order.payment_status)}
             </p>
           </div>
         </div>
@@ -146,10 +179,10 @@ export default function SaleReceiptPage() {
                   <TableCell>
                     <div>
                       <p className="font-semibold text-slate-900">
-                        {item.product__name}
+                        {item.product__name || item.sale_item__product__name}
                       </p>
                       <p className="text-xs text-slate-500">
-                        {t("sku")}: {item.product__sku || "-"}
+                        {t("sku")}: {item.product__sku || item.sale_item__product__sku || "-"}
                         {item.unit__name ? ` · ${t("unit")}: ${item.unit__name}` : ""}
                       </p>
                     </div>
@@ -167,52 +200,52 @@ export default function SaleReceiptPage() {
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">{t("subtotal")}</span>
             <span className="font-semibold text-slate-900">
-              {formatMoney(receipt.subtotal)}
+              {formatMoney(receipt.subtotal ?? order.subtotal)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">{t("discount")}</span>
             <span className="font-semibold text-slate-900">
               {formatMoney(
-                Number(receipt.discount_amount || 0) +
-                  Number(receipt.coupon_discount_amount || 0)
+                Number(receipt.discount_amount ?? order.discount_amount ?? 0) +
+                  Number(receipt.coupon_discount_amount ?? order.coupon_discount_amount ?? 0)
               )}
             </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">{t("tax")}</span>
             <span className="font-semibold text-slate-900">
-              {formatMoney(receipt.tax_amount)}
+              {formatMoney(receipt.tax_amount ?? order.tax_amount)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">{t("shipping")}</span>
             <span className="font-semibold text-slate-900">
-              {formatMoney(receipt.shipping_amount)}
+              {formatMoney(receipt.shipping_amount ?? receipt.shipping ?? order.shipping_amount ?? order.shipping)}
             </span>
           </div>
           <div className="flex justify-between border-t border-slate-200 pt-3 text-lg">
             <span className="font-bold text-slate-900">{t("grand_total")}</span>
             <span className="font-bold text-slate-900">
-              {formatMoney(receipt.total)}
+              {formatMoney(receipt.total ?? order.total)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">{t("received")}</span>
             <span className="font-semibold text-slate-900">
-              {formatMoney(receipt.tendered_amount)}
+              {formatMoney(order.tendered_amount)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">{t("change")}</span>
             <span className="font-semibold text-slate-900">
-              {formatMoney(receipt.change_amount)}
+              {formatMoney(order.change_amount)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">{t("due")}</span>
             <span className="font-semibold text-slate-900">
-              {formatMoney(receipt.due_amount)}
+              {formatMoney(order.due_amount)}
             </span>
           </div>
         </div>

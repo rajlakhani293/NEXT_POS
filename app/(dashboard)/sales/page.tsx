@@ -1,15 +1,13 @@
 "use client"
 
-import { useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Ban, ReceiptText, Wallet } from "lucide-react"
+import { FileText, ReceiptText, Settings } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { sales } from "@/lib/api/sales"
 import { PERMISSIONS } from "@/lib/permissions"
-import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
 const paymentStatusColors: Record<string, string> = {
@@ -78,9 +76,6 @@ export default function SalesHistoryPage() {
   const { hasPermission } = usePermissions()
   const canCreateSale = hasPermission(PERMISSIONS.sales.create)
   const canDeleteSale = hasPermission(PERMISSIONS.sales.delete)
-  const canVoidSale = hasPermission(PERMISSIONS.sales.void)
-  const canCollectDue = hasPermission(PERMISSIONS.payments.collectDue)
-  const [voidSale] = (sales as any).useVoidSaleMutation()
   const [deleteSales] = (sales as any).useDeleteSalesMutation()
 
   const {
@@ -101,75 +96,13 @@ export default function SalesHistoryPage() {
     itemsPerPage: 10,
   })
 
-  const summaryCards = useMemo(() => {
-    const totalSales = orders.reduce(
-      (sum: number, sale: any) => sum + Number(sale.total || 0),
-      0
-    )
-    const totalDue = orders.reduce(
-      (sum: number, sale: any) => sum + Number(sale.due_amount || 0),
-      0
-    )
-    const paidCount = orders.filter(
-      (sale: any) => sale.payment_status === "paid"
-    ).length
-    const dueCount = orders.filter((sale: any) =>
-      ["unpaid", "partially_paid"].includes(sale.payment_status)
-    ).length
-
-    return [
-      {
-        title: "Visible Sales",
-        value: formatMoney(totalSales),
-        helper: `${orders.length} rows on this page`,
-      },
-      {
-        title: "Visible Due",
-        value: formatMoney(totalDue),
-        helper: `${dueCount} orders need collection`,
-      },
-      {
-        title: "Paid Orders",
-        value: String(paidCount),
-        helper: "Fully settled orders",
-      },
-      {
-        title: "Total Records",
-        value: String(totalItems),
-        helper: "Matched by current filters",
-      },
-    ]
-  }, [orders, totalItems])
-
-  const handleVoidSale = async (saleId: number | string) => {
-    const response = await voidSale({
-      id: saleId,
-      payLoad: { note: "Voided from sales history." },
-    }).unwrap()
-    showToast.success(response?.message || "Sale voided successfully.")
-    triggerRefresh()
-  }
-
   return (
     <div className="h-full space-y-4">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {summaryCards.map((card) => (
-          <div
-            key={card.title}
-            className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
-          >
-            <p className="text-sm font-semibold text-slate-500">{card.title}</p>
-            <p className="mt-3 text-2xl font-bold text-slate-950">{card.value}</p>
-            <p className="mt-1 text-sm text-slate-500">{card.helper}</p>
-          </div>
-        ))}
-      </div>
-
       <DynamicTable
         data={orders}
         columns={columns}
-        tableTitle="Sales History"
-        title={canCreateSale ? "Add Sale" : undefined}
+        tableTitle="Orders List"
+        title={canCreateSale ? "Add a new order" : undefined}
         showSearch
         showDateRange
         searchTerm={searchTerm}
@@ -195,36 +128,37 @@ export default function SalesHistoryPage() {
         onEdit={(record: any) => router.push(`/sales/${record.id}`)}
         rowActions={(_, record) => [
           {
+            key: "options",
+            label: "Options",
+            labelText: "Options",
+            icon: <Settings className="size-4" />,
+            onClick: () => router.push(`/sales/${record.id}`),
+          },
+          ...(Number(record.latest_refund_id || 0) > 0
+            ? [
+                {
+                  key: "refund_receipt",
+                  label: "Refund Receipt",
+                  labelText: "Refund Receipt",
+                  icon: <ReceiptText className="size-4" />,
+                  onClick: () => router.push(`/sales/${record.id}/receipt?doc=refund&refund_id=${record.latest_refund_id}`),
+                },
+              ]
+            : []),
+          {
+            key: "invoice",
+            label: "Invoice",
+            labelText: "Invoice",
+            icon: <FileText className="size-4" />,
+            onClick: () => router.push(`/sales/${record.id}/receipt?doc=invoice`),
+          },
+          {
             key: "receipt",
             label: "Receipt",
             labelText: "Receipt",
             icon: <ReceiptText className="size-4" />,
             onClick: () => router.push(`/sales/${record.id}/receipt`),
           },
-          ...(canCollectDue &&
-          Number(record.due_amount || 0) > 0 &&
-          !["void", "order_void", "refunded"].includes(record.payment_status)
-            ? [
-                {
-                  key: "collect_due",
-                  label: "Collect Due",
-                  labelText: "Collect Due",
-                  icon: <Wallet className="size-4" />,
-                  onClick: () => router.push(`/sales/${record.id}`),
-                },
-              ]
-            : []),
-          ...(canVoidSale && !["void", "order_void", "refunded", "partially_refunded"].includes(record.payment_status)
-            ? [
-                {
-                  key: "void",
-                  label: "Void Sale",
-                  labelText: "Void Sale",
-                  icon: <Ban className="size-4" />,
-                  onClick: () => handleVoidSale(record.id),
-                },
-              ]
-            : []),
         ]}
       />
     </div>

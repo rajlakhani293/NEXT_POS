@@ -29,6 +29,12 @@ const endpointsConfig = {
   getSaleReceipt: {
     query: ({ id }: { id: number | string }) => getMutation(`${id}/receipt`),
   },
+  getSaleInvoice: {
+    query: ({ id }: { id: number | string }) => getMutation(`${id}/invoice`),
+  },
+  getSaleRefundReceipt: {
+    query: ({ id }: { id: number | string }) => getMutation(`refunds/${id}/receipt`),
+  },
   updateSaleProcessing: {
     query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
       createMutation(`${id}/processing`)(payLoad),

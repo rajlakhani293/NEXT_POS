@@ -1114,6 +1114,12 @@ export default function SalesPage() {
     return posOptions.printing_enabled_for === "only_paid_orders" && paymentStatus === "paid"
   }
 
+  const getPrintedDocumentUrl = (saleId: number | string) => {
+    const documentType = posOptions.printing_document === "invoice" ? "invoice" : "receipt"
+    const queryString = documentType === "invoice" ? "?doc=invoice" : ""
+    return `/sales/${saleId}/receipt${queryString}`
+  }
+
   const handleCompleteSale = async (submitOptions: { paymentStatus?: string } = {}) => {
     if (cashRegistersEnabled && !shift?.id) {
       showToast.error("Open shift is required before billing.")
@@ -1176,7 +1182,7 @@ export default function SalesPage() {
     await loadShift()
     if (sale?.id) {
       const paymentStatus = sale.payment_status || requestedPaymentStatus
-      router.push(shouldOpenReceipt(paymentStatus) ? `/sales/${sale.id}/receipt` : `/sales/${sale.id}`)
+      router.push(shouldOpenReceipt(paymentStatus) ? getPrintedDocumentUrl(sale.id) : `/sales/${sale.id}`)
     }
   }
 

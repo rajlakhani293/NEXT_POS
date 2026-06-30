@@ -69,6 +69,11 @@ const mainNavSections: DashboardNavSection[] = [
     permission: PERMISSIONS.sales.view,
     items: [
       {
+        title: "Open POS",
+        url: "/pos",
+        permission: PERMISSIONS.sales.create,
+      },
+      {
         title: "Orders List",
         url: "/sales",
         permission: PERMISSIONS.sales.view,
@@ -374,8 +379,12 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
     }, [])
 
   const matchesUrl = (url: string) => {
+    if (url === "/pos") {
+      return pathname === "/pos" || pathname === "/sales/create"
+    }
+
     if (url === "/sales") {
-      return pathname === "/sales" || pathname.startsWith("/sales/")
+      return pathname === "/sales" || (pathname.startsWith("/sales/") && pathname !== "/sales/create")
     }
 
     return pathname === url || pathname.startsWith(`${url}/`)

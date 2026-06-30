@@ -10,6 +10,8 @@ export type ResolvedRoutePermission = Omit<RoutePermission, "path">
 
 export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/dashboard", permission: PERMISSIONS.reports.view },
+  { path: "/pos", permission: PERMISSIONS.sales.create },
+  { path: "/sales/create", permission: PERMISSIONS.sales.create },
   { path: "/sales", permission: PERMISSIONS.sales.view },
   { path: "/sales/history", permission: PERMISSIONS.sales.view },
   { path: "/sales/receipt", permission: PERMISSIONS.sales.view },
@@ -74,6 +76,10 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
 export function resolveRoutePermission(
   pathname: string
 ): ResolvedRoutePermission | undefined {
+  if (pathname === "/pos" || pathname === "/sales/create") {
+    return { permission: PERMISSIONS.sales.create }
+  }
+
   const productEditMatch = pathname.match(/^\/inventory\/products\/([^/]+)$/)
   if (productEditMatch && productEditMatch[1] !== "create") {
     return { permission: PERMISSIONS.products.update }
