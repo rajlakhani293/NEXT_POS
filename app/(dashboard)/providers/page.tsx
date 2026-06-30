@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Boxes, PackageSearch } from "lucide-react"
 
@@ -9,6 +10,7 @@ import { purchases } from "@/lib/api/purchases"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
+import { SupplierForm } from "../purchases/suppliers/createUpdate"
 
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
@@ -24,6 +26,10 @@ const columns = [
 
 export default function ProvidersPage() {
   const router = useRouter()
+  const [formState, setFormState] = useState<{
+    isOpen: boolean
+    editId?: number | string | null
+  }>({ isOpen: false, editId: null })
   const [deleteSupplier] = (purchases as any).useDeleteSupplierMutation()
   const [updateSupplierStatus] = (purchases as any).useUpdateSupplierStatusMutation()
   const { hasPermission } = usePermissions()
@@ -70,9 +76,13 @@ export default function ProvidersPage() {
           onSort={handleSort}
           sortableFields={sortableFields}
           isLoading={isLoading}
-          setAddEntityOpen={canCreate ? (open: boolean) => open && router.push("/providers/create") : undefined}
+          setAddEntityOpen={
+            canCreate
+              ? (open: boolean) => open && setFormState({ isOpen: true, editId: null })
+              : undefined
+          }
           showEdit={canUpdate}
-          onEdit={(record: any) => router.push(`/providers/edit/${record.id}`)}
+          onEdit={(record: any) => setFormState({ isOpen: true, editId: record.id })}
           showDelete={canDelete}
           deleteMutation={deleteSupplier}
           showStatus={canUpdate}
@@ -98,6 +108,12 @@ export default function ProvidersPage() {
               onClick: () => router.push(`/providers/${record.id}/products`),
             },
           ]}
+        />
+        <SupplierForm
+          isOpen={formState.isOpen}
+          editId={formState.editId}
+          onClose={() => setFormState({ isOpen: false, editId: null })}
+          onSuccess={triggerRefresh}
         />
       </div>
     </PermissionGuard>

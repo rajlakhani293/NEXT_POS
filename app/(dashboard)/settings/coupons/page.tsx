@@ -1,12 +1,13 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { promotions } from "@/lib/api/promotions"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
+import { CouponForm } from "./createUpdate"
 
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
@@ -35,7 +36,10 @@ const columns = [
 ]
 
 export default function CouponsPage() {
-  const router = useRouter()
+  const [formState, setFormState] = useState<{
+    isOpen: boolean
+    editId?: number | string | null
+  }>({ isOpen: false, editId: null })
   const [deleteCoupon] = (promotions as any).useDeleteCouponMutation()
   const [updateCouponStatus] = (promotions as any).useUpdateCouponStatusMutation()
   const { hasPermission } = usePermissions()
@@ -62,11 +66,15 @@ export default function CouponsPage() {
   })
 
   const handleAdd = (open: boolean) => {
-    if (open) router.push("/settings/coupons/create")
+    if (open) setFormState({ isOpen: true, editId: null })
   }
 
   const handleEdit = (record: any) => {
-    router.push(`/settings/coupons/${record.id}`)
+    setFormState({ isOpen: true, editId: record.id })
+  }
+
+  const closeForm = () => {
+    setFormState({ isOpen: false, editId: null })
   }
 
   return (
@@ -100,7 +108,12 @@ export default function CouponsPage() {
         deleteModalTitle="Delete Coupon"
         deleteModalDescription="Are you sure you want to delete this coupon?"
       />
-
+      <CouponForm
+        isOpen={formState.isOpen}
+        editId={formState.editId}
+        onClose={closeForm}
+        onSuccess={triggerRefresh}
+      />
     </div>
   )
 }

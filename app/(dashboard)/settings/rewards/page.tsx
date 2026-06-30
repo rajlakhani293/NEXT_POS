@@ -1,12 +1,13 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { rewards } from "@/lib/api/rewards"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
+import { RewardSystemForm } from "./createUpdate"
 
 const columns = [
   { key: "name", title: "Name" },
@@ -17,7 +18,10 @@ const columns = [
 ]
 
 export default function RewardSystemsPage() {
-  const router = useRouter()
+  const [formState, setFormState] = useState<{
+    isOpen: boolean
+    editId?: number | string | null
+  }>({ isOpen: false, editId: null })
   const [deleteRewardSystem] = (rewards as any).useDeleteRewardSystemMutation()
   const [updateRewardSystemStatus] = (
     rewards as any
@@ -46,11 +50,15 @@ export default function RewardSystemsPage() {
   })
 
   const handleAdd = (open: boolean) => {
-    if (open) router.push("/settings/rewards/create")
+    if (open) setFormState({ isOpen: true, editId: null })
   }
 
   const handleEdit = (record: any) => {
-    router.push(`/settings/rewards/${record.id}`)
+    setFormState({ isOpen: true, editId: record.id })
+  }
+
+  const closeForm = () => {
+    setFormState({ isOpen: false, editId: null })
   }
 
   return (
@@ -84,7 +92,12 @@ export default function RewardSystemsPage() {
         deleteModalTitle="Delete Reward System"
         deleteModalDescription="Are you sure you want to delete this reward system?"
       />
-
+      <RewardSystemForm
+        isOpen={formState.isOpen}
+        editId={formState.editId}
+        onClose={closeForm}
+        onSuccess={triggerRefresh}
+      />
     </div>
   )
 }

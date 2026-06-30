@@ -20,16 +20,12 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/customers/coupons", permission: PERMISSIONS.promotions.view },
   { path: "/customers/create", permission: PERMISSIONS.customers.create },
   { path: "/customers", permission: PERMISSIONS.customers.view },
-  { path: "/providers/create", permission: PERMISSIONS.purchases.create },
   { path: "/providers", permission: PERMISSIONS.purchases.view },
   { path: "/purchases/orders/create", permission: PERMISSIONS.purchases.create },
   { path: "/purchases/products", permission: PERMISSIONS.purchases.view },
   { path: "/purchases/orders", permission: PERMISSIONS.purchases.view },
   { path: "/purchases/suppliers", permission: PERMISSIONS.purchases.view },
   { path: "/purchases", permission: PERMISSIONS.purchases.view },
-  { path: "/accounting/accounts/create", permission: PERMISSIONS.settings.update },
-  { path: "/accounting/accounts/edit", permission: PERMISSIONS.settings.update },
-  { path: "/accounting/accounts", permission: PERMISSIONS.reports.view },
   { path: "/accounting/transactions/create", permission: PERMISSIONS.settings.update },
   { path: "/accounting/transactions/edit", permission: PERMISSIONS.settings.update },
   { path: "/accounting/transactions/history", permission: PERMISSIONS.reports.view },
@@ -51,8 +47,6 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/products/stock-flow-records", permission: PERMISSIONS.inventory.view },
   { path: "/modules/upload", permission: PERMISSIONS.special.manageModules },
   { path: "/modules", permission: PERMISSIONS.special.manageModules },
-  { path: "/users/create", permission: PERMISSIONS.users.create },
-  { path: "/users/edit", permission: PERMISSIONS.users.update },
   { path: "/users/profile", permission: PERMISSIONS.special.manageProfile },
   { path: "/users/roles/permissions-manager", permission: PERMISSIONS.roles.update },
   { path: "/users/roles/create", permission: PERMISSIONS.roles.create },
@@ -74,9 +68,7 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/settings/roles", permission: PERMISSIONS.roles.view },
   { path: "/settings/tax-groups", permission: PERMISSIONS.products.view },
   { path: "/settings/taxes", permission: PERMISSIONS.products.view },
-  { path: "/settings/coupons/create", permission: PERMISSIONS.promotions.create },
   { path: "/settings/coupons", permission: PERMISSIONS.promotions.view },
-  { path: "/settings/rewards/create", permission: PERMISSIONS.rewards.create },
   { path: "/settings/rewards", permission: PERMISSIONS.rewards.view },
 ]
 
@@ -103,24 +95,9 @@ export function resolveRoutePermission(
     return { permission: PERMISSIONS.roles.update }
   }
 
-  const couponEditMatch = pathname.match(/^\/settings\/coupons\/([^/]+)$/)
-  if (couponEditMatch && couponEditMatch[1] !== "create") {
-    return { permission: PERMISSIONS.promotions.update }
-  }
-
-  const rewardEditMatch = pathname.match(/^\/settings\/rewards\/([^/]+)$/)
-  if (rewardEditMatch && rewardEditMatch[1] !== "create") {
-    return { permission: PERMISSIONS.rewards.update }
-  }
-
   const customerEditMatch = pathname.match(/^\/customers\/([^/]+)$/)
   if (customerEditMatch && customerEditMatch[1] !== "create") {
     return { permission: PERMISSIONS.customers.update }
-  }
-
-  const providerEditMatch = pathname.match(/^\/providers\/edit\/([^/]+)$/)
-  if (providerEditMatch) {
-    return { permission: PERMISSIONS.purchases.update }
   }
 
   const purchaseOrderEditMatch = pathname.match(/^\/purchases\/orders\/([^/]+)$/)
