@@ -38,6 +38,15 @@ const endpointsConfig = {
   updateUnitStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("units/status", payLoad) },
   getUnitById: { query: ({ id }: { id: number }) => getMutation(`units/${id}`) },
 
+  // Scale ranges
+  getScaleRangesDropdown: { query: () => getMutation("scale-ranges/dropdown-list") },
+  getScaleRangesData: { query: postMutation("scale-ranges/get-transactions") },
+  createScaleRange: { query: createMutation("scale-ranges/") },
+  editScaleRange: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`scale-ranges/${id}`, payLoad) },
+  deleteScaleRange: { query: deleteMutation("scale-ranges/delete") },
+  updateScaleRangeStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("scale-ranges/status", payLoad) },
+  getScaleRangeById: { query: ({ id }: { id: number }) => getMutation(`scale-ranges/${id}`) },
+
   // Tax groups
   getTaxGroupsDropdown: { query: () => getMutation("tax-groups/dropdown-list") },
   getTaxGroupsData: { query: postMutation("tax-groups/get-transactions") },

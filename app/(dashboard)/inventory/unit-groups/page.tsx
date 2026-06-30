@@ -12,15 +12,15 @@ const columns = [
 export default function UnitGroupsPage() {
   return (
     <CatalogPageShell
-      tableTitle="Unit Groups"
-      addTitle="Add Unit Group"
+      tableTitle="Unit Groups List"
+      addTitle="Add a new unit group"
       columns={columns}
       getDataHook={(catalog as any).useGetUnitGroupsDataMutation}
       deleteHook={(catalog as any).useDeleteUnitGroupMutation}
       statusHook={(catalog as any).useUpdateUnitGroupStatusMutation}
       FormComponent={UnitGroupForm}
       deleteTitle="Delete Unit Group"
-      deleteDescription="Are you sure you want to delete this unit group?"
+      deleteDescription="Would you like to delete this ?"
     />
   )
 }

@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
 import { PermissionGuard } from "@/components/permission-guard"
@@ -46,6 +48,7 @@ export function CatalogPageShell({
   permissions = PERMISSIONS.products,
   showDateRange = true,
 }: CatalogPageShellProps) {
+  const searchParams = useSearchParams()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editId, setEditId] = useState<number | string | null>(null)
   const [deleteRecord] = deleteHook()
@@ -95,6 +98,13 @@ export function CatalogPageShell({
     setIsFormOpen(false)
     setEditId(null)
   }
+
+  useEffect(() => {
+    if (searchParams.get("create") === "1" && canCreate) {
+      setEditId(null)
+      setIsFormOpen(true)
+    }
+  }, [canCreate, searchParams])
 
   return (
     <PermissionGuard permission={permissions.view}>

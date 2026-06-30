@@ -16,6 +16,7 @@ import { SelectItem } from "./ui/select"
 import { UniFieldInput } from "./ui/unifield-input"
 import { Switch } from "./ui/switch"
 import { ButtonGroup } from "./ui/button-group"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 interface FormField {
   name: string
@@ -96,6 +97,8 @@ const DynamicForm = <T extends Record<string, any>>({
   onFieldChange,
   isLoading = false,
 }: DynamicFormProps<T>) => {
+  const { t } = useTranslation()
+
   // Convert formWidth to CSS class
   const getWidthClass = (width: string | number | undefined): string => {
     if (!width) return "w-[600px]"
@@ -301,12 +304,12 @@ const DynamicForm = <T extends Record<string, any>>({
                 ) : field.type === "select" && field.options && field.multiple ? (
                   <div className="space-y-2 rounded-md border p-3">
                     <div className="text-sm font-medium">
-                      {field.label}
+                      {t(field.label)}
                       {field.required && <span className="text-red-500">*</span>}
                     </div>
                     {field.placeholder && (
                       <p className="text-xs text-muted-foreground">
-                        {field.placeholder}
+                        {t(field.placeholder)}
                       </p>
                     )}
                     <div className="flex flex-wrap gap-2">
@@ -334,7 +337,7 @@ const DynamicForm = <T extends Record<string, any>>({
                                 handleChange(field.name, next)
                               }}
                             >
-                              {option.label}
+                        {t(option.label)}
                             </Button>
                           )
                         })}
@@ -345,11 +348,11 @@ const DynamicForm = <T extends Record<string, any>>({
                   </div>
                 ) : field.type === "select" && field.options ? (
                   <UniFieldSelect
-                    label={field.label}
+                    label={t(field.label)}
                     value={formData[field.name] || ""}
                     onValueChange={(value) => handleChange(field.name, value)}
                     required={field.required}
-                    placeholder={field.placeholder || `Select ${field.label}`}
+                    placeholder={field.placeholder ? t(field.placeholder) : t(`Select ${field.label}`)}
                     error={errors[field.name]}
                     onAddNew={field.onAddNew}
                     addNewLabel={field.addNewLabel}
@@ -365,18 +368,18 @@ const DynamicForm = <T extends Record<string, any>>({
                           key={option.value}
                           value={option.value.toString()}
                         >
-                          {option.label}
+                            {t(option.label)}
                         </SelectItem>
                       ))}
                   </UniFieldSelect>
                 ) : field.type === "textarea" ? (
                   <UniFieldInput
                     as="textarea"
-                    label={field.label}
+                    label={t(field.label)}
                     value={formData[field.name] || ""}
                     onChange={(e) => handleChange(field.name, e.target.value)}
                     required={field.required}
-                    placeholder={field.placeholder}
+                    placeholder={field.placeholder ? t(field.placeholder) : field.placeholder}
                     prefix={field.prefix}
                     prefixPadding={field.prefixPadding}
                     rows={field.rows || 3}
@@ -387,7 +390,7 @@ const DynamicForm = <T extends Record<string, any>>({
                 ) : field.type === "number" ? (
                   <UniFieldInput
                     type="number"
-                    label={field.label}
+                    label={t(field.label)}
                     value={formData[field.name] || ""}
                     onChange={(e) => {
                       const value = e.target.value
@@ -398,7 +401,7 @@ const DynamicForm = <T extends Record<string, any>>({
                       handleChange(field.name, value)
                     }}
                     required={field.required}
-                    placeholder={field.placeholder}
+                    placeholder={field.placeholder ? t(field.placeholder) : field.placeholder}
                     prefix={field.prefix}
                     prefixPadding={field.prefixPadding}
                     min="0"
@@ -410,10 +413,10 @@ const DynamicForm = <T extends Record<string, any>>({
                 ) : field.type === "readonly" ? (
                   <UniFieldInput
                     type="text"
-                    label={field.label}
+                    label={t(field.label)}
                     value={formData[field.name] || ""}
                     readOnly
-                    placeholder={field.placeholder}
+                    placeholder={field.placeholder ? t(field.placeholder) : field.placeholder}
                     prefix={field.prefix}
                     prefixPadding={field.prefixPadding}
                     error={errors[field.name]}
@@ -437,14 +440,14 @@ const DynamicForm = <T extends Record<string, any>>({
                   <div className="flex items-center justify-between rounded-md border p-3">
                     <div className="space-y-1">
                       <div className="text-sm font-medium">
-                        {field.label}
+                        {t(field.label)}
                         {field.required && (
                           <span className="text-red-500">*</span>
                         )}
                       </div>
                       {field.note && (
                         <p className="text-sm text-muted-foreground">
-                          {field.note}
+                          {t(field.note)}
                         </p>
                       )}
                     </div>
@@ -459,7 +462,7 @@ const DynamicForm = <T extends Record<string, any>>({
                 ) : field.type === "radio" && field.options ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{field.label}</span>
+                      <span className="text-sm font-medium">{t(field.label)}</span>
                       {field.required && (
                         <span className="text-red-500">*</span>
                       )}
@@ -480,7 +483,7 @@ const DynamicForm = <T extends Record<string, any>>({
                           disabled={isFieldDisabled}
                           className={`flex-1 ${formData[field.name] === option.value.toString() ? "bg-blue-500 text-white hover:bg-blue-600" : ""} ${errors[field.name] ? "border-red-500" : ""}`}
                         >
-                          {option.label}
+                          {t(option.label)}
                         </Button>
                       ))}
                     </ButtonGroup>
@@ -493,11 +496,11 @@ const DynamicForm = <T extends Record<string, any>>({
                 ) : (
                   <UniFieldInput
                     type={field.type || "text"}
-                    label={field.label}
+                    label={t(field.label)}
                     value={formData[field.name] || ""}
                     onChange={(e) => handleChange(field.name, e.target.value)}
                     required={field.required}
-                    placeholder={field.placeholder}
+                    placeholder={field.placeholder ? t(field.placeholder) : field.placeholder}
                     prefix={field.prefix}
                     prefixPadding={field.prefixPadding}
                     inputMode={field.inputMode}
@@ -510,7 +513,7 @@ const DynamicForm = <T extends Record<string, any>>({
                 })()}
 
                 {field.note && (
-                  <p className="text-sm text-gray-500">Note: {field.note}</p>
+                  <p className="text-sm text-gray-500">{t("Note")}: {t(field.note)}</p>
                 )}
               </div>
             ))}
@@ -528,7 +531,7 @@ const DynamicForm = <T extends Record<string, any>>({
               onClick={handleClose}
               disabled={isSubmitting}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               type="submit"
@@ -542,10 +545,10 @@ const DynamicForm = <T extends Record<string, any>>({
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <Spinner />
-                  Saving...
+                  {t("Saving...")}
                 </span>
               ) : (
-                <span className="flex items-center">Save</span>
+                <span className="flex items-center">{t("Save")}</span>
               )}
             </Button>
           </div>

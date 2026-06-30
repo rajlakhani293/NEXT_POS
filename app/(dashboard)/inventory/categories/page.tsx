@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
 import { CategoryForm } from "@/app/(dashboard)/inventory/categories/createUpdate"
@@ -8,6 +9,7 @@ import { catalog } from "@/lib/api/catalog"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 const columns = [
   { key: "name", title: "Name" },
@@ -31,6 +33,8 @@ const columns = [
 ]
 
 export default function CategoriesPage() {
+  const searchParams = useSearchParams()
+  const { t } = useTranslation()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editId, setEditId] = useState<number | string | null>(null)
   const [deleteCategory] = (catalog as any).useDeleteCategoryMutation()
@@ -75,13 +79,25 @@ export default function CategoriesPage() {
     setEditId(null)
   }
 
+  useEffect(() => {
+    if (searchParams.get("create") === "1" && canCreate) {
+      setEditId(null)
+      setIsFormOpen(true)
+    }
+  }, [canCreate, searchParams])
+
+  const translatedColumns = columns.map((column) => ({
+    ...column,
+    title: t(column.title),
+  }))
+
   return (
     <div className="h-full space-y-4">
       <DynamicTable
         data={orders}
-        columns={columns}
-        tableTitle="Categories"
-        title={canCreate ? "Add Category" : undefined}
+        columns={translatedColumns}
+        tableTitle={t("Categories")}
+        title={canCreate ? t("Create Category") : undefined}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}
@@ -104,8 +120,8 @@ export default function CategoriesPage() {
           updateCategoryStatus({ payLoad: { ids, status } })
         }
         triggerRefresh={triggerRefresh}
-        deleteModalTitle="Delete Category"
-        deleteModalDescription="Are you sure you want to delete this category?"
+        deleteModalTitle={t("Delete Category")}
+        deleteModalDescription={t("Would you like to delete this ?")}
       />
 
       <CategoryForm

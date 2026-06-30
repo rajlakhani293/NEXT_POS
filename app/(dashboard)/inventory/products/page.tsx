@@ -9,6 +9,7 @@ import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { catalog } from "@/lib/api/catalog"
 import { PERMISSIONS } from "@/lib/permissions"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { useState } from "react"
 
 const money = (value: any) => `₹${Number(value || 0).toFixed(2)}`
@@ -29,6 +30,7 @@ const columns = [
 
 export default function ProductsPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const [adjustmentProduct, setAdjustmentProduct] = useState<any>(null)
   const [deleteProduct] = (catalog as any).useDeleteProductMutation()
   const [updateProductStatus] = (catalog as any).useUpdateProductStatusMutation()
@@ -54,14 +56,18 @@ export default function ProductsPage() {
     getMaster: (catalog as any).useGetProductsDataMutation,
     itemsPerPage: 10,
   })
+  const translatedColumns = columns.map((column) => ({
+    ...column,
+    title: t(column.title),
+  }))
 
   return (
     <div className="h-full space-y-4">
       <DynamicTable
         data={orders}
-        columns={columns}
-        tableTitle="Products"
-        title={canCreate ? "Add Product" : undefined}
+        columns={translatedColumns}
+        tableTitle={t("Products List")}
+        title={canCreate ? t("Add a new product") : undefined}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}
@@ -82,15 +88,15 @@ export default function ProductsPage() {
         rowActions={(_, record) => [
           {
             key: "stock_adjustment",
-            label: "Stock Adjustment",
-            labelText: "Stock Adjustment",
+            label: t("Stock Adjustment"),
+            labelText: t("Stock Adjustment"),
             icon: <SlidersHorizontalIcon className="size-4" />,
             onClick: () => setAdjustmentProduct(record),
           },
           {
             key: "stock_ledger",
-            label: "Stock Ledger",
-            labelText: "Stock Ledger",
+            label: t("See History"),
+            labelText: t("See History"),
             icon: <ClipboardListIcon className="size-4" />,
             onClick: () =>
               router.push(
@@ -105,8 +111,8 @@ export default function ProductsPage() {
           updateProductStatus({ payLoad: { ids, status } })
         }
         triggerRefresh={triggerRefresh}
-        deleteModalTitle="Delete Product"
-        deleteModalDescription="Are you sure you want to delete this product?"
+        deleteModalTitle={t("Delete Product")}
+        deleteModalDescription={t("Would you like to delete this ?")}
       />
 
       <StockAdjustmentForm

@@ -24,15 +24,15 @@ const columns = [
 export default function UnitsPage() {
   return (
     <CatalogPageShell
-      tableTitle="Units"
-      addTitle="Add Unit"
+      tableTitle="Units List"
+      addTitle="Add a new unit"
       columns={columns}
       getDataHook={(catalog as any).useGetUnitsDataMutation}
       deleteHook={(catalog as any).useDeleteUnitMutation}
       statusHook={(catalog as any).useUpdateUnitStatusMutation}
       FormComponent={UnitForm}
       deleteTitle="Delete Unit"
-      deleteDescription="Are you sure you want to delete this unit?"
+      deleteDescription="Would you like to delete this ?"
     />
   )
 }
