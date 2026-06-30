@@ -6,6 +6,7 @@ import Link from "next/link"
 import { NavMain } from "@/components/nav-main"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS, type PermissionRequirement } from "@/lib/permissions"
 import {
   Sidebar,
@@ -66,6 +67,13 @@ const mainNavSections: DashboardNavSection[] = [
     url: "/sales",
     icon: <ReceiptTextIcon />,
     permission: PERMISSIONS.sales.view,
+    items: [
+      {
+        title: "Orders List",
+        url: "/sales",
+        permission: PERMISSIONS.sales.view,
+      },
+    ],
   },
   {
     title: "Inventory",
@@ -324,18 +332,41 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
   const isSettingsMode = pathname.startsWith("/settings")
   const { hasPermission } = usePermissions()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
 
   const filterNavItems = (sections: DashboardNavSection[]) =>
     sections.reduce<DashboardNavSection[]>((visibleItems, item) => {
-      const visibleSubItems = item.items?.filter((subItem) =>
+      if (item.url === "/registers" && !posOptions.enable_cash_registers) {
+        return visibleItems
+      }
+
+      const itemWithOptionChildren =
+        item.url === "/sales" && posOptions.orders_allow_unpaid
+          ? {
+              ...item,
+              items: [
+                ...(item.items || []),
+                {
+                  title: "Instalments",
+                  url: "/sales/instalments",
+                  permission: PERMISSIONS.payments.collectDue,
+                },
+              ],
+            }
+          : item
+
+      const visibleSubItems = itemWithOptionChildren.items?.filter((subItem) =>
         hasPermission(subItem.permission, subItem.permissionMatch)
       )
 
-      const canViewItem = hasPermission(item.permission, item.permissionMatch)
+      const canViewItem = hasPermission(
+        itemWithOptionChildren.permission,
+        itemWithOptionChildren.permissionMatch
+      )
       if (!canViewItem && !visibleSubItems?.length) return visibleItems
 
       visibleItems.push({
-        ...item,
+        ...itemWithOptionChildren,
         items: visibleSubItems,
       })
 

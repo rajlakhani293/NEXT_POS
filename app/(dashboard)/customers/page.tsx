@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Gift, TicketPercent, Wallet } from "lucide-react"
 
@@ -8,6 +9,7 @@ import { customers } from "@/lib/api/customers"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
+import { CustomerForm } from "./createUpdate"
 
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
@@ -37,6 +39,7 @@ const columns = [
 
 export default function CustomersPage() {
   const router = useRouter()
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const [deleteCustomer] = (customers as any).useDeleteCustomerMutation()
   const [updateCustomerStatus] = (
     customers as any
@@ -65,7 +68,7 @@ export default function CustomersPage() {
   })
 
   const handleAdd = (open: boolean) => {
-    if (open) router.push("/customers/create")
+    if (open) setIsFormOpen(true)
   }
 
   const handleEdit = (record: any) => {
@@ -129,6 +132,11 @@ export default function CustomersPage() {
             onClick: () => router.push(`/customers/${record.id}/coupons`),
           },
         ]}
+      />
+      <CustomerForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSuccess={triggerRefresh}
       />
     </div>
   )

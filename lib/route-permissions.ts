@@ -18,7 +18,6 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/customers/coupons-generated", permission: PERMISSIONS.promotions.view },
   { path: "/customers/rewards", permission: PERMISSIONS.rewards.view },
   { path: "/customers/coupons", permission: PERMISSIONS.promotions.view },
-  { path: "/customers/create", permission: PERMISSIONS.customers.create },
   { path: "/customers", permission: PERMISSIONS.customers.view },
   { path: "/providers", permission: PERMISSIONS.purchases.view },
   { path: "/purchases/orders/create", permission: PERMISSIONS.purchases.create },
