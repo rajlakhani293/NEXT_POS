@@ -258,6 +258,7 @@ const mainNavSections: DashboardNavSection[] = [
     icon: <IoSettingsOutline />,
     permission: [
       PERMISSIONS.settings.view,
+      PERMISSIONS.branches.view,
       PERMISSIONS.products.view,
       PERMISSIONS.special.manageProfile,
       PERMISSIONS.users.view,
@@ -273,6 +274,18 @@ const settingsNavSections: DashboardNavSection[] = [
     url: "/settings/general",
     icon: <LandmarkIcon />,
     permission: PERMISSIONS.settings.view,
+  },
+  {
+    title: "Company",
+    url: "/settings/company",
+    icon: <LandmarkIcon />,
+    permission: PERMISSIONS.settings.view,
+  },
+  {
+    title: "Branches",
+    url: "/settings/branches",
+    icon: <StoreIcon />,
+    permission: PERMISSIONS.branches.view,
   },
   {
     title: "POS",

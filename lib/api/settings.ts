@@ -16,10 +16,18 @@ const endpointsConfig = {
   getSettingsForm: { query: ({ identifier }: { identifier: string }) => getMutation(`settings/${identifier}`) },
   saveSettingsForm: { query: ({ identifier, payLoad }: { identifier: string; payLoad: any }) => postMutation(`settings/${identifier}`)(payLoad) },
 
+  // Company
+  getCompany: { query: () => getMutation("organizations/company") },
+  updateCompany: { query: ({ payLoad }: { payLoad: any }) => putMutation("organizations/company", payLoad) },
+
   // Branches
   createBranch: { query: createMutation("organizations/branches/") },
   editBranch: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`organizations/branches/${id}`, payLoad) },
   getBranchById: { query: ({ id }: { id: number }) => getMutation(`organizations/branches/${id}`) },
+  getBranchesDropdown: { query: () => getMutation("organizations/branches/dropdown-list") },
+  getBranchesData: { query: postMutation("organizations/branches/get-transactions") },
+  deleteBranch: { query: deleteMutation("organizations/branches/delete") },
+  updateBranchStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("organizations/branches/status", payLoad) },
 
   // Roles
   getPermissions: { query: () => getMutation("accounts/permissions") },
