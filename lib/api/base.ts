@@ -45,9 +45,19 @@ export const createBaseQueryWithInterceptor = (
       const status =
         typeof errorData.status === "number" ? errorData.status : 400
       const message = data?.message
+      const url =
+        typeof modifiedArgs === "string"
+          ? modifiedArgs
+          : modifiedArgs && typeof modifiedArgs === "object" && "url" in modifiedArgs
+            ? String(modifiedArgs.url)
+            : ""
+      const isSessionCheck = url.includes("accounts/session-data")
 
       if (status === 401) {
         api.dispatch(setUnauthorized(true))
+        if (message && !isSessionCheck) {
+          showToast.error(message)
+        }
       } else if (status === 403) {
         api.dispatch(
           setPermissionError({
@@ -56,6 +66,9 @@ export const createBaseQueryWithInterceptor = (
               message || "You do not have permission to perform this action.",
           })
         )
+        if (message) {
+          showToast.error(message)
+        }
       } else if (message) {
         showToast.error(message)
       }

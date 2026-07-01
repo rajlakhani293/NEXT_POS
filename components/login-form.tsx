@@ -95,8 +95,8 @@ export function LoginForm({
           t(mode === "login" ? "You have successfully logged in." : "The account has been successfully created.")
       )
       await completeLogin(response.data.token, response.data.user)
-    } catch (error) {
-      showToast.error(error)
+    } catch {
+      // API errors are displayed by the base query interceptor.
     }
   }
 
