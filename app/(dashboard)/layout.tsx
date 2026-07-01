@@ -34,7 +34,6 @@ export default function DashboardLayout({
     typeof navigator !== "undefined" ? !navigator.onLine : false
   )
   const noPaddingRules = [
-    "/settings/company",
     "/sales/create",
     /^\/inventory\/products\/[^/]+$/,
     /^\/customers\/\d+$/,

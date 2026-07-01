@@ -49,8 +49,6 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/settings/users/roles/create", permission: PERMISSIONS.roles.create },
   { path: "/settings/users/roles", permission: PERMISSIONS.roles.view },
   { path: "/settings/users", permission: PERMISSIONS.users.view },
-  { path: "/settings/company", permission: PERMISSIONS.settings.view },
-  { path: "/settings/business", permission: PERMISSIONS.settings.view },
   { path: "/settings/general", permission: PERMISSIONS.settings.view },
   { path: "/settings/pos", permission: PERMISSIONS.settings.view },
   { path: "/settings/customers", permission: PERMISSIONS.settings.view },
@@ -59,9 +57,6 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/settings/invoices", permission: PERMISSIONS.settings.view },
   { path: "/settings/about", permission: PERMISSIONS.settings.view },
   { path: "/settings/accounting", permission: PERMISSIONS.settings.view },
-  { path: "/settings/notifications", permission: PERMISSIONS.settings.view },
-  { path: "/settings/media", permission: PERMISSIONS.settings.view },
-  { path: "/settings/branches", permission: PERMISSIONS.branches.view },
   { path: "/settings/tax-groups", permission: PERMISSIONS.products.view },
   { path: "/settings/taxes", permission: PERMISSIONS.products.view },
 ]
@@ -97,16 +92,6 @@ export function resolveRoutePermission(
         PERMISSIONS.purchases.pay,
       ],
       match: "any",
-    }
-  }
-
-  const supplierEditMatch = pathname.match(/^\/purchases\/suppliers\/([^/]+)$/)
-  if (supplierEditMatch) {
-    return {
-      permission:
-        supplierEditMatch[1] === "create"
-          ? PERMISSIONS.purchases.create
-          : PERMISSIONS.purchases.update,
     }
   }
 

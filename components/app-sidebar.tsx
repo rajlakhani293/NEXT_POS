@@ -258,10 +258,6 @@ const mainNavSections: DashboardNavSection[] = [
     icon: <IoSettingsOutline />,
     permission: [
       PERMISSIONS.settings.view,
-      PERMISSIONS.branches.view,
-      PERMISSIONS.payments.view,
-      PERMISSIONS.promotions.view,
-      PERMISSIONS.rewards.view,
       PERMISSIONS.products.view,
       PERMISSIONS.special.manageProfile,
       PERMISSIONS.users.view,
@@ -399,6 +395,7 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar>
 
 function SidebarCollapseButton() {
   const { toggleSidebar, state } = useSidebar()
+  const { t } = useTranslation()
   const isCollapsed = state === "collapsed"
 
   return (
@@ -406,7 +403,7 @@ function SidebarCollapseButton() {
       type="button"
       onClick={toggleSidebar}
       className="flex h-8 w-full items-center gap-2 rounded-sm border border-sidebar-border bg-white px-2 text-sm font-semibold text-sidebar-foreground transition-colors group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-11 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-3 hover:text-sidebar-accent-foreground"
-      title="Toggle Sidebar"
+      title={t("Toggle Sidebar")}
     >
       {isCollapsed ? (
         <MdOutlineArrowCircleRight className="size-4 shrink-0" />
@@ -414,7 +411,7 @@ function SidebarCollapseButton() {
         <MdOutlineArrowCircleLeft className="size-4 shrink-0" />
       )}
       <span className="truncate group-data-[collapsible=icon]:hidden">
-        Collapse
+        {t("Collapse")}
       </span>
     </button>
   )
@@ -523,7 +520,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
             >
               <ArrowLeftIcon className="size-4 shrink-0" />
               <span className="truncate group-data-[collapsible=icon]:hidden">
-                Back to Home
+                {t("Back to Home")}
               </span>
             </Link>
           </div>

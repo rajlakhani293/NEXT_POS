@@ -23,7 +23,7 @@ export const tabLabels: Record<ReportKey, string> = {
   profit: "Incomes & Losses",
   accounting: "Transactions",
   annual: "Annual Report",
-  payment_types: "Payment Types",
+  payment_types: "Sales By Payments",
 }
 
 export const reportCards: Array<{
@@ -121,11 +121,12 @@ export const reportColumns: Record<ReportKey, any[]> = {
     { key: "selling_price", title: "Selling" },
   ],
   customers_statement: [
-    { key: "name", title: "Customer" },
-    { key: "phone", title: "Phone" },
-    { key: "owed_amount", title: "Owed" },
-    { key: "credit_limit_amount", title: "Credit Limit" },
-    { key: "wallet_balance", title: "Wallet" },
+    { key: "operation", title: "Operation" },
+    { key: "amount", title: "Amount" },
+    { key: "previous_amount", title: "Previous Amount" },
+    { key: "next_amount", title: "Next Amount" },
+    { key: "description", title: "Description" },
+    { key: "created_at", title: "Date" },
   ],
   low_stock: [
     { key: "name", title: "Product" },

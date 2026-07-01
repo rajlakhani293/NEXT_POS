@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { accounting } from "@/lib/api/accounting"
+import { customers } from "@/lib/api/customers"
 import { reports } from "@/lib/api/reports"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { getDateRange } from "@/lib/utils"
@@ -48,11 +49,15 @@ export default function ReportViewPage() {
   )
 
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
+  const [selectedCustomerId, setSelectedCustomerId] = useState("")
   const [annualTotals, setAnnualTotals] = useState<any>(null)
 
-  const [getCustomerDueReport, customerDueState] = (
+  const [getCustomersDropdown, customersDropdownState] = (
+    customers as any
+  ).useGetCustomersDropdownMutation()
+  const [getCustomerStatement, customerStatementState] = (
     reports as any
-  ).useGetCustomerDueReportMutation()
+  ).useGetCustomerStatementMutation()
   const [getStockLedgerReport, stockLedgerState] = (
     reports as any
   ).useGetStockLedgerReportMutation()
@@ -82,7 +87,8 @@ export default function ReportViewPage() {
   ).useGetAnnualReportMutation()
 
   const isTableLoading =
-    customerDueState.isLoading ||
+    customerStatementState.isLoading ||
+    customersDropdownState.isLoading ||
     stockLedgerState.isLoading ||
     saleReportState.isLoading ||
     soldStockState.isLoading ||
@@ -114,14 +120,30 @@ export default function ReportViewPage() {
   }, [activeReport])
 
   useEffect(() => {
-    const requestKey = JSON.stringify({ report: activeReport, rowsPayload })
+    if (activeReport !== "customers_statement") return
+    void getCustomersDropdown()
+  }, [activeReport, getCustomersDropdown])
+
+  useEffect(() => {
+    const requestKey = JSON.stringify({
+      report: activeReport,
+      rowsPayload,
+      selectedCustomerId:
+        activeReport === "customers_statement" ? selectedCustomerId : undefined,
+    })
     if (lastRowsRequestRef.current === requestKey) return
     lastRowsRequestRef.current = requestKey
+
+    if (activeReport === "customers_statement" && !selectedCustomerId) {
+      setRows([])
+      setTotalItems(0)
+      return
+    }
 
     const mutationMap: Record<ReportKey, any> = {
       sales: getSaleReport,
       sales_progress: getProductsReport,
-      customers_statement: getCustomerDueReport,
+      customers_statement: (payLoad: any) => getCustomerStatement({ id: selectedCustomerId, payLoad }),
       low_stock: getLowStockReport,
       stock_ledger: getStockLedgerReport,
       sold_stock: getSoldStockReport,
@@ -152,7 +174,7 @@ export default function ReportViewPage() {
   }, [
     activeReport,
     getAnnualReport,
-    getCustomerDueReport,
+    getCustomerStatement,
     getLowStockReport,
     getPaymentTypesReport,
     getProductsReport,
@@ -162,6 +184,7 @@ export default function ReportViewPage() {
     getStockLedgerReport,
     getTransactionHistoryData,
     rowsPayload,
+    selectedCustomerId,
   ])
 
   const handleFilterChange = (action: string, payload?: any) => {
@@ -216,6 +239,31 @@ export default function ReportViewPage() {
     </div>
   ) : undefined
 
+  const customerSelector = activeReport === "customers_statement" ? (
+    <div className="flex items-center gap-2">
+      <span className="text-sm font-semibold text-gray-500">{t("Customer")}:</span>
+      <Select
+        value={selectedCustomerId || undefined}
+        onValueChange={(val) => {
+          setPage(1)
+          setSelectedCustomerId(val)
+          lastRowsRequestRef.current = ""
+        }}
+      >
+        <SelectTrigger className="h-9 w-[220px]">
+          <SelectValue placeholder={t("Select Customer")} />
+        </SelectTrigger>
+        <SelectContent>
+          {(customersDropdownState.data?.data || []).map((customer: any) => (
+            <SelectItem key={customer.id} value={String(customer.id)}>
+              {customer.name || customer.full_name || `${customer.first_name || ""} ${customer.last_name || ""}`.trim() || customer.email || customer.id}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  ) : undefined
+
   const formattedColumns = useMemo(() => {
     const rawColumns = reportColumns[activeReport] || []
     return rawColumns.map((col: any) => {
@@ -241,6 +289,8 @@ export default function ReportViewPage() {
         "owed_amount",
         "credit_limit_amount",
         "wallet_balance",
+        "previous_amount",
+        "next_amount",
         "payable_amount",
         "unit_cost",
         "balance_after",
@@ -333,6 +383,8 @@ export default function ReportViewPage() {
             <p className="text-sm font-medium text-gray-500">
               {activeReport === "annual" 
                 ? t("Monthly summary breakdown of sales, taxes, expenses, and net income.")
+                : activeReport === "customers_statement"
+                  ? t("Display the complete customer statement.")
                 : t("Review this report with search, date filters and pagination.")}
             </p>
           </div>
@@ -356,7 +408,7 @@ export default function ReportViewPage() {
           onFilterChange={handleFilterChange}
           isLoading={isTableLoading}
           hideActions
-          secondaryActionButton={yearSelector}
+          secondaryActionButton={yearSelector || customerSelector}
           footerSummary={footerSummary}
         />
       </div>

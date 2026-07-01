@@ -11,23 +11,14 @@ import {
 } from "@/lib/api/apiUtils"
 
 const endpointsConfig = {
-  // Company profile
-  getCompany: { query: () => getMutation("organizations/company") },
-  updateCompany: { query: ({ payLoad }: { payLoad: any }) => putMutation("organizations/company", payLoad) },
-
   // Business settings
   getBusinessSettings: { query: () => getMutation("settings/business") },
-  updateBusinessSettings: { query: ({ payLoad }: { payLoad: any }) => putMutation("settings/business", payLoad) },
   getSettingsForm: { query: ({ identifier }: { identifier: string }) => getMutation(`settings/${identifier}`) },
   saveSettingsForm: { query: ({ identifier, payLoad }: { identifier: string; payLoad: any }) => postMutation(`settings/${identifier}`)(payLoad) },
 
   // Branches
-  getBranchesDropdown: { query: () => getMutation("organizations/branches/dropdown-list") },
-  getBranchesData: { query: postMutation("organizations/branches/get-transactions") },
   createBranch: { query: createMutation("organizations/branches/") },
   editBranch: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`organizations/branches/${id}`, payLoad) },
-  deleteBranch: { query: deleteMutation("organizations/branches/delete") },
-  updateBranchStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("organizations/branches/status", payLoad) },
   getBranchById: { query: ({ id }: { id: number }) => getMutation(`organizations/branches/${id}`) },
 
   // Roles
@@ -49,11 +40,6 @@ const endpointsConfig = {
   getUserById: { query: ({ id }: { id: number | string }) => getMutation(`accounts/users/${id}`) },
   assignRole: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`accounts/users/${id}/assign-role`)(payLoad) },
 
-  // Background queue / Workers
-  getPendingJobs: { query: postMutation("settings/jobs/pending/get-transactions") },
-  getFailedJobs: { query: postMutation("settings/jobs/failed/get-transactions") },
-  retryFailedJob: { query: ({ id }: { id: number | string }) => postMutation(`settings/jobs/failed/${id}/retry`)({}) },
-  deleteFailedJob: { query: ({ id }: { id: number | string }) => ({ url: `settings/jobs/failed/${id}`, method: "DELETE" }) },
   resetDatabase: { query: () => postMutation("settings/reset")({}) },
 
   // Modules

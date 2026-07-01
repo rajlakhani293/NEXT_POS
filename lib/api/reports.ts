@@ -6,18 +6,13 @@ import { postMutation } from "@/lib/api/apiUtils"
 const endpointsConfig = {
   getDashboardSummary: { query: postMutation("dashboard-summary"), type: "query" },
   refreshDashboardSnapshot: { query: postMutation("dashboard-snapshot/refresh") },
-  getCustomerDueReport: { query: postMutation("customer-due") },
-  getSupplierPayableReport: { query: postMutation("provider-payable") },
   getStockLedgerReport: { query: postMutation("stock-ledger") },
-  getCustomerCreditLedgerReport: { query: postMutation("customer-credit-ledger") },
   getSaleReport: { query: postMutation("sale-report") },
   getSoldStockReport: { query: postMutation("sold-stock-report") },
   getProfitReport: { query: postMutation("profit-report") },
   getPaymentTypesReport: { query: postMutation("payment-types") },
   getProductsReport: { query: postMutation("products-report") },
   getLowStockReport: { query: postMutation("low-stock") },
-  getStockReport: { query: postMutation("stock-report") },
-  getCashierReport: { query: postMutation("cashier-report") },
   getCustomerStatement: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`customers-statement/${id}`)(payLoad) },
   getAnnualReport: { query: postMutation("annual-report") },
 }
