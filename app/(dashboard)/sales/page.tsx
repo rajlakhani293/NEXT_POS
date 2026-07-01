@@ -75,6 +75,7 @@ export default function SalesHistoryPage() {
   const router = useRouter()
   const { hasPermission } = usePermissions()
   const canCreateSale = hasPermission(PERMISSIONS.sales.create)
+  const canUpdateSale = hasPermission(PERMISSIONS.sales.update)
   const canDeleteSale = hasPermission(PERMISSIONS.sales.delete)
   const [deleteSales] = (sales as any).useDeleteSalesMutation()
 
@@ -118,14 +119,14 @@ export default function SalesHistoryPage() {
         setAddEntityOpen={
           canCreateSale ? () => router.push("/sales/create") : undefined
         }
-        showEdit
+        showEdit={canUpdateSale}
         showDelete={canDeleteSale}
         deleteMutation={deleteSales}
         triggerRefresh={triggerRefresh}
         canDeleteRow={(record: any) =>
           !["refunded", "partially_refunded"].includes(record?.payment_status)
         }
-        onEdit={(record: any) => router.push(`/sales/${record.id}`)}
+        onEdit={canUpdateSale ? (record: any) => router.push(`/sales/${record.id}`) : undefined}
         rowActions={(_, record) => [
           {
             key: "options",

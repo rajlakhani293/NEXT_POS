@@ -163,6 +163,8 @@
   "Would you like to delete this branch?": "هل تريد حذف هذا الفرع؟",
   "Head Office": "المكتب الرئيسي",
   "Company updated successfully.": "تم تحديث الشركة بنجاح.",
+  "You have successfully logged in.": "تم تسجيل الدخول بنجاح.",
+  "The account has been successfully created.": "تم إنشاء الحساب بنجاح.",
   "background_jobs": "المهام الخلفية",
   "reset_database": "إعادة ضبط قاعدة البيانات"
 }

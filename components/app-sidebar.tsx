@@ -66,29 +66,12 @@ const mainNavSections: DashboardNavSection[] = [
     url: "/sales",
     icon: <ReceiptTextIcon />,
     permission: PERMISSIONS.sales.view,
-    items: [
-      {
-        title: "Open POS",
-        url: "/sales/create",
-        permission: PERMISSIONS.sales.create,
-      },
-      {
-        title: "Orders List",
-        url: "/sales",
-        permission: PERMISSIONS.sales.view,
-      },
-    ],
   },
   {
     title: "Inventory",
     url: "/inventory/products",
     icon: <BoxesIcon />,
-    permission: [
-      PERMISSIONS.products.view,
-      PERMISSIONS.products.create,
-      PERMISSIONS.inventory.adjust,
-    ],
-    permissionMatch: "any",
+    permission: PERMISSIONS.products.view,
     items: [
       {
         title: "Products",
@@ -142,15 +125,7 @@ const mainNavSections: DashboardNavSection[] = [
     title: "Customers",
     url: "/customers",
     icon: <UsersIcon />,
-    permission: [
-      PERMISSIONS.customers.view,
-      PERMISSIONS.customers.create,
-      PERMISSIONS.rewards.view,
-      PERMISSIONS.rewards.create,
-      PERMISSIONS.promotions.view,
-      PERMISSIONS.promotions.create,
-    ],
-    permissionMatch: "any",
+    permission: PERMISSIONS.customers.view,
     items: [
       {
         title: "List",
@@ -178,22 +153,13 @@ const mainNavSections: DashboardNavSection[] = [
     title: "Providers",
     url: "/providers",
     icon: <UsersIcon />,
-    permission: [
-      PERMISSIONS.purchases.view,
-      PERMISSIONS.purchases.create,
-    ],
-    permissionMatch: "any"
+    permission: PERMISSIONS.purchases.view,
   },
   {
     title: "Procurements",
     url: "/purchases",
     icon: <ShoppingCartIcon />,
-    permission: [
-      PERMISSIONS.purchases.view,
-      PERMISSIONS.purchases.create,
-      PERMISSIONS.purchases.update,
-    ],
-    permissionMatch: "any",
+    permission: PERMISSIONS.purchases.view,
     items: [
       {
         title: "Procurements List",
@@ -211,12 +177,7 @@ const mainNavSections: DashboardNavSection[] = [
     title: "Accounting",
     url: "/accounting/transactions",
     icon: <WalletCardsIcon />,
-    permission: [
-      PERMISSIONS.expenses.view,
-      PERMISSIONS.expenses.create,
-      PERMISSIONS.expenses.update,
-    ],
-    permissionMatch: "any",
+    permission: PERMISSIONS.expenses.view,
     items: [
       {
         title: "Expenses",
@@ -481,6 +442,10 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
 
     if (itemPath === "/sales") {
       return pathname === "/sales" || (pathname.startsWith("/sales/") && pathname !== "/sales/create")
+    }
+
+    if (itemPath === "/settings/users") {
+      return pathname === "/settings/users"
     }
 
     return pathname === itemPath || pathname.startsWith(`${itemPath}/`)

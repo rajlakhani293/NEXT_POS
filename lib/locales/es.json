@@ -163,6 +163,8 @@
   "Would you like to delete this branch?": "¿Desea eliminar esta sucursal?",
   "Head Office": "Sede principal",
   "Company updated successfully.": "Empresa actualizada correctamente.",
+  "You have successfully logged in.": "Ha iniciado sesión correctamente.",
+  "The account has been successfully created.": "La cuenta se ha creado correctamente.",
   "background_jobs": "Tareas en Segundo Plano",
   "reset_database": "Restablecer Base de Datos"
 }

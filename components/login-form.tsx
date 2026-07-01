@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import Cookies from "js-cookie"
 import { BiLoaderCircle } from "react-icons/bi"
 
@@ -10,6 +11,7 @@ import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { useAppDispatch } from "@/lib/redux/hooks"
 import { useSession } from "@/lib/redux/session-provider"
 import { setSessionData } from "@/lib/redux/sessionSlice"
+import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,18 +22,18 @@ import {
 import { UniFieldInput } from "@/components/ui/unifield-input"
 
 const defaultDeviceName = "Web App"
-const registrationEnabled = false
 const recoveryEnabled = true
 
 export function LoginForm({
+  initialMode = "login",
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & { initialMode?: "login" | "register" }) {
   const router = useRouter()
   const { t } = useTranslation()
   const dispatch = useAppDispatch()
   const { refreshSession } = useSession()
-  const [mode, setMode] = useState<"login" | "register">("login")
+  const mode = initialMode
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -88,9 +90,13 @@ export function LoginForm({
         mode === "login"
           ? await login(payLoad).unwrap()
           : await register(payLoad).unwrap()
+      showToast.success(
+        response.message ||
+          t(mode === "login" ? "You have successfully logged in." : "The account has been successfully created.")
+      )
       await completeLogin(response.data.token, response.data.user)
-    } catch {
-      // API errors are displayed globally by the base query interceptor.
+    } catch (error) {
+      showToast.error(error)
     }
   }
 
@@ -195,21 +201,26 @@ export function LoginForm({
                   <a href="/password-lost" className="text-sm text-blue-600 hover:underline">
                     {t("Password Forgotten ?")}
                   </a>
-                  {registrationEnabled ? (
+                  {mode === "login" ? (
                     <>
                       <div className="mx-4 h-[15px] border-l" />
-                      <button
-                        type="button"
+                      <Link
+                        href="/register"
                         className="text-sm text-blue-600 hover:underline"
-                        onClick={() => {
-                          setMode((current) =>
-                            current === "login" ? "register" : "login"
-                          )
-                          setErrors({})
-                        }}
                       >
-                        {mode === "login" ? t("Register") : t("Sign In")}
-                      </button>
+                        {t("Register")}
+                      </Link>
+                    </>
+                  ) : null}
+                  {mode === "register" ? (
+                    <>
+                      <div className="mx-4 h-[15px] border-l" />
+                      <Link
+                        href="/login"
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        {t("Sign In")}
+                      </Link>
                     </>
                   ) : null}
                 </div>

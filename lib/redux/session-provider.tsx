@@ -24,7 +24,7 @@ interface SessionContextType {
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined)
 
-const publicRoutes = ["/login"]
+const publicRoutes = ["/login", "/register"]
 
 export function useSession() {
   const context = useContext(SessionContext)
