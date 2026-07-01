@@ -7,32 +7,34 @@ import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
 import { useTableData } from "@/hooks/useTableData"
 import { registers } from "@/lib/api/registers"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { formatDateTime } from "@/lib/format"
 import { ShiftDetails } from "./shiftDetails"
 import { IoMdEye } from "react-icons/io"
 
-const columns = [
-  { key: "cashier_name", title: "Cashier" },
-  { key: "shift_status", title: "Status" },
+const buildColumns = (t: (key: string) => string) => [
+  { key: "cashier_name", title: t("Cashier") },
+  { key: "shift_status", title: t("Status") },
   {
     key: "opened_at",
-    title: "Opened",
+    title: t("Opened"),
     render: (value: string | null) => formatDateTime(value),
   },
   {
     key: "closed_at",
-    title: "Closed",
+    title: t("Closed"),
     render: (value: string | null) => formatDateTime(value),
   },
-  { key: "opening_cash", title: "Opening" },
-  { key: "expected_cash", title: "Expected" },
-  { key: "declared_cash", title: "Declared" },
-  { key: "difference_amount", title: "Difference" },
+  { key: "opening_cash", title: t("Opening") },
+  { key: "expected_cash", title: t("Expected") },
+  { key: "declared_cash", title: t("Declared") },
+  { key: "difference_amount", title: t("Difference") },
 ]
 
 export default function RegisterShiftHistoryPage() {
   const router = useRouter()
   const params = useParams()
+  const { t } = useTranslation()
   const registerId = String(params.id)
   const [selectedShiftId, setSelectedShiftId] = useState<
     number | string | null
@@ -44,7 +46,7 @@ export default function RegisterShiftHistoryPage() {
   })
   const register = table.otherData?.register
   const registerName =
-    register?.name || table.orders[0]?.register_name || "Cash Register"
+    register?.name || table.orders[0]?.register_name || t("Cash Register")
 
   return (
     <div>
@@ -61,10 +63,10 @@ export default function RegisterShiftHistoryPage() {
           </Button>
           <div>
             <h1 className="text-xl font-bold text-gray-900">
-              {registerName} Shift History
+              {t("Register History For : %s").replace("%s", registerName)}
             </h1>
             <p className="text-sm font-medium text-gray-500">
-              {register?.location || "View every cashier shift for this register."}
+              {register?.location || t("Display all register histories.")}
             </p>
           </div>
         </div>
@@ -73,8 +75,8 @@ export default function RegisterShiftHistoryPage() {
       <div className="p-6">
         <DynamicTable
           data={table.orders}
-          columns={columns}
-          tableTitle="Shift History"
+          columns={buildColumns(t)}
+          tableTitle={t("Register History List")}
           showSearch
           searchTerm={table.searchTerm}
           currentPage={table.currentPage}
@@ -91,8 +93,8 @@ export default function RegisterShiftHistoryPage() {
           rowActions={(_, record) => [
             {
               key: "view",
-              label: "View Shift",
-              labelText: "View Shift",
+              label: t("Details"),
+              labelText: t("Details"),
               icon: <IoMdEye className="size-4" />,
               onClick: () => setSelectedShiftId(record.id),
             },

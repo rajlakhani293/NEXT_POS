@@ -8,6 +8,7 @@ import DynamicTable from "@/components/DynamicTable"
 import DynamicForm from "@/components/DynamicForm"
 import { PermissionGuard } from "@/components/permission-guard"
 import { registers } from "@/lib/api/registers"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
 import { useTableData } from "@/hooks/useTableData"
@@ -15,29 +16,30 @@ import { usePermissions } from "@/hooks/use-permissions"
 
 const money = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
-const registerColumns = [
-  { key: "name", title: "Name" },
+const buildRegisterColumns = (t: (key: string) => string) => [
+  { key: "name", title: t("Name") },
   {
     key: "register_status",
-    title: "Status",
+    title: t("Status"),
     render: (value: string) => (
       <span className="capitalize font-semibold text-xs">
-        {value || "closed"}
+        {t(value || "closed")}
       </span>
     ),
   },
-  { key: "cashier_username", title: "Used By", render: (value: any) => value || "Unused" },
-  { key: "balance", title: "Balance", render: money },
-  { key: "user_username", title: "Author" },
+  { key: "cashier_username", title: t("Used By"), render: (value: any) => value || t("N/A") },
+  { key: "balance", title: t("Balance"), render: money },
+  { key: "user_username", title: t("Author") },
   {
     key: "created_at",
-    title: "Created At",
+    title: t("Created At"),
     render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
   },
 ]
 
 export default function RegistersPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const [isRegisterFormOpen, setIsRegisterFormOpen] = useState(false)
   const [editRegisterId, setEditRegisterId] = useState<number | string | null>(null)
   const [registerValues, setRegisterValues] = useState({
@@ -89,7 +91,7 @@ export default function RegistersPage() {
     const response = editRegisterId
       ? await editRegister({ id: editRegisterId, payLoad }).unwrap()
       : await createRegister(payLoad).unwrap()
-    showToast.success(response?.message || "Cash register saved successfully.")
+    showToast.success(response?.message || t("Cash register saved successfully."))
     closeForm()
     refresh()
   }
@@ -99,9 +101,9 @@ export default function RegistersPage() {
       <div className="space-y-4">
         <DynamicTable
           data={registerTable.orders}
-          columns={registerColumns}
-          tableTitle="Cash Registers"
-          title={hasPermission(PERMISSIONS.cashRegister.open) ? "Add Register" : undefined}
+          columns={buildRegisterColumns(t)}
+          tableTitle={t("Registers List")}
+          title={hasPermission(PERMISSIONS.cashRegister.open) ? t("Add a new register") : undefined}
           showSearch
           searchTerm={registerTable.searchTerm}
           currentPage={registerTable.currentPage}
@@ -130,33 +132,33 @@ export default function RegistersPage() {
           rowActions={(_, record) => [
             {
               key: "history",
-              label: "Shift History",
-              labelText: "Shift History",
+              label: t("Register History"),
+              labelText: t("Register History"),
               icon: <History className="size-4" />,
               onClick: () => router.push(`/registers/${record.id}`),
             },
           ]}
           triggerRefresh={refresh}
-          deleteModalTitle="Delete Cash Register"
-          deleteModalDescription="Are you sure you want to delete this cash register?"
+          deleteModalTitle={t("Delete Cash Register")}
+          deleteModalDescription={t("Would you like to delete this ?")}
         />
 
         <DynamicForm
           isOpen={isRegisterFormOpen}
           onClose={closeForm}
-          title={editRegisterId ? "Edit Cash Register" : "Create Cash Register"}
+          title={editRegisterId ? t("Edit register") : t("Create a new register")}
           initialValues={registerValues}
           fields={[
             {
               name: "name",
-              label: "Register Name",
-              placeholder: "Main Register",
+              label: t("Name"),
+              placeholder: t("Provide a name to the resource."),
               required: true,
             },
             {
               name: "description",
-              label: "Description",
-              placeholder: "Provide more details about this cash register.",
+              label: t("Description"),
+              placeholder: t("Provide mode details about this cash register."),
               type: "textarea",
             },
           ]}

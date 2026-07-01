@@ -6,19 +6,20 @@ import DynamicTable from "@/components/DynamicTable"
 import CustomModal from "@/components/ui/customModal"
 import { Spinner } from "@/components/ui/spinner"
 import { registers } from "@/lib/api/registers"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { formatDateTime } from "@/lib/format"
 
-const entryColumns = [
-  { key: "entry_type", title: "Entry Type" },
-  { key: "payment_type", title: "Payment Type" },
-  { key: "amount", title: "Amount" },
-  { key: "balance_before", title: "Before" },
-  { key: "balance_after", title: "After" },
-  { key: "reference_type", title: "Reference" },
-  { key: "note", title: "Note" },
+const buildEntryColumns = (t: (key: string) => string) => [
+  { key: "entry_type", title: t("Entry Type") },
+  { key: "payment_type", title: t("Payment Type") },
+  { key: "amount", title: t("Amount") },
+  { key: "balance_before", title: t("Before") },
+  { key: "balance_after", title: t("After") },
+  { key: "reference_type", title: t("Reference") },
+  { key: "note", title: t("Note") },
   {
     key: "created_at",
-    title: "Created",
+    title: t("Created At"),
     render: (value: string | null) => formatDateTime(value),
   },
 ]
@@ -31,6 +32,7 @@ type ShiftDetailsProps = {
 }
 
 export function ShiftDetails({ shiftId, onClose }: ShiftDetailsProps) {
+  const { t } = useTranslation()
   const [shift, setShift] = useState<any>(null)
   const requestedShiftRef = useRef<string | null>(null)
   const [getShiftById, shiftState] = (registers as any).useGetShiftByIdMutation()
@@ -58,24 +60,24 @@ export function ShiftDetails({ shiftId, onClose }: ShiftDetailsProps) {
   const entries = shift?.entries || []
   const cards = useMemo(
     () => [
-      ["Opening Cash", zReport?.opening_cash],
-      ["Expected Cash", zReport?.expected_cash],
-      ["Declared Cash", zReport?.declared_cash],
-      ["Difference", zReport?.difference_amount],
-      ["Sales Collected", zReport?.sales_collected],
-      ["Refund Out", zReport?.refund_out],
-      ["Cash In", zReport?.cash_in],
-      ["Cash Out", zReport?.cash_out],
+      [t("Opening Cash"), zReport?.opening_cash],
+      [t("Expected Cash"), zReport?.expected_cash],
+      [t("Declared Cash"), zReport?.declared_cash],
+      [t("Difference"), zReport?.difference_amount],
+      [t("Sales Collected"), zReport?.sales_collected],
+      [t("Refund Out"), zReport?.refund_out],
+      [t("Cash In"), zReport?.cash_in],
+      [t("Cash Out"), zReport?.cash_out],
     ],
-    [zReport]
+    [t, zReport]
   )
 
   return (
     <CustomModal
       open={Boolean(shiftId)}
       onOpenChange={(open) => !open && onClose()}
-      title={`${shift?.register_name || "Register"} Shift Details`}
-      description={`Cashier: ${shift?.cashier_name || "-"} · Status: ${shift?.shift_status || "-"}`}
+      title={`${shift?.register_name || t("Register")} ${t("Details")}`}
+      description={`${t("Cashier")}: ${shift?.cashier_name || "-"} · ${t("Status")}: ${shift?.shift_status || "-"}`}
       showFooter={false}
       className="flex h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none flex-col gap-0 overflow-hidden rounded-xl p-0 sm:h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)] sm:max-w-none lg:h-[calc(100dvh-3rem)] lg:w-[calc(100vw-3rem)] lg:max-w-none"
       headerClassName="shrink-0 px-4 py-3 pr-14 sm:px-5 sm:py-3"
@@ -85,7 +87,7 @@ export function ShiftDetails({ shiftId, onClose }: ShiftDetailsProps) {
         <div className="flex min-h-80 items-center justify-center">
           <div className="flex items-center gap-3 text-sm font-medium text-gray-600">
             <Spinner className="size-5" />
-            Loading shift details...
+            {t("Loading shift details...")}
           </div>
         </div>
       ) : (
@@ -106,14 +108,14 @@ export function ShiftDetails({ shiftId, onClose }: ShiftDetailsProps) {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-xl border border-gray-200 p-4">
-              <h3 className="font-bold text-slate-950">Shift Summary</h3>
+              <h3 className="font-bold text-slate-950">{t("Register History")}</h3>
               <div className="mt-3 space-y-3 text-sm">
                 {[
-                  ["Opened At", formatDateTime(shift?.opened_at)],
-                  ["Closed At", formatDateTime(shift?.closed_at)],
-                  ["Register", shift?.register_name],
-                  ["Cashier", shift?.cashier_name],
-                  ["Entries", shift?.entry_count],
+                  [t("Opened At"), formatDateTime(shift?.opened_at)],
+                  [t("Closed At"), formatDateTime(shift?.closed_at)],
+                  [t("Register"), shift?.register_name],
+                  [t("Cashier"), shift?.cashier_name],
+                  [t("Entries"), shift?.entry_count],
                 ].map(([label, value]) => (
                   <div
                     key={label}
@@ -130,7 +132,7 @@ export function ShiftDetails({ shiftId, onClose }: ShiftDetailsProps) {
 
             <div className="rounded-xl border border-gray-200 p-4">
               <h3 className="font-bold text-slate-950">
-                Totals By Entry Type
+                {t("Totals By Entry Type")}
               </h3>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {(zReport?.totals_by_type || []).map((item: any) => (
@@ -152,8 +154,8 @@ export function ShiftDetails({ shiftId, onClose }: ShiftDetailsProps) {
 
           <DynamicTable
             data={entries}
-            columns={entryColumns}
-            tableTitle="Shift Entries"
+            columns={buildEntryColumns(t)}
+            tableTitle={t("Register History List")}
             currentPage={1}
             itemsPerPage={Math.max(entries.length, 10)}
             totalItems={entries.length}
