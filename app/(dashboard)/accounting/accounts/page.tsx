@@ -3,41 +3,42 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 
-import { CatalogPageShell } from "@/components/catalog/catalog-page-shell"
 import DynamicTable from "@/components/DynamicTable"
 import { accounting } from "@/lib/api/accounting"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { TransactionAccountForm } from "./createUpdate"
 
-const columns = [
-  { key: "category_identifier", title: "Category" },
+const buildColumns = (t: (key: string) => string) => [
+  { key: "category_identifier", title: t("Category") },
   {
     key: "sub_category__name",
-    title: "Sub Account",
+    title: t("Sub Account"),
     render: (value: string) => value || "-",
   },
-  { key: "name", title: "Name" },
-  { key: "account", title: "Account" },
-  { key: "user_username", title: "Author" },
+  { key: "name", title: t("Name") },
+  { key: "account", title: t("Account") },
+  { key: "user_username", title: t("Author") },
   {
     key: "created_at",
-    title: "Created At",
+    title: t("Created At"),
     render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
   },
 ]
 
 export default function TransactionAccountsPage() {
   const searchParams = useSearchParams()
+  const { t } = useTranslation()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editId, setEditId] = useState<number | string | null>(null)
   const [deleteRecord] = (accounting as any).useDeleteAccountMutation()
   const [updateStatus] = (accounting as any).useUpdateAccountStatusMutation()
   const { hasPermission } = usePermissions()
-  const canCreate = hasPermission(PERMISSIONS.settings.update)
-  const canUpdate = hasPermission(PERMISSIONS.settings.update)
-  const canDelete = hasPermission(PERMISSIONS.settings.update)
+  const canCreate = hasPermission(PERMISSIONS.expenses.create)
+  const canUpdate = hasPermission(PERMISSIONS.expenses.update)
+  const canDelete = hasPermission(PERMISSIONS.expenses.delete)
   const table = useTableData({
     getMaster: (accounting as any).useGetAccountsDataMutation,
     itemsPerPage: 10,
@@ -59,9 +60,9 @@ export default function TransactionAccountsPage() {
     <div className="h-full space-y-4">
       <DynamicTable
         data={table.orders}
-        columns={columns}
-        tableTitle="Accounts List"
-        title={canCreate ? "Add a new Account" : undefined}
+        columns={buildColumns(t)}
+        tableTitle={t("Accounts List")}
+        title={canCreate ? t("Add a new Account") : undefined}
         showSearch
         searchTerm={table.searchTerm}
         currentPage={table.currentPage}
@@ -95,8 +96,8 @@ export default function TransactionAccountsPage() {
           updateStatus({ payLoad: { ids, status } })
         }
         triggerRefresh={table.triggerRefresh}
-        deleteModalTitle="Delete Account"
-        deleteModalDescription="Would you like to delete this ?"
+        deleteModalTitle={t("Delete Account")}
+        deleteModalDescription={t("Would you like to delete this ?")}
         showDateRange
         selectedDateRange={table.selectedDateRange}
         dateFilters={table.dateFilters}

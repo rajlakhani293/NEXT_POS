@@ -2,6 +2,7 @@
 
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { accounting } from "@/lib/api/accounting"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 const initialValues = {
   name: "",
@@ -12,40 +13,41 @@ const initialValues = {
 }
 
 export function TransactionAccountForm(props: any) {
+  const { t } = useTranslation()
   const accounts = (accounting as any).useGetAccountsDropdownQuery()
 
   return (
     <CatalogMasterForm
       {...props}
-      entityName="Account"
+      entityName={t("Account")}
       fields={[
         {
           name: "category_identifier",
-          label: "Main Account",
-          placeholder: "Select category",
+          label: t("Main Account"),
+          placeholder: t("Select category"),
           type: "select",
           required: true,
           options: [
-            { label: "Assets", value: "assets" },
-            { label: "Liabilities", value: "liabilities" },
-            { label: "Revenues", value: "revenues" },
-            { label: "Expenses", value: "expenses" },
-            { label: "Equity", value: "equity" },
+            { label: t("Assets"), value: "assets" },
+            { label: t("Liabilities"), value: "liabilities" },
+            { label: t("Revenues"), value: "revenues" },
+            { label: t("Expenses"), value: "expenses" },
+            { label: t("Equity"), value: "equity" },
           ],
         },
         {
           name: "sub_category_id",
-          label: "Sub Account",
-          placeholder: "Select parent account",
+          label: t("Sub Account"),
+          placeholder: t("Select parent account"),
           type: "select",
           options: (accounts.data?.data || []).map((account: any) => ({
             label: account.name,
             value: String(account.id),
           })),
         },
-        { name: "name", label: "Name", placeholder: "Enter account name", type: "text", required: true },
-        { name: "account", label: "Account", placeholder: "Auto generated if empty", type: "text" },
-        { name: "description", label: "Description", placeholder: "Enter description", type: "textarea" },
+        { name: "name", label: t("Name"), placeholder: t("Enter account name"), type: "text", required: true },
+        { name: "account", label: t("Account"), placeholder: t("Auto generated if empty"), type: "text" },
+        { name: "description", label: t("Description"), placeholder: t("Enter description"), type: "textarea" },
       ]}
       initialValues={initialValues}
       createHook={(accounting as any).useCreateAccountMutation}

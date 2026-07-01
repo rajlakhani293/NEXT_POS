@@ -7,33 +7,35 @@ import DynamicTable from "@/components/DynamicTable"
 import { PermissionGuard } from "@/components/permission-guard"
 import { Button } from "@/components/ui/button"
 import { accounting } from "@/lib/api/accounting"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
 import { useTableData } from "@/hooks/useTableData"
 
-const columns = [
-  { key: "name", title: "Name" },
-  { key: "type", title: "Type" },
-  { key: "account__name", title: "Account Name" },
-  { key: "value", title: "Value" },
-  { key: "recurring", title: "Recurring", render: (value: any) => (value ? "Yes" : "No") },
-  { key: "occurrence", title: "Occurrence" },
-  { key: "user_username", title: "Author" },
-  { key: "created_at", title: "Created At" },
+const buildColumns = (t: (key: string) => string) => [
+  { key: "name", title: t("Name") },
+  { key: "type", title: t("Type") },
+  { key: "account__name", title: t("Account Name") },
+  { key: "value", title: t("Value") },
+  { key: "recurring", title: t("Recurring"), render: (value: any) => (value ? t("Yes") : t("No")) },
+  { key: "occurrence", title: t("Occurrence") },
+  { key: "user_username", title: t("Author") },
+  { key: "created_at", title: t("Created At") },
 ]
 
 export default function TransactionsPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const table = useTableData({
     getMaster: (accounting as any).useGetTransactionsDataMutation,
     itemsPerPage: 10,
   })
 
   return (
-    <PermissionGuard permission={PERMISSIONS.reports.view}>
+    <PermissionGuard permission={PERMISSIONS.expenses.view}>
       <DynamicTable
         data={table.orders}
-        columns={columns}
-        tableTitle="Transactions List"
+        columns={buildColumns(t)}
+        tableTitle={t("Transactions List")}
         showSearch
         searchTerm={table.searchTerm}
         currentPage={table.currentPage}
@@ -48,15 +50,15 @@ export default function TransactionsPage() {
         rowActions={(_, record) => [
           {
             key: "history",
-            label: "History",
-            labelText: "History",
+            label: t("History"),
+            labelText: t("History"),
             icon: <Clock className="size-4" />,
             onClick: () => router.push(`/accounting/transactions/history/${record.id}`),
           },
           {
             key: "trigger",
-            label: "Trigger",
-            labelText: "Trigger",
+            label: t("Trigger"),
+            labelText: t("Trigger"),
             icon: <Play className="size-4" />,
             onClick: () => router.push(`/accounting/transactions/history/${record.id}?trigger=1`),
           },
@@ -65,7 +67,7 @@ export default function TransactionsPage() {
         secondaryActionButton={
           <Button onClick={() => router.push("/accounting/transactions/create")}>
             <Plus className="size-4" />
-            Create Expense
+            {t("Create Expense")}
           </Button>
         }
       />

@@ -10,6 +10,7 @@ import { SelectItem } from "@/components/ui/select"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { accounting } from "@/lib/api/accounting"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
 
@@ -26,6 +27,7 @@ const initialValues = {
 
 export default function CreateAccountingTransactionPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const accounts = (accounting as any).useGetAccountsDropdownQuery()
   const [createTransaction, createState] = (
     accounting as any
@@ -40,10 +42,10 @@ export default function CreateAccountingTransactionPage() {
 
   const submit = async () => {
     const nextErrors: Record<string, string> = {}
-    if (!values.account_id) nextErrors.account_id = "Account is required."
-    if (!values.name.trim()) nextErrors.name = "Transaction name is required."
+    if (!values.account_id) nextErrors.account_id = t("Account is required.")
+    if (!values.name.trim()) nextErrors.name = t("Transaction name is required.")
     if (!values.amount || Number(values.amount) <= 0) {
-      nextErrors.amount = "Amount must be greater than 0."
+      nextErrors.amount = t("Amount must be greater than 0.")
     }
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors)
@@ -53,26 +55,26 @@ export default function CreateAccountingTransactionPage() {
       ...values,
       account_id: Number(values.account_id),
     }).unwrap()
-    showToast.success(response?.message || "Transaction created.")
+    showToast.success(response?.message || t("The transaction has been successfully saved."))
     router.push("/accounting/transactions")
   }
 
   return (
-    <PermissionGuard permission={PERMISSIONS.settings.update}>
+    <PermissionGuard permission={PERMISSIONS.expenses.create}>
       <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gray-50">
         <div className="flex flex-none items-center gap-4 border-b bg-white px-6 py-3">
           <Button
             size="icon"
             variant="outline"
-            aria-label="Back"
+            aria-label={t("Back")}
             onClick={() => router.back()}
           >
             <ArrowLeft className="size-4" />
           </Button>
           <div>
-            <h1 className="text-xl font-semibold">Create Expense Transaction</h1>
+            <h1 className="text-xl font-semibold">{t("Create a new transaction")}</h1>
             <p className="text-sm text-muted-foreground">
-              Register a new transaction and save it.
+              {t("Register a new transaction and save it.")}
             </p>
           </div>
         </div>
@@ -80,12 +82,12 @@ export default function CreateAccountingTransactionPage() {
         <div className="min-h-0 flex-1 overflow-auto p-6 pb-24">
           <div className="mx-auto grid max-w-5xl gap-5 rounded-xl border bg-white p-6 md:grid-cols-2">
             <UniFieldSelect
-              label="Account"
+              label={t("Account")}
               required
               value={values.account_id}
               onValueChange={(value) => setValue("account_id", value)}
               error={errors.account_id}
-              placeholder="Choose account"
+              placeholder={t("Choose account")}
             >
               {(accounts.data?.data || []).map((account: any) => (
                 <SelectItem key={account.id} value={String(account.id)}>
@@ -94,24 +96,24 @@ export default function CreateAccountingTransactionPage() {
               ))}
             </UniFieldSelect>
             <UniFieldInput
-              label="Transaction Name"
+              label={t("Transaction Name")}
               required
               value={values.name}
               onChange={(event) => setValue("name", event.target.value)}
               error={errors.name}
-              placeholder="Enter transaction name"
+              placeholder={t("Enter transaction name")}
             />
             <input type="hidden" value={values.transaction_type} readOnly />
             <UniFieldSelect
-              label="Action"
+              label={t("Action")}
               value={values.action_type}
               onValueChange={(value) => setValue("action_type", value)}
             >
-              <SelectItem value="increase">Increase</SelectItem>
-              <SelectItem value="decrease">Decrease</SelectItem>
+              <SelectItem value="increase">{t("Increase")}</SelectItem>
+              <SelectItem value="decrease">{t("Decrease")}</SelectItem>
             </UniFieldSelect>
             <UniFieldInput
-              label="Amount"
+              label={t("Amount")}
               required
               type="number"
               min="0"
@@ -120,26 +122,26 @@ export default function CreateAccountingTransactionPage() {
               value={values.amount}
               onChange={(event) => setValue("amount", event.target.value)}
               error={errors.amount}
-              placeholder="Enter amount"
+              placeholder={t("Enter amount")}
             />
             <UniFieldInput
-              label="Transaction Date"
+              label={t("Transaction Date")}
               type="date"
               value={values.transaction_date}
               onChange={(event) => setValue("transaction_date", event.target.value)}
             />
             <UniFieldInput
-              label="Reference Number"
+              label={t("Reference Number")}
               value={values.reference_number}
               onChange={(event) => setValue("reference_number", event.target.value)}
-              placeholder="Enter reference number"
+              placeholder={t("Enter reference number")}
             />
             <UniFieldInput
-              label="Description"
+              label={t("Description")}
               as="textarea"
               value={values.description}
               onChange={(event) => setValue("description", event.target.value)}
-              placeholder="Enter transaction description"
+              placeholder={t("Enter transaction description")}
               containerClassName="md:col-span-2"
             />
           </div>
@@ -147,10 +149,10 @@ export default function CreateAccountingTransactionPage() {
 
         <div className="flex flex-none justify-end gap-2 border-t bg-white px-6 py-3">
           <Button variant="outline" onClick={() => router.back()}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button onClick={submit} disabled={createState.isLoading}>
-            Save Transaction
+            {t("Save Transaction")}
           </Button>
         </div>
       </div>

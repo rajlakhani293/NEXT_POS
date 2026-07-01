@@ -212,30 +212,31 @@ const mainNavSections: DashboardNavSection[] = [
     url: "/accounting/transactions",
     icon: <WalletCardsIcon />,
     permission: [
-      PERMISSIONS.reports.view,
-      PERMISSIONS.settings.update,
+      PERMISSIONS.expenses.view,
+      PERMISSIONS.expenses.create,
+      PERMISSIONS.expenses.update,
     ],
     permissionMatch: "any",
     items: [
       {
         title: "Expenses",
         url: "/accounting/transactions",
-        permission: PERMISSIONS.reports.view,
+        permission: PERMISSIONS.expenses.view,
       },
       {
         title: "Transaction History",
         url: "/accounting/transactions/history",
-        permission: PERMISSIONS.reports.view,
+        permission: PERMISSIONS.expenses.view,
       },
       {
         title: "Rules",
         url: "/accounting/rules",
-        permission: PERMISSIONS.settings.update,
+        permission: PERMISSIONS.expenses.update,
       },
       {
         title: "Accounts",
         url: "/accounting/accounts",
-        permission: PERMISSIONS.reports.view,
+        permission: PERMISSIONS.expenses.view,
       },
     ],
   },

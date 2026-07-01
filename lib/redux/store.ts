@@ -3,7 +3,6 @@ import { accounting } from "../api/accounting"
 import { auth } from "../api/auth"
 import { catalog } from "../api/catalog"
 import { customers } from "../api/customers"
-import { expenses } from "../api/expenses"
 import { inventory } from "../api/inventory"
 import { media } from "../api/media"
 import { notifications } from "../api/notifications"
@@ -23,7 +22,6 @@ export const store = configureStore({
     [auth.reducerPath]: auth.reducer,
     [catalog.reducerPath]: catalog.reducer,
     [customers.reducerPath]: customers.reducer,
-    [expenses.reducerPath]: expenses.reducer,
     [inventory.reducerPath]: inventory.reducer,
     [media.reducerPath]: media.reducer,
     [notifications.reducerPath]: notifications.reducer,
@@ -43,7 +41,6 @@ export const store = configureStore({
       auth.middleware,
       catalog.middleware,
       customers.middleware,
-      expenses.middleware,
       inventory.middleware,
       media.middleware,
       notifications.middleware,
