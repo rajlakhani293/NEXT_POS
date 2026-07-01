@@ -4,6 +4,7 @@ import { useEffect } from "react"
 
 import DynamicForm from "@/components/DynamicForm"
 import { promotions } from "@/lib/api/promotions"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { rewards } from "@/lib/api/rewards"
 import { showToast } from "@/lib/toast"
 
@@ -34,19 +35,19 @@ const initialValues: RewardSystemFormValues = {
   description: "",
 }
 
-const buildRewardFields = (couponOptions: any[]) => [
+const buildRewardFields = (couponOptions: any[], t: (key: string) => string) => [
   {
     name: "name",
-    label: "Reward Name",
+    label: t("Reward Name"),
     type: "text",
-    placeholder: "Enter reward system name",
+    placeholder: t("Enter reward system name"),
     required: true,
   },
   {
     name: "coupon_id",
-    label: "Reward Coupon",
+    label: t("Reward Coupon"),
     type: "select",
-    placeholder: "Select coupon",
+    placeholder: t("Select coupon"),
     required: true,
     allowClear: true,
     options: couponOptions.map((coupon: any) => ({
@@ -56,37 +57,37 @@ const buildRewardFields = (couponOptions: any[]) => [
   },
   {
     name: "target",
-    label: "Target",
+    label: t("Target"),
     type: "number",
-    placeholder: "How many points needed to redeem coupon",
+    placeholder: t("How many points needed to redeem coupon"),
     required: true,
   },
   {
     name: "from_amount",
-    label: "From Cart Value",
+    label: t("From Cart Value"),
     type: "number",
-    placeholder: "Example: 100",
+    placeholder: t("Example: 100"),
     prefix: "₹",
   },
   {
     name: "to_amount",
-    label: "To Cart Value",
+    label: t("To Cart Value"),
     type: "number",
-    placeholder: "Optional",
+    placeholder: t("Optional"),
     prefix: "₹",
   },
   {
     name: "reward",
-    label: "Reward Points",
+    label: t("Reward Points"),
     type: "number",
-    placeholder: "Example: 1",
+    placeholder: t("Example: 1"),
     required: true,
   },
   {
     name: "description",
-    label: "Description",
+    label: t("Description"),
     type: "textarea",
-    placeholder: "Enter description",
+    placeholder: t("Enter description"),
     rows: 3,
   },
 ]
@@ -97,6 +98,7 @@ export function RewardSystemForm({
   onSuccess,
   editId,
 }: RewardSystemFormProps) {
+  const { t } = useTranslation()
   const [createRewardSystem] = (rewards as any).useCreateRewardSystemMutation()
   const [editRewardSystem] = (rewards as any).useEditRewardSystemMutation()
   const [getRewardSystemById, { data, isLoading }] = (
@@ -116,7 +118,7 @@ export function RewardSystemForm({
   }, [editId, getCouponsDropdown, getRewardSystemById, isOpen])
 
   const record = data?.data
-  const rewardFields = buildRewardFields(couponsData?.data || [])
+  const rewardFields = buildRewardFields(couponsData?.data || [], t)
   const formValues: RewardSystemFormValues =
     editId && record
       ? {
@@ -153,10 +155,10 @@ export function RewardSystemForm({
 
     if (editId) {
       const response = await editRewardSystem({ id: editId, payLoad }).unwrap()
-      showToast.success(response?.message || "Reward system updated successfully.")
+      showToast.success(response?.message || t("Reward system updated successfully."))
     } else {
       const response = await createRewardSystem(payLoad).unwrap()
-      showToast.success(response?.message || "Reward system created successfully.")
+      showToast.success(response?.message || t("Reward system created successfully."))
     }
 
     onSuccess()
@@ -171,8 +173,8 @@ export function RewardSystemForm({
       onSubmit={handleSubmit}
       onClose={onClose}
       onSuccess={onSuccess}
-      title={editId ? "Edit Reward System" : "Create Reward System"}
-      note="Example: spend ₹100 and earn 1 point."
+      title={editId ? t("Edit Reward System") : t("Create Reward System")}
+      note={t("Example: spend ₹100 and earn 1 point.")}
       isOpen={isOpen}
       formWidth="w-[560px]"
       isLoading={Boolean(editId) && isLoading}

@@ -4,6 +4,7 @@ import { MapPin, PencilLine, Plus } from "lucide-react"
 
 import DynamicForm from "@/components/DynamicForm"
 import { Button } from "@/components/ui/button"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { cn } from "@/lib/utils"
 
 export type AddressType = "billing" | "shipping"
@@ -63,6 +64,7 @@ export function CustomerAddressAddon({
   shippingAddress,
   onAddressChange,
 }: CustomerAddressAddonProps) {
+  const { t } = useTranslation()
   const getAddressValues = (type: AddressType) =>
     type === "billing" ? billingAddress : shippingAddress
 
@@ -73,63 +75,63 @@ export function CustomerAddressAddon({
   const addressFields = [
     {
       name: "first_name",
-      label: "First Name",
+      label: t("First Name"),
       type: "text",
-      placeholder: "Enter first name",
+      placeholder: t("Enter first name"),
     },
     {
       name: "last_name",
-      label: "Last Name",
+      label: t("Last Name"),
       type: "text",
-      placeholder: "Enter last name",
+      placeholder: t("Enter last name"),
     },
     {
       name: "phone",
-      label: "Phone",
+      label: t("Phone"),
       type: "text",
-      placeholder: "Enter phone number",
+      placeholder: t("Enter phone number"),
     },
     {
       name: "email",
-      label: "Email",
+      label: t("Email"),
       type: "email",
-      placeholder: "Enter email address",
+      placeholder: t("Enter email address"),
     },
     {
       name: "address_1",
-      label: "Address Line 1",
+      label: t("Address Line 1"),
       type: "text",
-      placeholder: "Enter address line 1",
+      placeholder: t("Enter address line 1"),
     },
     {
       name: "address_2",
-      label: "Address Line 2",
+      label: t("Address Line 2"),
       type: "text",
-      placeholder: "Enter address line 2",
+      placeholder: t("Enter address line 2"),
     },
     {
       name: "country",
-      label: "Country",
+      label: t("Country"),
       type: "text",
-      placeholder: "Enter country",
+      placeholder: t("Enter country"),
     },
     {
       name: "city",
-      label: "City",
+      label: t("City"),
       type: "text",
-      placeholder: "Enter city",
+      placeholder: t("Enter city"),
     },
     {
       name: "pobox",
-      label: "PO.Box",
+      label: t("PO.Box"),
       type: "text",
-      placeholder: "Enter postal address / PO box",
+      placeholder: t("Enter postal address / PO box"),
     },
     {
       name: "company_name",
-      label: "Company",
+      label: t("Company"),
       type: "text",
-      placeholder: "Enter company name",
+      placeholder: t("Enter company name"),
     },
   ]
 
@@ -151,9 +153,9 @@ export function CustomerAddressAddon({
               <MapPin className="size-4" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+              <h3 className="text-sm font-semibold text-gray-900">{t(title)}</h3>
               <p className="mt-1 text-xs font-medium text-gray-500">
-                {isAdded ? "Address added" : "No address added yet"}
+                {isAdded ? t("Address added") : t("No address added yet")}
               </p>
             </div>
           </div>
@@ -172,7 +174,7 @@ export function CustomerAddressAddon({
             ) : (
               <Plus className="size-3.5" />
             )}
-            {isAdded ? "Edit" : "Add"}
+            {isAdded ? t("Edit") : t("Add")}
           </Button>
         </div>
 
@@ -206,10 +208,10 @@ export function CustomerAddressAddon({
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold text-gray-900">
-              Addresses
+              {t("Addresses")}
             </h2>
             <p className="mt-1 text-xs font-medium text-gray-500">
-              Add billing and shipping address from side forms.
+              {t("Add billing and shipping address from side forms.")}
             </p>
           </div>
         </div>

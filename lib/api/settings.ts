@@ -18,6 +18,8 @@ const endpointsConfig = {
   // Business settings
   getBusinessSettings: { query: () => getMutation("settings/business") },
   updateBusinessSettings: { query: ({ payLoad }: { payLoad: any }) => putMutation("settings/business", payLoad) },
+  getSettingsForm: { query: ({ identifier }: { identifier: string }) => getMutation(`settings/${identifier}`) },
+  saveSettingsForm: { query: ({ identifier, payLoad }: { identifier: string; payLoad: any }) => postMutation(`settings/${identifier}`)(payLoad) },
 
   // Branches
   getBranchesDropdown: { query: () => getMutation("organizations/branches/dropdown-list") },

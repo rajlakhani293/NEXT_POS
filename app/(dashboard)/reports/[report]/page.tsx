@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select"
 import { accounting } from "@/lib/api/accounting"
 import { reports } from "@/lib/api/reports"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { getDateRange } from "@/lib/utils"
 import {
   isReportKey,
@@ -26,6 +27,7 @@ import {
 export default function ReportViewPage() {
   const router = useRouter()
   const params = useParams()
+  const { t } = useTranslation()
   const reportParam = String(params.report || "")
 
   if (!isReportKey(reportParam)) {
@@ -51,15 +53,9 @@ export default function ReportViewPage() {
   const [getCustomerDueReport, customerDueState] = (
     reports as any
   ).useGetCustomerDueReportMutation()
-  const [getSupplierPayableReport, supplierPayableState] = (
-    reports as any
-  ).useGetSupplierPayableReportMutation()
   const [getStockLedgerReport, stockLedgerState] = (
     reports as any
   ).useGetStockLedgerReportMutation()
-  const [getCustomerCreditLedgerReport, customerCreditState] = (
-    reports as any
-  ).useGetCustomerCreditLedgerReportMutation()
   const [getSaleReport, saleReportState] = (
     reports as any
   ).useGetSaleReportMutation()
@@ -78,12 +74,6 @@ export default function ReportViewPage() {
   const [getLowStockReport, lowStockState] = (
     reports as any
   ).useGetLowStockReportMutation()
-  const [getStockReport, stockState] = (
-    reports as any
-  ).useGetStockReportMutation()
-  const [getCashierReport, cashierState] = (
-    reports as any
-  ).useGetCashierReportMutation()
   const [getTransactionHistoryData, accountingState] = (
     accounting as any
   ).useGetTransactionHistoryDataMutation()
@@ -93,17 +83,13 @@ export default function ReportViewPage() {
 
   const isTableLoading =
     customerDueState.isLoading ||
-    supplierPayableState.isLoading ||
     stockLedgerState.isLoading ||
-    customerCreditState.isLoading ||
     saleReportState.isLoading ||
     soldStockState.isLoading ||
     profitState.isLoading ||
     paymentTypesState.isLoading ||
     productsState.isLoading ||
     lowStockState.isLoading ||
-    stockState.isLoading ||
-    cashierState.isLoading ||
     accountingState.isLoading ||
     annualState.isLoading
 
@@ -134,19 +120,15 @@ export default function ReportViewPage() {
 
     const mutationMap: Record<ReportKey, any> = {
       sales: getSaleReport,
+      sales_progress: getProductsReport,
+      customers_statement: getCustomerDueReport,
+      low_stock: getLowStockReport,
+      stock_ledger: getStockLedgerReport,
       sold_stock: getSoldStockReport,
       profit: getProfitReport,
-      payment_types: getPaymentTypesReport,
-      products: getProductsReport,
-      low_stock: getLowStockReport,
-      stock: getStockReport,
-      cashier: getCashierReport,
-      customer_due: getCustomerDueReport,
-      supplier_payable: getSupplierPayableReport,
-      stock_ledger: getStockLedgerReport,
-      customer_credit: getCustomerCreditLedgerReport,
       accounting: getTransactionHistoryData,
       annual: getAnnualReport,
+      payment_types: getPaymentTypesReport,
     }
 
     const payload = activeReport === "annual" ? rowsPayload : { ...rowsPayload, limit: 10 }
@@ -170,8 +152,6 @@ export default function ReportViewPage() {
   }, [
     activeReport,
     getAnnualReport,
-    getCashierReport,
-    getCustomerCreditLedgerReport,
     getCustomerDueReport,
     getLowStockReport,
     getPaymentTypesReport,
@@ -180,8 +160,6 @@ export default function ReportViewPage() {
     getSaleReport,
     getSoldStockReport,
     getStockLedgerReport,
-    getStockReport,
-    getSupplierPayableReport,
     getTransactionHistoryData,
     rowsPayload,
   ])
@@ -219,13 +197,13 @@ export default function ReportViewPage() {
 
   const yearSelector = activeReport === "annual" ? (
     <div className="flex items-center gap-2">
-      <span className="text-sm font-semibold text-gray-500">Year:</span>
+      <span className="text-sm font-semibold text-gray-500">{t("Year")}:</span>
       <Select
         value={String(selectedYear)}
         onValueChange={(val) => setSelectedYear(Number(val))}
       >
         <SelectTrigger className="w-[120px] h-9">
-          <SelectValue placeholder="Select year" />
+          <SelectValue placeholder={t("Select year")} />
         </SelectTrigger>
         <SelectContent>
           {years.map((y) => (
@@ -275,6 +253,7 @@ export default function ReportViewPage() {
       if (moneyKeys.includes(col.key)) {
         return {
           ...col,
+          title: t(col.title),
           render: (val: any) => formatMoney(val),
         }
       }
@@ -282,6 +261,7 @@ export default function ReportViewPage() {
       if (col.key === "created_at" || col.key === "paid_at") {
         return {
           ...col,
+          title: t(col.title),
           render: (val: any) => (val ? new Date(val).toLocaleString() : "-"),
         }
       }
@@ -289,13 +269,15 @@ export default function ReportViewPage() {
       if (col.key === "customer__name") {
         return {
           ...col,
-          render: (val: any, record: any) => record.customer__full_name || record.customer__name || "Walk-in Customer",
+          title: t(col.title),
+          render: (val: any, record: any) => record.customer__full_name || record.customer__name || t("Walk-in Customer"),
         }
       }
 
       if (col.key === "cashier__full_name") {
         return {
           ...col,
+          title: t(col.title),
           render: (val: any, record: any) => record.user__full_name || record.cashier__full_name || "-",
         }
       }
@@ -303,6 +285,7 @@ export default function ReportViewPage() {
       if (col.key === "due_amount") {
         return {
           ...col,
+          title: t(col.title),
           render: (_: any, record: any) => {
             const total = Number(record.total || 0)
             const paid = Number(record.tendered_amount || 0)
@@ -312,20 +295,23 @@ export default function ReportViewPage() {
         }
       }
 
-      return col
+      return {
+        ...col,
+        title: t(col.title),
+      }
     })
-  }, [activeReport])
+  }, [activeReport, t])
 
   const footerSummary = useMemo(() => {
     if (activeReport !== "annual" || !annualTotals) return undefined
     const formatMoney = (val: any) => `₹${Number(val || 0).toFixed(2)}`
     return [
-      { label: "Total Sales", value: formatMoney(annualTotals.total_sales) },
-      { label: "Total Taxes", value: formatMoney(annualTotals.total_taxes) },
-      { label: "Total Expenses", value: formatMoney(annualTotals.total_expenses) },
-      { label: "Net Income", value: formatMoney(annualTotals.net_income) },
+      { label: t("Total Sales"), value: formatMoney(annualTotals.total_sales) },
+      { label: t("Total Taxes"), value: formatMoney(annualTotals.total_taxes) },
+      { label: t("Total Expenses"), value: formatMoney(annualTotals.total_expenses) },
+      { label: t("Net Income"), value: formatMoney(annualTotals.net_income) },
     ]
-  }, [activeReport, annualTotals])
+  }, [activeReport, annualTotals, t])
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -342,12 +328,12 @@ export default function ReportViewPage() {
           </Button>
           <div>
             <h1 className="text-xl font-bold text-gray-900">
-              {tabLabels[activeReport]}
+              {t(tabLabels[activeReport])}
             </h1>
             <p className="text-sm font-medium text-gray-500">
               {activeReport === "annual" 
-                ? "Monthly summary breakdown of sales, taxes, expenses, and net income."
-                : "Review this report with search, date filters and pagination."}
+                ? t("Monthly summary breakdown of sales, taxes, expenses, and net income.")
+                : t("Review this report with search, date filters and pagination.")}
             </p>
           </div>
         </div>
@@ -357,7 +343,7 @@ export default function ReportViewPage() {
         <DynamicTable
           data={rows}
           columns={formattedColumns}
-          tableTitle={tabLabels[activeReport]}
+          tableTitle={t(tabLabels[activeReport])}
           showSearch={activeReport !== "annual"}
           showDateRange={activeReport !== "annual"}
           searchTerm={searchTerm}

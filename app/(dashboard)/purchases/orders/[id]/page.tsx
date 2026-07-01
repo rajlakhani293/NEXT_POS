@@ -12,6 +12,7 @@ import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { catalog } from "@/lib/api/catalog"
 import { payments } from "@/lib/api/payments"
 import { purchases } from "@/lib/api/purchases"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
@@ -68,6 +69,7 @@ const money = (value: string | number | null | undefined) =>
 export default function PurchaseOrderFormPage() {
   const router = useRouter()
   const params = useParams()
+  const { t } = useTranslation()
   const id = params.id as string
   const isEdit = id !== "create"
   const loadKeyRef = useRef("")
@@ -274,15 +276,15 @@ export default function PurchaseOrderFormPage() {
 
   const validate = () => {
     const nextErrors: Record<string, string> = {}
-    if (!formData.supplier_id) nextErrors.supplier_id = "Supplier is required"
-    if (!formData.order_date) nextErrors.order_date = "Order date is required"
+    if (!formData.supplier_id) nextErrors.supplier_id = t("Provider is required")
+    if (!formData.order_date) nextErrors.order_date = t("Invoice date is required")
     if (items.length) {
       items.forEach((item, index) => {
-        if (!item.product_id) nextErrors[`product_${index}`] = "Product is required"
-        if (!item.unit_id) nextErrors[`unit_${index}`] = "Unit is required"
+        if (!item.product_id) nextErrors[`product_${index}`] = t("Product is required")
+        if (!item.unit_id) nextErrors[`unit_${index}`] = t("Unit is required")
         if (!item.ordered_quantity)
-          nextErrors[`quantity_${index}`] = "Quantity is required"
-        if (!item.cost_price) nextErrors[`cost_${index}`] = "Cost is required"
+          nextErrors[`quantity_${index}`] = t("Quantity is required")
+        if (!item.cost_price) nextErrors[`cost_${index}`] = t("Purchase price is required")
       })
     }
     setErrors(nextErrors)
@@ -317,7 +319,7 @@ export default function PurchaseOrderFormPage() {
           tax_value: item.tax_amount || "0",
         }))
         const response = await createPurchaseOrder(payLoad).unwrap()
-        showToast.success(response?.message || "Purchase order created.")
+        showToast.success(response?.message || t("The procurement has been created successfully."))
       } else {
         const response = await editPurchaseOrder({ id, payLoad }).unwrap()
         await bulkUpdatePurchaseOrderProducts({
@@ -333,7 +335,7 @@ export default function PurchaseOrderFormPage() {
             })),
           },
         }).unwrap()
-        showToast.success(response?.message || "Purchase order updated.")
+        showToast.success(response?.message || t("The procurement has been updated successfully."))
       }
       goBack()
     } finally {
@@ -350,7 +352,7 @@ export default function PurchaseOrderFormPage() {
       }))
 
     if (!selectedItems.length) {
-      showToast.error("Enter receive quantity for at least one item.")
+      showToast.error(t("Enter receive quantity for at least one item."))
       return
     }
 
@@ -358,14 +360,14 @@ export default function PurchaseOrderFormPage() {
       id,
       payLoad: { items: selectedItems, note: formData.note || "" },
     }).unwrap()
-    showToast.success(response?.message || "Stock received successfully.")
+    showToast.success(response?.message || t("Stock received successfully."))
     await reloadOrder()
     setReceiveItems({})
   }
 
   const submitPayment = async () => {
     if (money(payment.amount) <= 0) {
-      showToast.error("Payment amount is required.")
+      showToast.error(t("Payment amount is required."))
       return
     }
 
@@ -373,7 +375,7 @@ export default function PurchaseOrderFormPage() {
       id,
       payLoad: payment,
     }).unwrap()
-    showToast.success(response?.message || "Purchase payment recorded.")
+    showToast.success(response?.message || t("Procurement payment recorded."))
     await reloadOrder()
   }
 
@@ -381,7 +383,7 @@ export default function PurchaseOrderFormPage() {
     const response = await getLowStockSuggestions().unwrap()
     const suggestions = response?.data || []
     if (!suggestions.length) {
-      showToast.error("No low stock suggestions found.")
+      showToast.error(t("No low stock suggestions found."))
       return
     }
     setItems((current) => [
@@ -394,18 +396,18 @@ export default function PurchaseOrderFormPage() {
         tax_amount: "0",
       })),
     ])
-    showToast.success("Low stock suggestions added.")
+    showToast.success(t("Low stock suggestions added."))
   }
 
   const handleRefreshOrder = async () => {
     await refreshPurchaseOrder({ id }).unwrap()
     await reloadOrder()
-    showToast.success("Procurement refreshed successfully.")
+    showToast.success(t("Procurement refreshed successfully."))
   }
 
   const handleSetAsPaid = async () => {
     const response = await setPurchaseOrderAsPaid({ id }).unwrap()
-    showToast.success(response?.message || "Procurement marked as paid.")
+    showToast.success(response?.message || t("Procurement marked as paid."))
     await reloadOrder()
   }
 
@@ -415,21 +417,21 @@ export default function PurchaseOrderFormPage() {
     const payLoad: Record<string, string> = { payment_status }
     if (payment_status === "partial") {
       if (money(payment.amount) <= 0) {
-        showToast.error("Enter partial amount first.")
+        showToast.error(t("Enter partial amount first."))
         return
       }
       payLoad.amount = payment.amount
     }
 
     const response = await changePurchasePaymentStatus({ id, payLoad }).unwrap()
-    showToast.success(response?.message || "Payment status updated.")
+    showToast.success(response?.message || t("Payment status updated."))
     await reloadOrder()
   }
 
   const handleRemoveItem = async (item: PurchaseItemForm) => {
     if (isEdit && item.purchase_item_id) {
       await deletePurchaseOrderProduct({ id, productId: item.purchase_item_id }).unwrap()
-      showToast.success("Procurement product deleted.")
+      showToast.success(t("Procurement product deleted."))
       await reloadOrder()
       return
     }
@@ -441,7 +443,7 @@ export default function PurchaseOrderFormPage() {
       <div className="flex h-full items-center justify-center bg-gray-50">
         <div className="flex items-center gap-3 text-sm font-medium text-gray-600">
           <Spinner className="h-5 w-5" />
-          Loading purchase data...
+          {t("Loading procurement data...")}
         </div>
       </div>
     )
@@ -462,10 +464,10 @@ export default function PurchaseOrderFormPage() {
           </Button>
           <div>
             <h1 className="text-xl font-bold text-gray-900">
-              {isEdit ? "Edit Purchase Order" : "Create Purchase Order"}
+              {isEdit ? t("Edit Procurement") : t("New Procurement")}
             </h1>
             <p className="text-xs font-medium text-gray-500">
-              Buy stock from supplier, receive stock-in and record supplier payment.
+              {t("Make a new procurement.")}
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2">
@@ -473,10 +475,10 @@ export default function PurchaseOrderFormPage() {
               <>
                 <Button type="button" variant="outline" onClick={handleRefreshOrder}>
                   <RefreshCwIcon className="size-4" />
-                  Refresh
+                  {t("Refresh")}
                 </Button>
                 <Button type="button" variant="outline" onClick={handleSetAsPaid}>
-                  Set As Paid
+                  {t("Set As Paid")}
                 </Button>
                 <Button
                   type="button"
@@ -484,7 +486,7 @@ export default function PurchaseOrderFormPage() {
                   onClick={() => router.push(`/purchases/orders/${id}/invoice`)}
                 >
                   <FileTextIcon className="size-4" />
-                  Invoice
+                  {t("Invoice")}
                 </Button>
               </>
             ) : null}
@@ -498,11 +500,11 @@ export default function PurchaseOrderFormPage() {
             <section className="rounded-lg border border-gray-200 bg-white p-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <UniFieldSelect
-                  label="Provider"
+                  label={t("Provider")}
                   required
                   value={formData.supplier_id}
                   onValueChange={(value) => updateField("supplier_id", value)}
-                  placeholder="Select Provider"
+                  placeholder={t("Select Provider")}
                   error={errors.supplier_id}
                 >
                   {supplierOptions.map((supplier: any) => (
@@ -512,19 +514,19 @@ export default function PurchaseOrderFormPage() {
                   ))}
                 </UniFieldSelect>
                 <UniFieldInput
-                  label="Procurement Name"
-                  placeholder="Auto generated if empty"
+                  label={t("Procurement Name")}
+                  placeholder={t("Auto generated if empty")}
                   value={formData.code}
                   onChange={(event) => updateField("code", event.target.value)}
                 />
                 <UniFieldInput
-                  label="Invoice Number"
-                  placeholder="External Invoice reference"
+                  label={t("Invoice Number")}
+                  placeholder={t("External Invoice reference")}
                   value={formData.invoice_reference}
                   onChange={(event) => updateField("invoice_reference", event.target.value)}
                 />
                 <UniFieldInput
-                  label="Invoice Date"
+                  label={t("Invoice Date")}
                   required
                   type="date"
                   value={formData.order_date}
@@ -534,7 +536,7 @@ export default function PurchaseOrderFormPage() {
                   error={errors.order_date}
                 />
                 <UniFieldInput
-                  label="Delivery Time"
+                  label={t("Delivery Time")}
                   type="date"
                   value={formData.expected_date}
                   onChange={(event) =>
@@ -542,18 +544,18 @@ export default function PurchaseOrderFormPage() {
                   }
                 />
                 <UniFieldSelect
-                  label="Delivery Status"
+                  label={t("Delivery Status")}
                   value={formData.workflow_status}
                   onValueChange={(value) => updateField("workflow_status", value)}
                 >
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="ordered">Ordered</SelectItem>
-                  <SelectItem value="partial">Partial</SelectItem>
-                  <SelectItem value="received">Received</SelectItem>
+                  <SelectItem value="draft">{t("Draft")}</SelectItem>
+                  <SelectItem value="ordered">{t("Ordered")}</SelectItem>
+                  <SelectItem value="partial">{t("Partial")}</SelectItem>
+                  <SelectItem value="received">{t("Received")}</SelectItem>
                 </UniFieldSelect>
                 
                 <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50/50 px-3 py-2">
-                  <span className="text-sm font-semibold text-gray-700">Automatic Approval</span>
+                  <span className="text-sm font-semibold text-gray-700">{t("Automatic Approval")}</span>
                   <input
                     type="checkbox"
                     checked={formData.automatic_approval}
@@ -563,24 +565,24 @@ export default function PurchaseOrderFormPage() {
                 </div>
 
                 <UniFieldInput
-                  label="Shipping Amount"
+                  label={t("Shipping Amount")}
                   type="number"
                   min="0"
                   step="0.01"
                   prefix="₹"
-                  placeholder="Enter shipping"
+                  placeholder={t("Enter shipping")}
                   value={formData.shipping_amount}
                   onChange={(event) =>
                     updateField("shipping_amount", event.target.value)
                   }
                 />
                 <UniFieldInput
-                  label="Discount Amount"
+                  label={t("Discount Amount")}
                   type="number"
                   min="0"
                   step="0.01"
                   prefix="₹"
-                  placeholder="Enter discount"
+                  placeholder={t("Enter discount")}
                   value={formData.discount_amount}
                   onChange={(event) =>
                     updateField("discount_amount", event.target.value)
@@ -589,8 +591,8 @@ export default function PurchaseOrderFormPage() {
                 <div className="md:col-span-3">
                   <UniFieldInput
                     as="textarea"
-                    label="Description"
-                    placeholder="Enter description note"
+                    label={t("Description")}
+                    placeholder={t("Enter description note")}
                     value={formData.note}
                     onChange={(event) => updateField("note", event.target.value)}
                   />
@@ -603,19 +605,19 @@ export default function PurchaseOrderFormPage() {
                 <div className="mb-4 flex items-center justify-between">
                   <div>
                     <h2 className="text-base font-bold text-gray-900">
-                      Purchase Items
+                      {t("Procurement Products List")}
                     </h2>
                     <p className="text-xs font-medium text-gray-500">
-                      Add products that you are buying from the supplier.
+                      {t("Add products that you are buying from the provider.")}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button type="button" variant="outline" onClick={handleUseLowStockSuggestions}>
-                      Low Stock Suggestions
+                      {t("Low Stock Suggestions")}
                     </Button>
                     <Button type="button" onClick={() => setItems([...items, emptyItem()])}>
                       <PlusIcon className="size-4" />
-                      Add Item
+                      {t("Add Item")}
                     </Button>
                   </div>
                 </div>
@@ -627,13 +629,13 @@ export default function PurchaseOrderFormPage() {
                       className="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.8fr_auto]"
                     >
                       <UniFieldSelect
-                        label={index === 0 ? "Product" : undefined}
+                        label={index === 0 ? t("Product") : undefined}
                         required
                         value={item.product_id}
                         onValueChange={(value) =>
                           updateProductItemSelection(item.id, value)
                         }
-                        placeholder="Select product"
+                        placeholder={t("Select product")}
                         error={errors[`product_${index}`]}
                       >
                         {productOptions.map((product: any) => (
@@ -643,13 +645,13 @@ export default function PurchaseOrderFormPage() {
                         ))}
                       </UniFieldSelect>
                       <UniFieldSelect
-                        label={index === 0 ? "Unit" : undefined}
+                        label={index === 0 ? t("Unit") : undefined}
                         required
                         value={item.unit_id}
                         onValueChange={(value) =>
                           updateItem(item.id, "unit_id", value)
                         }
-                        placeholder="Select unit"
+                        placeholder={t("Select unit")}
                         error={errors[`unit_${index}`]}
                       >
                         {(units.data?.data || []).map((unit: any) => (
@@ -659,12 +661,12 @@ export default function PurchaseOrderFormPage() {
                         ))}
                       </UniFieldSelect>
                       <UniFieldInput
-                        label={index === 0 ? "Qty" : undefined}
+                        label={index === 0 ? t("Quantity") : undefined}
                         required
                         type="number"
                         min="0"
                         step="0.001"
-                        placeholder="Qty"
+                        placeholder={t("Quantity")}
                         value={item.ordered_quantity}
                         onChange={(event) =>
                           updateItem(item.id, "ordered_quantity", event.target.value)
@@ -672,13 +674,13 @@ export default function PurchaseOrderFormPage() {
                         error={errors[`quantity_${index}`]}
                       />
                       <UniFieldInput
-                        label={index === 0 ? "Cost" : undefined}
+                        label={index === 0 ? t("Purchase Price") : undefined}
                         required
                         type="number"
                         min="0"
                         step="0.01"
                         prefix="₹"
-                        placeholder="Cost"
+                        placeholder={t("Purchase Price")}
                         value={item.cost_price}
                         onChange={(event) =>
                           updateItem(item.id, "cost_price", event.target.value)
@@ -686,12 +688,12 @@ export default function PurchaseOrderFormPage() {
                         error={errors[`cost_${index}`]}
                       />
                       <UniFieldInput
-                        label={index === 0 ? "Tax" : undefined}
+                        label={index === 0 ? t("Tax") : undefined}
                         type="number"
                         min="0"
                         step="0.01"
                         prefix="₹"
-                        placeholder="Tax"
+                        placeholder={t("Tax")}
                         value={item.tax_amount}
                         onChange={(event) =>
                           updateItem(item.id, "tax_amount", event.target.value)
@@ -714,15 +716,15 @@ export default function PurchaseOrderFormPage() {
 
                 <div className="mt-4 grid gap-2 rounded-lg bg-gray-50 p-3 text-sm font-semibold text-gray-700 md:ml-auto md:w-80">
                   <div className="flex justify-between">
-                    <span>Subtotal</span>
+                    <span>{t("Subtotal")}</span>
                     <span>₹{totals.subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Tax</span>
+                    <span>{t("Tax")}</span>
                     <span>₹{totals.tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-base font-bold text-gray-950">
-                    <span>Total</span>
+                    <span>{t("Total")}</span>
                     <span>₹{totals.total.toFixed(2)}</span>
                   </div>
                 </div>
@@ -733,19 +735,19 @@ export default function PurchaseOrderFormPage() {
                   <div className="mb-4 flex items-center justify-between">
                     <div>
                       <h2 className="text-base font-bold text-gray-900">
-                        Purchase Items
+                        {t("Procurement Products List")}
                       </h2>
                       <p className="text-xs font-medium text-gray-500">
-                        Manage procurement products, receive quantities and supplier billing.
+                        {t("Manage procurement products, receive quantities and provider billing.")}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button type="button" variant="outline" onClick={handleUseLowStockSuggestions}>
-                        Low Stock Suggestions
+                        {t("Low Stock Suggestions")}
                       </Button>
                       <Button type="button" onClick={() => setItems([...items, emptyItem()])}>
                         <PlusIcon className="size-4" />
-                        Add Item
+                        {t("Add Item")}
                       </Button>
                     </div>
                   </div>
@@ -765,13 +767,13 @@ export default function PurchaseOrderFormPage() {
                           className="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr_0.8fr_0.8fr_auto]"
                         >
                           <UniFieldSelect
-                            label={index === 0 ? "Product" : undefined}
+                            label={index === 0 ? t("Product") : undefined}
                             required
                             value={item.product_id}
                             onValueChange={(value) =>
                               updateProductItemSelection(item.id, value)
                             }
-                            placeholder="Select product"
+                            placeholder={t("Select product")}
                             error={errors[`product_${index}`]}
                           >
                             {productOptions.map((product: any) => (
@@ -781,13 +783,13 @@ export default function PurchaseOrderFormPage() {
                             ))}
                           </UniFieldSelect>
                           <UniFieldSelect
-                            label={index === 0 ? "Unit" : undefined}
+                            label={index === 0 ? t("Unit") : undefined}
                             required
                             value={item.unit_id}
                             onValueChange={(value) =>
                               updateItem(item.id, "unit_id", value)
                             }
-                            placeholder="Select unit"
+                            placeholder={t("Select unit")}
                             error={errors[`unit_${index}`]}
                           >
                             {(units.data?.data || []).map((unit: any) => (
@@ -797,12 +799,12 @@ export default function PurchaseOrderFormPage() {
                             ))}
                           </UniFieldSelect>
                           <UniFieldInput
-                            label={index === 0 ? "Ordered" : undefined}
+                            label={index === 0 ? t("Quantity") : undefined}
                             required
                             type="number"
                             min={receivedQuantity}
                             step="0.001"
-                            placeholder="Qty"
+                            placeholder={t("Quantity")}
                             value={item.ordered_quantity}
                             onChange={(event) =>
                               updateItem(item.id, "ordered_quantity", event.target.value)
@@ -810,19 +812,19 @@ export default function PurchaseOrderFormPage() {
                             error={errors[`quantity_${index}`]}
                           />
                           <UniFieldInput
-                            label={index === 0 ? "Received" : undefined}
+                            label={index === 0 ? t("Received") : undefined}
                             value={existingItem ? String(existingItem.received_quantity || 0) : "0"}
                             readOnly
                             disabled
                           />
                           <UniFieldInput
-                            label={index === 0 ? "Cost" : undefined}
+                            label={index === 0 ? t("Purchase Price") : undefined}
                             required
                             type="number"
                             min="0"
                             step="0.01"
                             prefix="₹"
-                            placeholder="Cost"
+                            placeholder={t("Purchase Price")}
                             value={item.cost_price}
                             onChange={(event) =>
                               updateItem(item.id, "cost_price", event.target.value)
@@ -831,19 +833,19 @@ export default function PurchaseOrderFormPage() {
                           />
                           <div className="space-y-2">
                             <UniFieldInput
-                              label={index === 0 ? "Tax" : undefined}
+                              label={index === 0 ? t("Tax") : undefined}
                               type="number"
                               min="0"
                               step="0.01"
                               prefix="₹"
-                              placeholder="Tax"
+                              placeholder={t("Tax")}
                               value={item.tax_amount}
                               onChange={(event) =>
                                 updateItem(item.id, "tax_amount", event.target.value)
                               }
                             />
                             <p className="text-xs font-medium text-gray-500">
-                              Total: ₹{rowTotal.toFixed(2)}
+                              {t("Total")}: ₹{rowTotal.toFixed(2)}
                             </p>
                           </div>
                           <div className={cn("flex items-end", index === 0 && "pt-6")}>
@@ -863,15 +865,15 @@ export default function PurchaseOrderFormPage() {
                   </div>
                   <div className="mt-4 grid gap-2 rounded-lg bg-gray-50 p-3 text-sm font-semibold text-gray-700 md:ml-auto md:w-80">
                     <div className="flex justify-between">
-                      <span>Subtotal</span>
+                      <span>{t("Subtotal")}</span>
                       <span>₹{totals.subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Tax</span>
+                      <span>{t("Tax")}</span>
                       <span>₹{totals.tax.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-base font-bold text-gray-950">
-                      <span>Total</span>
+                      <span>{t("Total")}</span>
                       <span>₹{totals.total.toFixed(2)}</span>
                     </div>
                   </div>
@@ -880,10 +882,10 @@ export default function PurchaseOrderFormPage() {
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                   <section className="rounded-lg border border-gray-200 bg-white p-4">
                     <h2 className="text-base font-bold text-gray-900">
-                      Stock In / Receive Purchase
+                      {t("Stock In")}
                     </h2>
                     <p className="mb-4 text-xs font-medium text-gray-500">
-                      Enter received quantity. This increases product current stock.
+                      {t("Enter received quantity. This increases product current stock.")}
                     </p>
                     <div className="space-y-3">
                       {orderItems.map((item: any) => {
@@ -901,7 +903,7 @@ export default function PurchaseOrderFormPage() {
                                 {item.product__name}
                               </p>
                               <p className="text-xs font-medium text-gray-500">
-                                Pending: {pending}
+                                {t("Pending")}: {pending}
                               </p>
                             </div>
                             <UniFieldInput
@@ -909,7 +911,7 @@ export default function PurchaseOrderFormPage() {
                               min="0"
                               max={pending}
                               step="0.001"
-                              placeholder="Receive qty"
+                              placeholder={t("Receive quantity")}
                               value={receiveItems[item.id] || ""}
                               onChange={(event) =>
                                 setReceiveItems((current) => ({
@@ -928,25 +930,25 @@ export default function PurchaseOrderFormPage() {
                       onClick={submitReceive}
                       disabled={receivePurchaseOrder.isLoading}
                     >
-                      {receivePurchaseOrder.isLoading ? <Spinner /> : "Receive Stock"}
+                      {receivePurchaseOrder.isLoading ? <Spinner /> : t("Receive Stock")}
                     </Button>
                   </section>
 
                   <section className="rounded-lg border border-gray-200 bg-white p-4">
                     <h2 className="text-base font-bold text-gray-900">
-                      Supplier Payment
+                      {t("Provider Payment")}
                     </h2>
                     <p className="mb-4 text-xs font-medium text-gray-500">
-                      Record payment against this purchase order.
+                      {t("Record payment against this procurement.")}
                     </p>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <UniFieldInput
-                        label="Amount"
+                        label={t("Amount")}
                         type="number"
                         min="0"
                         step="0.01"
                         prefix="₹"
-                        placeholder="Enter amount"
+                        placeholder={t("Enter amount")}
                         value={payment.amount}
                         onChange={(event) =>
                           setPayment((current) => ({
@@ -956,7 +958,7 @@ export default function PurchaseOrderFormPage() {
                         }
                       />
                       <UniFieldSelect
-                        label="Payment Type"
+                        label={t("Payment Type")}
                         value={payment.payment_type}
                         onValueChange={(value) =>
                           setPayment((current) => ({
@@ -972,7 +974,7 @@ export default function PurchaseOrderFormPage() {
                         ))}
                       </UniFieldSelect>
                       <UniFieldInput
-                        label="Paid At"
+                        label={t("Paid At")}
                         type="date"
                         value={payment.paid_at}
                         onChange={(event) =>
@@ -983,8 +985,8 @@ export default function PurchaseOrderFormPage() {
                         }
                       />
                       <UniFieldInput
-                        label="Reference"
-                        placeholder="Transaction/reference number"
+                        label={t("Reference")}
+                        placeholder={t("Transaction/reference number")}
                         value={payment.reference_number}
                         onChange={(event) =>
                           setPayment((current) => ({
@@ -996,8 +998,8 @@ export default function PurchaseOrderFormPage() {
                       <div className="md:col-span-2">
                         <UniFieldInput
                           as="textarea"
-                          label="Payment Note"
-                          placeholder="Enter payment note"
+                          label={t("Payment Note")}
+                          placeholder={t("Enter payment note")}
                           value={payment.note}
                           onChange={(event) =>
                             setPayment((current) => ({
@@ -1014,7 +1016,7 @@ export default function PurchaseOrderFormPage() {
                       onClick={submitPayment}
                       disabled={payPurchaseOrder.isLoading}
                     >
-                      {payPurchaseOrder.isLoading ? <Spinner /> : "Pay Supplier"}
+                      {payPurchaseOrder.isLoading ? <Spinner /> : t("Pay Provider")}
                     </Button>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Button
@@ -1022,21 +1024,21 @@ export default function PurchaseOrderFormPage() {
                         variant="outline"
                         onClick={() => handlePaymentStatusChange("unpaid")}
                       >
-                        Mark Unpaid
+                        {t("Mark Unpaid")}
                       </Button>
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => handlePaymentStatusChange("partial")}
                       >
-                        Mark Partial
+                        {t("Mark Partial")}
                       </Button>
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => handlePaymentStatusChange("paid")}
                       >
-                        Mark Paid
+                        {t("Mark Paid")}
                       </Button>
                     </div>
                   </section>
@@ -1067,7 +1069,7 @@ export default function PurchaseOrderFormPage() {
                 onClick={goBack}
                 disabled={isSubmitting}
               >
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="submit"
@@ -1077,12 +1079,12 @@ export default function PurchaseOrderFormPage() {
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
                     <Spinner />
-                    Saving...
+                    {t("Saving...")}
                   </span>
                 ) : isEdit ? (
-                  "Save Purchase"
+                  t("Save Procurement")
                 ) : (
-                  "Create Purchase"
+                  t("Create Procurement")
                 )}
               </Button>
             </div>

@@ -4,6 +4,7 @@ import { useEffect } from "react"
 
 import DynamicForm from "@/components/DynamicForm"
 import { customers } from "@/lib/api/customers"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { rewards } from "@/lib/api/rewards"
 import { showToast } from "@/lib/toast"
 
@@ -28,27 +29,27 @@ const initialValues: CustomerGroupFormValues = {
   reward_system_id: "",
 }
 
-const buildFields = (rewardSystems: any[]) => [
+const buildFields = (rewardSystems: any[], t: (key: string) => string) => [
   {
     name: "name",
-    label: "Group Name",
+    label: t("Group Name"),
     type: "text",
-    placeholder: "Enter group name",
+    placeholder: t("Enter group name"),
     required: true,
   },
   {
     name: "minimal_credit_payment",
-    label: "Minimum Credit Payment",
+    label: t("Minimum Credit Payment"),
     type: "number",
-    placeholder: "Enter minimum payment percentage",
+    placeholder: t("Enter minimum payment percentage"),
     suffix: "%",
     min: 0,
   },
   {
     name: "reward_system_id",
-    label: "Reward System",
+    label: t("Reward System"),
     type: "select",
-    placeholder: "Select reward system",
+    placeholder: t("Select reward system"),
     allowClear: true,
     options: rewardSystems.map((system: any) => ({
       label: system.name,
@@ -57,9 +58,9 @@ const buildFields = (rewardSystems: any[]) => [
   },
   {
     name: "description",
-    label: "Description",
+    label: t("Description"),
     type: "textarea",
-    placeholder: "Enter description",
+    placeholder: t("Enter description"),
     rows: 3,
   },
 ]
@@ -70,6 +71,7 @@ export function CustomerGroupForm({
   onSuccess,
   editId,
 }: CustomerGroupFormProps) {
+  const { t } = useTranslation()
   const [createCustomerGroup] = (customers as any).useCreateCustomerGroupMutation()
   const [editCustomerGroup] = (customers as any).useEditCustomerGroupMutation()
   const [getCustomerGroupById, { data, isLoading }] = (
@@ -89,7 +91,7 @@ export function CustomerGroupForm({
   }, [editId, getCustomerGroupById, getRewardSystemsDropdown, isOpen])
 
   const record = data?.data
-  const fields = buildFields(rewardSystems.data?.data || [])
+  const fields = buildFields(rewardSystems.data?.data || [], t)
   const formValues: CustomerGroupFormValues =
     editId && record
       ? {
@@ -116,10 +118,10 @@ export function CustomerGroupForm({
 
     if (editId) {
       const response = await editCustomerGroup({ id: editId, payLoad }).unwrap()
-      showToast.success(response?.message || "Customer group updated successfully.")
+      showToast.success(response?.message || t("Customer group updated successfully."))
     } else {
       const response = await createCustomerGroup(payLoad).unwrap()
-      showToast.success(response?.message || "Customer group created successfully.")
+      showToast.success(response?.message || t("Customer group created successfully."))
     }
 
     onSuccess()
@@ -134,7 +136,7 @@ export function CustomerGroupForm({
       onSubmit={handleSubmit}
       onClose={onClose}
       onSuccess={onSuccess}
-      title={editId ? "Edit Customer Group" : "Create Customer Group"}
+      title={editId ? t("Edit Customer Group") : t("Create Customer Group")}
       isOpen={isOpen}
       formWidth="w-[560px]"
       isLoading={Boolean(editId) && isLoading}

@@ -7,22 +7,25 @@ import { ArrowLeft, ReceiptText } from "lucide-react"
 import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
 import { purchases } from "@/lib/api/purchases"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
-const columns = [
-  { key: "name", title: "Name" },
-  { key: "invoice_reference", title: "Invoice" },
-  { key: "payment_status", title: "Payment" },
-  { key: "delivery_status", title: "Delivery" },
-  { key: "total_items", title: "Items" },
-  { key: "value", title: "Value", render: (value: any) => formatMoney(value) },
-  { key: "created_at", title: "Created At", render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+const buildColumns = (t: (key: string) => string) => [
+  { key: "name", title: t("Name") },
+  { key: "invoice_reference", title: t("Invoice") },
+  { key: "payment_status", title: t("Payment") },
+  { key: "delivery_status", title: t("Delivery") },
+  { key: "total_items", title: t("Items") },
+  { key: "value", title: t("Value"), render: (value: any) => formatMoney(value) },
+  { key: "created_at", title: t("Created At"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 
 export default function ProviderProcurementsPage() {
   const params = useParams()
   const router = useRouter()
+  const { t } = useTranslation()
+  const columns = buildColumns(t)
   const id = params.id as string
   const lastRequestRef = useRef("")
   const [rows, setRows] = useState<any[]>([])
@@ -58,12 +61,12 @@ export default function ProviderProcurementsPage() {
         <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={() => router.push("/providers")}>
           <ArrowLeft className="size-4" />
         </Button>
-        <h1 className="text-xl font-bold text-gray-900">Provider Procurements</h1>
+        <h1 className="text-xl font-bold text-gray-900">{t("Provider Procurements")}</h1>
       </div>
       <DynamicTable
         data={rows}
         columns={columns}
-        tableTitle="Provider Procurements"
+        tableTitle={t("Provider Procurements")}
         showSearch
         searchTerm={searchTerm}
         onFilterChange={(action, payload) => {
@@ -80,8 +83,8 @@ export default function ProviderProcurementsPage() {
         rowActions={(_, record) => [
           {
             key: "receipt",
-            label: "View",
-            labelText: "View",
+            label: t("View"),
+            labelText: t("View"),
             icon: <ReceiptText className="size-4" />,
             onClick: () => router.push(`/purchases/orders/${record.id}`),
           },

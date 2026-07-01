@@ -6,19 +6,22 @@ import { useSearchParams } from "next/navigation"
 import DynamicTable from "@/components/DynamicTable"
 import { CustomerGroupForm } from "@/app/(dashboard)/customers/groups/createUpdate"
 import { customers } from "@/lib/api/customers"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 
-const columns = [
-  { key: "name", title: "Name" },
-  { key: "reward_name", title: "Reward System" },
-  { key: "user_username", title: "Author" },
-  { key: "created_at", title: "Created On", render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+const buildColumns = (t: (key: string) => string) => [
+  { key: "name", title: t("Name") },
+  { key: "reward_name", title: t("Reward System") },
+  { key: "user_username", title: t("Author") },
+  { key: "created_at", title: t("Created On"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 
 export default function CustomerGroupsPage() {
   const searchParams = useSearchParams()
+  const { t } = useTranslation()
+  const columns = buildColumns(t)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editId, setEditId] = useState<number | string | null>(null)
   const [deleteCustomerGroup] = (customers as any).useDeleteCustomerGroupMutation()
@@ -75,8 +78,8 @@ export default function CustomerGroupsPage() {
       <DynamicTable
         data={orders}
         columns={columns}
-        tableTitle="Customer Groups List"
-        title={canCreate ? "Add a new Customers Group" : undefined}
+        tableTitle={t("Customer Groups List")}
+        title={canCreate ? t("Add a new Customers Group") : undefined}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}
@@ -99,8 +102,8 @@ export default function CustomerGroupsPage() {
           updateCustomerGroupStatus({ payLoad: { ids, status } })
         }
         triggerRefresh={triggerRefresh}
-        deleteModalTitle="Delete Customer Group"
-        deleteModalDescription="Would you like to delete this ?"
+        deleteModalTitle={t("Delete Customer Group")}
+        deleteModalDescription={t("Would you like to delete this ?")}
       />
 
       <CustomerGroupForm

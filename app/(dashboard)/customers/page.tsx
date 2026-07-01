@@ -6,6 +6,7 @@ import { Gift, ReceiptText, TicketPercent, Wallet } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { customers } from "@/lib/api/customers"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
@@ -13,33 +14,35 @@ import { CustomerForm } from "./createUpdate"
 
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
-const columns = [
-  { key: "first_name", title: "First Name" },
-  { key: "last_name", title: "Last Name" },
-  { key: "group_name", title: "Group" },
-  { key: "phone", title: "Phone" },
-  { key: "email", title: "Email" },
+const buildColumns = (t: (key: string) => string) => [
+  { key: "first_name", title: t("First Name") },
+  { key: "last_name", title: t("Last Name") },
+  { key: "group_name", title: t("Group") },
+  { key: "phone", title: t("Phone") },
+  { key: "email", title: t("Email") },
   {
     key: "account_amount",
-    title: "Account Credit",
+    title: t("Account Credit"),
     render: (value: any) => formatMoney(value),
   },
   {
     key: "owed_amount",
-    title: "Owed Amount",
+    title: t("Owed Amount"),
     render: (value: any) => formatMoney(value),
   },
   {
     key: "purchases_amount",
-    title: "Purchase Amount",
+    title: t("Purchase Amount"),
     render: (value: any) => formatMoney(value),
   },
-  { key: "user_username", title: "Author" },
+  { key: "user_username", title: t("Author") },
 ]
 
 export default function CustomersPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t } = useTranslation()
+  const columns = buildColumns(t)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [deleteCustomer] = (customers as any).useDeleteCustomerMutation()
   const [updateCustomerStatus] = (
@@ -87,8 +90,8 @@ export default function CustomersPage() {
       <DynamicTable
         data={orders}
         columns={columns}
-        tableTitle="Customers List"
-        title={canCreate ? "Add a new customer" : undefined}
+        tableTitle={t("Customers List")}
+        title={canCreate ? t("Add a new customer") : undefined}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}
@@ -111,34 +114,34 @@ export default function CustomersPage() {
           updateCustomerStatus({ payLoad: { ids, status } })
         }
         triggerRefresh={triggerRefresh}
-        deleteModalTitle="Delete Customer"
-        deleteModalDescription="Would you like to delete this ?"
+        deleteModalTitle={t("Delete Customer")}
+        deleteModalDescription={t("Would you like to delete this ?")}
         rowActions={(_, record) => [
           {
             key: "orders",
-            label: "Orders",
-            labelText: "Orders",
+            label: t("Orders"),
+            labelText: t("Orders"),
             icon: <ReceiptText className="size-4" />,
             onClick: () => router.push(`/customers/${record.id}?tab=orders`),
           },
           {
             key: "credit",
-            label: "Wallet History",
-            labelText: "Wallet History",
+            label: t("Wallet History"),
+            labelText: t("Wallet History"),
             icon: <Wallet className="size-4" />,
             onClick: () => router.push(`/customers/${record.id}/account-history`),
           },
           {
             key: "rewards",
-            label: "Rewards",
-            labelText: "Rewards",
+            label: t("Rewards"),
+            labelText: t("Rewards"),
             icon: <Gift className="size-4" />,
             onClick: () => router.push(`/customers/${record.id}/rewards`),
           },
           {
             key: "coupons",
-            label: "Coupons",
-            labelText: "Coupons",
+            label: t("Coupons"),
+            labelText: t("Coupons"),
             icon: <TicketPercent className="size-4" />,
             onClick: () => router.push(`/customers/${record.id}/coupons`),
           },

@@ -8,30 +8,32 @@ import DynamicTable from "@/components/DynamicTable"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { purchases } from "@/lib/api/purchases"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
+
+const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
 const workflowLabels: Record<string, string> = {
   draft: "Draft",
   ordered: "Ordered",
-  partial: "Partial",
+  partial: "Partially Received",
   received: "Received",
 }
 
 const paymentLabels: Record<string, string> = {
   unpaid: "Unpaid",
   partially_paid: "Partially Paid",
+  partial: "Partially Paid",
   paid: "Paid",
 }
 
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
-
-const columns = [
-  { key: "code", title: "Name" },
-  { key: "supplier_name", title: "Provider" },
+const buildColumns = (t: (key: string) => string) => [
+  { key: "code", title: t("Name") },
+  { key: "supplier_name", title: t("Provider") },
   {
     key: "workflow_status",
-    title: "Delivery Status",
+    title: t("Delivery Status"),
     render: (value: string) => (
       <span
         className={cn(
@@ -42,13 +44,13 @@ const columns = [
           value === "draft" && "bg-gray-100 text-gray-700"
         )}
       >
-        {workflowLabels[value] || value}
+        {t(workflowLabels[value] || value)}
       </span>
     ),
   },
   {
     key: "payment_status",
-    title: "Payment Status",
+    title: t("Payment Status"),
     render: (value: string) => (
       <span
         className={cn(
@@ -58,35 +60,37 @@ const columns = [
           value === "unpaid" && "bg-red-50 text-red-700"
         )}
       >
-        {paymentLabels[value] || value}
+        {t(paymentLabels[value] || value)}
       </span>
     ),
   },
   {
     key: "invoice_date",
-    title: "Invoice Date",
+    title: t("Invoice Date"),
     render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
   },
   {
     key: "total",
-    title: "Sale Value",
+    title: t("Sale Value"),
     render: (value: any) => formatMoney(value),
   },
   {
     key: "cost",
-    title: "Purchase Value",
+    title: t("Purchase Value"),
     render: (value: any) => formatMoney(value),
   },
   {
     key: "tax_value",
-    title: "Taxes",
+    title: t("Taxes"),
     render: (value: any) => formatMoney(value),
   },
-  { key: "user_username", title: "Author" },
+  { key: "user_username", title: t("Author") },
 ]
 
 export default function PurchaseOrdersPage() {
   const router = useRouter()
+  const { t } = useTranslation()
+  const columns = buildColumns(t)
   const [deletePurchaseOrder] = (
     purchases as any
   ).useDeletePurchaseOrderMutation()
@@ -133,27 +137,27 @@ export default function PurchaseOrdersPage() {
 
     return [
       {
-        title: "Visible Purchase Value",
+        title: t("Visible Purchase Value"),
         value: formatMoney(totalAmount),
-        helper: `${orders.length} rows on this page`,
+        helper: t(":count rows on this page").replace(":count", String(orders.length)),
       },
       {
-        title: "Visible Paid",
+        title: t("Visible Paid"),
         value: formatMoney(totalPaid),
-        helper: "Supplier payments on visible rows",
+        helper: t("Provider payments on visible rows"),
       },
       {
-        title: "Partially Received",
+        title: t("Partially Received"),
         value: String(partialCount),
-        helper: "Orders still waiting for stock-in",
+        helper: t("Procurements still waiting for stock-in"),
       },
       {
-        title: "Received Orders",
+        title: t("Received Procurements"),
         value: String(receivedCount),
-        helper: `${totalItems} total matched records`,
+        helper: t(":count total matched records").replace(":count", String(totalItems)),
       },
     ]
-  }, [orders, totalItems])
+  }, [orders, t, totalItems])
 
   return (
     <div className="h-full space-y-4">
@@ -173,8 +177,8 @@ export default function PurchaseOrdersPage() {
       <DynamicTable
         data={orders}
         columns={columns}
-        tableTitle="Purchase Orders"
-        title={canCreate ? "Add Purchase" : undefined}
+        tableTitle={t("Procurements List")}
+        title={canCreate ? t("Add a new procurement") : undefined}
         showSearch
         showDateRange
         searchTerm={searchTerm}
@@ -195,15 +199,15 @@ export default function PurchaseOrdersPage() {
         showDelete={canDelete}
         deleteMutation={deletePurchaseOrder}
         triggerRefresh={triggerRefresh}
-        deleteModalTitle="Delete Purchase Order"
-        deleteModalDescription="Are you sure you want to delete this purchase order?"
+        deleteModalTitle={t("Delete Procurement")}
+        deleteModalDescription={t("Would you like to delete this ?")}
         rowActions={(_, record) => [
           ...(canReceive
             ? [
               {
                 key: "receive",
-                label: "Stock In",
-                labelText: "Stock In",
+                label: t("Stock In"),
+                labelText: t("Stock In"),
                 icon: <PackageCheckIcon className="size-4" />,
                 onClick: () =>
                   router.push(`/purchases/orders/${record.id}?action=receive`),
@@ -214,8 +218,8 @@ export default function PurchaseOrdersPage() {
             ? [
               {
                 key: "pay",
-                label: "Pay Supplier",
-                labelText: "Pay Supplier",
+                label: t("Pay Provider"),
+                labelText: t("Pay Provider"),
                 icon: <BanknoteIcon className="size-4" />,
                 onClick: () =>
                   router.push(`/purchases/orders/${record.id}?action=pay`),
@@ -224,8 +228,8 @@ export default function PurchaseOrdersPage() {
             : []),
           {
             key: "invoice",
-            label: "Invoice",
-            labelText: "Invoice",
+            label: t("Invoice"),
+            labelText: t("Invoice"),
             icon: <FileTextIcon className="size-4" />,
             onClick: () => router.push(`/purchases/orders/${record.id}/invoice`),
           },

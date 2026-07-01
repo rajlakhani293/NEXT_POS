@@ -7,7 +7,6 @@ import { settings } from "@/lib/api/settings"
 import { customers } from "@/lib/api/customers"
 import { PERMISSIONS } from "@/lib/permissions"
 
-// Source user columns
 const columns = [
   { key: "username", title: "Username" },
   { key: "account_amount", title: "Wallet" },
@@ -69,7 +68,6 @@ export function UserForm(props: any) {
       entityName="User"
       formWidth="w-[560px]"
       fields={[
-        // General tab fields matching the source form
         {
           name: "username",
           label: "Username",
@@ -184,9 +182,7 @@ export function UserForm(props: any) {
         credit_limit_amount: values.credit_limit_amount
           ? Number(values.credit_limit_amount)
           : undefined,
-        // Strip password_confirm before sending to backend
         password_confirm: undefined,
-        // Don't send empty password on edit
         password: values.password || undefined,
       })}
     />

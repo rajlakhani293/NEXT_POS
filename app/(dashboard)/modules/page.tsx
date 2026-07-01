@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import Cookies from "js-cookie"
 import { ArchiveIcon, RefreshCwIcon, SearchIcon, Trash2Icon, UploadIcon } from "lucide-react"
 
 import { PermissionGuard } from "@/components/permission-guard"
@@ -91,6 +92,39 @@ export default function ModulesPage() {
   const refreshModules = async () => {
     await loadModules(segment)
     showToast.success(t("Report Refreshed"))
+  }
+
+  const downloadModule = async (module: ModuleRecord) => {
+    const token = Cookies.get("token")
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/modules/download/${module.namespace}`,
+      {
+        headers: {
+          ...(token ? { authorization: `Bearer ${token}` } : {}),
+          "ngrok-skip-browser-warning": "true",
+        },
+      }
+    )
+
+    if (!response.ok) {
+      showToast.error(t("Unable to download the module."))
+      return
+    }
+
+    const blob = await response.blob()
+    const disposition = response.headers.get("content-disposition") || ""
+    const filenameMatch = disposition.match(/filename="?([^"]+)"?/)
+    const filename =
+      filenameMatch?.[1] ||
+      `${module.name.toLowerCase().replace(/\s+/g, "-")}-${module.version || "module"}.zip`
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement("a")
+    anchor.href = url
+    anchor.download = filename
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
   }
 
   const runOperation = async (operation: "enable" | "disable" | "delete", module: ModuleRecord) => {
@@ -220,7 +254,14 @@ export default function ModulesPage() {
                         </Button>
                       )}
                       <div className="flex gap-2">
-                        <Button type="button" variant="outline" size="icon" disabled={module.autoloaded} title={t("Download")}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          disabled={module.autoloaded}
+                          title={t("Download")}
+                          onClick={() => downloadModule(module)}
+                        >
                           <ArchiveIcon className="size-4" />
                         </Button>
                         <Button

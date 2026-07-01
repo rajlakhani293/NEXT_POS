@@ -4,6 +4,7 @@ import { useEffect } from "react"
 
 import DynamicForm from "@/components/DynamicForm"
 import { promotions } from "@/lib/api/promotions"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { showToast } from "@/lib/toast"
 
 type CouponFormProps = {
@@ -56,57 +57,58 @@ const csvToIds = (value: string) =>
 
 const idsToCsv = (value: any) => (Array.isArray(value) ? value.join(", ") : "")
 
-const couponFields = [
-  { name: "name", label: "Name", type: "text", placeholder: "Enter coupon name", required: true },
-  { name: "code", label: "Code", type: "text", placeholder: "Example: WELCOME10", required: true },
+const buildCouponFields = (t: (key: string) => string) => [
+  { name: "name", label: t("Name"), type: "text", placeholder: t("Enter coupon name"), required: true },
+  { name: "code", label: t("Code"), type: "text", placeholder: t("Example: WELCOME10"), required: true },
   {
     name: "type",
-    label: "Discount Type",
+    label: t("Discount Type"),
     type: "radio",
     required: true,
     options: [
-      { label: "Flat", value: "flat_discount" },
-      { label: "Percentage", value: "percentage_discount" },
+      { label: t("Flat"), value: "flat_discount" },
+      { label: t("Percentage"), value: "percentage_discount" },
     ],
   },
-  { name: "discount_value", label: "Discount Value", type: "number", placeholder: "Enter discount", required: true },
-  { name: "minimum_cart_value", label: "Minimum Cart", type: "number", placeholder: "Minimum cart value", prefix: "₹" },
-  { name: "maximum_cart_value", label: "Maximum Cart", type: "number", placeholder: "0 means no maximum", prefix: "₹" },
-  { name: "valid_until", label: "Valid Until", type: "date", placeholder: "Select valid until date" },
-  { name: "valid_hours_start", label: "Valid Hours Start", type: "text", placeholder: "HH:MM e.g. 09:00" },
-  { name: "valid_hours_end", label: "Valid Hours End", type: "text", placeholder: "HH:MM e.g. 21:00" },
-  { name: "limit_usage", label: "Limit Usage", type: "number", placeholder: "0 means unlimited" },
+  { name: "discount_value", label: t("Discount Value"), type: "number", placeholder: t("Enter discount"), required: true },
+  { name: "minimum_cart_value", label: t("Minimum Cart"), type: "number", placeholder: t("Minimum cart value"), prefix: "₹" },
+  { name: "maximum_cart_value", label: t("Maximum Cart"), type: "number", placeholder: t("0 means no maximum"), prefix: "₹" },
+  { name: "valid_until", label: t("Valid Until"), type: "date", placeholder: t("Select valid until date") },
+  { name: "valid_hours_start", label: t("Valid Hours Start"), type: "text", placeholder: t("HH:MM e.g. 09:00") },
+  { name: "valid_hours_end", label: t("Valid Hours End"), type: "text", placeholder: t("HH:MM e.g. 21:00") },
+  { name: "limit_usage", label: t("Limit Usage"), type: "number", placeholder: t("0 means unlimited") },
   {
     name: "customer_group_ids",
-    label: "Customer Group IDs",
+    label: t("Customer Group IDs"),
     type: "text",
-    placeholder: "Example: 1,2",
-    note: "Coupon applies to these customer groups. Keep empty for all.",
+    placeholder: t("Example: 1,2"),
+    note: t("Coupon applies to these customer groups. Keep empty for all."),
   },
   {
     name: "customer_ids",
-    label: "Particular Customer IDs",
+    label: t("Particular Customer IDs"),
     type: "text",
-    placeholder: "Example: 4,8",
-    note: "Coupon applies to these particular customers. Keep empty for all.",
+    placeholder: t("Example: 4,8"),
+    note: t("Coupon applies to these particular customers. Keep empty for all."),
   },
   {
     name: "category_ids",
-    label: "Category IDs",
+    label: t("Category IDs"),
     type: "text",
-    placeholder: "Example: 1,3",
-    note: "Keep empty if coupon applies to all categories.",
+    placeholder: t("Example: 1,3"),
+    note: t("Keep empty if coupon applies to all categories."),
   },
   {
     name: "product_ids",
-    label: "Product IDs",
+    label: t("Product IDs"),
     type: "text",
-    placeholder: "Example: 10,12",
-    note: "Keep empty if coupon applies to all products.",
+    placeholder: t("Example: 10,12"),
+    note: t("Keep empty if coupon applies to all products."),
   },
 ]
 
 export function CouponForm({ isOpen, onClose, onSuccess, editId }: CouponFormProps) {
+  const { t } = useTranslation()
   const [createCoupon] = (promotions as any).useCreateCouponMutation()
   const [editCoupon] = (promotions as any).useEditCouponMutation()
   const [getCouponById, { data, isLoading }] = (promotions as any).useGetCouponByIdMutation()
@@ -118,6 +120,7 @@ export function CouponForm({ isOpen, onClose, onSuccess, editId }: CouponFormPro
   }, [editId, getCouponById, isOpen])
 
   const record = data?.data
+  const couponFields = buildCouponFields(t)
   const formValues: CouponFormValues =
     editId && record
       ? {
@@ -158,10 +161,10 @@ export function CouponForm({ isOpen, onClose, onSuccess, editId }: CouponFormPro
 
     if (editId) {
       const response = await editCoupon({ id: editId, payLoad }).unwrap()
-      showToast.success(response?.message || "Coupon updated successfully.")
+      showToast.success(response?.message || t("Coupon updated successfully."))
     } else {
       const response = await createCoupon(payLoad).unwrap()
-      showToast.success(response?.message || "Coupon created successfully.")
+      showToast.success(response?.message || t("Coupon created successfully."))
     }
     onSuccess()
     onClose()
@@ -175,8 +178,8 @@ export function CouponForm({ isOpen, onClose, onSuccess, editId }: CouponFormPro
       onSubmit={handleSubmit}
       onClose={onClose}
       onSuccess={onSuccess}
-      title={editId ? "Edit Coupon" : "Create Coupon"}
-      note="Use customer group IDs or particular customer IDs to target coupons."
+      title={editId ? t("Edit Coupon") : t("Create Coupon")}
+      note={t("Use customer group IDs or particular customer IDs to target coupons.")}
       isOpen={isOpen}
       formWidth="w-[620px]"
       isLoading={Boolean(editId) && isLoading}

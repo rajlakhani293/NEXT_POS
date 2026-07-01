@@ -34,7 +34,6 @@ export default function DashboardLayout({
     typeof navigator !== "undefined" ? !navigator.onLine : false
   )
   const noPaddingRules = [
-    "/pos",
     "/settings/company",
     "/sales/create",
     /^\/inventory\/products\/[^/]+$/,
@@ -43,7 +42,7 @@ export default function DashboardLayout({
     /^\/registers\/[^/]$/,
     /^\/reports\/[^/]+$/,
     /^\/settings\/roles\/(create|\d+)$/,
-    "/settings/accounting/transactions/create",
+    "/accounting/transactions/create",
   ]
   const isNoPaddingPage = noPaddingRules.some((rule) =>
     typeof rule === "string" ? pathname === rule : rule.test(pathname)

@@ -5,20 +5,22 @@ import { useRouter } from "next/navigation"
 import DynamicTable from "@/components/DynamicTable"
 import { useTableData } from "@/hooks/useTableData"
 import { purchases } from "@/lib/api/purchases"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
-const columns = [
-  { key: "purchase_order__code", title: "Purchase No" },
-  { key: "product__name", title: "Product" },
-  { key: "ordered_quantity", title: "Ordered Qty" },
-  { key: "received_quantity", title: "Received Qty" },
-  { key: "cost_price", title: "Cost Price" },
-  { key: "tax_amount", title: "Tax" },
-  { key: "total", title: "Total" },
-  { key: "created_at", title: "Created" },
+const buildColumns = (t: (key: string) => string) => [
+  { key: "purchase_order__code", title: t("Procurement") },
+  { key: "product__name", title: t("Product") },
+  { key: "ordered_quantity", title: t("Quantity") },
+  { key: "received_quantity", title: t("Received") },
+  { key: "cost_price", title: t("Purchase Price") },
+  { key: "tax_amount", title: t("Tax") },
+  { key: "total", title: t("Total") },
+  { key: "created_at", title: t("Created At") },
 ]
 
 export default function ProcurementProductsPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const table = useTableData({
     getMaster: (purchases as any).useGetProcurementProductsDataMutation,
     itemsPerPage: 10,
@@ -28,8 +30,8 @@ export default function ProcurementProductsPage() {
     <div className="h-full space-y-4">
       <DynamicTable
         data={table.orders}
-        columns={columns}
-        tableTitle="Procurement Products"
+        columns={buildColumns(t)}
+        tableTitle={t("Procurement Products List")}
         showSearch
         showDateRange
         searchTerm={table.searchTerm}

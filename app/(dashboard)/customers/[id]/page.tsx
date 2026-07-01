@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { customers } from "@/lib/api/customers"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
@@ -117,6 +118,7 @@ export default function CustomerFormPage() {
   const router = useRouter()
   const params = useParams()
   const searchParams = useSearchParams()
+  const { t } = useTranslation()
   const id = params.id as string
   const isEdit = id !== "create"
 
@@ -328,13 +330,13 @@ export default function CustomerFormPage() {
 
   const validate = () => {
     const nextErrors: Record<string, string> = {}
-    if (!values.first_name.trim()) nextErrors.first_name = "First name is required"
-    if (!values.group_id) nextErrors.group_id = "Group is required"
+    if (!values.first_name.trim()) nextErrors.first_name = t("First name is required")
+    if (!values.group_id) nextErrors.group_id = t("Group is required")
     if (values.phone && !/^[6-9]\d{9}$/.test(values.phone)) {
-      nextErrors.phone = "Enter valid Indian phone number"
+      nextErrors.phone = t("Enter valid Indian phone number")
     }
     if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-      nextErrors.email = "Enter valid email"
+      nextErrors.email = t("Enter valid email")
     }
 
     setErrors(nextErrors)
@@ -357,10 +359,10 @@ export default function CustomerFormPage() {
     try {
       if (isEdit) {
         const response = await editCustomer({ id, payLoad }).unwrap()
-        showToast.success(response?.message || "Customer updated successfully.")
+        showToast.success(response?.message || t("Customer updated successfully."))
       } else {
         const response = await createCustomer(payLoad).unwrap()
-        showToast.success(response?.message || "Customer created successfully.")
+        showToast.success(response?.message || t("Customer created successfully."))
       }
       goBack()
     } finally {
@@ -384,7 +386,7 @@ export default function CustomerFormPage() {
             </Button>
             <div>
               <h1 className="text-xl font-bold text-gray-900">
-                {isEdit ? "Edit Customer" : "Create Customer"}
+                {isEdit ? t("Edit Customer") : t("Create Customer")}
               </h1>
             </div>
           </div>
@@ -400,7 +402,7 @@ export default function CustomerFormPage() {
                     : "border-transparent text-gray-500 hover:text-gray-700"
                 )}
               >
-                Details
+                {t("Details")}
               </button>
               <button
                 type="button"
@@ -412,7 +414,7 @@ export default function CustomerFormPage() {
                     : "border-transparent text-gray-500 hover:text-gray-700"
                 )}
               >
-                Order History
+                {t("Order History")}
               </button>
             </div>
           ) : null}
@@ -425,7 +427,7 @@ export default function CustomerFormPage() {
           <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/70 backdrop-blur-[1px]">
             <div className="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm">
               <Spinner className="h-5 w-5" />
-              Loading customer data...
+              {t("Loading customer data...")}
             </div>
           </div>
         ) : null}
@@ -435,11 +437,11 @@ export default function CustomerFormPage() {
             <DynamicTable
               data={ordersRows}
               columns={[
-                { key: "code", title: "Order Code" },
-                { key: "order_type", title: "Type" },
+                { key: "code", title: t("Order Code") },
+                { key: "order_type", title: t("Type") },
                 {
                   key: "payment_status",
-                  title: "Payment Status",
+                  title: t("Payment Status"),
                   render: (value: string) => (
                     <span
                       className={cn(
@@ -451,14 +453,14 @@ export default function CustomerFormPage() {
                     </span>
                   ),
                 },
-                { key: "delivery_status", title: "Delivery Status" },
-                { key: "subtotal", title: "Subtotal", render: (value: any) => formatMoney(value) },
-                { key: "tax_amount", title: "Tax", render: (value: any) => formatMoney(value) },
-                { key: "shipping", title: "Shipping", render: (value: any) => formatMoney(value) },
-                { key: "total", title: "Total", render: (value: any) => formatMoney(value) },
-                { key: "created_at", title: "Date", render: (value: any) => new Date(value).toLocaleDateString() },
+                { key: "delivery_status", title: t("Delivery Status") },
+                { key: "subtotal", title: t("Subtotal"), render: (value: any) => formatMoney(value) },
+                { key: "tax_amount", title: t("Tax"), render: (value: any) => formatMoney(value) },
+                { key: "shipping", title: t("Shipping"), render: (value: any) => formatMoney(value) },
+                { key: "total", title: t("Total"), render: (value: any) => formatMoney(value) },
+                { key: "created_at", title: t("Date"), render: (value: any) => new Date(value).toLocaleDateString() },
               ]}
-              tableTitle="Orders History"
+              tableTitle={t("Orders History")}
               showSearch
               searchTerm={ordersSearch}
               onFilterChange={handleOrdersFilterChange}
@@ -471,8 +473,8 @@ export default function CustomerFormPage() {
               rowActions={(_, record) => [
                 {
                   key: "receipt",
-                  label: "Receipt",
-                  labelText: "Receipt",
+                  label: t("Receipt"),
+                  labelText: t("Receipt"),
                   icon: <ReceiptText className="size-4" />,
                   onClick: () => router.push(`/sales/${record.id}/receipt`),
                 },
@@ -487,29 +489,29 @@ export default function CustomerFormPage() {
               <section className="rounded-lg border border-gray-200 bg-white p-4">
                 <div className="mb-4 flex items-center gap-3">
                   <h2 className="text-base font-semibold text-gray-900">
-                    Customer Details
+                    {t("Customer Details")}
                   </h2>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <UniFieldInput
-                    label="First Name"
+                    label={t("First Name")}
                     required
-                    placeholder="Enter first name"
+                    placeholder={t("Enter first name")}
                     value={values.first_name}
                     error={errors.first_name}
                     onChange={(event) => updateField("first_name", event.target.value)}
                   />
                   <UniFieldInput
-                    label="Last Name"
-                    placeholder="Enter last name"
+                    label={t("Last Name")}
+                    placeholder={t("Enter last name")}
                     value={values.last_name}
                     error={errors.last_name}
                     onChange={(event) => updateField("last_name", event.target.value)}
                   />
                   <UniFieldInput
-                    label="Phone Number"
-                    placeholder="Enter 10 digit phone number"
+                    label={t("Phone Number")}
+                    placeholder={t("Enter 10 digit phone number")}
                     prefix="+91"
                     prefixPadding="pl-12"
                     maxLength={10}
@@ -521,9 +523,9 @@ export default function CustomerFormPage() {
                     }
                   />
                   <UniFieldInput
-                    label="Email"
+                    label={t("Email")}
                     type="email"
-                    placeholder="Enter customer email"
+                    placeholder={t("Enter customer email")}
                     value={values.email}
                     error={errors.email}
                     onChange={(event) =>
@@ -532,14 +534,14 @@ export default function CustomerFormPage() {
                   />
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-gray-700">
-                      Group <span className="text-red-500">*</span>
+                      {t("Group")} <span className="text-red-500">*</span>
                     </label>
                     <Select
                       value={values.group_id}
                       onValueChange={(val) => updateField("group_id", val)}
                     >
                       <SelectTrigger className="h-10 w-full border-2 bg-white">
-                        <SelectValue placeholder="Select Group" />
+                        <SelectValue placeholder={t("Select Group")} />
                       </SelectTrigger>
                       <SelectContent>
                         {groups.map((g) => (
@@ -555,41 +557,41 @@ export default function CustomerFormPage() {
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-gray-700">
-                      Gender
+                      {t("Gender")}
                     </label>
                     <Select
                       value={values.gender || "not_defined"}
                       onValueChange={(val) => updateField("gender", val === "not_defined" ? "" : val)}
                     >
                       <SelectTrigger className="h-10 w-full border-2 bg-white">
-                        <SelectValue placeholder="Not Defined" />
+                        <SelectValue placeholder={t("Not Defined")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="not_defined">Not Defined</SelectItem>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="not_defined">{t("Not Defined")}</SelectItem>
+                        <SelectItem value="male">{t("Male")}</SelectItem>
+                        <SelectItem value="female">{t("Female")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <UniFieldInput
-                    label="Birth Date"
+                    label={t("Birth Date")}
                     type="date"
                     value={values.birth_date ? values.birth_date.split(" ")[0] : ""}
                     onChange={(event) => updateField("birth_date", event.target.value)}
                   />
                   <UniFieldInput
-                    label="PO Box"
-                    placeholder="Enter PO Box"
+                    label={t("PO Box")}
+                    placeholder={t("Enter PO Box")}
                     value={values.pobox}
                     onChange={(event) => updateField("pobox", event.target.value)}
                   />
                   <UniFieldInput
-                    label="Credit Limit"
+                    label={t("Credit Limit")}
                     type="number"
                     min="0"
                     step="0.01"
                     prefix="₹"
-                    placeholder="Enter credit limit"
+                    placeholder={t("Enter credit limit")}
                     value={values.credit_limit_amount}
                     onChange={(event) =>
                       updateField("credit_limit_amount", event.target.value)
@@ -630,7 +632,7 @@ export default function CustomerFormPage() {
                 onClick={goBack}
                 disabled={isSubmitting}
               >
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="submit"
@@ -640,12 +642,12 @@ export default function CustomerFormPage() {
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
                      <Spinner />
-                     Saving...
+                     {t("Saving...")}
                   </span>
                 ) : isEdit ? (
-                  "Update Customer"
+                  t("Update Customer")
                 ) : (
-                  "Save Customer"
+                  t("Save Customer")
                 )}
               </Button>
             </div>

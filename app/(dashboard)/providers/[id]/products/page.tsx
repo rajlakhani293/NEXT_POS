@@ -7,24 +7,27 @@ import { ArrowLeft } from "lucide-react"
 import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
 import { purchases } from "@/lib/api/purchases"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
-const columns = [
-  { key: "name", title: "Name" },
-  { key: "product_name", title: "Product" },
-  { key: "procurement_name", title: "Procurement" },
-  { key: "purchase_price", title: "Purchase Price", render: (value: any) => formatMoney(value) },
-  { key: "quantity", title: "Quantity" },
-  { key: "available_quantity", title: "Available" },
-  { key: "unit_name", title: "Unit" },
-  { key: "total", title: "Total", render: (value: any) => formatMoney(value) },
-  { key: "created_at", title: "Created At", render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+const buildColumns = (t: (key: string) => string) => [
+  { key: "name", title: t("Name") },
+  { key: "product_name", title: t("Product") },
+  { key: "procurement_name", title: t("Procurement") },
+  { key: "purchase_price", title: t("Purchase Price"), render: (value: any) => formatMoney(value) },
+  { key: "quantity", title: t("Quantity") },
+  { key: "available_quantity", title: t("Available") },
+  { key: "unit_name", title: t("Unit") },
+  { key: "total", title: t("Total"), render: (value: any) => formatMoney(value) },
+  { key: "created_at", title: t("Created At"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 
 export default function ProviderProductsPage() {
   const params = useParams()
   const router = useRouter()
+  const { t } = useTranslation()
+  const columns = buildColumns(t)
   const id = params.id as string
   const lastRequestRef = useRef("")
   const [rows, setRows] = useState<any[]>([])
@@ -60,12 +63,12 @@ export default function ProviderProductsPage() {
         <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={() => router.push("/providers")}>
           <ArrowLeft className="size-4" />
         </Button>
-        <h1 className="text-xl font-bold text-gray-900">Provider Products</h1>
+        <h1 className="text-xl font-bold text-gray-900">{t("Provider Products")}</h1>
       </div>
       <DynamicTable
         data={rows}
         columns={columns}
-        tableTitle="Provider Products"
+        tableTitle={t("Provider Products")}
         showSearch
         searchTerm={searchTerm}
         onFilterChange={(action, payload) => {

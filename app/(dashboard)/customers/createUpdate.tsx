@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 
 import DynamicForm from "@/components/DynamicForm"
 import { customers } from "@/lib/api/customers"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { showToast } from "@/lib/toast"
 
 type CustomerFormProps = {
@@ -77,32 +78,35 @@ const initialValues: CustomerFormValues = {
   shipping_company_name: "",
 }
 
-const buildCustomerFields = (groups: { id: number | string; name: string }[]) => [
+const buildCustomerFields = (
+  groups: { id: number | string; name: string }[],
+  t: (key: string) => string
+) => [
   {
     name: "first_name",
-    label: "Customer Name",
+    label: t("Customer Name"),
     type: "text",
-    placeholder: "Provide a unique name for the customer.",
+    placeholder: t("Provide a unique name for the customer."),
     required: true,
   },
   {
     name: "last_name",
-    label: "Last Name",
+    label: t("Last Name"),
     type: "text",
-    placeholder: "Provide the customer last name",
+    placeholder: t("Provide the customer last name"),
   },
   {
     name: "credit_limit_amount",
-    label: "Credit Limit",
+    label: t("Credit Limit"),
     type: "number",
-    placeholder: "Set what should be the limit of the purchase on credit.",
+    placeholder: t("Set what should be the limit of the purchase on credit."),
     prefix: "₹",
   },
   {
     name: "group_id",
-    label: "Group",
+    label: t("Group"),
     type: "select",
-    placeholder: "Assign the customer to a group",
+    placeholder: t("Assign the customer to a group"),
     required: true,
     options: groups.map((group) => ({
       label: group.name,
@@ -111,15 +115,15 @@ const buildCustomerFields = (groups: { id: number | string; name: string }[]) =>
   },
   {
     name: "birth_date",
-    label: "Birth Date",
+    label: t("Birth Date"),
     type: "date",
-    placeholder: "Displays the customer birth date",
+    placeholder: t("Displays the customer birth date"),
   },
   {
     name: "phone",
-    label: "Phone Number",
+    label: t("Phone Number"),
     type: "text",
-    placeholder: "Enter 10 digit phone number",
+    placeholder: t("Enter 10 digit phone number"),
     prefix: "+91",
     prefixPadding: "pl-12",
     maxLength: 10,
@@ -127,137 +131,137 @@ const buildCustomerFields = (groups: { id: number | string; name: string }[]) =>
     sanitize: (value: string) => value.replace(/\D/g, "").slice(0, 10),
     validate: (value: string) => {
       if (!value) return ""
-      if (value.length > 0 && value.length < 6) return "The phone number provided is too short."
+      if (value.length > 0 && value.length < 6) return t("The phone number provided is too short.")
       return ""
     },
   },
   {
     name: "email",
-    label: "Email",
+    label: t("Email"),
     type: "email",
-    placeholder: "Enter customer email",
+    placeholder: t("Enter customer email"),
     validate: (value: string) => {
       if (!value) return ""
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Enter valid email"
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return t("Enter valid email")
       return ""
     },
   },
   {
     name: "pobox",
-    label: "PO Box",
+    label: t("PO Box"),
     type: "text",
-    placeholder: "Provide the customer PO.Box",
+    placeholder: t("Provide the customer PO.Box"),
   },
   {
     name: "gender",
-    label: "Gender",
+    label: t("Gender"),
     type: "select",
-    placeholder: "Provide the customer gender",
+    placeholder: t("Provide the customer gender"),
     allowClear: true,
     options: [
-      { label: "Not Defined", value: "not_defined" },
-      { label: "Male", value: "male" },
-      { label: "Female", value: "female" },
+      { label: t("Not Defined"), value: "not_defined" },
+      { label: t("Male"), value: "male" },
+      { label: t("Female"), value: "female" },
     ],
   },
   {
     name: "billing_first_name",
-    label: "Billing First Name",
+    label: t("Billing First Name"),
     type: "text",
   },
   {
     name: "billing_last_name",
-    label: "Billing Last Name",
+    label: t("Billing Last Name"),
     type: "text",
   },
   {
     name: "billing_phone",
-    label: "Billing Phone",
+    label: t("Billing Phone"),
     type: "text",
   },
   {
     name: "billing_email",
-    label: "Billing Email",
+    label: t("Billing Email"),
     type: "email",
   },
   {
     name: "billing_address_1",
-    label: "Billing Address 1",
+    label: t("Billing Address 1"),
     type: "text",
   },
   {
     name: "billing_address_2",
-    label: "Billing Address 2",
+    label: t("Billing Address 2"),
     type: "text",
   },
   {
     name: "billing_country",
-    label: "Billing Country",
+    label: t("Billing Country"),
     type: "text",
   },
   {
     name: "billing_city",
-    label: "Billing City",
+    label: t("Billing City"),
     type: "text",
   },
   {
     name: "billing_pobox",
-    label: "Billing PO.Box",
+    label: t("Billing PO.Box"),
     type: "text",
   },
   {
     name: "billing_company_name",
-    label: "Billing Company",
+    label: t("Billing Company"),
     type: "text",
   },
   {
     name: "shipping_first_name",
-    label: "Shipping First Name",
+    label: t("Shipping First Name"),
     type: "text",
   },
   {
     name: "shipping_last_name",
-    label: "Shipping Last Name",
+    label: t("Shipping Last Name"),
     type: "text",
   },
   {
     name: "shipping_phone",
-    label: "Shipping Phone",
+    label: t("Shipping Phone"),
     type: "text",
   },
   {
     name: "shipping_email",
-    label: "Shipping Email",
+    label: t("Shipping Email"),
     type: "email",
   },
   {
     name: "shipping_address_1",
-    label: "Shipping Address 1",
+    label: t("Shipping Address 1"),
     type: "text",
   },
   {
     name: "shipping_address_2",
-    label: "Shipping Address 2",
+    label: t("Shipping Address 2"),
     type: "text",
   },
   {
     name: "shipping_country",
-    label: "Shipping Country",
+    label: t("Shipping Country"),
     type: "text",
   },
   {
     name: "shipping_city",
-    label: "Shipping City",
+    label: t("Shipping City"),
     type: "text",
   },
   {
     name: "shipping_pobox",
-    label: "Shipping PO.Box",
+    label: t("Shipping PO.Box"),
     type: "text",
   },
   {
     name: "shipping_company_name",
-    label: "Shipping Company",
+    label: t("Shipping Company"),
     type: "text",
   },
 ]
@@ -268,6 +272,7 @@ export function CustomerForm({
   onSuccess,
   editId,
 }: CustomerFormProps) {
+  const { t } = useTranslation()
   const [createCustomer] = (customers as any).useCreateCustomerMutation()
   const [editCustomer] = (customers as any).useEditCustomerMutation()
   const [getCustomerById, { data, isLoading }] = (
@@ -298,7 +303,7 @@ export function CustomerForm({
   const record = data?.data
   const billingAddress = record?.addresses?.billing || record?.address || {}
   const shippingAddress = record?.addresses?.shipping || {}
-  const customerFields = buildCustomerFields(groups)
+  const customerFields = buildCustomerFields(groups, t)
   const formValues: CustomerFormValues =
     editId && record
       ? {
@@ -346,10 +351,10 @@ export function CustomerForm({
 
     if (editId) {
       const response = await editCustomer({ id: editId, payLoad }).unwrap()
-      showToast.success(response?.message || "Customer updated successfully.")
+      showToast.success(response?.message || t("Customer updated successfully."))
     } else {
       const response = await createCustomer(payLoad).unwrap()
-      showToast.success(response?.message || "Customer created successfully.")
+      showToast.success(response?.message || t("Customer created successfully."))
     }
 
     onSuccess()
@@ -364,7 +369,7 @@ export function CustomerForm({
       onSubmit={handleSubmit}
       onClose={onClose}
       onSuccess={onSuccess}
-      title={editId ? "Edit customer" : "Create a new customer"}
+      title={editId ? t("Edit customer") : t("Create a new customer")}
       isOpen={isOpen}
       formWidth="w-[640px]"
       isLoading={Boolean(editId) && isLoading}

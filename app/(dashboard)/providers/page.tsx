@@ -8,20 +8,21 @@ import DynamicTable from "@/components/DynamicTable"
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { PermissionGuard } from "@/components/permission-guard"
 import { purchases } from "@/lib/api/purchases"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 
 const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
-const columns = [
-  { key: "first_name", title: "First Name" },
-  { key: "email", title: "Email" },
-  { key: "phone", title: "Phone" },
-  { key: "amount_due", title: "Amount Due", render: (value: any) => formatMoney(value) },
-  { key: "amount_paid", title: "Amount Paid", render: (value: any) => formatMoney(value) },
-  { key: "user_username", title: "Author" },
-  { key: "created_at", title: "Created At", render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+const buildColumns = (t: (key: string) => string) => [
+  { key: "first_name", title: t("First Name") },
+  { key: "email", title: t("Email") },
+  { key: "phone", title: t("Phone") },
+  { key: "amount_due", title: t("Amount Due"), render: (value: any) => formatMoney(value) },
+  { key: "amount_paid", title: t("Amount Paid"), render: (value: any) => formatMoney(value) },
+  { key: "user_username", title: t("Author") },
+  { key: "created_at", title: t("Created At"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 
 const providerInitialValues = {
@@ -35,52 +36,53 @@ const providerInitialValues = {
 }
 
 function ProviderForm(props: any) {
+  const { t } = useTranslation()
   return (
     <CatalogMasterForm
       {...props}
-      entityName="provider"
+      entityName={t("provider")}
       fields={[
         {
           name: "first_name",
-          label: "First Name",
-          placeholder: "Provide a name to the resource.",
+          label: t("First Name"),
+          placeholder: t("Provide a name to the resource."),
           type: "text",
           required: true,
         },
         {
           name: "email",
-          label: "Email",
-          placeholder: "Provide the provider email. Might be used to send automated email.",
+          label: t("Email"),
+          placeholder: t("Provide the provider email. Might be used to send automated email."),
           type: "email",
         },
         {
           name: "last_name",
-          label: "Last Name",
-          placeholder: "Provider last name if necessary.",
+          label: t("Last Name"),
+          placeholder: t("Provider last name if necessary."),
           type: "text",
         },
         {
           name: "phone",
-          label: "Phone",
-          placeholder: "Contact phone number for the provider. Might be used to send automated SMS notifications.",
+          label: t("Phone"),
+          placeholder: t("Contact phone number for the provider. Might be used to send automated SMS notifications."),
           type: "text",
         },
         {
           name: "address_1",
-          label: "Address 1",
-          placeholder: "First address of the provider.",
+          label: t("Address 1"),
+          placeholder: t("First address of the provider."),
           type: "text",
         },
         {
           name: "address_2",
-          label: "Address 2",
-          placeholder: "Second address of the provider.",
+          label: t("Address 2"),
+          placeholder: t("Second address of the provider."),
           type: "text",
         },
         {
           name: "description",
-          label: "Description",
-          placeholder: "Further details about the provider",
+          label: t("Description"),
+          placeholder: t("Further details about the provider"),
           type: "textarea",
         },
       ]}
@@ -96,6 +98,8 @@ function ProviderForm(props: any) {
 export default function ProvidersPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t } = useTranslation()
+  const columns = buildColumns(t)
   const [formState, setFormState] = useState<{
     isOpen: boolean
     editId?: number | string | null
@@ -139,8 +143,8 @@ export default function ProvidersPage() {
         <DynamicTable
           data={orders}
           columns={columns}
-          tableTitle="Providers List"
-          title={canCreate ? "Add a new provider" : undefined}
+          tableTitle={t("Providers List")}
+          title={canCreate ? t("Add a new provider") : undefined}
           showSearch
           searchTerm={searchTerm}
           currentPage={currentPage}
@@ -164,22 +168,22 @@ export default function ProvidersPage() {
           showStatus={canUpdate}
           statusChangeMutation={({ ids, status }: any) => updateProviderStatus({ payLoad: { ids, status } })}
           triggerRefresh={triggerRefresh}
-          deleteModalTitle="Delete Provider"
-          deleteModalDescription="Would you like to delete this ?"
+          deleteModalTitle={t("Delete Provider")}
+          deleteModalDescription={t("Would you like to delete this ?")}
           selectedDateRange={selectedDateRange}
           dateFilters={dateFilters}
           rowActions={(_, record) => [
             {
               key: "procurements",
-              label: "See Procurements",
-              labelText: "See Procurements",
+              label: t("See Procurements"),
+              labelText: t("See Procurements"),
               icon: <Boxes className="size-4" />,
               onClick: () => router.push(`/providers/${record.id}/procurements`),
             },
             {
               key: "products",
-              label: "See Products",
-              labelText: "See Products",
+              label: t("See Products"),
+              labelText: t("See Products"),
               icon: <PackageSearch className="size-4" />,
               onClick: () => router.push(`/providers/${record.id}/products`),
             },
