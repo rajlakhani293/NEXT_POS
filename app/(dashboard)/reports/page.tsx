@@ -3,24 +3,26 @@
 import { useRouter } from "next/navigation"
 import { ArrowRight } from "lucide-react"
 
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { reportCards, reportGroups } from "./report-config"
 
 export default function ReportsPage() {
   const router = useRouter()
+  const { t } = useTranslation()
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold">Reports</h1>
+        <h1 className="text-xl font-bold">{t("Reports")}</h1>
         <p className="text-sm font-medium text-muted-foreground">
-          Choose a report to view sales, stock, due and ledger data.
+          {t("Choose a report to view sales, stock, due and ledger data.")}
         </p>
       </div>
 
       {reportGroups.map((group) => (
         <section key={group} className="space-y-3">
           <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
-            {group}
+            {t(group)}
           </h2>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {reportCards
@@ -35,10 +37,10 @@ export default function ReportsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="text-base font-bold text-gray-950">
-                        {report.title}
+                        {t(report.title)}
                       </h3>
                       <p className="mt-1 text-sm font-medium leading-6 text-muted-foreground">
-                        {report.description}
+                        {t(report.description)}
                       </p>
                     </div>
                     <span className="rounded-full bg-gray-100 p-2 text-gray-500 transition group-hover:bg-black group-hover:text-white">

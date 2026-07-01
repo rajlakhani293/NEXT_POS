@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { useParams, usePathname, useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import {
   ArrowLeft,
   BadgeCheck,
@@ -225,12 +225,11 @@ function buildPermissionRows(permissions: PermissionItem[], moduleKeys: string[]
 
 export default function RoleFormPage() {
   const router = useRouter()
-  const pathname = usePathname()
   const { t } = useTranslation()
   const params = useParams()
   const id = params.id as string
   const isEdit = id !== "create"
-  const rolesListPath = pathname.startsWith("/users/roles") ? "/users/roles" : "/settings/roles"
+  const rolesListPath = "/settings/users/roles"
 
   const [values, setValues] = useState<RoleFormValues>(initialValues)
   const [errors, setErrors] = useState<Record<string, string>>({})

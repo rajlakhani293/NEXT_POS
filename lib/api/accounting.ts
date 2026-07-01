@@ -33,6 +33,10 @@ const endpointsConfig = {
   createManualTransaction: { query: createMutation("transactions/") },
   getTransactionsData: { query: postMutation("transactions/get-transactions") },
   getTransactionHistoryData: { query: postMutation("history/get-transactions") },
+  triggerTransaction: {
+    query: ({ id }: { id: number | string }) =>
+      getMutation(`transactions/trigger/${id}`),
+  },
   bootstrapAccounting: { query: () => postMutation("bootstrap")({}) },
   getAccountingActions: {
     type: "query",

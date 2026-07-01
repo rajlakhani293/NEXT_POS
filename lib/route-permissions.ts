@@ -10,7 +10,6 @@ export type ResolvedRoutePermission = Omit<RoutePermission, "path">
 
 export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/dashboard", permission: PERMISSIONS.reports.view },
-  { path: "/pos", permission: PERMISSIONS.sales.create },
   { path: "/sales/create", permission: PERMISSIONS.sales.create },
   { path: "/sales", permission: PERMISSIONS.sales.view },
   { path: "/sales/history", permission: PERMISSIONS.sales.view },
@@ -21,7 +20,6 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/customers/coupons", permission: PERMISSIONS.promotions.view },
   { path: "/customers/coupons-generated", permission: PERMISSIONS.promotions.view },
   { path: "/customers/rewards", permission: PERMISSIONS.rewards.view },
-  { path: "/customers/coupons", permission: PERMISSIONS.promotions.view },
   { path: "/customers", permission: PERMISSIONS.customers.view },
   { path: "/providers", permission: PERMISSIONS.purchases.view },
   { path: "/purchases/orders/create", permission: PERMISSIONS.purchases.create },
@@ -30,7 +28,6 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/purchases/suppliers", permission: PERMISSIONS.purchases.view },
   { path: "/purchases", permission: PERMISSIONS.purchases.view },
   { path: "/accounting/transactions/create", permission: PERMISSIONS.settings.update },
-  { path: "/accounting/transactions/edit", permission: PERMISSIONS.settings.update },
   { path: "/accounting/transactions/history", permission: PERMISSIONS.reports.view },
   { path: "/accounting/transactions", permission: PERMISSIONS.reports.view },
   { path: "/accounting/accounts", permission: PERMISSIONS.reports.view },
@@ -50,35 +47,32 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/inventory/scale-range", permission: PERMISSIONS.inventory.adjust },
   { path: "/modules/upload", permission: PERMISSIONS.special.manageModules },
   { path: "/modules", permission: PERMISSIONS.special.manageModules },
-  { path: "/users/profile", permission: PERMISSIONS.special.manageProfile },
-  { path: "/users/roles/permissions-manager", permission: PERMISSIONS.roles.update },
-  { path: "/users/roles/create", permission: PERMISSIONS.roles.create },
-  { path: "/users/roles/edit", permission: PERMISSIONS.roles.update },
-  { path: "/users/roles", permission: PERMISSIONS.roles.view },
-  { path: "/users", permission: PERMISSIONS.users.view },
+  { path: "/settings/users/profile", permission: PERMISSIONS.special.manageProfile },
+  { path: "/settings/users/roles/permissions-manager", permission: PERMISSIONS.roles.update },
+  { path: "/settings/users/roles/create", permission: PERMISSIONS.roles.create },
+  { path: "/settings/users/roles", permission: PERMISSIONS.roles.view },
+  { path: "/settings/users", permission: PERMISSIONS.users.view },
   { path: "/settings/company", permission: PERMISSIONS.settings.view },
   { path: "/settings/business", permission: PERMISSIONS.settings.view },
-  { path: "/settings/accounting/accounts", permission: PERMISSIONS.reports.view },
-  { path: "/settings/accounting/rules", permission: PERMISSIONS.reports.view },
-  { path: "/settings/accounting/transactions", permission: PERMISSIONS.reports.view },
-  { path: "/settings/accounting/history", permission: PERMISSIONS.reports.view },
-  { path: "/settings/accounting/configuration", permission: PERMISSIONS.reports.view },
+  { path: "/settings/general", permission: PERMISSIONS.settings.view },
+  { path: "/settings/pos", permission: PERMISSIONS.settings.view },
+  { path: "/settings/customers", permission: PERMISSIONS.settings.view },
+  { path: "/settings/orders", permission: PERMISSIONS.settings.view },
+  { path: "/settings/reports", permission: PERMISSIONS.settings.view },
+  { path: "/settings/invoices", permission: PERMISSIONS.settings.view },
+  { path: "/settings/about", permission: PERMISSIONS.settings.view },
+  { path: "/settings/accounting", permission: PERMISSIONS.settings.view },
   { path: "/settings/notifications", permission: PERMISSIONS.settings.view },
   { path: "/settings/media", permission: PERMISSIONS.settings.view },
   { path: "/settings/branches", permission: PERMISSIONS.branches.view },
-  { path: "/settings/users", permission: PERMISSIONS.users.view },
-  { path: "/settings/roles/create", permission: PERMISSIONS.roles.create },
-  { path: "/settings/roles", permission: PERMISSIONS.roles.view },
   { path: "/settings/tax-groups", permission: PERMISSIONS.products.view },
   { path: "/settings/taxes", permission: PERMISSIONS.products.view },
-  { path: "/settings/coupons", permission: PERMISSIONS.promotions.view },
-  { path: "/settings/rewards", permission: PERMISSIONS.rewards.view },
 ]
 
 export function resolveRoutePermission(
   pathname: string
 ): ResolvedRoutePermission | undefined {
-  if (pathname === "/pos" || pathname === "/sales/create") {
+  if (pathname === "/sales/create") {
     return { permission: PERMISSIONS.sales.create }
   }
 
@@ -87,18 +81,8 @@ export function resolveRoutePermission(
     return { permission: PERMISSIONS.products.update }
   }
 
-  const roleEditMatch = pathname.match(/^\/settings\/roles\/([^/]+)$/)
+  const roleEditMatch = pathname.match(/^\/settings\/users\/roles\/([^/]+)$/)
   if (roleEditMatch && roleEditMatch[1] !== "create") {
-    return { permission: PERMISSIONS.roles.update }
-  }
-
-  const sourceRoleEditMatch = pathname.match(/^\/users\/roles\/edit\/([^/]+)$/)
-  if (sourceRoleEditMatch) {
-    return { permission: PERMISSIONS.roles.update }
-  }
-
-  const sourceRoleCreateMatch = pathname.match(/^\/users\/roles\/([^/]+)$/)
-  if (sourceRoleCreateMatch && sourceRoleCreateMatch[1] !== "create") {
     return { permission: PERMISSIONS.roles.update }
   }
 

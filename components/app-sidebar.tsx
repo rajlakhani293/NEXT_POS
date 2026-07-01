@@ -26,12 +26,11 @@ import {
   ShieldCheckIcon,
   ShoppingCartIcon,
   SlidersHorizontalIcon,
-  SparklesIcon,
-  TicketPercentIcon,
   StoreIcon,
   UsersIcon,
   WalletCardsIcon,
   AlertTriangle,
+  PlugIcon,
   Server,
 } from "lucide-react"
 
@@ -70,7 +69,7 @@ const mainNavSections: DashboardNavSection[] = [
     items: [
       {
         title: "Open POS",
-        url: "/pos",
+        url: "/sales/create",
         permission: PERMISSIONS.sales.create,
       },
       {
@@ -97,11 +96,6 @@ const mainNavSections: DashboardNavSection[] = [
         permission: PERMISSIONS.products.view,
       },
       {
-        title: "Create Product",
-        url: "/inventory/products/create",
-        permission: PERMISSIONS.products.create,
-      },
-      {
         title: "Print Labels",
         url: "/inventory/labels",
         permission: PERMISSIONS.products.view,
@@ -112,29 +106,14 @@ const mainNavSections: DashboardNavSection[] = [
         permission: PERMISSIONS.products.view,
       },
       {
-        title: "Create Category",
-        url: "/inventory/categories?create=1",
-        permission: PERMISSIONS.products.create,
-      },
-      {
         title: "Units",
         url: "/inventory/units",
         permission: PERMISSIONS.products.view,
       },
       {
-        title: "Create Unit",
-        url: "/inventory/units?create=1",
-        permission: PERMISSIONS.products.create,
-      },
-      {
         title: "Unit Groups",
         url: "/inventory/unit-groups",
         permission: PERMISSIONS.products.view,
-      },
-      {
-        title: "Create Unit Groups",
-        url: "/inventory/unit-groups?create=1",
-        permission: PERMISSIONS.products.create,
       },
       {
         title: "Stock Adjustment",
@@ -152,6 +131,12 @@ const mainNavSections: DashboardNavSection[] = [
         permission: PERMISSIONS.products.view,
       },
     ],
+  },
+  {
+    title: "Modules",
+    url: "/modules",
+    icon: <PlugIcon />,
+    permission: PERMISSIONS.special.manageModules,
   },
   {
     title: "Customers",
@@ -173,19 +158,9 @@ const mainNavSections: DashboardNavSection[] = [
         permission: PERMISSIONS.customers.view,
       },
       {
-        title: "Create Customer",
-        url: "/customers?create=1",
-        permission: PERMISSIONS.customers.create,
-      },
-      {
         title: "Customers Groups",
         url: "/customers/groups",
         permission: PERMISSIONS.customers.view,
-      },
-      {
-        title: "Create Group",
-        url: "/customers/groups?create=1",
-        permission: PERMISSIONS.customers.create,
       },
       {
         title: "Reward Systems",
@@ -193,19 +168,9 @@ const mainNavSections: DashboardNavSection[] = [
         permission: PERMISSIONS.rewards.view,
       },
       {
-        title: "Create Reward",
-        url: "/customers/rewards-system?create=1",
-        permission: PERMISSIONS.rewards.create,
-      },
-      {
         title: "List Coupons",
         url: "/customers/coupons",
         permission: PERMISSIONS.promotions.view,
-      },
-      {
-        title: "Create Coupon",
-        url: "/customers/coupons?create=1",
-        permission: PERMISSIONS.promotions.create,
       },
     ],
   },
@@ -224,23 +189,28 @@ const mainNavSections: DashboardNavSection[] = [
         url: "/providers",
         permission: PERMISSIONS.purchases.view,
       },
-      {
-        title: "Create A Provider",
-        url: "/providers?create=1",
-        permission: PERMISSIONS.purchases.create,
-      },
     ],
   },
   {
-    title: "Purchases",
+    title: "Procurements",
     url: "/purchases",
     icon: <ShoppingCartIcon />,
-    permission: PERMISSIONS.purchases.view,
+    permission: [
+      PERMISSIONS.purchases.view,
+      PERMISSIONS.purchases.create,
+      PERMISSIONS.purchases.update,
+    ],
+    permissionMatch: "any",
     items: [
       {
-        title: "Purchase Orders",
+        title: "Procurements List",
         url: "/purchases",
         permission: PERMISSIONS.purchases.view,
+      },
+      {
+        title: "Products",
+        url: "/purchases/products",
+        permission: PERMISSIONS.purchases.update,
       },
     ],
   },
@@ -260,11 +230,6 @@ const mainNavSections: DashboardNavSection[] = [
         permission: PERMISSIONS.reports.view,
       },
       {
-        title: "Create Expense",
-        url: "/accounting/transactions/create",
-        permission: PERMISSIONS.settings.update,
-      },
-      {
         title: "Transaction History",
         url: "/accounting/transactions/history",
         permission: PERMISSIONS.reports.view,
@@ -278,11 +243,6 @@ const mainNavSections: DashboardNavSection[] = [
         title: "Accounts",
         url: "/accounting/accounts",
         permission: PERMISSIONS.reports.view,
-      },
-      {
-        title: "Create Account",
-        url: "/accounting/accounts?create=1",
-        permission: PERMISSIONS.settings.update,
       },
     ],
   },
@@ -300,7 +260,7 @@ const mainNavSections: DashboardNavSection[] = [
   },
   {
     title: "Settings",
-    url: "/settings/company",
+    url: "/settings/general",
     icon: <IoSettingsOutline />,
     permission: [
       PERMISSIONS.settings.view,
@@ -308,6 +268,10 @@ const mainNavSections: DashboardNavSection[] = [
       PERMISSIONS.payments.view,
       PERMISSIONS.promotions.view,
       PERMISSIONS.rewards.view,
+      PERMISSIONS.products.view,
+      PERMISSIONS.special.manageProfile,
+      PERMISSIONS.users.view,
+      PERMISSIONS.roles.view,
     ],
     permissionMatch: "any",
   },
@@ -315,81 +279,125 @@ const mainNavSections: DashboardNavSection[] = [
 
 const settingsNavSections: DashboardNavSection[] = [
   {
-    title: "Company",
-    url: "/settings/company",
+    title: "General",
+    url: "/settings/general",
     icon: <LandmarkIcon />,
     permission: PERMISSIONS.settings.view,
   },
   {
-    title: "Branches",
-    url: "/settings/branches",
-    icon: <StoreIcon />,
-    permission: PERMISSIONS.branches.view,
-  },
-  {
-    title: "Business Settings",
-    url: "/settings/business",
+    title: "POS",
+    url: "/settings/pos",
     icon: <SlidersHorizontalIcon />,
     permission: PERMISSIONS.settings.view,
   },
   {
-    title: "Payment Types",
-    url: "/settings/payment-types",
-    icon: <WalletCardsIcon />,
-    permission: PERMISSIONS.payments.view,
+    title: "Customers",
+    url: "/settings/customers",
+    icon: <UsersIcon />,
+    permission: PERMISSIONS.settings.view,
   },
   {
-    title: "Media",
-    url: "/settings/media",
-    icon: <ImageIcon />,
+    title: "Orders",
+    url: "/settings/orders",
+    icon: <ReceiptTextIcon />,
     permission: PERMISSIONS.settings.view,
+  },
+  {
+    title: "Accounting",
+    url: "/settings/accounting",
+    icon: <WalletCardsIcon />,
+    permission: PERMISSIONS.settings.view,
+  },
+  {
+    title: "Taxes",
+    url: "/settings/tax-groups",
+    icon: <HiReceiptTax />,
+    permission: [
+      PERMISSIONS.products.view,
+      PERMISSIONS.products.create,
+    ],
+    permissionMatch: "any",
+    items: [
+      {
+        title: "Taxes Groups",
+        url: "/settings/tax-groups",
+        permission: PERMISSIONS.products.view,
+      },
+      {
+        title: "Taxes",
+        url: "/settings/taxes",
+        permission: PERMISSIONS.products.view,
+      },
+    ],
   },
   {
     title: "Users",
     url: "/settings/users",
     icon: <UsersIcon />,
-    permission: PERMISSIONS.users.view,
+    permission: [
+      PERMISSIONS.special.manageProfile,
+      PERMISSIONS.users.view,
+      PERMISSIONS.users.create,
+    ],
+    permissionMatch: "any",
+    items: [
+      {
+        title: "My Profile",
+        url: "/settings/users/profile",
+        permission: PERMISSIONS.special.manageProfile,
+      },
+      {
+        title: "Users List",
+        url: "/settings/users",
+        permission: PERMISSIONS.users.view,
+      },
+    ],
   },
   {
     title: "Roles",
-    url: "/settings/roles",
+    url: "/settings/users/roles",
     icon: <ShieldCheckIcon />,
-    permission: PERMISSIONS.roles.view,
+    permission: [
+      PERMISSIONS.roles.view,
+      PERMISSIONS.roles.create,
+      PERMISSIONS.roles.update,
+    ],
+    permissionMatch: "any",
+    items: [
+      {
+        title: "Roles",
+        url: "/settings/users/roles",
+        permission: PERMISSIONS.roles.view,
+      },
+      {
+        title: "Permissions Manager",
+        url: "/settings/users/roles/permissions-manager",
+        permission: PERMISSIONS.roles.update,
+      },
+    ],
   },
   {
-    title: "Tax Groups",
-    url: "/settings/tax-groups",
-    icon: <HiReceiptTax />,
-    permission: PERMISSIONS.products.view,
-  },
-  {
-    title: "Taxes",
-    url: "/settings/taxes",
-    icon: <ReceiptTextIcon />,
-    permission: PERMISSIONS.products.view,
-  },
-  {
-    title: "Coupons",
-    url: "/settings/coupons",
-    icon: <TicketPercentIcon />,
-    permission: PERMISSIONS.promotions.view,
-  },
-  {
-    title: "Rewards",
-    url: "/settings/rewards",
-    icon: <SparklesIcon />,
-    permission: PERMISSIONS.rewards.view,
-  },
-  {
-    title: "Background Jobs",
-    url: "/settings/workers",
-    icon: <Server />,
+    title: "Reports",
+    url: "/settings/reports",
+    icon: <FileBarChart2Icon />,
     permission: PERMISSIONS.settings.view,
   },
   {
-    title: "Reset Database",
+    title: "Invoices",
+    url: "/settings/invoices",
+    icon: <ImageIcon />,
+    permission: PERMISSIONS.settings.view,
+  },
+  {
+    title: "Reset",
     url: "/settings/reset",
     icon: <AlertTriangle />,
+    permission: PERMISSIONS.settings.view,
+  },
+  {
+    title: "About",
+    url: "/settings/about",
+    icon: <Server />,
     permission: PERMISSIONS.settings.view,
   },
 ]
@@ -466,10 +474,6 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
 
   const matchesUrl = (url: string) => {
     const itemPath = url.split("?")[0]
-
-    if (itemPath === "/pos") {
-      return pathname === "/pos" || pathname === "/sales/create"
-    }
 
     if (itemPath === "/sales") {
       return pathname === "/sales" || (pathname.startsWith("/sales/") && pathname !== "/sales/create")
