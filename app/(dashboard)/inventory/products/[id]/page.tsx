@@ -31,6 +31,8 @@ import { Switch } from "@/components/ui/switch"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { catalog } from "@/lib/api/catalog"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
@@ -292,8 +294,11 @@ function buildProductFormData(values: ProductFormValues, isEdit: boolean, unitsL
 export default function ProductFormPage() {
   const router = useRouter()
   const params = useParams()
+  const { t } = useTranslation()
+  const posOptions = usePosOptions()
   const id = params.id as string
   const isEdit = id !== "create"
+  const currencySymbol = posOptions.currency_symbol
 
   const [formData, setFormData] = useState<ProductFormValues>(initialValues)
   const [activeTab, setActiveTab] = useState<"identification" | "units" | "expiry" | "taxes" | "images">("identification")
@@ -321,13 +326,13 @@ export default function ProductFormPage() {
         productId: id,
         payLoad: formDataPayload,
       }).unwrap()
-      showToast.success(response?.message || "Gallery image uploaded successfully.")
+      showToast.success(response?.message || t("Gallery image uploaded successfully."))
       // Refetch product data to refresh gallery list
       const result = await getProductById({ id }).unwrap()
       setGallery(result?.data?.gallery || [])
     } catch (err) {
       console.error(err)
-      showToast.error("Failed to upload gallery image.")
+      showToast.error(t("Failed to upload gallery image."))
     }
   }
 
@@ -337,13 +342,13 @@ export default function ProductFormPage() {
         productId: id,
         id: galleryId,
       }).unwrap()
-      showToast.success(response?.message || "Gallery image deleted successfully.")
+      showToast.success(response?.message || t("Gallery image deleted successfully."))
       // Refetch product data to refresh gallery list
       const result = await getProductById({ id }).unwrap()
       setGallery(result?.data?.gallery || [])
     } catch (err) {
       console.error(err)
-      showToast.error("Failed to delete gallery image.")
+      showToast.error(t("Failed to delete gallery image."))
     }
   }
 
@@ -492,13 +497,13 @@ export default function ProductFormPage() {
 
   const validate = () => {
     const nextErrors: Record<string, string> = {}
-    if (!formData.name.trim()) nextErrors.name = "Name is required"
+    if (!formData.name.trim()) nextErrors.name = t("Name is required")
     if (!formData.selling_price)
-      nextErrors.selling_price = "Selling price is required"
-    if (!formData.unit_id) nextErrors.unit_id = "Primary unit is required"
+      nextErrors.selling_price = t("Selling price is required")
+    if (!formData.unit_id) nextErrors.unit_id = t("Primary unit is required")
     if (imageError) nextErrors.image = imageError
     if (formData.is_tax_inclusive && !formData.tax_group_id) {
-      nextErrors.tax_group_id = "Tax is required when inclusive of tax"
+      nextErrors.tax_group_id = t("Tax is required when inclusive of tax")
     }
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
@@ -532,9 +537,9 @@ export default function ProductFormPage() {
 
   const validateUnitQuantity = () => {
     const nextErrors: Record<string, string> = {}
-    if (!unitQuantityForm.unit_id) nextErrors.unit_id = "Unit is required"
+    if (!unitQuantityForm.unit_id) nextErrors.unit_id = t("Unit is required")
     if (!unitQuantityForm.quantity)
-      nextErrors.quantity = "Quantity is required"
+      nextErrors.quantity = t("Quantity is required")
     setUnitQuantityErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
@@ -564,7 +569,7 @@ export default function ProductFormPage() {
           payLoad,
         }).unwrap()
         showToast.success(
-          response?.message || "Product unit quantity updated successfully."
+          response?.message || t("Product unit quantity updated successfully.")
         )
       } else {
         const response = await createProductUnitQuantity({
@@ -572,7 +577,7 @@ export default function ProductFormPage() {
           payLoad,
         }).unwrap()
         showToast.success(
-          response?.message || "Product unit quantity created successfully."
+          response?.message || t("Product unit quantity created successfully.")
         )
       }
 
@@ -606,7 +611,7 @@ export default function ProductFormPage() {
       id: record.id,
     }).unwrap()
     showToast.success(
-      response?.message || "Product unit quantity deleted successfully."
+      response?.message || t("Product unit quantity deleted successfully.")
     )
     await getProductUnitQuantities({ productId: id })
     if (unitQuantityForm.id === record.id) {
@@ -623,7 +628,7 @@ export default function ProductFormPage() {
       const payLoad = buildProductFormData(formData, isEdit, units.data?.data || [])
       if (isEdit) {
         const response = await editProduct({ id, payLoad }).unwrap()
-        showToast.success(response?.message || "Product updated successfully.")
+        showToast.success(response?.message || t("Product updated successfully."))
       } else {
         const response = await createProduct(payLoad).unwrap()
         const productId = response?.data?.id
@@ -633,7 +638,7 @@ export default function ProductFormPage() {
             payLoad: buildDefaultUnitQuantityPayload(formData),
           }).unwrap()
         }
-        showToast.success(response?.message || "Product created successfully.")
+        showToast.success(response?.message || t("Product created successfully."))
       }
       goBack()
     } finally {
@@ -646,7 +651,7 @@ export default function ProductFormPage() {
       <div className="flex h-full items-center justify-center bg-gray-50">
         <div className="flex items-center gap-3 text-sm font-medium text-gray-600">
           <Spinner className="h-5 w-5" />
-          Loading product data...
+          {t("Loading product data...")}
         </div>
       </div>
     )
@@ -668,10 +673,10 @@ export default function ProductFormPage() {
             </Button>
             <div>
               <h1 className="text-xl font-bold text-gray-900">
-                {isEdit ? "Edit Product" : "Create Product"}
+                {isEdit ? t("Edit Product") : t("Create Product")}
               </h1>
               <p className="text-xs font-medium text-gray-500">
-                Product details, pricing, tax and inventory setup.
+                {t("Product details, pricing, tax and inventory setup.")}
               </p>
             </div>
           </div>
@@ -692,7 +697,7 @@ export default function ProductFormPage() {
                     : "border-transparent text-gray-400 hover:text-gray-600"
                 )}
               >
-                {tab === "expiry" ? "Expiry" : tab}
+                {t(tab === "expiry" ? "Expiry" : tab)}
               </button>
             ))}
           </div>
@@ -704,9 +709,9 @@ export default function ProductFormPage() {
             {/* Main Name Field */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
               <UniFieldInput
-                label="Name"
+                label={t("Name")}
                 required
-                placeholder="Enter Product Name"
+                placeholder={t("Enter Product Name")}
                 value={formData.name}
                 onChange={(event) => updateField("name", event.target.value)}
                 error={errors.name}
@@ -721,15 +726,15 @@ export default function ProductFormPage() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <UniFieldSelect
-                      label="Category"
+                      label={t("Category")}
                       required
                       value={formData.category_id}
                       onValueChange={(value) => updateField("category_id", value)}
-                      placeholder="Select Category"
+                      placeholder={t("Select Category")}
                       error={errors.category_id}
                       allowClear
                       onAddNew={() => setAddFormOpen("category")}
-                      addNewLabel="Add New Category"
+                      addNewLabel={t("Add New Category")}
                     >
                       {toOption(categories.data?.data).map((option) => (
                         <SelectItem key={option.value} value={option.value}>
@@ -739,32 +744,32 @@ export default function ProductFormPage() {
                     </UniFieldSelect>
 
                     <UniFieldSelect
-                      label="Product Type"
+                      label={t("Product Type")}
                       value={formData.product_type}
                       onValueChange={(value) => updateField("product_type", value as any)}
                     >
-                      <SelectItem value="product">Materialized Product</SelectItem>
-                      <SelectItem value="service">Dematerialized Product</SelectItem>
+                      <SelectItem value="product">{t("Materialized Product")}</SelectItem>
+                      <SelectItem value="service">{t("Dematerialized Product")}</SelectItem>
                     </UniFieldSelect>
 
                     <UniFieldInput
-                      label="SKU"
-                      placeholder="Enter SKU"
+                      label={t("SKU")}
+                      placeholder={t("Enter SKU")}
                       value={formData.sku}
                       onChange={(event) => updateField("sku", event.target.value)}
                     />
 
                     <UniFieldSelect
-                      label="Status"
+                      label={t("Status")}
                       value={formData.status}
                       onValueChange={(value) => updateField("status", value)}
                     >
-                      <SelectItem value="0">On Sale</SelectItem>
-                      <SelectItem value="1">Hidden</SelectItem>
+                      <SelectItem value="0">{t("On Sale")}</SelectItem>
+                      <SelectItem value="1">{t("Hidden")}</SelectItem>
                     </UniFieldSelect>
 
                     <UniFieldInput
-                      label="Barcode"
+                      label={t("Barcode")}
                       placeholder="2273546838467"
                       value={formData.barcode}
                       onChange={(event) => updateField("barcode", event.target.value)}
@@ -775,13 +780,13 @@ export default function ProductFormPage() {
                           className="flex min-w-32 items-center justify-center gap-1.5 text-xs font-semibold text-gray-800"
                         >
                           <WandSparkles className="size-3.5" />
-                          Auto Generate
+                          {t("Auto Generate")}
                         </button>
                       }
                     />
 
                     <UniFieldSelect
-                      label="Barcode Type"
+                      label={t("Barcode Type")}
                       value={formData.barcode_type}
                       onValueChange={(value) => updateField("barcode_type", value)}
                     >
@@ -799,8 +804,8 @@ export default function ProductFormPage() {
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2 border-t border-gray-100 pt-6">
                     <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-4">
                       <div>
-                        <div className="text-sm font-semibold text-gray-900">Stock Management Enabled</div>
-                        <p className="text-xs text-gray-500 mt-0.5">Enable stock tracking on this item.</p>
+                        <div className="text-sm font-semibold text-gray-900">{t("Stock Management Enabled")}</div>
+                        <p className="text-xs text-gray-500 mt-0.5">{t("Enable stock tracking on this item.")}</p>
                       </div>
                       <Switch
                         checked={Boolean(formData.track_stock)}
@@ -811,8 +816,8 @@ export default function ProductFormPage() {
 
                     <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-4">
                       <div>
-                        <div className="text-sm font-semibold text-gray-900">Pin Product</div>
-                        <p className="text-xs text-gray-500 mt-0.5">Pin this product to show at top of POS grid.</p>
+                        <div className="text-sm font-semibold text-gray-900">{t("Pin Product")}</div>
+                        <p className="text-xs text-gray-500 mt-0.5">{t("Pin this product to show at top of POS grid.")}</p>
                       </div>
                       <Switch
                         checked={Boolean(formData.pinned)}
@@ -824,8 +829,8 @@ export default function ProductFormPage() {
                   <div className="border-t border-gray-100 pt-6">
                     <UniFieldInput
                       as="textarea"
-                      label="Description"
-                      placeholder="Enter a detailed description..."
+                      label={t("Description")}
+                      placeholder={t("Enter a detailed description...")}
                       value={formData.description}
                       onChange={(event) => updateField("description", event.target.value)}
                       rows={4}
@@ -839,14 +844,14 @@ export default function ProductFormPage() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <UniFieldSelect
-                      label="Primary Unit"
+                      label={t("Primary Unit")}
                       required
                       value={formData.unit_id}
                       onValueChange={(value) => updateField("unit_id", value)}
-                      placeholder="Select Unit"
+                      placeholder={t("Select Unit")}
                       error={errors.unit_id}
                       onAddNew={() => setAddFormOpen("unit")}
-                      addNewLabel="Add New Unit"
+                      addNewLabel={t("Add New Unit")}
                     >
                       {toOption(units.data?.data).map((option) => (
                         <SelectItem key={option.value} value={option.value}>
@@ -857,8 +862,8 @@ export default function ProductFormPage() {
 
                     <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-4">
                       <div>
-                        <div className="text-sm font-semibold text-gray-900">Accurate Tracking</div>
-                        <p className="text-xs text-gray-500 mt-0.5">Strictly track every sale and inventory step.</p>
+                        <div className="text-sm font-semibold text-gray-900">{t("Accurate Tracking")}</div>
+                        <p className="text-xs text-gray-500 mt-0.5">{t("Strictly track every sale and inventory step.")}</p>
                       </div>
                       <Switch
                         checked={Boolean(formData.accurate_tracking)}
@@ -869,8 +874,8 @@ export default function ProductFormPage() {
 
                     <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-4">
                       <div>
-                        <div className="text-sm font-semibold text-gray-900">Auto COGS</div>
-                        <p className="text-xs text-gray-500 mt-0.5">Compute cost of goods sold automatically.</p>
+                        <div className="text-sm font-semibold text-gray-900">{t("Auto COGS")}</div>
+                        <p className="text-xs text-gray-500 mt-0.5">{t("Compute cost of goods sold automatically.")}</p>
                       </div>
                       <Switch
                         checked={Boolean(formData.auto_cogs)}
@@ -881,8 +886,8 @@ export default function ProductFormPage() {
 
                     <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-4">
                       <div>
-                        <div className="text-sm font-semibold text-gray-900">Allow Decimal Qty</div>
-                        <p className="text-xs text-gray-500 mt-0.5">Allow fractional stock quantities.</p>
+                        <div className="text-sm font-semibold text-gray-900">{t("Allow Decimal Qty")}</div>
+                        <p className="text-xs text-gray-500 mt-0.5">{t("Allow fractional stock quantities.")}</p>
                       </div>
                       <Switch
                         checked={Boolean(formData.allow_decimal_qty)}
@@ -893,55 +898,55 @@ export default function ProductFormPage() {
 
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2 border-t border-gray-100 pt-6">
                     <UniFieldInput
-                      label="Sale Price"
+                      label={t("Sale Price")}
                       required
-                      placeholder="Enter Sale Price"
+                      placeholder={t("Enter Sale Price")}
                       type="number"
                       min="0"
                       step="0.01"
-                      prefix="₹"
+                      prefix={currencySymbol}
                       value={formData.selling_price}
                       onChange={(event) => updateField("selling_price", event.target.value)}
                       error={errors.selling_price}
                     />
 
                     <UniFieldInput
-                      label="Wholesale Price"
+                      label={t("Wholesale Price")}
                       type="number"
-                      placeholder="Enter Wholesale Price"
+                      placeholder={t("Enter Wholesale Price")}
                       min="0"
                       step="0.01"
-                      prefix="₹"
+                      prefix={currencySymbol}
                       value={formData.wholesale_price}
                       onChange={(event) => updateField("wholesale_price", event.target.value)}
                     />
 
                     <UniFieldInput
-                      label="COGS"
+                      label={t("COGS")}
                       type="number"
-                      placeholder="Enter COGS"
+                      placeholder={t("Enter COGS")}
                       min="0"
                       step="0.01"
-                      prefix="₹"
+                      prefix={currencySymbol}
                       value={formData.purchase_price}
                       onChange={(event) => updateField("purchase_price", event.target.value)}
                     />
 
                     <UniFieldInput
-                      label="MRP"
+                      label={t("MRP")}
                       type="number"
-                      placeholder="Enter MRP"
+                      placeholder={t("Enter MRP")}
                       min="0"
                       step="0.01"
-                      prefix="₹"
+                      prefix={currencySymbol}
                       value={formData.mrp}
                       onChange={(event) => updateField("mrp", event.target.value)}
                     />
 
                     <UniFieldInput
-                      label="Weight"
+                      label={t("Weight")}
                       type="number"
-                      placeholder="Enter Weight"
+                      placeholder={t("Enter Weight")}
                       min="0"
                       step="0.001"
                       value={formData.weight}
@@ -953,9 +958,9 @@ export default function ProductFormPage() {
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-3 border-t border-gray-100 pt-6">
                       {!isEdit && (
                         <UniFieldInput
-                          label="Opening Stock"
+                          label={t("Opening Stock")}
                           type="number"
-                          placeholder="Enter Opening Stock"
+                          placeholder={t("Enter Opening Stock")}
                           min="0"
                           step="0.001"
                           value={formData.opening_stock}
@@ -963,18 +968,18 @@ export default function ProductFormPage() {
                         />
                       )}
                       <UniFieldInput
-                        label="Low Quantity"
+                        label={t("Low Quantity")}
                         type="number"
-                        placeholder="Enter Low Quantity"
+                        placeholder={t("Enter Low Quantity")}
                         min="0"
                         step="0.001"
                         value={formData.min_stock}
                         onChange={(event) => updateField("min_stock", event.target.value)}
                       />
                       <UniFieldInput
-                        label="Max Stock"
+                        label={t("Max Stock")}
                         type="number"
-                        placeholder="Enter Max Stock"
+                        placeholder={t("Enter Max Stock")}
                         min="0"
                         step="0.001"
                         value={formData.max_stock}
@@ -986,8 +991,8 @@ export default function ProductFormPage() {
                   {isEdit && (
                     <div className="border-t border-gray-100 pt-6 space-y-6">
                       <div>
-                        <h3 className="text-sm font-bold text-gray-900">Selling Units (Alternate Units)</h3>
-                        <p className="text-xs text-gray-500 mt-0.5">Manage conversions and custom unit prices.</p>
+                        <h3 className="text-sm font-bold text-gray-900">{t("Selling Units (Alternate Units)")}</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">{t("Manage conversions and custom unit prices.")}</p>
                       </div>
 
                       <div className="grid grid-cols-1 gap-3">
@@ -996,32 +1001,32 @@ export default function ProductFormPage() {
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-bold text-gray-900">{record.unit_name}</span>
-                                {record.is_default && <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">Default</span>}
+                                {record.is_default && <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">{t("Default")}</span>}
                               </div>
                               <p className="text-xs text-gray-500 mt-1">
-                                {Number(record.quantity).toLocaleString()} {record.convert_unit_short_name || "base unit"} per {record.unit_short_name || record.unit_name}
+                                {Number(record.quantity).toLocaleString()} {record.convert_unit_short_name || t("base unit")} {t("per")} {record.unit_short_name || record.unit_name}
                               </p>
                               <p className="text-xs font-bold text-gray-800 mt-1">
-                                Sale: ₹{Number(record.sale_price).toFixed(2)} · Buy/COGS: ₹{Number(record.cogs).toFixed(2)}
+                                {t("Sale")}: {currencySymbol}{Number(record.sale_price).toFixed(2)} · {t("Buy/COGS")}: {currencySymbol}{Number(record.cogs).toFixed(2)}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button type="button" variant="outline" size="sm" onClick={() => handleEditUnitQuantity(record)}>Edit</Button>
-                              <Button type="button" variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteUnitQuantity(record)}>Delete</Button>
+                              <Button type="button" variant="outline" size="sm" onClick={() => handleEditUnitQuantity(record)}>{t("Edit")}</Button>
+                              <Button type="button" variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteUnitQuantity(record)}>{t("Delete")}</Button>
                             </div>
                           </div>
                         ))}
                       </div>
 
                       <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 space-y-4">
-                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">{unitQuantityForm.id ? "Edit Alternate Unit" : "Add Alternate Unit"}</h4>
+                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">{unitQuantityForm.id ? t("Edit Alternate Unit") : t("Add Alternate Unit")}</h4>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                           <UniFieldSelect
-                            label="Assigned Unit"
+                            label={t("Assigned Unit")}
                             required
                             value={unitQuantityForm.unit_id}
                             onValueChange={(val) => updateUnitQuantityField("unit_id", val)}
-                            placeholder="Select Unit"
+                            placeholder={t("Select Unit")}
                             error={unitQuantityErrors.unit_id}
                           >
                             {toOption(units.data?.data).map((option) => (
@@ -1032,10 +1037,10 @@ export default function ProductFormPage() {
                           </UniFieldSelect>
 
                           <UniFieldSelect
-                            label="Convert Unit"
+                            label={t("Convert Unit")}
                             value={unitQuantityForm.convert_unit_id}
                             onValueChange={(val) => updateUnitQuantityField("convert_unit_id", val)}
-                            placeholder="Select Convert Unit"
+                            placeholder={t("Select Convert Unit")}
                           >
                             {toOption(units.data?.data).map((option) => (
                               <SelectItem key={option.value} value={option.value}>
@@ -1045,56 +1050,56 @@ export default function ProductFormPage() {
                           </UniFieldSelect>
 
                           <UniFieldInput
-                            label="Factor"
+                            label={t("Factor")}
                             required
-                            placeholder="e.g. 12"
+                            placeholder={t("e.g. 12")}
                             value={unitQuantityForm.quantity}
                             onChange={(e) => updateUnitQuantityField("quantity", e.target.value)}
                             error={unitQuantityErrors.quantity}
                           />
 
                           <UniFieldInput
-                            label="Sale Price"
+                            label={t("Sale Price")}
                             required
-                            placeholder="Enter Sale Price"
+                            placeholder={t("Enter Sale Price")}
                             type="number"
                             min="0"
                             step="0.01"
-                            prefix="₹"
+                            prefix={currencySymbol}
                             value={unitQuantityForm.sale_price}
                             onChange={(e) => updateUnitQuantityField("sale_price", e.target.value)}
                             error={unitQuantityErrors.sale_price}
                           />
 
                           <UniFieldInput
-                            label="COGS"
-                            placeholder="Enter Cost Price"
+                            label={t("COGS")}
+                            placeholder={t("Enter Cost Price")}
                             type="number"
                             min="0"
                             step="0.01"
-                            prefix="₹"
+                            prefix={currencySymbol}
                             value={unitQuantityForm.purchase_price}
                             onChange={(e) => updateUnitQuantityField("purchase_price", e.target.value)}
                           />
 
                           <UniFieldInput
-                            label="Barcode"
-                            placeholder="Enter custom barcode"
+                            label={t("Barcode")}
+                            placeholder={t("Enter custom barcode")}
                             value={unitQuantityForm.barcode}
                             onChange={(e) => updateUnitQuantityField("barcode", e.target.value)}
                           />
 
                           <UniFieldInput
-                            label="PLU Code"
-                            placeholder="Enter PLU lookup code"
+                            label={t("PLU Code")}
+                            placeholder={t("Enter PLU lookup code")}
                             value={unitQuantityForm.scale_plu}
                             onChange={(e) => updateUnitQuantityField("scale_plu", e.target.value)}
                           />
 
                           <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4">
                             <div>
-                              <div className="text-sm font-semibold text-gray-900">Is Default</div>
-                              <p className="text-xs text-gray-500 mt-0.5">Use as primary unit for calculations.</p>
+                              <div className="text-sm font-semibold text-gray-900">{t("Is Default")}</div>
+                              <p className="text-xs text-gray-500 mt-0.5">{t("Use as primary unit for calculations.")}</p>
                             </div>
                             <Switch
                               checked={Boolean(unitQuantityForm.is_default)}
@@ -1105,10 +1110,10 @@ export default function ProductFormPage() {
 
                         <div className="flex justify-end gap-2 pt-2">
                           {unitQuantityForm.id && (
-                            <Button type="button" variant="outline" onClick={resetUnitQuantityForm}>Cancel</Button>
+                            <Button type="button" variant="outline" onClick={resetUnitQuantityForm}>{t("Cancel")}</Button>
                           )}
                           <Button type="button" onClick={handleSaveUnitQuantity} disabled={isSavingUnitQuantity}>
-                            {isSavingUnitQuantity ? <Spinner /> : unitQuantityForm.id ? "Update Selling Unit" : "Add Selling Unit"}
+                            {isSavingUnitQuantity ? <Spinner /> : unitQuantityForm.id ? t("Update Selling Unit") : t("Add Selling Unit")}
                           </Button>
                         </div>
                       </div>
@@ -1123,8 +1128,8 @@ export default function ProductFormPage() {
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-4">
                       <div>
-                        <div className="text-sm font-semibold text-gray-900">Product Expires</div>
-                        <p className="text-xs text-gray-500 mt-0.5">Track expiry date on batches/lots.</p>
+                        <div className="text-sm font-semibold text-gray-900">{t("Product Expires")}</div>
+                        <p className="text-xs text-gray-500 mt-0.5">{t("Track expiry date on batches/lots.")}</p>
                       </div>
                       <Switch
                         checked={Boolean(formData.expires)}
@@ -1137,12 +1142,12 @@ export default function ProductFormPage() {
 
                     {formData.expires && (
                       <UniFieldSelect
-                        label="On Expiration"
+                        label={t("On Expiration")}
                         value={formData.on_expiration}
                         onValueChange={(value) => updateField("on_expiration", value)}
                       >
-                        <SelectItem value="prevent_sales">Prevent Sales</SelectItem>
-                        <SelectItem value="allow_sales">Allow Sales</SelectItem>
+                        <SelectItem value="prevent_sales">{t("Prevent Sales")}</SelectItem>
+                        <SelectItem value="allow_sales">{t("Allow Sales")}</SelectItem>
                       </UniFieldSelect>
                     )}
                   </div>
@@ -1154,14 +1159,14 @@ export default function ProductFormPage() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <UniFieldSelect
-                      label="Tax Group"
+                      label={t("Tax Group")}
                       value={formData.tax_group_id}
                       onValueChange={(value) => updateField("tax_group_id", value)}
-                      placeholder="Select Tax"
+                      placeholder={t("Select Tax")}
                       error={errors.tax_group_id}
                       allowClear
                       onAddNew={() => setAddFormOpen("taxGroup")}
-                      addNewLabel="Add New Tax Group"
+                      addNewLabel={t("Add New Tax Group")}
                     >
                       {(taxGroups.data?.data || []).map((group: any) => (
                         <SelectItem key={group.id} value={String(group.id)}>
@@ -1180,12 +1185,12 @@ export default function ProductFormPage() {
                     </UniFieldSelect>
 
                     <UniFieldSelect
-                      label="Tax Type"
+                      label={t("Tax Type")}
                       value={formData.is_tax_inclusive ? "inclusive" : "exclusive"}
                       onValueChange={(value) => updateField("is_tax_inclusive", value === "inclusive")}
                     >
-                      <SelectItem value="inclusive">Inclusive</SelectItem>
-                      <SelectItem value="exclusive">Exclusive</SelectItem>
+                      <SelectItem value="inclusive">{t("Inclusive")}</SelectItem>
+                      <SelectItem value="exclusive">{t("Exclusive")}</SelectItem>
                     </UniFieldSelect>
                   </div>
                 </div>
@@ -1196,7 +1201,7 @@ export default function ProductFormPage() {
                 <div className="space-y-6">
                   <div className="max-w-md">
                     <ImageUpload
-                      label="Product Image"
+                      label={t("Product Image")}
                       value={formData.image}
                       initialUrl={initialImageUrl}
                       error={imageError || errors.image}
@@ -1213,13 +1218,13 @@ export default function ProductFormPage() {
                   {isEdit && (
                     <div className="border-t border-gray-100 pt-6 space-y-4">
                       <div>
-                        <h3 className="text-sm font-bold text-gray-900">Product Gallery</h3>
-                        <p className="text-xs text-gray-500 mt-0.5">Upload gallery images for showcase.</p>
+                        <h3 className="text-sm font-bold text-gray-900">{t("Product Gallery")}</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">{t("Upload gallery images for showcase.")}</p>
                       </div>
                       <div className="grid grid-cols-4 gap-4">
                         {gallery.map((img: any) => (
                           <div key={img.id} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group">
-                            <img src={img.url} alt={img.name || "Gallery"} className="object-cover w-full h-full" />
+                            <img src={img.url} alt={img.name || t("Gallery")} className="object-cover w-full h-full" />
                             <button
                               type="button"
                               onClick={() => handleDeleteGalleryImage(img.id)}
@@ -1228,7 +1233,7 @@ export default function ProductFormPage() {
                               <Trash2 className="size-3.5" />
                             </button>
                             {img.featured && (
-                              <span className="absolute bottom-2 left-2 px-1.5 py-0.5 text-[8px] bg-blue-600 text-white rounded font-bold uppercase">Cover</span>
+                              <span className="absolute bottom-2 left-2 px-1.5 py-0.5 text-[8px] bg-blue-600 text-white rounded font-bold uppercase">{t("Cover")}</span>
                             )}
                           </div>
                         ))}
@@ -1239,7 +1244,7 @@ export default function ProductFormPage() {
                           ) : (
                             <>
                               <Plus className="size-6 text-gray-400" />
-                              <span className="text-xs text-gray-400 mt-1">Upload</span>
+                              <span className="text-xs text-gray-400 mt-1">{t("Upload")}</span>
                             </>
                           )}
                           <input
@@ -1278,7 +1283,7 @@ export default function ProductFormPage() {
                   onClick={goBack}
                   disabled={isSubmitting}
                 >
-                  Cancel
+                  {t("Cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -1288,12 +1293,12 @@ export default function ProductFormPage() {
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
                       <Spinner />
-                      Saving...
+                      {t("Saving...")}
                     </span>
                   ) : isEdit ? (
-                    "Update Product"
+                    t("Update Product")
                   ) : (
-                    "Save Product"
+                    t("Save Product")
                   )}
                 </Button>
               </div>

@@ -12,14 +12,12 @@ import { PERMISSIONS } from "@/lib/permissions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { useState } from "react"
 
-const money = (value: any) => `₹${Number(value || 0).toFixed(2)}`
-
 const columns = [
   { key: "name", title: "Name" },
-  { key: "type", title: "Type", render: (val: any) => val || "standard" },
+  { key: "type", title: "Type" },
   { key: "sku", title: "SKU" },
-  { key: "category_name", title: "Category", render: (val: any) => val || "Unassigned" },
-  { key: "status", title: "Status", render: (val: any) => val === "available" ? "Available" : "Hidden" },
+  { key: "category_name", title: "Category" },
+  { key: "status", title: "Status" },
   { key: "user_username", title: "Author" },
   {
     key: "created_at",
@@ -59,6 +57,14 @@ export default function ProductsPage() {
   const translatedColumns = columns.map((column) => ({
     ...column,
     title: t(column.title),
+    render:
+      column.key === "type"
+        ? (val: any) => t(val || "standard")
+        : column.key === "category_name"
+          ? (val: any) => val || t("Unassigned")
+          : column.key === "status"
+            ? (val: any) => val === "available" ? t("Available") : t("Hidden")
+            : column.render,
   }))
 
   return (
