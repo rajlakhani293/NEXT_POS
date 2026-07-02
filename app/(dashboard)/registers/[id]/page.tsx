@@ -9,10 +9,14 @@ import { useTableData } from "@/hooks/useTableData"
 import { registers } from "@/lib/api/registers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { formatDateTime } from "@/lib/format"
+import { usePosOptions } from "@/lib/options"
 import { ShiftDetails } from "./shiftDetails"
 import { IoMdEye } from "react-icons/io"
 
-const buildColumns = (t: (key: string) => string) => [
+const buildColumns = (
+  t: (key: string) => string,
+  formatMoney: (value: any) => string
+) => [
   { key: "cashier_name", title: t("Cashier") },
   { key: "shift_status", title: t("Status") },
   {
@@ -25,24 +29,30 @@ const buildColumns = (t: (key: string) => string) => [
     title: t("Closed"),
     render: (value: string | null) => formatDateTime(value),
   },
-  { key: "opening_cash", title: t("Opening") },
-  { key: "expected_cash", title: t("Expected") },
-  { key: "declared_cash", title: t("Declared") },
-  { key: "difference_amount", title: t("Difference") },
+  { key: "opening_cash", title: t("Opening"), render: formatMoney },
+  { key: "expected_cash", title: t("Expected"), render: formatMoney },
+  { key: "declared_cash", title: t("Declared"), render: formatMoney },
+  { key: "difference_amount", title: t("Difference"), render: formatMoney },
 ]
 
 export default function RegisterShiftHistoryPage() {
   const router = useRouter()
   const params = useParams()
   const { t } = useTranslation()
-  const registerId = String(params.id)
+  const posOptions = usePosOptions()
+  const formatMoney = (value: any) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const rawRegisterId = Array.isArray(params.id) ? params.id[0] : params.id
+  const registerId = Number(rawRegisterId)
+  const hasRegisterId = Number.isFinite(registerId) && registerId > 0
   const [selectedShiftId, setSelectedShiftId] = useState<
     number | string | null
   >(null)
   const table = useTableData({
     getMaster: (registers as any).useGetShiftsDataMutation,
+    enabled: hasRegisterId,
     itemsPerPage: 10,
-    selectedFilters: { register_id: Number(registerId) },
+    selectedFilters: hasRegisterId ? { register_id: registerId } : {},
   })
   const register = table.otherData?.register
   const registerName =
@@ -75,7 +85,7 @@ export default function RegisterShiftHistoryPage() {
       <div className="p-6">
         <DynamicTable
           data={table.orders}
-          columns={buildColumns(t)}
+          columns={buildColumns(t, formatMoney)}
           tableTitle={t("Register History List")}
           showSearch
           searchTerm={table.searchTerm}

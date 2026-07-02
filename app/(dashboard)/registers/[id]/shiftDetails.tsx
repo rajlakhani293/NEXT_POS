@@ -8,13 +8,17 @@ import { Spinner } from "@/components/ui/spinner"
 import { registers } from "@/lib/api/registers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { formatDateTime } from "@/lib/format"
+import { usePosOptions } from "@/lib/options"
 
-const buildEntryColumns = (t: (key: string) => string) => [
+const buildEntryColumns = (
+  t: (key: string) => string,
+  formatMoney: (value: any) => string
+) => [
   { key: "entry_type", title: t("Entry Type") },
   { key: "payment_type", title: t("Payment Type") },
-  { key: "amount", title: t("Amount") },
-  { key: "balance_before", title: t("Before") },
-  { key: "balance_after", title: t("After") },
+  { key: "amount", title: t("Amount"), render: formatMoney },
+  { key: "balance_before", title: t("Before"), render: formatMoney },
+  { key: "balance_after", title: t("After"), render: formatMoney },
   { key: "reference_type", title: t("Reference") },
   { key: "note", title: t("Note") },
   {
@@ -24,8 +28,6 @@ const buildEntryColumns = (t: (key: string) => string) => [
   },
 ]
 
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
-
 type ShiftDetailsProps = {
   shiftId: number | string | null
   onClose: () => void
@@ -33,6 +35,9 @@ type ShiftDetailsProps = {
 
 export function ShiftDetails({ shiftId, onClose }: ShiftDetailsProps) {
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const formatMoney = (value: any) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
   const [shift, setShift] = useState<any>(null)
   const requestedShiftRef = useRef<string | null>(null)
   const [getShiftById, shiftState] = (registers as any).useGetShiftByIdMutation()
@@ -154,7 +159,7 @@ export function ShiftDetails({ shiftId, onClose }: ShiftDetailsProps) {
 
           <DynamicTable
             data={entries}
-            columns={buildEntryColumns(t)}
+            columns={buildEntryColumns(t, formatMoney)}
             tableTitle={t("Register History List")}
             currentPage={1}
             itemsPerPage={Math.max(entries.length, 10)}

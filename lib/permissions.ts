@@ -78,6 +78,9 @@ export const PERMISSIONS = {
   },
   cashRegister: {
     view: "cash_register_view",
+    create: "cash_register_create",
+    update: "cash_register_update",
+    delete: "cash_register_delete",
     open: "cash_register_open",
     close: "cash_register_close",
     cashIn: "cash_register_cash_in",

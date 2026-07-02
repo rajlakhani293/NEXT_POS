@@ -9,14 +9,16 @@ import DynamicForm from "@/components/DynamicForm"
 import { PermissionGuard } from "@/components/permission-guard"
 import { registers } from "@/lib/api/registers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
 import { useTableData } from "@/hooks/useTableData"
 import { usePermissions } from "@/hooks/use-permissions"
 
-const money = (value: any) => `₹${Number(value || 0).toFixed(2)}`
-
-const buildRegisterColumns = (t: (key: string) => string) => [
+const buildRegisterColumns = (
+  t: (key: string) => string,
+  formatMoney: (value: any) => string
+) => [
   { key: "name", title: t("Name") },
   {
     key: "register_status",
@@ -28,7 +30,7 @@ const buildRegisterColumns = (t: (key: string) => string) => [
     ),
   },
   { key: "cashier_username", title: t("Used By"), render: (value: any) => value || t("N/A") },
-  { key: "balance", title: t("Balance"), render: money },
+  { key: "balance", title: t("Balance"), render: formatMoney },
   { key: "user_username", title: t("Author") },
   {
     key: "created_at",
@@ -40,6 +42,9 @@ const buildRegisterColumns = (t: (key: string) => string) => [
 export default function RegistersPage() {
   const router = useRouter()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const formatMoney = (value: any) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
   const [isRegisterFormOpen, setIsRegisterFormOpen] = useState(false)
   const [editRegisterId, setEditRegisterId] = useState<number | string | null>(null)
   const [registerValues, setRegisterValues] = useState({
@@ -52,6 +57,9 @@ export default function RegistersPage() {
   const [updateRegisterStatus] = (registers as any).useUpdateRegisterStatusMutation()
   const [getRegisterById] = (registers as any).useGetRegisterByIdMutation()
   const { hasPermission } = usePermissions()
+  const canCreate = hasPermission(PERMISSIONS.cashRegister.create)
+  const canUpdate = hasPermission(PERMISSIONS.cashRegister.update)
+  const canDelete = hasPermission(PERMISSIONS.cashRegister.delete)
   const registerTable = useTableData({
     getMaster: (registers as any).useGetRegistersDataMutation,
     itemsPerPage: 10,
@@ -101,9 +109,9 @@ export default function RegistersPage() {
       <div className="space-y-4">
         <DynamicTable
           data={registerTable.orders}
-          columns={buildRegisterColumns(t)}
+          columns={buildRegisterColumns(t, formatMoney)}
           tableTitle={t("Registers List")}
-          title={hasPermission(PERMISSIONS.cashRegister.open) ? t("Add a new register") : undefined}
+          title={canCreate ? t("Add a new register") : undefined}
           showSearch
           searchTerm={registerTable.searchTerm}
           currentPage={registerTable.currentPage}
@@ -116,16 +124,16 @@ export default function RegistersPage() {
           sortableFields={registerTable.sortableFields}
           isLoading={registerTable.isLoading}
           setAddEntityOpen={
-            hasPermission(PERMISSIONS.cashRegister.open)
+            canCreate
               ? () => openRegisterForm()
               : undefined
           }
           showDateRange
-          showEdit={hasPermission(PERMISSIONS.cashRegister.close)}
+          showEdit={canUpdate}
           onEdit={openRegisterForm}
-          showDelete={hasPermission(PERMISSIONS.cashRegister.close)}
+          showDelete={canDelete}
           deleteMutation={deleteRegister}
-          showStatus={hasPermission(PERMISSIONS.cashRegister.close)}
+          showStatus={canUpdate}
           statusChangeMutation={({ ids, status }: any) =>
             updateRegisterStatus({ payLoad: { ids, status } })
           }
