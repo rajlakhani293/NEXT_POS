@@ -6,21 +6,28 @@ import DynamicTable from "@/components/DynamicTable"
 import { useTableData } from "@/hooks/useTableData"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 
-const buildColumns = (t: (key: string) => string) => [
+const buildColumns = (
+  t: (key: string) => string,
+  formatMoney: (value: any) => string
+) => [
   { key: "purchase_order__code", title: t("Procurement") },
   { key: "product__name", title: t("Product") },
   { key: "ordered_quantity", title: t("Quantity") },
   { key: "received_quantity", title: t("Received") },
-  { key: "cost_price", title: t("Purchase Price") },
-  { key: "tax_amount", title: t("Tax") },
-  { key: "total", title: t("Total") },
-  { key: "created_at", title: t("Created At") },
+  { key: "cost_price", title: t("Purchase Price"), render: (value: any) => formatMoney(value) },
+  { key: "tax_amount", title: t("Tax"), render: (value: any) => formatMoney(value) },
+  { key: "total", title: t("Total"), render: (value: any) => formatMoney(value) },
+  { key: "created_at", title: t("Created At"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 
 export default function ProcurementProductsPage() {
   const router = useRouter()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const formatMoney = (value: any) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
   const table = useTableData({
     getMaster: (purchases as any).useGetProcurementProductsDataMutation,
     itemsPerPage: 10,
@@ -30,7 +37,7 @@ export default function ProcurementProductsPage() {
     <div className="h-full space-y-4">
       <DynamicTable
         data={table.orders}
-        columns={buildColumns(t)}
+        columns={buildColumns(t, formatMoney)}
         tableTitle={t("Procurement Products List")}
         showSearch
         showDateRange

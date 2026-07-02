@@ -8,13 +8,15 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
-
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
+import { usePosOptions } from "@/lib/options"
 
 export default function PurchaseInvoicePage() {
   const router = useRouter()
   const params = useParams()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const formatMoney = (value: any) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
   const id = params.id as string
   const [getPurchaseOrderById, purchaseOrder] = (
     purchases as any

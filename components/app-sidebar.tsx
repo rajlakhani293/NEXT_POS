@@ -160,18 +160,6 @@ const mainNavSections: DashboardNavSection[] = [
     url: "/purchases",
     icon: <ShoppingCartIcon />,
     permission: PERMISSIONS.purchases.view,
-    items: [
-      {
-        title: "Procurements List",
-        url: "/purchases",
-        permission: PERMISSIONS.purchases.view,
-      },
-      {
-        title: "Products",
-        url: "/purchases/products",
-        permission: PERMISSIONS.purchases.update,
-      },
-    ],
   },
   {
     title: "Accounting",

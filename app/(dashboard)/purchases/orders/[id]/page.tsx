@@ -13,6 +13,7 @@ import { catalog } from "@/lib/api/catalog"
 import { payments } from "@/lib/api/payments"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
@@ -70,6 +71,9 @@ export default function PurchaseOrderFormPage() {
   const router = useRouter()
   const params = useParams()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const formatMoney = (value: string | number | null | undefined) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
   const id = params.id as string
   const isEdit = id !== "create"
   const loadKeyRef = useRef("")
@@ -569,7 +573,7 @@ export default function PurchaseOrderFormPage() {
                   type="number"
                   min="0"
                   step="0.01"
-                  prefix="₹"
+                  prefix={posOptions.currency_symbol}
                   placeholder={t("Enter shipping")}
                   value={formData.shipping_amount}
                   onChange={(event) =>
@@ -581,7 +585,7 @@ export default function PurchaseOrderFormPage() {
                   type="number"
                   min="0"
                   step="0.01"
-                  prefix="₹"
+                  prefix={posOptions.currency_symbol}
                   placeholder={t("Enter discount")}
                   value={formData.discount_amount}
                   onChange={(event) =>
@@ -679,7 +683,7 @@ export default function PurchaseOrderFormPage() {
                         type="number"
                         min="0"
                         step="0.01"
-                        prefix="₹"
+                        prefix={posOptions.currency_symbol}
                         placeholder={t("Purchase Price")}
                         value={item.cost_price}
                         onChange={(event) =>
@@ -692,7 +696,7 @@ export default function PurchaseOrderFormPage() {
                         type="number"
                         min="0"
                         step="0.01"
-                        prefix="₹"
+                        prefix={posOptions.currency_symbol}
                         placeholder={t("Tax")}
                         value={item.tax_amount}
                         onChange={(event) =>
@@ -717,15 +721,15 @@ export default function PurchaseOrderFormPage() {
                 <div className="mt-4 grid gap-2 rounded-lg bg-gray-50 p-3 text-sm font-semibold text-gray-700 md:ml-auto md:w-80">
                   <div className="flex justify-between">
                     <span>{t("Subtotal")}</span>
-                    <span>₹{totals.subtotal.toFixed(2)}</span>
+                    <span>{formatMoney(totals.subtotal)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t("Tax")}</span>
-                    <span>₹{totals.tax.toFixed(2)}</span>
+                    <span>{formatMoney(totals.tax)}</span>
                   </div>
                   <div className="flex justify-between text-base font-bold text-gray-950">
                     <span>{t("Total")}</span>
-                    <span>₹{totals.total.toFixed(2)}</span>
+                    <span>{formatMoney(totals.total)}</span>
                   </div>
                 </div>
               </section>
@@ -823,7 +827,7 @@ export default function PurchaseOrderFormPage() {
                             type="number"
                             min="0"
                             step="0.01"
-                            prefix="₹"
+                            prefix={posOptions.currency_symbol}
                             placeholder={t("Purchase Price")}
                             value={item.cost_price}
                             onChange={(event) =>
@@ -837,7 +841,7 @@ export default function PurchaseOrderFormPage() {
                               type="number"
                               min="0"
                               step="0.01"
-                              prefix="₹"
+                              prefix={posOptions.currency_symbol}
                               placeholder={t("Tax")}
                               value={item.tax_amount}
                               onChange={(event) =>
@@ -845,7 +849,7 @@ export default function PurchaseOrderFormPage() {
                               }
                             />
                             <p className="text-xs font-medium text-gray-500">
-                              {t("Total")}: ₹{rowTotal.toFixed(2)}
+                              {t("Total")}: {formatMoney(rowTotal)}
                             </p>
                           </div>
                           <div className={cn("flex items-end", index === 0 && "pt-6")}>
@@ -866,15 +870,15 @@ export default function PurchaseOrderFormPage() {
                   <div className="mt-4 grid gap-2 rounded-lg bg-gray-50 p-3 text-sm font-semibold text-gray-700 md:ml-auto md:w-80">
                     <div className="flex justify-between">
                       <span>{t("Subtotal")}</span>
-                      <span>₹{totals.subtotal.toFixed(2)}</span>
+                      <span>{formatMoney(totals.subtotal)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>{t("Tax")}</span>
-                      <span>₹{totals.tax.toFixed(2)}</span>
+                      <span>{formatMoney(totals.tax)}</span>
                     </div>
                     <div className="flex justify-between text-base font-bold text-gray-950">
                       <span>{t("Total")}</span>
-                      <span>₹{totals.total.toFixed(2)}</span>
+                      <span>{formatMoney(totals.total)}</span>
                     </div>
                   </div>
                 </section>
@@ -947,7 +951,7 @@ export default function PurchaseOrderFormPage() {
                         type="number"
                         min="0"
                         step="0.01"
-                        prefix="₹"
+                        prefix={posOptions.currency_symbol}
                         placeholder={t("Enter amount")}
                         value={payment.amount}
                         onChange={(event) =>

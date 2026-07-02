@@ -9,10 +9,9 @@ import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
-
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
 const workflowLabels: Record<string, string> = {
   draft: "Draft",
@@ -28,7 +27,10 @@ const paymentLabels: Record<string, string> = {
   paid: "Paid",
 }
 
-const buildColumns = (t: (key: string) => string) => [
+const buildColumns = (
+  t: (key: string) => string,
+  formatMoney: (value: any) => string
+) => [
   { key: "code", title: t("Name") },
   { key: "supplier_name", title: t("Provider") },
   {
@@ -90,14 +92,17 @@ const buildColumns = (t: (key: string) => string) => [
 export default function PurchaseOrdersPage() {
   const router = useRouter()
   const { t } = useTranslation()
-  const columns = buildColumns(t)
+  const posOptions = usePosOptions()
+  const formatMoney = (value: any) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const columns = buildColumns(t, formatMoney)
   const [deletePurchaseOrder] = (
     purchases as any
   ).useDeletePurchaseOrderMutation()
   const { hasPermission } = usePermissions()
   const canCreate = hasPermission(PERMISSIONS.purchases.create)
   const canUpdate = hasPermission(PERMISSIONS.purchases.update)
-  const canDelete = hasPermission(PERMISSIONS.purchases.update)
+  const canDelete = hasPermission(PERMISSIONS.purchases.delete)
   const canReceive = hasPermission(PERMISSIONS.purchases.receive)
   const canPay = hasPermission(PERMISSIONS.purchases.pay)
 
