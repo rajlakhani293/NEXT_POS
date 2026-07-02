@@ -11,6 +11,7 @@ import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { accounting } from "@/lib/api/accounting"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
 
@@ -28,6 +29,7 @@ const initialValues = {
 export default function CreateAccountingTransactionPage() {
   const router = useRouter()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
   const accounts = (accounting as any).useGetAccountsDropdownQuery()
   const [createTransaction, createState] = (
     accounting as any
@@ -117,7 +119,7 @@ export default function CreateAccountingTransactionPage() {
               required
               type="number"
               min="0"
-              prefix="₹"
+              prefix={posOptions.currency_symbol}
               prefixPadding="pl-9"
               value={values.amount}
               onChange={(event) => setValue("amount", event.target.value)}

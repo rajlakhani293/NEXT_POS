@@ -8,14 +8,18 @@ import { PermissionGuard } from "@/components/permission-guard"
 import { Button } from "@/components/ui/button"
 import { accounting } from "@/lib/api/accounting"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { useTableData } from "@/hooks/useTableData"
 
-const buildColumns = (t: (key: string) => string) => [
+const buildColumns = (
+  t: (key: string) => string,
+  formatMoney: (value: any) => string
+) => [
   { key: "name", title: t("Name") },
   { key: "type", title: t("Type") },
   { key: "account__name", title: t("Account Name") },
-  { key: "value", title: t("Value") },
+  { key: "value", title: t("Value"), render: (value: any) => formatMoney(value) },
   { key: "recurring", title: t("Recurring"), render: (value: any) => (value ? t("Yes") : t("No")) },
   { key: "occurrence", title: t("Occurrence") },
   { key: "user_username", title: t("Author") },
@@ -25,6 +29,9 @@ const buildColumns = (t: (key: string) => string) => [
 export default function TransactionsPage() {
   const router = useRouter()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const formatMoney = (value: any) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
   const table = useTableData({
     getMaster: (accounting as any).useGetTransactionsDataMutation,
     itemsPerPage: 10,
@@ -34,7 +41,7 @@ export default function TransactionsPage() {
     <PermissionGuard permission={PERMISSIONS.expenses.view}>
       <DynamicTable
         data={table.orders}
-        columns={buildColumns(t)}
+        columns={buildColumns(t, formatMoney)}
         tableTitle={t("Transactions List")}
         showSearch
         searchTerm={table.searchTerm}
