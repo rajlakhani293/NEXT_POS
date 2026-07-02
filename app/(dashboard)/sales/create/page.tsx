@@ -549,7 +549,7 @@ export default function SalesPage() {
 
   const handleOpenShift = async () => {
     if (!selectedRegisterId) {
-      showToast.error("Please select a cash register.")
+      showToast.error(t("Please select a cash register."))
       return
     }
 
@@ -563,7 +563,7 @@ export default function SalesPage() {
     setOpeningCash("")
     setOpeningNote("")
     setIsOpenShiftDialogOpen(false)
-    showToast.success(response?.message || "Shift opened successfully.")
+    showToast.success(response?.message || t("Shift opened successfully."))
   }
 
   const handleCloseShift = async () => {
@@ -585,7 +585,7 @@ export default function SalesPage() {
 
   const handleCashMovement = async () => {
     if (!movementAmount || Number(movementAmount) <= 0) {
-      showToast.error("Amount must be greater than 0.")
+      showToast.error(t("Amount must be greater than 0."))
       return
     }
 
@@ -600,7 +600,7 @@ export default function SalesPage() {
     setMovementNote("")
     setShiftAction(null)
     await loadShift()
-    showToast.success(response?.message || "Cash movement recorded.")
+    showToast.success(response?.message || t("Cash movement recorded."))
   }
 
   const getCartStockUsage = (productId: number | string, unitQuantityId?: number | string) =>
@@ -648,7 +648,7 @@ export default function SalesPage() {
       product.stock_management !== "disabled" && product.type !== "dematerialized"
 
     if (stockManaged && !unitQuantity?.id) {
-      showToast.error("Select a selling unit before adding this product.")
+      showToast.error(t("Select a selling unit before adding this product."))
       return false
     }
     if (!validateProductQuantity(product, unitQuantity, initialQty)) return false
@@ -719,7 +719,7 @@ export default function SalesPage() {
   const openQuantityDialog = (product: POSProduct | any, unitQuantity?: POSUnitQuantity | any, initialQty = 1) => {
     if (!showQuantity) {
       const added = addProductToCart(product, unitQuantity, initialQty)
-      if (added) showToast.success(`${product.name} added to cart.`)
+      if (added) showToast.success(t("{product} added to cart.").replace("{product}", product.name))
       return
     }
     setPendingCartProduct({ product, unitQuantity })
@@ -735,7 +735,7 @@ export default function SalesPage() {
       quantity
     )
     if (!added) return
-    showToast.success(`${pendingCartProduct.product.name} added to cart.`)
+    showToast.success(t("{product} added to cart.").replace("{product}", pendingCartProduct.product.name))
     setPendingCartProduct(null)
     setQuantityInput("1")
   }
@@ -756,7 +756,7 @@ export default function SalesPage() {
     const added = addProductToCart(product, matchedUnitQuantity, initialQty)
     if (added) {
       setBarcode("")
-      showToast.success(`${product.name} added to cart.`)
+      showToast.success(t("{product} added to cart.").replace("{product}", product.name))
     }
   }
 
@@ -990,7 +990,7 @@ export default function SalesPage() {
       }))
     )
     setIsHeldCartDialogOpen(false)
-    showToast.success("Held cart loaded successfully.")
+    showToast.success(t("Held cart loaded successfully."))
   }
 
   const handleOpenPendingOrder = async (order: any) => {
@@ -1021,24 +1021,24 @@ export default function SalesPage() {
 
   const handleDeleteHeldSale = async (heldSaleId: number | string) => {
     const response = await deleteHeldSale({ id: heldSaleId }).unwrap()
-    showToast.success(response?.message || "Held cart deleted successfully.")
+    showToast.success(response?.message || t("Held cart deleted successfully."))
     await refreshPendingOrders("hold", pendingOrderSearch)
   }
 
   const handleRedeemReward = async () => {
     if (!customerId) {
-      showToast.error("Choose customer before redeeming reward.")
+      showToast.error(t("Choose customer before redeeming reward."))
       return
     }
     if (!redeemableReward) {
-      showToast.error("No redeemable reward balance for this customer.")
+      showToast.error(t("No redeemable reward balance for this customer."))
       return
     }
     const response = await redeemCustomerReward({
       customer_id: Number(customerId),
       reward_system_id: Number(redeemableReward.reward_system_id),
       points: Number(redeemableReward.target_points),
-      note: "Redeemed from POS checkout.",
+      note: t("Redeemed from POS checkout."),
     }).unwrap()
     const couponCode = response?.data?.issued_coupon?.code
     if (couponCode) {
@@ -1047,16 +1047,16 @@ export default function SalesPage() {
         if (existing.includes(couponCode)) return current
         return [...existing, couponCode].join(", ")
       })
-      showToast.success(`Reward redeemed. Coupon ${couponCode} added.`)
+      showToast.success(t("Reward redeemed. Coupon {coupon} added.").replace("{coupon}", couponCode))
     } else {
-      showToast.success(response?.message || "Reward redeemed successfully.")
+      showToast.success(response?.message || t("Reward redeemed successfully."))
     }
     await getCustomerRewardBalance({ id: customerId })
   }
 
   const handleHoldSale = async () => {
     if (!cartItems.length) {
-      showToast.error("Add at least one product before holding cart.")
+      showToast.error(t("Add at least one product before holding cart."))
       return
     }
     if (paymentsRows.some((row) => money(row.amount) > 0)) {
@@ -1122,11 +1122,11 @@ export default function SalesPage() {
 
   const handleCompleteSale = async (submitOptions: { paymentStatus?: string } = {}) => {
     if (cashRegistersEnabled && !shift?.id) {
-      showToast.error("Open shift is required before billing.")
+      showToast.error(t("Open shift is required before billing."))
       return
     }
     if (!cartItems.length) {
-      showToast.error("Add at least one product to cart.")
+      showToast.error(t("Add at least one product to cart."))
       return
     }
     const requestedPaymentStatus = submitOptions.paymentStatus || estimatedPaymentStatus
@@ -1176,7 +1176,7 @@ export default function SalesPage() {
 
     const response = await createSale(payLoad).unwrap()
     const sale = response?.data
-    showToast.success(response?.message || "Sale created successfully.")
+    showToast.success(response?.message || t("Sale created successfully."))
     resetSaleForm()
     setIsPaymentDialogOpen(false)
     await loadShift()
@@ -1245,7 +1245,7 @@ export default function SalesPage() {
 
   const handleOpenPaymentDialog = () => {
     if (!cartItems.length) {
-      showToast.error("Add at least one product to cart.")
+      showToast.error(t("Add at least one product to cart."))
       return
     }
     setIsPaymentDialogOpen(true)
@@ -1442,7 +1442,7 @@ export default function SalesPage() {
                   label={t("customer")}
                   value={customerId}
                   onValueChange={setCustomerId}
-                  placeholder="Walk-in customer"
+                  placeholder={t("Walk-in Customer")}
                   allowClear
                 >
                   {customerOptions.map((customer: any) => (
@@ -1462,7 +1462,7 @@ export default function SalesPage() {
                 className="flex items-center gap-1 rounded px-2 py-1 text-blue-600 hover:bg-blue-50"
               >
                 <Home className="size-3.5" />
-                <span>Home</span>
+                <span>{t("Home")}</span>
               </button>
               {gridBreadcrumbs.map((crumb, i) => (
                 <span key={crumb.id} className="flex items-center gap-1">
@@ -1481,7 +1481,7 @@ export default function SalesPage() {
             {/* Pinned products strip */}
               {pinnedProductsForGrid.length > 0 && (
               <div className="border-b border-gray-100 bg-amber-50/60 px-3 py-2">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">Pinned</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">{t("Pinned")}</p>
                 <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                   {pinnedProductsForGrid.map((product) => {
                     const uq = product.unit_quantities?.[0]
@@ -1873,7 +1873,7 @@ export default function SalesPage() {
                         onChange={(event) =>
                           updatePaymentRow(row.id, "amount", event.target.value)
                         }
-                        placeholder="0.00"
+                        placeholder={t("0.00")}
                         prefix={posOptions.currency_symbol}
                         type="number"
                       />
@@ -2358,7 +2358,7 @@ export default function SalesPage() {
             label={t("opening_cash")}
             value={openingCash}
             onChange={(event) => setOpeningCash(event.target.value)}
-            placeholder="Enter opening cash"
+            placeholder={t("Enter opening cash")}
             prefix={posOptions.currency_symbol}
             type="number"
           />
@@ -2405,7 +2405,7 @@ export default function SalesPage() {
             label={t("amount")}
             value={movementAmount}
             onChange={(event) => setMovementAmount(event.target.value)}
-            placeholder="Enter amount"
+            placeholder={t("Enter amount")}
             prefix={posOptions.currency_symbol}
             type="number"
           />
@@ -2453,7 +2453,7 @@ export default function SalesPage() {
             label={t("declared_cash")}
             value={declaredCash}
             onChange={(event) => setDeclaredCash(event.target.value)}
-            placeholder="Enter counted cash"
+            placeholder={t("Enter counted cash")}
             prefix={posOptions.currency_symbol}
             type="number"
           />
@@ -2544,7 +2544,7 @@ export default function SalesPage() {
                         <p><strong>{t("Tendered")}</strong>: {formatMoney(order.tendered_amount || order.tendered || 0)}</p>
                       </div>
                       <div className="space-y-1">
-                        <p><strong>{t("Customer")}</strong>: {order.customer__full_name || order.customer__name || order.customer?.name || "Walk-in customer"}</p>
+                        <p><strong>{t("Customer")}</strong>: {order.customer__full_name || order.customer__name || order.customer?.name || t("Walk-in Customer")}</p>
                         <p><strong>{t("Date")}</strong>: {order.created_at ? new Date(order.created_at).toLocaleString() : "-"}</p>
                         <p><strong>{t("Type")}</strong>: {order.order_type || order.type || "-"}</p>
                       </div>
@@ -2712,9 +2712,9 @@ export default function SalesPage() {
       }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Select Selling Unit</DialogTitle>
+            <DialogTitle>{t("Select Selling Unit")}</DialogTitle>
             <DialogDescription>
-              Choose the unit you want to add for <strong>{unitPickerProduct?.name}</strong>.
+              {t("Choose the unit you want to add for")} <strong>{unitPickerProduct?.name}</strong>.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -2730,7 +2730,7 @@ export default function SalesPage() {
                 }}
                 className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold hover:border-blue-400 hover:bg-blue-50 transition"
               >
-                <span>{uq.unit_name || uq.unit_short_name || uq.unit_identifier || `Unit ${uq.id}`}</span>
+                <span>{uq.unit_name || uq.unit_short_name || uq.unit_identifier || `${t("Unit")} ${uq.id}`}</span>
                 <span className="text-blue-600">{formatMoney(getDisplayPrice(uq))}</span>
               </button>
             ))}
@@ -2774,7 +2774,7 @@ export default function SalesPage() {
                     {pendingCartProduct.unitQuantity.unit_name ||
                       pendingCartProduct.unitQuantity.unit_short_name ||
                       pendingCartProduct.unitQuantity.unit_identifier ||
-                      `Unit ${pendingCartProduct.unitQuantity.id}`}
+                      `${t("Unit")} ${pendingCartProduct.unitQuantity.id}`}
                   </span>
                 </div>
                 <div className="mt-2 flex justify-between">
@@ -3045,29 +3045,29 @@ export default function SalesPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Item Discount</DialogTitle>
+            <DialogTitle>{t("Item Discount")}</DialogTitle>
             <DialogDescription>
-              Apply a flat or percentage discount to <strong>{activeDiscountItem?.name}</strong>.
+              {t("Apply a flat or percentage discount to")} <strong>{activeDiscountItem?.name}</strong>.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <UniFieldSelect
-              label="Discount Type"
+              label={t("Discount Type")}
               value={itemDiscountType}
               onValueChange={(val) => setItemDiscountType(val as "flat" | "percentage")}
-              placeholder="Select discount type"
+              placeholder={t("Select discount type")}
               required
             >
               <SelectItem value="flat">{t("Flat Amount")} ({posOptions.currency_symbol})</SelectItem>
-              <SelectItem value="percentage">Percentage (%)</SelectItem>
+              <SelectItem value="percentage">{t("Percentage")} (%)</SelectItem>
             </UniFieldSelect>
 
             <UniFieldInput
-              label="Discount Value"
+              label={t("Discount Value")}
               value={itemDiscountVal}
               onChange={(e) => setItemDiscountVal(e.target.value)}
-              placeholder="Enter discount value"
+              placeholder={t("Enter discount value")}
               type="number"
               prefix={itemDiscountType === "flat" ? posOptions.currency_symbol : "%"}
             />
@@ -3078,10 +3078,10 @@ export default function SalesPage() {
               variant="outline"
               onClick={() => setActiveDiscountItem(null)}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button onClick={handleApplyItemDiscount}>
-              Apply Discount
+              {t("Apply Discount")}
             </Button>
           </DialogFooter>
         </DialogContent>
