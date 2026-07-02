@@ -8,26 +8,30 @@ import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { rewards } from "@/lib/api/rewards"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
-const balanceColumns = [
-  { key: "reward_system_name", title: "Reward System" },
-  { key: "points", title: "Points" },
-  { key: "lifetime_points", title: "Lifetime Points" },
-  { key: "target_points", title: "Target" },
+const buildBalanceColumns = (t: (key: string) => string) => [
+  { key: "reward_system_name", title: t("Reward System") },
+  { key: "points", title: t("Points") },
+  { key: "lifetime_points", title: t("Lifetime Points") },
+  { key: "target_points", title: t("Target") },
 ]
 
-const redemptionColumns = [
-  { key: "reward_system__name", title: "Reward System" },
-  { key: "customer_coupon__code", title: "Coupon" },
-  { key: "points_redeemed", title: "Points Redeemed" },
-  { key: "note", title: "Note" },
-  { key: "created_at", title: "Created" },
+const buildRedemptionColumns = (t: (key: string) => string) => [
+  { key: "reward_system__name", title: t("Reward System") },
+  { key: "customer_coupon__code", title: t("Coupon") },
+  { key: "points_redeemed", title: t("Points Redeemed") },
+  { key: "note", title: t("Note") },
+  { key: "created_at", title: t("Created") },
 ]
 
 export default function CustomerRewardsHistoryPage() {
   const router = useRouter()
   const params = useParams()
+  const { t } = useTranslation()
   const id = params.id as string
+  const balanceColumns = buildBalanceColumns(t)
+  const redemptionColumns = buildRedemptionColumns(t)
   const [tab, setTab] = useState<"balances" | "redemptions">("balances")
   const [balances, setBalances] = useState<any[]>([])
   const [redemptions, setRedemptions] = useState<any[]>([])
@@ -68,7 +72,7 @@ export default function CustomerRewardsHistoryPage() {
       <div className="flex h-full items-center justify-center bg-gray-50">
         <div className="flex items-center gap-3 text-sm font-medium text-gray-600">
           <Spinner className="h-5 w-5" />
-          Loading reward history...
+          {t("Loading reward history...")}
         </div>
       </div>
     )
@@ -92,24 +96,24 @@ export default function CustomerRewardsHistoryPage() {
           <ArrowLeft className="size-4" />
         </Button>
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Customer Rewards</h1>
+          <h1 className="text-xl font-bold text-gray-900">{t("Customer Rewards")}</h1>
           <p className="text-sm font-medium text-gray-500">
-            Reward balances and redeemed coupon history for this customer.
+            {t("Reward balances and redeemed coupon history for this customer.")}
           </p>
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">Reward Systems</p>
+          <p className="text-sm font-semibold text-slate-500">{t("Reward Systems")}</p>
           <p className="mt-3 text-2xl font-bold text-slate-950">{balances.length}</p>
         </div>
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">Available Points</p>
+          <p className="text-sm font-semibold text-slate-500">{t("Available Points")}</p>
           <p className="mt-3 text-2xl font-bold text-slate-950">{totalPoints}</p>
         </div>
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">Redemptions</p>
+          <p className="text-sm font-semibold text-slate-500">{t("Redemptions")}</p>
           <p className="mt-3 text-2xl font-bold text-slate-950">{totalItems}</p>
         </div>
       </div>
@@ -119,13 +123,13 @@ export default function CustomerRewardsHistoryPage() {
           variant={tab === "balances" ? "default" : "outline"}
           onClick={() => setTab("balances")}
         >
-          Balances
+          {t("Balances")}
         </Button>
         <Button
           variant={tab === "redemptions" ? "default" : "outline"}
           onClick={() => setTab("redemptions")}
         >
-          Redemptions
+          {t("Redemptions")}
         </Button>
       </div>
 
@@ -133,7 +137,7 @@ export default function CustomerRewardsHistoryPage() {
         <DynamicTable
           data={balances}
           columns={balanceColumns}
-          tableTitle="Reward Balances"
+          tableTitle={t("Reward Balances")}
           currentPage={1}
           itemsPerPage={balances.length || 10}
           totalItems={balances.length}
@@ -144,7 +148,7 @@ export default function CustomerRewardsHistoryPage() {
         <DynamicTable
           data={redemptions}
           columns={redemptionColumns}
-          tableTitle="Reward Redemptions"
+          tableTitle={t("Reward Redemptions")}
           currentPage={page}
           itemsPerPage={10}
           totalItems={totalItems}

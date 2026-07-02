@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import DynamicForm from "@/components/DynamicForm"
 import { customers } from "@/lib/api/customers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 
 type CustomerFormProps = {
@@ -80,7 +81,8 @@ const initialValues: CustomerFormValues = {
 
 const buildCustomerFields = (
   groups: { id: number | string; name: string }[],
-  t: (key: string) => string
+  t: (key: string) => string,
+  currencySymbol: string
 ) => [
   {
     name: "first_name",
@@ -100,7 +102,7 @@ const buildCustomerFields = (
     label: t("Credit Limit"),
     type: "number",
     placeholder: t("Set what should be the limit of the purchase on credit."),
-    prefix: "₹",
+    prefix: currencySymbol,
   },
   {
     name: "group_id",
@@ -273,6 +275,7 @@ export function CustomerForm({
   editId,
 }: CustomerFormProps) {
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
   const [createCustomer] = (customers as any).useCreateCustomerMutation()
   const [editCustomer] = (customers as any).useEditCustomerMutation()
   const [getCustomerById, { data, isLoading }] = (
@@ -303,7 +306,7 @@ export function CustomerForm({
   const record = data?.data
   const billingAddress = record?.addresses?.billing || record?.address || {}
   const shippingAddress = record?.addresses?.shipping || {}
-  const customerFields = buildCustomerFields(groups, t)
+  const customerFields = buildCustomerFields(groups, t, posOptions.currency_symbol)
   const formValues: CustomerFormValues =
     editId && record
       ? {

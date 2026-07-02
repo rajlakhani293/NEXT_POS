@@ -8,34 +8,45 @@ import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { promotions } from "@/lib/api/promotions"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 
-const couponColumns = [
-  { key: "coupon__name", title: "Coupon" },
-  { key: "code", title: "Issued Code" },
-  { key: "issued_at", title: "Issued At" },
-  { key: "expires_at", title: "Expires At" },
-  { key: "usage_count", title: "Usage Count" },
+const buildCouponColumns = (t: (key: string) => string) => [
+  { key: "coupon__name", title: t("Coupon") },
+  { key: "code", title: t("Issued Code") },
+  { key: "issued_at", title: t("Issued At") },
+  { key: "expires_at", title: t("Expires At") },
+  { key: "usage_count", title: t("Usage Count") },
   {
     key: "is_redeemed",
-    title: "Redeemed",
-    render: (value: boolean) => (value ? "Yes" : "No"),
+    title: t("Redeemed"),
+    render: (value: boolean) => (value ? t("Yes") : t("No")),
   },
-  { key: "redeemed_at", title: "Redeemed At" },
+  { key: "redeemed_at", title: t("Redeemed At") },
 ]
 
-const historyColumns = [
-  { key: "sale_order__code", title: "Sale No" },
-  { key: "code", title: "Coupon Code" },
-  { key: "type", title: "Type" },
-  { key: "discount_value", title: "Value" },
-  { key: "discount_amount", title: "Discount Applied" },
-  { key: "created_at", title: "Used At" },
+const buildHistoryColumns = (
+  t: (key: string) => string,
+  formatMoney: (value: any) => string
+) => [
+  { key: "sale_order__code", title: t("Sale No") },
+  { key: "code", title: t("Coupon Code") },
+  { key: "type", title: t("Type") },
+  { key: "discount_value", title: t("Value") },
+  { key: "discount_amount", title: t("Discount Applied"), render: (value: any) => formatMoney(value) },
+  { key: "created_at", title: t("Used At") },
 ]
 
 export default function CustomerCouponsHistoryPage() {
   const router = useRouter()
   const params = useParams()
+  const { t } = useTranslation()
+  const posOptions = usePosOptions()
   const id = params.id as string
+  const formatMoney = (value: any) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const couponColumns = buildCouponColumns(t)
+  const historyColumns = buildHistoryColumns(t, formatMoney)
   const [coupons, setCoupons] = useState<any[]>([])
   const [selectedCoupon, setSelectedCoupon] = useState<any>(null)
   const [historyRows, setHistoryRows] = useState<any[]>([])
@@ -94,7 +105,7 @@ export default function CustomerCouponsHistoryPage() {
       <div className="flex h-full items-center justify-center bg-gray-50">
         <div className="flex items-center gap-3 text-sm font-medium text-gray-600">
           <Spinner className="h-5 w-5" />
-          Loading customer coupons...
+          {t("Loading customer coupons...")}
         </div>
       </div>
     )
@@ -113,26 +124,26 @@ export default function CustomerCouponsHistoryPage() {
           <ArrowLeft className="size-4" />
         </Button>
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Customer Coupons</h1>
+          <h1 className="text-xl font-bold text-gray-900">{t("Customer Coupons")}</h1>
           <p className="text-sm font-medium text-gray-500">
-            Issued coupons and usage history for this customer.
+            {t("Issued coupons and usage history for this customer.")}
           </p>
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">Issued Coupons</p>
+          <p className="text-sm font-semibold text-slate-500">{t("Issued Coupons")}</p>
           <p className="mt-3 text-2xl font-bold text-slate-950">{totalCoupons}</p>
         </div>
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">Selected Coupon</p>
+          <p className="text-sm font-semibold text-slate-500">{t("Selected Coupon")}</p>
           <p className="mt-3 text-lg font-bold text-slate-950">
             {selectedCoupon?.code || "-"}
           </p>
         </div>
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">Usage History</p>
+          <p className="text-sm font-semibold text-slate-500">{t("Usage History")}</p>
           <p className="mt-3 text-2xl font-bold text-slate-950">{totalHistory}</p>
         </div>
       </div>
@@ -140,7 +151,7 @@ export default function CustomerCouponsHistoryPage() {
       <DynamicTable
         data={coupons}
         columns={couponColumns}
-        tableTitle="Issued Customer Coupons"
+        tableTitle={t("Issued Customer Coupons")}
         currentPage={couponsPage}
         itemsPerPage={10}
         totalItems={totalCoupons}
@@ -158,8 +169,8 @@ export default function CustomerCouponsHistoryPage() {
         columns={historyColumns}
         tableTitle={
           selectedCoupon?.code
-            ? `Coupon Usage History · ${selectedCoupon.code}`
-            : "Coupon Usage History"
+            ? `${t("Coupon Usage History")} - ${selectedCoupon.code}`
+            : t("Coupon Usage History")
         }
         currentPage={historyPage}
         itemsPerPage={10}

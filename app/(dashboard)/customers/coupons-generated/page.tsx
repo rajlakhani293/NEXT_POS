@@ -4,23 +4,26 @@ import { useRouter } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
 import { promotions } from "@/lib/api/promotions"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 
-const columns = [
-  { key: "name", title: "Name" },
-  { key: "code", title: "Code" },
-  { key: "coupon__name", title: "Coupon" },
-  { key: "customer__full_name", title: "Customer" },
-  { key: "usage", title: "Usage" },
-  { key: "limit_usage", title: "Limit" },
-  { key: "user_username", title: "Author" },
-  { key: "created_at", title: "Created On", render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+const buildColumns = (t: (key: string) => string) => [
+  { key: "name", title: t("Name") },
+  { key: "code", title: t("Code") },
+  { key: "coupon__name", title: t("Coupon") },
+  { key: "customer__full_name", title: t("Customer") },
+  { key: "usage", title: t("Usage") },
+  { key: "limit_usage", title: t("Limit") },
+  { key: "user_username", title: t("Author") },
+  { key: "created_at", title: t("Created On"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 
 export default function GeneratedCustomerCouponsPage() {
   const router = useRouter()
+  const { t } = useTranslation()
+  const columns = buildColumns(t)
   const { hasPermission } = usePermissions()
   const canUpdate = hasPermission(PERMISSIONS.promotions.update)
 
@@ -46,7 +49,7 @@ export default function GeneratedCustomerCouponsPage() {
       <DynamicTable
         data={orders}
         columns={columns}
-        tableTitle="Customer Coupons"
+        tableTitle={t("Customer Coupons")}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}

@@ -5,6 +5,7 @@ import { useEffect } from "react"
 import DynamicForm from "@/components/DynamicForm"
 import { promotions } from "@/lib/api/promotions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { rewards } from "@/lib/api/rewards"
 import { showToast } from "@/lib/toast"
 
@@ -35,7 +36,11 @@ const initialValues: RewardSystemFormValues = {
   description: "",
 }
 
-const buildRewardFields = (couponOptions: any[], t: (key: string) => string) => [
+const buildRewardFields = (
+  couponOptions: any[],
+  t: (key: string) => string,
+  currencySymbol: string
+) => [
   {
     name: "name",
     label: t("Reward Name"),
@@ -67,14 +72,14 @@ const buildRewardFields = (couponOptions: any[], t: (key: string) => string) => 
     label: t("From Cart Value"),
     type: "number",
     placeholder: t("Example: 100"),
-    prefix: "₹",
+    prefix: currencySymbol,
   },
   {
     name: "to_amount",
     label: t("To Cart Value"),
     type: "number",
     placeholder: t("Optional"),
-    prefix: "₹",
+    prefix: currencySymbol,
   },
   {
     name: "reward",
@@ -99,6 +104,7 @@ export function RewardSystemForm({
   editId,
 }: RewardSystemFormProps) {
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
   const [createRewardSystem] = (rewards as any).useCreateRewardSystemMutation()
   const [editRewardSystem] = (rewards as any).useEditRewardSystemMutation()
   const [getRewardSystemById, { data, isLoading }] = (
@@ -118,7 +124,7 @@ export function RewardSystemForm({
   }, [editId, getCouponsDropdown, getRewardSystemById, isOpen])
 
   const record = data?.data
-  const rewardFields = buildRewardFields(couponsData?.data || [], t)
+  const rewardFields = buildRewardFields(couponsData?.data || [], t, posOptions.currency_symbol)
   const formValues: RewardSystemFormValues =
     editId && record
       ? {
@@ -174,7 +180,10 @@ export function RewardSystemForm({
       onClose={onClose}
       onSuccess={onSuccess}
       title={editId ? t("Edit Reward System") : t("Create Reward System")}
-      note={t("Example: spend ₹100 and earn 1 point.")}
+      note={t("Example: spend {amount} and earn 1 point.").replace(
+        "{amount}",
+        `${posOptions.currency_symbol}100`
+      )}
       isOpen={isOpen}
       formWidth="w-[560px]"
       isLoading={Boolean(editId) && isLoading}

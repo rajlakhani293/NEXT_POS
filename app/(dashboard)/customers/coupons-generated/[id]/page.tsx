@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { promotions } from "@/lib/api/promotions"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { showToast } from "@/lib/toast"
 
 type GeneratedCouponValues = {
@@ -25,6 +26,7 @@ const initialValues: GeneratedCouponValues = {
 export default function GeneratedCustomerCouponFormPage() {
   const params = useParams()
   const router = useRouter()
+  const { t } = useTranslation()
   const id = params.id as string
   const loadKeyRef = useRef("")
   const [values, setValues] = useState(initialValues)
@@ -73,7 +75,7 @@ export default function GeneratedCustomerCouponFormPage() {
           limit_usage: Number(values.limit_usage || 0),
         },
       }).unwrap()
-      showToast.success(response?.message || "Customer coupon updated successfully.")
+      showToast.success(response?.message || t("Customer coupon updated successfully."))
       goBack()
     } finally {
       setIsSubmitting(false)
@@ -85,7 +87,7 @@ export default function GeneratedCustomerCouponFormPage() {
       <div className="flex h-full items-center justify-center bg-gray-50">
         <div className="flex items-center gap-3 text-sm font-medium text-gray-600">
           <Spinner className="h-5 w-5" />
-          Loading customer coupon...
+          {t("Loading customer coupon...")}
         </div>
       </div>
     )
@@ -98,26 +100,26 @@ export default function GeneratedCustomerCouponFormPage() {
           <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={goBack}>
             <ArrowLeft className="size-4" />
           </Button>
-          <h1 className="text-xl font-bold text-gray-900">Edit Customer Coupon</h1>
+          <h1 className="text-xl font-bold text-gray-900">{t("Edit Customer Coupon")}</h1>
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <section className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <UniFieldInput
-              label="Name"
+              label={t("Name")}
               value={values.name}
               onChange={(event) => updateField("name", event.target.value)}
             />
             <UniFieldInput
-              label="Usage"
+              label={t("Usage")}
               type="number"
               min="0"
               value={values.usage}
               onChange={(event) => updateField("usage", event.target.value)}
             />
             <UniFieldInput
-              label="Limit"
+              label={t("Limit")}
               type="number"
               min="0"
               value={values.limit_usage}
@@ -128,10 +130,10 @@ export default function GeneratedCustomerCouponFormPage() {
       </div>
       <footer className="flex justify-end gap-2 border-t border-gray-200 bg-white p-3">
         <Button type="button" variant="outline" onClick={goBack}>
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : "Save"}
+          {isSubmitting ? t("Saving...") : t("Save")}
         </Button>
       </footer>
     </form>

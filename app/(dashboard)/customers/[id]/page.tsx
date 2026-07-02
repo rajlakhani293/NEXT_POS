@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select"
 import { customers } from "@/lib/api/customers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
@@ -111,14 +112,14 @@ const paymentStatusColors: Record<string, string> = {
   order_void: "bg-zinc-200 text-zinc-700",
 }
 
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
-
-
 export default function CustomerFormPage() {
   const router = useRouter()
   const params = useParams()
   const searchParams = useSearchParams()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const formatMoney = (value: any) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
   const id = params.id as string
   const isEdit = id !== "create"
 
@@ -449,7 +450,7 @@ export default function CustomerFormPage() {
                         paymentStatusColors[value] || "bg-gray-100 text-gray-700"
                       )}
                     >
-                      {String(value || "-").replaceAll("_", " ")}
+                      {t(String(value || "-").replaceAll("_", " "))}
                     </span>
                   ),
                 },
@@ -590,7 +591,7 @@ export default function CustomerFormPage() {
                     type="number"
                     min="0"
                     step="0.01"
-                    prefix="₹"
+                    prefix={posOptions.currency_symbol}
                     placeholder={t("Enter credit limit")}
                     value={values.credit_limit_amount}
                     onChange={(event) =>

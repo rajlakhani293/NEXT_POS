@@ -7,14 +7,16 @@ import { Gift, ReceiptText, TicketPercent, Wallet } from "lucide-react"
 import DynamicTable from "@/components/DynamicTable"
 import { customers } from "@/lib/api/customers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { CustomerForm } from "./createUpdate"
 
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
-
-const buildColumns = (t: (key: string) => string) => [
+const buildColumns = (
+  t: (key: string) => string,
+  formatMoney: (value: any) => string
+) => [
   { key: "first_name", title: t("First Name") },
   { key: "last_name", title: t("Last Name") },
   { key: "group_name", title: t("Group") },
@@ -42,7 +44,10 @@ export default function CustomersPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { t } = useTranslation()
-  const columns = buildColumns(t)
+  const posOptions = usePosOptions()
+  const formatMoney = (value: any) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const columns = buildColumns(t, formatMoney)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [deleteCustomer] = (customers as any).useDeleteCustomerMutation()
   const [updateCustomerStatus] = (
@@ -52,6 +57,8 @@ export default function CustomersPage() {
   const canCreate = hasPermission(PERMISSIONS.customers.create)
   const canUpdate = hasPermission(PERMISSIONS.customers.update)
   const canDelete = hasPermission(PERMISSIONS.customers.delete)
+  const showCredit = posOptions.enable_credit_account
+  const showRewards = posOptions.enable_customer_rewards
 
   const {
     orders,
@@ -124,20 +131,20 @@ export default function CustomersPage() {
             icon: <ReceiptText className="size-4" />,
             onClick: () => router.push(`/customers/${record.id}?tab=orders`),
           },
-          {
+          showCredit ? {
             key: "credit",
             label: t("Wallet History"),
             labelText: t("Wallet History"),
             icon: <Wallet className="size-4" />,
             onClick: () => router.push(`/customers/${record.id}/account-history`),
-          },
-          {
+          } : null,
+          showRewards ? {
             key: "rewards",
             label: t("Rewards"),
             labelText: t("Rewards"),
             icon: <Gift className="size-4" />,
             onClick: () => router.push(`/customers/${record.id}/rewards`),
-          },
+          } : null,
           {
             key: "coupons",
             label: t("Coupons"),
@@ -145,7 +152,7 @@ export default function CustomersPage() {
             icon: <TicketPercent className="size-4" />,
             onClick: () => router.push(`/customers/${record.id}/coupons`),
           },
-        ]}
+        ].filter(Boolean) as any}
       />
       <CustomerForm
         isOpen={isFormOpen}

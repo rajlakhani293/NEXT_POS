@@ -8,20 +8,25 @@ import DynamicForm from "@/components/DynamicForm"
 import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
 import { customers } from "@/lib/api/customers"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 
-const columns = [
-  { key: "operation", title: "Operation" },
-  { key: "previous_amount", title: "Before" },
-  { key: "amount", title: "Amount" },
-  { key: "next_amount", title: "After" },
-  { key: "description", title: "Description" },
-  { key: "created_at", title: "Created" },
+const buildColumns = (t: (key: string) => string) => [
+  { key: "operation", title: t("Operation") },
+  { key: "previous_amount", title: t("Before") },
+  { key: "amount", title: t("Amount") },
+  { key: "next_amount", title: t("After") },
+  { key: "description", title: t("Description") },
+  { key: "created_at", title: t("Created") },
 ]
 
 export default function CustomerAccountHistoryPage() {
   const params = useParams()
   const router = useRouter()
+  const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const columns = buildColumns(t)
   const customerId = params.id as string
   const lastLedgerRequestRef = useRef("")
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -71,7 +76,7 @@ export default function CustomerAccountHistoryPage() {
         },
       },
     }).unwrap()
-    showToast.success(response?.message || "Account history stored successfully.")
+    showToast.success(response?.message || t("Account history stored successfully."))
     setIsFormOpen(false)
     await loadLedger(1, searchTerm, true)
   }
@@ -96,9 +101,9 @@ export default function CustomerAccountHistoryPage() {
           <ArrowLeft className="size-4" />
         </Button>
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Customer Accounts List</h1>
+          <h1 className="text-xl font-bold text-gray-900">{t("Customer Accounts List")}</h1>
           <p className="text-sm font-medium text-gray-500">
-            Display all customer accounts.
+            {t("Display all customer accounts.")}
           </p>
         </div>
       </div>
@@ -106,7 +111,7 @@ export default function CustomerAccountHistoryPage() {
       <DynamicTable
         data={rows}
         columns={columns}
-        tableTitle="Customer Accounts List"
+        tableTitle={t("Customer Accounts List")}
         showSearch
         searchTerm={searchTerm}
         onFilterChange={handleFilterChange}
@@ -117,7 +122,7 @@ export default function CustomerAccountHistoryPage() {
         isLoading={ledgerState.isLoading}
         secondaryActionButton={
           <Button disabled={!customerId} onClick={() => setIsFormOpen(true)}>
-            Add a new customer account
+            {t("Add a new customer account")}
           </Button>
         }
         hideActions
@@ -126,7 +131,7 @@ export default function CustomerAccountHistoryPage() {
       <DynamicForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title="Create a new customer account"
+        title={t("Create a new customer account")}
         initialValues={{
           amount: "",
           operation: "add",
@@ -135,28 +140,28 @@ export default function CustomerAccountHistoryPage() {
         fields={[
           {
             name: "amount",
-            label: "Amount",
+            label: t("Amount"),
             type: "number",
-            placeholder: "Amount",
+            placeholder: t("Amount"),
             required: true,
-            prefix: "₹",
+            prefix: posOptions.currency_symbol,
           },
           {
             name: "operation",
-            label: "Operation",
+            label: t("Operation"),
             type: "radio",
             required: true,
             options: [
-              { label: "Add", value: "add" },
-              { label: "Deduct", value: "deduct" },
-              { label: "Refund", value: "refund" },
-              { label: "Payment", value: "payment" },
+              { label: t("Add"), value: "add" },
+              { label: t("Deduct"), value: "deduct" },
+              { label: t("Refund"), value: "refund" },
+              { label: t("Payment"), value: "payment" },
             ],
           },
           {
             name: "description",
-            label: "Description",
-            placeholder: "Description",
+            label: t("Description"),
+            placeholder: t("Description"),
             required: true,
           },
         ]}

@@ -6,14 +6,16 @@ import { useSearchParams } from "next/navigation"
 import DynamicTable from "@/components/DynamicTable"
 import { promotions } from "@/lib/api/promotions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { CouponForm } from "./createUpdate"
 
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
-
-const buildColumns = (t: (key: string) => string) => [
+const buildColumns = (
+  t: (key: string) => string,
+  formatMoney: (value: any) => string
+) => [
   { key: "name", title: t("Name") },
   {
     key: "type",
@@ -40,7 +42,10 @@ const buildColumns = (t: (key: string) => string) => [
 export default function CouponsPage() {
   const searchParams = useSearchParams()
   const { t } = useTranslation()
-  const columns = buildColumns(t)
+  const posOptions = usePosOptions()
+  const formatMoney = (value: any) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const columns = buildColumns(t, formatMoney)
   const [formState, setFormState] = useState<{
     isOpen: boolean
     editId?: number | string | null

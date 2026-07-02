@@ -228,8 +228,8 @@ export function CustomerAddressAddon({
         initialValues={activeAddressValues}
         onSubmit={handleAddressSubmit}
         onClose={() => onOpenChange(null)}
-        title={openType === "shipping" ? "Shipping Address" : "Billing Address"}
-        note="Add address details for this customer."
+        title={openType === "shipping" ? t("Shipping Address") : t("Billing Address")}
+        note={t("Add address details for this customer.")}
         isOpen={Boolean(openType)}
         formWidth="w-[460px]"
       />

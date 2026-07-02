@@ -5,6 +5,7 @@ import { useEffect } from "react"
 import DynamicForm from "@/components/DynamicForm"
 import { promotions } from "@/lib/api/promotions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 
 type CouponFormProps = {
@@ -57,7 +58,7 @@ const csvToIds = (value: string) =>
 
 const idsToCsv = (value: any) => (Array.isArray(value) ? value.join(", ") : "")
 
-const buildCouponFields = (t: (key: string) => string) => [
+const buildCouponFields = (t: (key: string) => string, currencySymbol: string) => [
   { name: "name", label: t("Name"), type: "text", placeholder: t("Enter coupon name"), required: true },
   { name: "code", label: t("Code"), type: "text", placeholder: t("Example: WELCOME10"), required: true },
   {
@@ -71,8 +72,8 @@ const buildCouponFields = (t: (key: string) => string) => [
     ],
   },
   { name: "discount_value", label: t("Discount Value"), type: "number", placeholder: t("Enter discount"), required: true },
-  { name: "minimum_cart_value", label: t("Minimum Cart"), type: "number", placeholder: t("Minimum cart value"), prefix: "₹" },
-  { name: "maximum_cart_value", label: t("Maximum Cart"), type: "number", placeholder: t("0 means no maximum"), prefix: "₹" },
+  { name: "minimum_cart_value", label: t("Minimum Cart"), type: "number", placeholder: t("Minimum cart value"), prefix: currencySymbol },
+  { name: "maximum_cart_value", label: t("Maximum Cart"), type: "number", placeholder: t("0 means no maximum"), prefix: currencySymbol },
   { name: "valid_until", label: t("Valid Until"), type: "date", placeholder: t("Select valid until date") },
   { name: "valid_hours_start", label: t("Valid Hours Start"), type: "text", placeholder: t("HH:MM e.g. 09:00") },
   { name: "valid_hours_end", label: t("Valid Hours End"), type: "text", placeholder: t("HH:MM e.g. 21:00") },
@@ -109,6 +110,7 @@ const buildCouponFields = (t: (key: string) => string) => [
 
 export function CouponForm({ isOpen, onClose, onSuccess, editId }: CouponFormProps) {
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
   const [createCoupon] = (promotions as any).useCreateCouponMutation()
   const [editCoupon] = (promotions as any).useEditCouponMutation()
   const [getCouponById, { data, isLoading }] = (promotions as any).useGetCouponByIdMutation()
@@ -120,7 +122,7 @@ export function CouponForm({ isOpen, onClose, onSuccess, editId }: CouponFormPro
   }, [editId, getCouponById, isOpen])
 
   const record = data?.data
-  const couponFields = buildCouponFields(t)
+  const couponFields = buildCouponFields(t, posOptions.currency_symbol)
   const formValues: CouponFormValues =
     editId && record
       ? {

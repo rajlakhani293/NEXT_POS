@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { rewards } from "@/lib/api/rewards"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { showToast } from "@/lib/toast"
 
 type CustomerRewardValues = {
@@ -23,6 +24,7 @@ const initialValues: CustomerRewardValues = {
 export default function CustomerRewardEditPage() {
   const params = useParams()
   const router = useRouter()
+  const { t } = useTranslation()
   const customerId = params.id as string
   const rewardId = params.rewardId as string
   const loadKeyRef = useRef("")
@@ -73,7 +75,7 @@ export default function CustomerRewardEditPage() {
           target: values.target || "0",
         },
       }).unwrap()
-      showToast.success(response?.message || "Customer reward updated successfully.")
+      showToast.success(response?.message || t("Customer reward updated successfully."))
       goBack()
     } finally {
       setIsSubmitting(false)
@@ -85,7 +87,7 @@ export default function CustomerRewardEditPage() {
       <div className="flex h-full items-center justify-center bg-gray-50">
         <div className="flex items-center gap-3 text-sm font-medium text-gray-600">
           <Spinner className="h-5 w-5" />
-          Loading customer reward...
+          {t("Loading customer reward...")}
         </div>
       </div>
     )
@@ -98,14 +100,14 @@ export default function CustomerRewardEditPage() {
           <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={goBack}>
             <ArrowLeft className="size-4" />
           </Button>
-          <h1 className="text-xl font-bold text-gray-900">Edit Customer Reward</h1>
+          <h1 className="text-xl font-bold text-gray-900">{t("Edit Customer Reward")}</h1>
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <section className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <UniFieldInput
-              label="Points"
+              label={t("Points")}
               type="number"
               min="0"
               step="0.01"
@@ -113,7 +115,7 @@ export default function CustomerRewardEditPage() {
               onChange={(event) => updateField("points", event.target.value)}
             />
             <UniFieldInput
-              label="Target"
+              label={t("Target")}
               type="number"
               min="0"
               step="0.01"
@@ -125,10 +127,10 @@ export default function CustomerRewardEditPage() {
       </div>
       <footer className="flex justify-end gap-2 border-t border-gray-200 bg-white p-3">
         <Button type="button" variant="outline" onClick={goBack}>
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : "Save"}
+          {isSubmitting ? t("Saving...") : t("Save")}
         </Button>
       </footer>
     </form>

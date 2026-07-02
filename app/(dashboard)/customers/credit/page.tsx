@@ -7,20 +7,25 @@ import DynamicForm from "@/components/DynamicForm"
 import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
 import { customers } from "@/lib/api/customers"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 
-const columns = [
-  { key: "operation", title: "Operation" },
-  { key: "previous_amount", title: "Before" },
-  { key: "amount", title: "Amount" },
-  { key: "next_amount", title: "After" },
-  { key: "description", title: "Description" },
-  { key: "created_at", title: "Created" },
+const buildColumns = (t: (key: string) => string) => [
+  { key: "operation", title: t("Operation") },
+  { key: "previous_amount", title: t("Before") },
+  { key: "amount", title: t("Amount") },
+  { key: "next_amount", title: t("After") },
+  { key: "description", title: t("Description") },
+  { key: "created_at", title: t("Created") },
 ]
 
 export default function CustomerCreditPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const columns = buildColumns(t)
   const customerId = searchParams.get("customer_id") || ""
   const customerName = searchParams.get("customer_name") || ""
   const lastLedgerRequestRef = useRef("")
@@ -74,7 +79,7 @@ export default function CustomerCreditPage() {
         },
       },
     }).unwrap()
-    showToast.success(response?.message || "Account history stored successfully.")
+    showToast.success(response?.message || t("Account history stored successfully."))
     setIsFormOpen(false)
     await loadLedger(customerId, 1, searchTerm, true)
   }
@@ -90,12 +95,12 @@ export default function CustomerCreditPage() {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm">
-          <h1 className="text-xl font-bold">Customer Credit</h1>
+          <h1 className="text-xl font-bold">{t("Customer Credit")}</h1>
           <p className="mt-2 text-sm font-medium text-muted-foreground">
-            Please open credit history from a customer row.
+            {t("Please open credit history from a customer row.")}
           </p>
           <Button className="mt-4" onClick={() => router.push("/customers")}>
-            Back to Customers
+            {t("Back to Customers")}
           </Button>
         </div>
       </div>
@@ -123,7 +128,7 @@ export default function CustomerCreditPage() {
       <DynamicTable
         data={rows}
         columns={columns}
-        tableTitle="Account History"
+        tableTitle={t("Account History")}
         showSearch
         searchTerm={searchTerm}
         onFilterChange={handleFilterChange}
@@ -134,7 +139,7 @@ export default function CustomerCreditPage() {
         isLoading={ledgerState.isLoading}
         secondaryActionButton={
           <Button disabled={!customerId} onClick={() => setIsFormOpen(true)}>
-            Add History
+            {t("Add History")}
           </Button>
         }
         hideActions
@@ -143,7 +148,7 @@ export default function CustomerCreditPage() {
       <DynamicForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title="Customer Account History"
+        title={t("Customer Account History")}
         initialValues={{
           amount: "",
           operation: "add",
@@ -152,28 +157,28 @@ export default function CustomerCreditPage() {
         fields={[
           {
             name: "amount",
-            label: "Amount",
+            label: t("Amount"),
             type: "number",
-            placeholder: "Enter amount",
+            placeholder: t("Enter amount"),
             required: true,
-            prefix: "₹",
+            prefix: posOptions.currency_symbol,
           },
           {
             name: "operation",
-            label: "Operation",
+            label: t("Operation"),
             type: "radio",
             required: true,
             options: [
-              { label: "Add", value: "add" },
-              { label: "Deduct", value: "deduct" },
-              { label: "Refund", value: "refund" },
-              { label: "Payment", value: "payment" },
+              { label: t("Add"), value: "add" },
+              { label: t("Deduct"), value: "deduct" },
+              { label: t("Refund"), value: "refund" },
+              { label: t("Payment"), value: "payment" },
             ],
           },
           {
             name: "description",
-            label: "Description",
-            placeholder: "Enter description",
+            label: t("Description"),
+            placeholder: t("Enter description"),
             required: true,
           },
         ]}
