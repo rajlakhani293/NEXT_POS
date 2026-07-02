@@ -8,10 +8,12 @@ import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
-
-const buildColumns = (t: (key: string) => string) => [
+const buildColumns = (
+  t: (key: string) => string,
+  formatMoney: (value: any) => string
+) => [
   { key: "name", title: t("Name") },
   { key: "product_name", title: t("Product") },
   { key: "procurement_name", title: t("Procurement") },
@@ -27,7 +29,10 @@ export default function ProviderProductsPage() {
   const params = useParams()
   const router = useRouter()
   const { t } = useTranslation()
-  const columns = buildColumns(t)
+  const posOptions = usePosOptions()
+  const formatMoney = (value: any) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const columns = buildColumns(t, formatMoney)
   const id = params.id as string
   const lastRequestRef = useRef("")
   const [rows, setRows] = useState<any[]>([])

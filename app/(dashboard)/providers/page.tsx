@@ -9,13 +9,15 @@ import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { PermissionGuard } from "@/components/permission-guard"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
-
-const buildColumns = (t: (key: string) => string) => [
+const buildColumns = (
+  t: (key: string) => string,
+  formatMoney: (value: any) => string
+) => [
   { key: "first_name", title: t("First Name") },
   { key: "email", title: t("Email") },
   { key: "phone", title: t("Phone") },
@@ -99,7 +101,10 @@ export default function ProvidersPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { t } = useTranslation()
-  const columns = buildColumns(t)
+  const posOptions = usePosOptions()
+  const formatMoney = (value: any) =>
+    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const columns = buildColumns(t, formatMoney)
   const [formState, setFormState] = useState<{
     isOpen: boolean
     editId?: number | string | null
@@ -107,9 +112,9 @@ export default function ProvidersPage() {
   const [deleteProvider] = (purchases as any).useDeleteProviderMutation()
   const [updateProviderStatus] = (purchases as any).useUpdateProviderStatusMutation()
   const { hasPermission } = usePermissions()
-  const canCreate = hasPermission(PERMISSIONS.purchases.create)
-  const canUpdate = hasPermission(PERMISSIONS.purchases.update)
-  const canDelete = hasPermission(PERMISSIONS.purchases.delete)
+  const canCreate = hasPermission(PERMISSIONS.providers.create)
+  const canUpdate = hasPermission(PERMISSIONS.providers.update)
+  const canDelete = hasPermission(PERMISSIONS.providers.delete)
 
   const {
     orders,
@@ -138,7 +143,7 @@ export default function ProvidersPage() {
   }, [canCreate, searchParams])
 
   return (
-    <PermissionGuard permission={PERMISSIONS.purchases.view}>
+    <PermissionGuard permission={PERMISSIONS.providers.view}>
       <div className="h-full space-y-4">
         <DynamicTable
           data={orders}

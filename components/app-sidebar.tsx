@@ -153,7 +153,7 @@ const mainNavSections: DashboardNavSection[] = [
     title: "Providers",
     url: "/providers",
     icon: <UsersIcon />,
-    permission: PERMISSIONS.purchases.view,
+    permission: PERMISSIONS.providers.view,
   },
   {
     title: "Procurements",
