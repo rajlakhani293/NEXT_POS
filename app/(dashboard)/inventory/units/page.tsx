@@ -3,6 +3,7 @@
 import { CatalogPageShell } from "@/components/catalog/catalog-page-shell"
 import { catalog } from "@/lib/api/catalog"
 import { UnitForm } from "./createUpdate"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 const columns = [
   { key: "name", title: "Name" },
@@ -22,11 +23,20 @@ const columns = [
 ]
 
 export default function UnitsPage() {
+  const { t } = useTranslation()
+  const translatedColumns = columns.map((column) => ({
+    ...column,
+    render:
+      column.key === "base_unit"
+        ? (value: boolean) => (value ? t("Yes") : t("No"))
+        : column.render,
+  }))
+
   return (
     <CatalogPageShell
       tableTitle="Units List"
       addTitle="Add a new unit"
-      columns={columns}
+      columns={translatedColumns}
       getDataHook={(catalog as any).useGetUnitsDataMutation}
       deleteHook={(catalog as any).useDeleteUnitMutation}
       statusHook={(catalog as any).useUpdateUnitStatusMutation}

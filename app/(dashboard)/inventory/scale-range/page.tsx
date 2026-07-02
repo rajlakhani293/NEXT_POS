@@ -24,7 +24,7 @@ function ScaleRangeForm(props: any) {
   return (
     <CatalogMasterForm
       {...props}
-      entityName="scale range"
+      entityName="Scale Range"
       fields={[
         {
           name: "name",

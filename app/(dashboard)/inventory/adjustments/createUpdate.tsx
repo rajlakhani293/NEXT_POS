@@ -5,6 +5,8 @@ import { useEffect, useRef } from "react"
 import DynamicForm from "@/components/DynamicForm"
 import { catalog } from "@/lib/api/catalog"
 import { inventory } from "@/lib/api/inventory"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 
 type StockAdjustmentFormProps = {
@@ -29,6 +31,8 @@ export function StockAdjustmentForm({
   onSuccess,
   product,
 }: StockAdjustmentFormProps) {
+  const { t } = useTranslation()
+  const posOptions = usePosOptions()
   const loadedRef = useRef(false)
   const [createStockAdjustment] = (
     inventory as any
@@ -44,13 +48,13 @@ export function StockAdjustmentForm({
   }, [getProductsDropdown, isOpen])
 
   const productOptions = (products.data?.data || []).map((product: any) => ({
-    label: `${product.name}${product.sku ? ` (${product.sku})` : ""} - Stock: ${product.current_stock || 0}`,
+    label: `${product.name}${product.sku ? ` (${product.sku})` : ""} - ${t("Stock")}: ${product.current_stock || 0}`,
     value: product.id,
   }))
   const productFieldOptions = product
     ? [
         {
-          label: `${product.name}${product.sku ? ` (${product.sku})` : ""} - Stock: ${product.current_stock || 0}`,
+          label: `${product.name}${product.sku ? ` (${product.sku})` : ""} - ${t("Stock")}: ${product.current_stock || 0}`,
           value: product.id,
         },
       ]
@@ -63,7 +67,7 @@ export function StockAdjustmentForm({
       quantity: values.quantity || "0",
       unit_cost: values.unit_cost || "0",
     }).unwrap()
-    showToast.success(response?.message || "Stock adjustment created successfully.")
+    showToast.success(response?.message || t("Stock adjustment created successfully."))
     onSuccess()
     onClose()
   }
@@ -106,7 +110,7 @@ export function StockAdjustmentForm({
           label: "Unit Cost",
           placeholder: "Optional cost",
           type: "number",
-          prefix: "₹",
+          prefix: posOptions.currency_symbol,
         },
         {
           name: "reason",

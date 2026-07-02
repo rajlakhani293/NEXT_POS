@@ -152,7 +152,7 @@ const DynamicForm = <T extends Record<string, any>>({
         (typeof value === "string" && value.trim() === "") ||
         (Array.isArray(value) && value.length === 0))
     ) {
-      return field.custom_msg || `${field.label} is required`
+      return field.custom_msg ? t(field.custom_msg) : t("{field} is required").replace("{field}", t(field.label))
     }
 
     if (field.validate) {
@@ -160,7 +160,7 @@ const DynamicForm = <T extends Record<string, any>>({
     }
 
     if (field.type === "number" && value && isNaN(Number(value))) {
-      return `${field.label} must be a valid number`
+      return t("{field} must be a valid number").replace("{field}", t(field.label))
     }
 
     return ""
@@ -251,12 +251,12 @@ const DynamicForm = <T extends Record<string, any>>({
         <DrawerHeader className="shrink-0 border-b">
           <div className="flex items-center justify-between">
             <div>
-              <DrawerTitle>{title}</DrawerTitle>
+              <DrawerTitle>{t(title)}</DrawerTitle>
               {note ? (
                 <span className="text-sm text-muted-foreground">{note}</span>
               ) : (
                 <span className="sr-only">
-                  Form dialog for {title || "form"}
+                  {t("Form dialog for")} {t(title || "form")}
                 </span>
               )}
             </div>
@@ -355,7 +355,7 @@ const DynamicForm = <T extends Record<string, any>>({
                     placeholder={field.placeholder ? t(field.placeholder) : t(`Select ${field.label}`)}
                     error={errors[field.name]}
                     onAddNew={field.onAddNew}
-                    addNewLabel={field.addNewLabel}
+                    addNewLabel={field.addNewLabel ? t(field.addNewLabel) : field.addNewLabel}
                     allowClear={field.allowClear}
                     disabled={isFieldDisabled}
                   >

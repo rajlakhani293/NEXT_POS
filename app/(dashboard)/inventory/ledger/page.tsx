@@ -5,8 +5,8 @@ import { useSearchParams } from "next/navigation"
 import DynamicTable from "@/components/DynamicTable"
 import { inventory } from "@/lib/api/inventory"
 import { useTableData } from "@/hooks/useTableData"
-
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
+import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 
 const columns = [
   { key: "product_name", title: "Product" },
@@ -17,7 +17,7 @@ const columns = [
   { key: "before_quantity", title: "Initial Quantity" },
   { key: "quantity", title: "Quantity" },
   { key: "after_quantity", title: "New Quantity" },
-  { key: "total_price", title: "Total Price", render: formatMoney },
+  { key: "total_price", title: "Total Price" },
   { key: "user_username", title: "Author" },
   {
     key: "created_at",
@@ -28,6 +28,8 @@ const columns = [
 ]
 
 export default function StockLedgerPage() {
+  const { t } = useTranslation()
+  const posOptions = usePosOptions()
   const searchParams = useSearchParams()
   const productId = searchParams.get("product_id")
   const productName = searchParams.get("product_name")
@@ -48,13 +50,24 @@ export default function StockLedgerPage() {
     itemsPerPage: 10,
     selectedFilters: productId ? { product_id: Number(productId) } : {},
   })
+  const formatMoney = (value: any) => `${posOptions.currency_symbol}${Number(value || 0).toFixed(2)}`
+  const translatedColumns = columns.map((column) => ({
+    ...column,
+    title: t(column.title),
+    render:
+      column.key === "operation_type"
+        ? (value: string) => t(String(value || "-").replaceAll("-", " "))
+        : column.key === "total_price"
+          ? formatMoney
+          : column.render,
+  }))
 
   return (
     <div className="h-full space-y-4">
       <DynamicTable
         data={orders}
-        columns={columns}
-        tableTitle={productName ? `Stock Ledger - ${productName}` : "Stock Ledger"}
+        columns={translatedColumns}
+        tableTitle={productName ? `${t("Stock Ledger")} - ${productName}` : t("Stock Ledger")}
         showSearch
         searchTerm={searchTerm}
         currentPage={currentPage}

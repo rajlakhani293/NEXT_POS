@@ -5,6 +5,7 @@ import { useEffect } from "react"
 import DynamicForm from "@/components/DynamicForm"
 import { showToast } from "@/lib/toast"
 import { catalog } from "@/lib/api/catalog"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 type CategoryFormProps = {
   isOpen: boolean
@@ -35,6 +36,7 @@ export function CategoryForm({
   onSuccess,
   editId,
 }: CategoryFormProps) {
+  const { t } = useTranslation()
   const [createCategory] = (catalog as any).useCreateCategoryMutation()
   const [editCategory] = (catalog as any).useEditCategoryMutation()
   const [getCategoryById, { data, isLoading }] = (
@@ -54,7 +56,7 @@ export function CategoryForm({
   }, [editId, getCategoryById, getCategoriesDropdown, isOpen])
 
   const categoryOptions = [
-    { label: "No Parent", value: "" },
+    { label: t("No Parent"), value: "" },
     ...(categories.data?.data || [])
       .filter((c: any) => String(c.id) !== String(editId))
       .map((c: any) => ({
@@ -86,10 +88,10 @@ export function CategoryForm({
 
     if (editId) {
       const response = await editCategory({ id: editId, payLoad }).unwrap()
-      showToast.success(response?.message || "Category updated successfully.")
+      showToast.success(response?.message || t("Category updated successfully."))
     } else {
       const response = await createCategory(payLoad).unwrap()
-      showToast.success(response?.message || "Category created successfully.")
+      showToast.success(response?.message || t("Category created successfully."))
     }
 
     onSuccess()

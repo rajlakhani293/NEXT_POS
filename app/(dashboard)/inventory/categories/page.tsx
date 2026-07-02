@@ -89,6 +89,12 @@ export default function CategoriesPage() {
   const translatedColumns = columns.map((column) => ({
     ...column,
     title: t(column.title),
+    render:
+      column.key === "parent_name"
+        ? (value: any) => value || t("No Parent")
+        : column.key === "displays_on_pos"
+          ? (value: any) => (value ? t("Yes") : t("No"))
+          : column.render,
   }))
 
   return (

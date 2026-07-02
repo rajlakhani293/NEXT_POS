@@ -10,6 +10,8 @@ import { Spinner } from "@/components/ui/spinner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { catalog } from "@/lib/api/catalog"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { useAppSelector } from "@/lib/redux/hooks"
 import { showToast } from "@/lib/toast"
 
@@ -48,6 +50,8 @@ interface SelectedProduct {
 
 export default function PrintLabelsPage() {
   const router = useRouter()
+  const { t } = useTranslation()
+  const posOptions = usePosOptions()
   const storeNameSetting = useAppSelector(
     (state) => state.session.businessSettings?.settings?.store_name
   )
@@ -97,7 +101,7 @@ export default function PrintLabelsPage() {
     setSearchTerm("")
     // Prevent adding duplicates of the same product
     if (selectedProducts.some((p) => p.id === String(product.id))) {
-      showToast.error(`${product.name} is already added.`)
+      showToast.error(t("{product} is already added.").replace("{product}", product.name))
       return
     }
 
@@ -116,9 +120,9 @@ export default function PrintLabelsPage() {
         selected_unit_quantity_id: defaultUnitId,
       }
       setSelectedProducts((prev) => [...prev, newSelected])
-      showToast.success(`${product.name} added to list.`)
+      showToast.success(t("{product} added to list.").replace("{product}", product.name))
     } catch {
-      showToast.error(`Failed to load unit configurations for ${product.name}.`)
+      showToast.error(t("Failed to load unit configurations for {product}.").replace("{product}", product.name))
     }
   }
 
@@ -172,7 +176,7 @@ export default function PrintLabelsPage() {
 
   const handlePrint = () => {
     if (labelsToPrint.length === 0) {
-      showToast.error("Add at least one product label to print.")
+      showToast.error(t("Add at least one product label to print."))
       return
     }
     window.print()
@@ -194,15 +198,15 @@ export default function PrintLabelsPage() {
               <ArrowLeft className="size-4" />
             </Button>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Print Barcode Labels</h1>
+              <h1 className="text-xl font-bold text-gray-900">{t("Print Barcode Labels")}</h1>
               <p className="text-sm text-gray-500">
-                Generate and print custom barcode labels for store inventory items.
+                {t("Generate and print custom barcode labels for store inventory items.")}
               </p>
             </div>
           </div>
           <Button onClick={handlePrint} className="gap-2 bg-blue-600 hover:bg-blue-700">
             <Printer className="size-4" />
-            Print Labels
+            {t("Print Labels")}
           </Button>
         </div>
       </div>
@@ -214,10 +218,10 @@ export default function PrintLabelsPage() {
           <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950 px-5 py-3 text-slate-400">
             <div className="flex items-center gap-2">
               <Eye className="size-4 text-blue-400" />
-              <span className="text-sm font-semibold text-slate-200">Layout Preview</span>
+              <span className="text-sm font-semibold text-slate-200">{t("Layout Preview")}</span>
             </div>
             <span className="text-xs text-slate-500 font-medium">
-              Rendering {labelsToPrint.length} total labels
+              {t("Rendering {count} total labels").replace("{count}", String(labelsToPrint.length))}
             </span>
           </div>
 
@@ -259,7 +263,7 @@ export default function PrintLabelsPage() {
                         )}
                         {label.unitName && (
                           <p className="text-[9px] text-gray-500 truncate leading-none mt-0.5">
-                            Unit: {label.unitName}
+                            {t("Unit")}: {label.unitName}
                           </p>
                         )}
                       </div>
@@ -275,7 +279,7 @@ export default function PrintLabelsPage() {
 
                       {showProductPrice && (
                         <p className="text-xs font-bold text-black leading-none mt-0.5">
-                          ₹{label.price.toFixed(2)}
+                          {posOptions.currency_symbol}{label.price.toFixed(2)}
                         </p>
                       )}
                     </div>
@@ -285,8 +289,8 @@ export default function PrintLabelsPage() {
             ) : (
               <div className="flex flex-col items-center justify-center h-80 text-slate-500 gap-3">
                 <Sliders className="size-16 opacity-20 text-slate-400" />
-                <p className="text-sm font-semibold">Preview Paper is Empty</p>
-                <p className="text-xs text-slate-600">Search and add products to start designing labels.</p>
+                <p className="text-sm font-semibold">{t("Preview Paper is Empty")}</p>
+                <p className="text-xs text-slate-600">{t("Search and add products to start designing labels.")}</p>
               </div>
             )}
           </div>
@@ -297,8 +301,8 @@ export default function PrintLabelsPage() {
           {/* Section 1: Search & Add Products */}
           <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
             <div>
-              <h2 className="text-base font-bold text-gray-950">Add Products</h2>
-              <p className="text-xs text-gray-500">Scan barcode or search items to print.</p>
+              <h2 className="text-base font-bold text-gray-950">{t("Add Products")}</h2>
+              <p className="text-xs text-gray-500">{t("Scan barcode or search items to print.")}</p>
             </div>
             
             <div className="relative">
@@ -306,7 +310,7 @@ export default function PrintLabelsPage() {
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by name, SKU, or barcode..."
+                placeholder={t("Search by name, SKU, or barcode...")}
                 className="h-10 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
 
@@ -320,7 +324,7 @@ export default function PrintLabelsPage() {
                     >
                       <span className="text-xs font-bold text-gray-900">{product.name}</span>
                       <span className="text-[10px] text-gray-500">
-                        SKU: {product.sku || "-"} · Barcode: {product.barcode || "-"}
+                        {t("SKU")}: {product.sku || "-"} · {t("Barcode")}: {product.barcode || "-"}
                       </span>
                     </li>
                   ))}
@@ -331,7 +335,7 @@ export default function PrintLabelsPage() {
             {/* List of included products */}
             {selectedProducts.length > 0 && (
               <div className="space-y-3 pt-2">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Included Items</h3>
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("Included Items")}</h3>
                 <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                   {selectedProducts.map((product) => (
                     <div
@@ -346,30 +350,30 @@ export default function PrintLabelsPage() {
                       </button>
                       <div className="pr-6">
                         <p className="text-xs font-bold text-gray-950 truncate">{product.name}</p>
-                        <p className="text-[10px] text-gray-500">SKU: {product.sku || "-"}</p>
+                        <p className="text-[10px] text-gray-500">{t("SKU")}: {product.sku || "-"}</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[9px] font-bold text-gray-400 block mb-0.5">Selling Unit</label>
+                          <label className="text-[9px] font-bold text-gray-400 block mb-0.5">{t("Selling Unit")}</label>
                           <Select
                             value={product.selected_unit_quantity_id}
                             onValueChange={(val) => handleUpdateUnit(product.id, val)}
                           >
                             <SelectTrigger className="h-7 text-xs bg-white">
-                              <SelectValue placeholder="Unit" />
+                            <SelectValue placeholder={t("Unit")} />
                             </SelectTrigger>
                             <SelectContent className="max-h-40">
                               {product.unit_quantities.map((uq: any) => (
                                 <SelectItem key={uq.id} value={String(uq.id)}>
-                                  {uq.unit_name || uq.unit__name} (₹{Number(uq.sale_price).toFixed(2)})
+                                  {uq.unit_name || uq.unit__name} ({posOptions.currency_symbol}{Number(uq.sale_price).toFixed(2)})
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </div>
                         <div>
-                          <label className="text-[9px] font-bold text-gray-400 block mb-0.5">No. of Labels</label>
+                          <label className="text-[9px] font-bold text-gray-400 block mb-0.5">{t("No. of Labels")}</label>
                           <input
                             type="number"
                             min={1}
@@ -389,21 +393,21 @@ export default function PrintLabelsPage() {
           {/* Section 2: Layout Options */}
           <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
             <div>
-              <h2 className="text-base font-bold text-gray-950">Layout Settings</h2>
-              <p className="text-xs text-gray-500">Customize paper size, column structure, and label heights.</p>
+              <h2 className="text-base font-bold text-gray-950">{t("Layout Settings")}</h2>
+              <p className="text-xs text-gray-500">{t("Customize paper size, column structure, and label heights.")}</p>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-gray-600 block mb-1">Max Columns</label>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">{t("Max Columns")}</label>
                 <Select value={String(maxColumns)} onValueChange={(val) => setMaxColumns(Number(val))}>
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Columns" />
+                    <SelectValue placeholder={t("Columns")} />
                   </SelectTrigger>
                   <SelectContent>
                     {[1, 2, 3, 4, 5, 6].map((col) => (
                       <SelectItem key={col} value={String(col)}>
-                        {col} Column{col > 1 ? "s" : ""}
+                        {col} {t(col > 1 ? "Columns" : "Column")}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -411,22 +415,22 @@ export default function PrintLabelsPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-gray-600 block mb-1">Border Style</label>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">{t("Border Style")}</label>
                 <Select value={borderStyle} onValueChange={(val: any) => setBorderStyle(val)}>
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Border Style" />
+                    <SelectValue placeholder={t("Border Style")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="solid">Solid Line</SelectItem>
-                    <SelectItem value="dashed">Dashed Line</SelectItem>
-                    <SelectItem value="none">No Border</SelectItem>
+                    <SelectItem value="solid">{t("Solid Line")}</SelectItem>
+                    <SelectItem value="dashed">{t("Dashed Line")}</SelectItem>
+                    <SelectItem value="none">{t("No Border")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 block mb-1">Paper Width</label>
+                  <label className="text-[10px] font-bold text-gray-500 block mb-1">{t("Paper Width")}</label>
                   <input
                     type="number"
                     value={documentWidth}
@@ -435,7 +439,7 @@ export default function PrintLabelsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 block mb-1">Label Height</label>
+                  <label className="text-[10px] font-bold text-gray-500 block mb-1">{t("Label Height")}</label>
                   <input
                     type="number"
                     value={labelHeight}
@@ -444,7 +448,7 @@ export default function PrintLabelsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 block mb-1">Barcode Height</label>
+                  <label className="text-[10px] font-bold text-gray-500 block mb-1">{t("Barcode Height")}</label>
                   <input
                     type="number"
                     value={barcodeHeight}
@@ -459,31 +463,31 @@ export default function PrintLabelsPage() {
           {/* Section 3: Visibility Settings */}
           <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
             <div>
-              <h2 className="text-base font-bold text-gray-950">Field Visibility</h2>
-              <p className="text-xs text-gray-500">Toggle values to include on the printed sticker.</p>
+              <h2 className="text-base font-bold text-gray-950">{t("Field Visibility")}</h2>
+              <p className="text-xs text-gray-500">{t("Toggle values to include on the printed sticker.")}</p>
             </div>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between rounded-xl border border-slate-50 p-2">
                 <div>
-                  <p className="text-xs font-bold text-gray-900">Show Store Name</p>
+                  <p className="text-xs font-bold text-gray-900">{t("Show Store Name")}</p>
                   <p className="text-[10px] text-gray-500">{storeName}</p>
                 </div>
                 <Switch checked={showStoreName} onCheckedChange={setShowStoreName} />
               </div>
 
               <div className="flex items-center justify-between rounded-xl border border-slate-50 p-2">
-                <p className="text-xs font-bold text-gray-900">Show Product Name</p>
+                <p className="text-xs font-bold text-gray-900">{t("Show Product Name")}</p>
                 <Switch checked={showProductName} onCheckedChange={setShowProductName} />
               </div>
 
               <div className="flex items-center justify-between rounded-xl border border-slate-50 p-2">
-                <p className="text-xs font-bold text-gray-900">Show Product Price</p>
+                <p className="text-xs font-bold text-gray-900">{t("Show Product Price")}</p>
                 <Switch checked={showProductPrice} onCheckedChange={setShowProductPrice} />
               </div>
 
               <div className="flex items-center justify-between rounded-xl border border-slate-50 p-2">
-                <p className="text-xs font-bold text-gray-900">Show Barcode Text</p>
+                <p className="text-xs font-bold text-gray-900">{t("Show Barcode Text")}</p>
                 <Switch checked={showBarcodeText} onCheckedChange={setShowBarcodeText} />
               </div>
             </div>
