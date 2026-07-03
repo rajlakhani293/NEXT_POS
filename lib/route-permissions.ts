@@ -45,9 +45,9 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/modules/upload", permission: PERMISSIONS.special.manageModules },
   { path: "/modules", permission: PERMISSIONS.special.manageModules },
   { path: "/settings/users/profile", permission: PERMISSIONS.special.manageProfile },
-  { path: "/settings/users/roles/permissions-manager", permission: PERMISSIONS.roles.update },
-  { path: "/settings/users/roles/create", permission: PERMISSIONS.roles.create },
-  { path: "/settings/users/roles", permission: PERMISSIONS.roles.view },
+  { path: "/settings/roles/permissions-manager", permission: PERMISSIONS.roles.update },
+  { path: "/settings/roles/create", permission: PERMISSIONS.roles.create },
+  { path: "/settings/roles", permission: PERMISSIONS.roles.view },
   { path: "/settings/users", permission: PERMISSIONS.users.view },
   { path: "/settings/general", permission: PERMISSIONS.settings.view },
   { path: "/settings/company", permission: PERMISSIONS.settings.view },
@@ -57,6 +57,7 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/settings/orders", permission: PERMISSIONS.settings.view },
   { path: "/settings/reports", permission: PERMISSIONS.settings.view },
   { path: "/settings/invoices", permission: PERMISSIONS.settings.view },
+  { path: "/settings/reset", permission: PERMISSIONS.settings.view },
   { path: "/settings/about", permission: PERMISSIONS.settings.view },
   { path: "/settings/accounting", permission: PERMISSIONS.settings.view },
   { path: "/settings/tax-groups", permission: PERMISSIONS.products.view },
@@ -75,7 +76,7 @@ export function resolveRoutePermission(
     return { permission: PERMISSIONS.products.update }
   }
 
-  const roleEditMatch = pathname.match(/^\/settings\/users\/roles\/([^/]+)$/)
+  const roleEditMatch = pathname.match(/^\/settings\/roles\/([^/]+)$/)
   if (roleEditMatch && roleEditMatch[1] !== "create") {
     return { permission: PERMISSIONS.roles.update }
   }

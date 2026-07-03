@@ -78,9 +78,18 @@ const selectOptions: Record<string, { value: string; label: string }[]> = {
     { value: "grid", label: "Grid" },
     { value: "list", label: "List" },
   ],
+  pos_printing_document: [
+    { value: "invoice", label: "Invoice" },
+    { value: "receipt", label: "Receipt" },
+  ],
+  pos_printing_enabled_for: [
+    { value: "disabled", label: "Disabled" },
+    { value: "all_orders", label: "All Orders" },
+    { value: "partially_paid_orders", label: "From Partially Paid Orders" },
+    { value: "only_paid_orders", label: "Only Paid Orders" },
+  ],
   pos_printing_gateway: [
-    { value: "browser", label: "Browser" },
-    { value: "qz-tray", label: "QZ Tray" },
+    { value: "default", label: "Default Printing (web)" },
   ],
   pos_vat: [
     { value: "disabled", label: "Disabled" },
@@ -103,7 +112,12 @@ const selectOptions: Record<string, { value: string; label: string }[]> = {
   invoice_receipt_template: [
     { value: "default", label: "Default" },
   ],
-  workers_enabled: yesNoOptions,
+  reports_email: yesNoOptions,
+  workers_enabled: [
+    { value: "no", label: "No" },
+    { value: "await_confirm", label: "Test" },
+    { value: "yes", label: "Yes" },
+  ],
   mode: [
     { value: "soft", label: "Soft" },
     { value: "hard", label: "Hard" },

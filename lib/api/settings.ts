@@ -48,7 +48,6 @@ const endpointsConfig = {
   getUserById: { query: ({ id }: { id: number | string }) => getMutation(`accounts/users/${id}`) },
   assignRole: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`accounts/users/${id}/assign-role`)(payLoad) },
 
-  resetDatabase: { query: () => postMutation("settings/reset")({}) },
 
   // Modules
   getModules: { query: ({ segment = "" }: { segment?: string } = {}) => getMutation(`modules${segment ? `/${segment}` : ""}`) },

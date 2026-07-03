@@ -229,7 +229,7 @@ export default function RoleFormPage() {
   const params = useParams()
   const id = params.id as string
   const isEdit = id !== "create"
-  const rolesListPath = "/settings/users/roles"
+  const rolesListPath = "/settings/roles"
 
   const [values, setValues] = useState<RoleFormValues>(initialValues)
   const [errors, setErrors] = useState<Record<string, string>>({})

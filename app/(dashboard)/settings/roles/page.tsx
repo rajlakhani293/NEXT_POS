@@ -54,10 +54,10 @@ export default function RolesPage() {
         columns={columns}
         tableTitle={t("Roles List")}
         title={canCreate ? t("Add a new role") : undefined}
-        setAddEntityOpen={canCreate ? () => router.push("/settings/users/roles/create") : undefined}
+        setAddEntityOpen={canCreate ? () => router.push("/settings/roles/create") : undefined}
         showSearch
         showEdit={canUpdate}
-        onEdit={(record: any) => router.push(`/settings/users/roles/${record.id}`)}
+        onEdit={(record: any) => router.push(`/settings/roles/${record.id}`)}
         showDelete={canDelete}
         rowActions={
           canCreate
