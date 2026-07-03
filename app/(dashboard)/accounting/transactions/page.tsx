@@ -6,10 +6,12 @@ import { Clock, Play, Plus } from "lucide-react"
 import DynamicTable from "@/components/DynamicTable"
 import { PermissionGuard } from "@/components/permission-guard"
 import { Button } from "@/components/ui/button"
+import { usePermissions } from "@/hooks/use-permissions"
 import { accounting } from "@/lib/api/accounting"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
+import { showToast } from "@/lib/toast"
 import { useTableData } from "@/hooks/useTableData"
 
 const buildColumns = (
@@ -30,6 +32,12 @@ export default function TransactionsPage() {
   const router = useRouter()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
+  const { hasPermission } = usePermissions()
+  const canCreate = hasPermission(PERMISSIONS.expenses.create)
+  const canUpdate = hasPermission(PERMISSIONS.expenses.update)
+  const canDelete = hasPermission(PERMISSIONS.expenses.delete)
+  const [deleteTransaction] = (accounting as any).useDeleteTransactionMutation()
+  const [triggerTransaction] = (accounting as any).useTriggerTransactionMutation()
   const formatMoney = (value: any) =>
     `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
   const table = useTableData({
@@ -54,6 +62,13 @@ export default function TransactionsPage() {
         onSort={table.handleSort}
         sortableFields={table.sortableFields}
         isLoading={table.isLoading}
+        showEdit={canUpdate}
+        onEdit={(record) => router.push(`/accounting/transactions/create?id=${record.id}`)}
+        showDelete={canDelete}
+        deleteMutation={deleteTransaction}
+        triggerRefresh={table.triggerRefresh}
+        deleteModalTitle={t("Delete Transaction")}
+        deleteModalDescription={t("Would you like to delete this ?")}
         rowActions={(_, record) => [
           {
             key: "history",
@@ -67,15 +82,23 @@ export default function TransactionsPage() {
             label: t("Trigger"),
             labelText: t("Trigger"),
             icon: <Play className="size-4" />,
-            onClick: () => router.push(`/accounting/transactions/history/${record.id}?trigger=1`),
+            onClick: async () => {
+              try {
+                const response = await triggerTransaction({ id: record.id }).unwrap()
+                showToast.success(response?.message || t("The transaction has been successfully triggered."))
+                table.triggerRefresh()
+              } catch (error: any) {
+                showToast.error(error?.data?.message || t("Unable to trigger transaction."))
+              }
+            },
           },
-        ]}
+        ].filter((action) => action.key !== "trigger" || canUpdate)}
         showDateRange
         secondaryActionButton={
-          <Button onClick={() => router.push("/accounting/transactions/create")}>
+          canCreate ? <Button onClick={() => router.push("/accounting/transactions/create")}>
             <Plus className="size-4" />
             {t("Create Expense")}
-          </Button>
+          </Button> : undefined
         }
       />
     </PermissionGuard>

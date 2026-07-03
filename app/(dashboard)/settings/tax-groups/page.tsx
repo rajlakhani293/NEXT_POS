@@ -2,6 +2,7 @@
 
 import { CatalogPageShell } from "@/components/catalog/catalog-page-shell"
 import { catalog } from "@/lib/api/catalog"
+import { PERMISSIONS } from "@/lib/permissions"
 import { TaxGroupForm } from "./createUpdate"
 
 const columns = [
@@ -26,6 +27,7 @@ export default function TaxGroupsPage() {
       FormComponent={TaxGroupForm}
       deleteTitle="Delete Tax Group"
       deleteDescription="Would you like to delete this tax group?"
+      permissions={PERMISSIONS.taxes}
     />
   )
 }

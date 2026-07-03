@@ -19,6 +19,7 @@ const endpointsConfig = {
   deleteCategory: { query: deleteMutation("categories/delete") },
   updateCategoryStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("categories/status", payLoad) },
   getCategoryById: { query: ({ id }: { id: number }) => getMutation(`categories/${id}`) },
+  computeCategoryProducts: { query: ({ id }: { id: number | string }) => getMutation(`categories/${id}/compute-products`) },
 
   // Unit groups
   getUnitGroupsDropdown: { query: () => getMutation("unit-groups/dropdown-list") },

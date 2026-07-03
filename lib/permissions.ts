@@ -33,6 +33,12 @@ export const PERMISSIONS = {
     update: "products_update",
     delete: "products_delete",
   },
+  taxes: {
+    view: "taxes_view",
+    create: "taxes_create",
+    update: "taxes_update",
+    delete: "taxes_delete",
+  },
   inventory: {
     view: "inventory_view",
     adjust: "inventory_adjust",
@@ -74,7 +80,15 @@ export const PERMISSIONS = {
   payments: {
     view: "payments_view",
     create: "payments_create",
+    update: "payments_update",
+    delete: "payments_delete",
     collectDue: "payments_collect_due",
+  },
+  media: {
+    view: "media_view",
+    upload: "media_upload",
+    update: "media_update",
+    delete: "media_delete",
   },
   cashRegister: {
     view: "cash_register_view",

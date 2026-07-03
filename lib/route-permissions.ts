@@ -11,6 +11,7 @@ export type ResolvedRoutePermission = Omit<RoutePermission, "path">
 export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/dashboard", permission: PERMISSIONS.reports.view },
   { path: "/sales/create", permission: PERMISSIONS.sales.create },
+  { path: "/sales/payment-types", permission: PERMISSIONS.payments.view },
   { path: "/sales", permission: PERMISSIONS.sales.view },
   { path: "/sales/history", permission: PERMISSIONS.sales.view },
   { path: "/sales/receipt", permission: PERMISSIONS.sales.view },
@@ -44,6 +45,7 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/inventory/scale-range", permission: PERMISSIONS.inventory.adjust },
   { path: "/modules/upload", permission: PERMISSIONS.special.manageModules },
   { path: "/modules", permission: PERMISSIONS.special.manageModules },
+  { path: "/medias", permission: PERMISSIONS.media.view },
   { path: "/settings/users/profile", permission: PERMISSIONS.special.manageProfile },
   { path: "/settings/roles/permissions-manager", permission: PERMISSIONS.roles.update },
   { path: "/settings/roles/create", permission: PERMISSIONS.roles.create },
@@ -60,8 +62,8 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/settings/reset", permission: PERMISSIONS.settings.view },
   { path: "/settings/about", permission: PERMISSIONS.settings.view },
   { path: "/settings/accounting", permission: PERMISSIONS.settings.view },
-  { path: "/settings/tax-groups", permission: PERMISSIONS.products.view },
-  { path: "/settings/taxes", permission: PERMISSIONS.products.view },
+  { path: "/settings/tax-groups", permission: PERMISSIONS.taxes.view },
+  { path: "/settings/taxes", permission: PERMISSIONS.taxes.view },
 ]
 
 export function resolveRoutePermission(

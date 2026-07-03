@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { Calculator } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { CategoryForm } from "@/app/(dashboard)/inventory/categories/createUpdate"
@@ -10,6 +11,7 @@ import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { showToast } from "@/lib/toast"
 
 const columns = [
   { key: "name", title: "Name" },
@@ -41,6 +43,9 @@ export default function CategoriesPage() {
   const [updateCategoryStatus] = (
     catalog as any
   ).useUpdateCategoryStatusMutation()
+  const [computeCategoryProducts] = (
+    catalog as any
+  ).useComputeCategoryProductsMutation()
   const { hasPermission } = usePermissions()
   const canCreate = hasPermission(PERMISSIONS.products.create)
   const canUpdate = hasPermission(PERMISSIONS.products.update)
@@ -128,6 +133,28 @@ export default function CategoriesPage() {
         triggerRefresh={triggerRefresh}
         deleteModalTitle={t("Delete Category")}
         deleteModalDescription={t("Would you like to delete this ?")}
+        rowActions={(_, record) =>
+          canUpdate
+            ? [
+                {
+                  key: "compute",
+                  label: t("Compute Products"),
+                  labelText: t("Compute Products"),
+                  icon: <Calculator className="size-4" />,
+                  onClick: async () => {
+                    const response = await computeCategoryProducts({
+                      id: record.id,
+                    }).unwrap()
+                    showToast.success(
+                      response?.message ||
+                        t("The category products has been refreshed")
+                    )
+                    triggerRefresh()
+                  },
+                },
+              ]
+            : []
+        }
       />
 
       <CategoryForm

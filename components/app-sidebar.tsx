@@ -66,6 +66,18 @@ const mainNavSections: DashboardNavSection[] = [
     url: "/sales",
     icon: <ReceiptTextIcon />,
     permission: PERMISSIONS.sales.view,
+    items: [
+      {
+        title: "Orders List",
+        url: "/sales",
+        permission: PERMISSIONS.sales.view,
+      },
+      {
+        title: "Payment Types",
+        url: "/sales/payment-types",
+        permission: PERMISSIONS.payments.view,
+      },
+    ],
   },
   {
     title: "Inventory",
@@ -120,6 +132,12 @@ const mainNavSections: DashboardNavSection[] = [
     url: "/modules",
     icon: <PlugIcon />,
     permission: PERMISSIONS.special.manageModules,
+  },
+  {
+    title: "Medias",
+    url: "/medias",
+    icon: <ImageIcon />,
+    permission: PERMISSIONS.media.view,
   },
   {
     title: "Customers",
@@ -265,20 +283,20 @@ const settingsNavSections: DashboardNavSection[] = [
     url: "/settings/tax-groups",
     icon: <HiReceiptTax />,
     permission: [
-      PERMISSIONS.products.view,
-      PERMISSIONS.products.create,
+      PERMISSIONS.taxes.view,
+      PERMISSIONS.taxes.create,
     ],
     permissionMatch: "any",
     items: [
       {
         title: "Taxes Groups",
         url: "/settings/tax-groups",
-        permission: PERMISSIONS.products.view,
+        permission: PERMISSIONS.taxes.view,
       },
       {
         title: "Taxes",
         url: "/settings/taxes",
-        permission: PERMISSIONS.products.view,
+        permission: PERMISSIONS.taxes.view,
       },
     ],
   },
@@ -429,7 +447,12 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
     const itemPath = url.split("?")[0]
 
     if (itemPath === "/sales") {
-      return pathname === "/sales" || (pathname.startsWith("/sales/") && pathname !== "/sales/create")
+      return (
+        pathname === "/sales" ||
+        (pathname.startsWith("/sales/") &&
+          pathname !== "/sales/create" &&
+          !pathname.startsWith("/sales/payment-types"))
+      )
     }
 
     if (itemPath === "/settings/users") {

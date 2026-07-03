@@ -2,6 +2,7 @@
 
 import { CatalogPageShell } from "@/components/catalog/catalog-page-shell"
 import { catalog } from "@/lib/api/catalog"
+import { PERMISSIONS } from "@/lib/permissions"
 import { TaxForm } from "./createUpdate"
 
 const columns = [
@@ -28,6 +29,7 @@ export default function TaxesPage() {
       FormComponent={TaxForm}
       deleteTitle="Delete Tax"
       deleteDescription="Would you like to delete this tax?"
+      permissions={PERMISSIONS.taxes}
     />
   )
 }

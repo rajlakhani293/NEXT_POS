@@ -31,6 +31,19 @@ const endpointsConfig = {
   },
 
   createManualTransaction: { query: createMutation("transactions/") },
+  editTransaction: {
+    query: ({ id, payLoad }: { id: any; payLoad: any }) =>
+      putMutation(`transactions/${id}`, payLoad),
+  },
+  getTransactionById: {
+    query: ({ id }: { id: number | string }) => getMutation(`transactions/${id}`),
+  },
+  deleteTransaction: {
+    query: ({ ids }: { ids: Array<number | string> }) => ({
+      url: `transactions/${ids[0]}`,
+      method: "DELETE",
+    }),
+  },
   getTransactionsData: { query: postMutation("transactions/get-transactions") },
   getTransactionHistoryData: { query: postMutation("history/get-transactions") },
   triggerTransaction: {
