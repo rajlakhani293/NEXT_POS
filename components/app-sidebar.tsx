@@ -307,7 +307,7 @@ const settingsNavSections: DashboardNavSection[] = [
   },
   {
     title: "Roles",
-    url: "/settings/users/roles",
+    url: "/settings/roles",
     icon: <ShieldCheckIcon />,
     permission: [
       PERMISSIONS.roles.view,
@@ -318,12 +318,12 @@ const settingsNavSections: DashboardNavSection[] = [
     items: [
       {
         title: "Roles",
-        url: "/settings/users/roles",
+        url: "/settings/roles",
         permission: PERMISSIONS.roles.view,
       },
       {
         title: "Permissions Manager",
-        url: "/settings/users/roles/permissions-manager",
+        url: "/settings/roles/permissions-manager",
         permission: PERMISSIONS.roles.update,
       },
     ],
