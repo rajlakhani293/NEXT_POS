@@ -140,10 +140,13 @@ export const reportColumns: Record<ReportKey, any[]> = {
   ],
   stock_ledger: [
     { key: "product__name", title: "Product" },
-    { key: "entry_type", title: "Entry" },
-    { key: "quantity", title: "Qty" },
-    { key: "unit_cost", title: "Cost" },
-    { key: "balance_after", title: "Balance" },
+    { key: "unit__name", title: "Unit" },
+    { key: "initial_quantity", title: "Initial Quantity" },
+    { key: "procured_quantity", title: "Procured Quantity" },
+    { key: "sold_quantity", title: "Sold Quantity" },
+    { key: "defective_quantity", title: "Defective Quantity" },
+    { key: "final_quantity", title: "Final Quantity" },
+    { key: "date", title: "Date" },
   ],
   sold_stock: [
     { key: "sale_order__code", title: "Order" },

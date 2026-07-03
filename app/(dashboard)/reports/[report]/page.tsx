@@ -17,6 +17,7 @@ import { accounting } from "@/lib/api/accounting"
 import { customers } from "@/lib/api/customers"
 import { reports } from "@/lib/api/reports"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { getDateRange } from "@/lib/utils"
 import {
   isReportKey,
@@ -29,6 +30,9 @@ export default function ReportViewPage() {
   const router = useRouter()
   const params = useParams()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const formatMoney = (val: any) =>
+    `${posOptions.currency_symbol}${Number(val || 0).toFixed(posOptions.currency_precision)}`
   const reportParam = String(params.report || "")
 
   if (!isReportKey(reportParam)) {
@@ -58,9 +62,9 @@ export default function ReportViewPage() {
   const [getCustomerStatement, customerStatementState] = (
     reports as any
   ).useGetCustomerStatementMutation()
-  const [getStockLedgerReport, stockLedgerState] = (
+  const [getProductHistoryCombinedReport, stockHistoryState] = (
     reports as any
-  ).useGetStockLedgerReportMutation()
+  ).useGetProductHistoryCombinedReportMutation()
   const [getSaleReport, saleReportState] = (
     reports as any
   ).useGetSaleReportMutation()
@@ -89,7 +93,7 @@ export default function ReportViewPage() {
   const isTableLoading =
     customerStatementState.isLoading ||
     customersDropdownState.isLoading ||
-    stockLedgerState.isLoading ||
+    stockHistoryState.isLoading ||
     saleReportState.isLoading ||
     soldStockState.isLoading ||
     profitState.isLoading ||
@@ -103,13 +107,17 @@ export default function ReportViewPage() {
     if (activeReport === "annual") {
       return { year: selectedYear }
     }
-    return {
+    const payload: any = {
       page,
       limit: 10,
       search: searchTerm || undefined,
       startDate: dateFilters.startDate,
       endDate: dateFilters.endDate,
     }
+    if (activeReport === "stock_ledger") {
+      payload.date = dateFilters.endDate || dateFilters.startDate
+    }
+    return payload
   }, [activeReport, selectedYear, dateFilters.endDate, dateFilters.startDate, page, searchTerm])
 
   useEffect(() => {
@@ -145,7 +153,7 @@ export default function ReportViewPage() {
       sales_progress: getProductsReport,
       customers_statement: (payLoad: any) => getCustomerStatement({ id: selectedCustomerId, payLoad }),
       low_stock: getLowStockReport,
-      stock_ledger: getStockLedgerReport,
+      stock_ledger: getProductHistoryCombinedReport,
       sold_stock: getSoldStockReport,
       profit: getProfitReport,
       accounting: getTransactionHistoryData,
@@ -181,7 +189,7 @@ export default function ReportViewPage() {
     getProfitReport,
     getSaleReport,
     getSoldStockReport,
-    getStockLedgerReport,
+    getProductHistoryCombinedReport,
     getTransactionHistoryData,
     rowsPayload,
     selectedCustomerId,
@@ -269,8 +277,6 @@ export default function ReportViewPage() {
     return rawColumns.map((col: any) => {
       if (col.render) return col
 
-      const formatMoney = (val: any) => `₹${Number(val || 0).toFixed(2)}`
-
       const moneyKeys = [
         "total",
         "tendered_amount",
@@ -300,6 +306,19 @@ export default function ReportViewPage() {
         "net_income",
       ]
 
+      if (col.key === "due_amount") {
+        return {
+          ...col,
+          title: t(col.title),
+          render: (_: any, record: any) => {
+            const total = Number(record.total || 0)
+            const paid = Number(record.tendered_amount || 0)
+            const due = Math.max(0, total - paid)
+            return formatMoney(due)
+          },
+        }
+      }
+
       if (moneyKeys.includes(col.key)) {
         return {
           ...col,
@@ -308,7 +327,7 @@ export default function ReportViewPage() {
         }
       }
 
-      if (col.key === "created_at" || col.key === "paid_at") {
+      if (col.key === "created_at" || col.key === "paid_at" || col.key === "date") {
         return {
           ...col,
           title: t(col.title),
@@ -332,36 +351,22 @@ export default function ReportViewPage() {
         }
       }
 
-      if (col.key === "due_amount") {
-        return {
-          ...col,
-          title: t(col.title),
-          render: (_: any, record: any) => {
-            const total = Number(record.total || 0)
-            const paid = Number(record.tendered_amount || 0)
-            const due = Math.max(0, total - paid)
-            return formatMoney(due)
-          },
-        }
-      }
-
       return {
         ...col,
         title: t(col.title),
       }
     })
-  }, [activeReport, t])
+  }, [activeReport, formatMoney, t])
 
   const footerSummary = useMemo(() => {
     if (activeReport !== "annual" || !annualTotals) return undefined
-    const formatMoney = (val: any) => `₹${Number(val || 0).toFixed(2)}`
     return [
       { label: t("Total Sales"), value: formatMoney(annualTotals.total_sales) },
       { label: t("Total Taxes"), value: formatMoney(annualTotals.total_taxes) },
       { label: t("Total Expenses"), value: formatMoney(annualTotals.total_expenses) },
       { label: t("Net Income"), value: formatMoney(annualTotals.net_income) },
     ]
-  }, [activeReport, annualTotals, t])
+  }, [activeReport, annualTotals, formatMoney, t])
 
   return (
     <div className="flex h-full min-h-0 flex-col">

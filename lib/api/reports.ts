@@ -6,7 +6,7 @@ import { postMutation } from "@/lib/api/apiUtils"
 const endpointsConfig = {
   getDashboardSummary: { query: postMutation("dashboard-summary"), type: "query" },
   refreshDashboardSnapshot: { query: postMutation("dashboard-snapshot/refresh") },
-  getStockLedgerReport: { query: postMutation("stock-ledger") },
+  getProductHistoryCombinedReport: { query: postMutation("product-history-combined") },
   getSaleReport: { query: postMutation("sale-report") },
   getSoldStockReport: { query: postMutation("sold-stock-report") },
   getProfitReport: { query: postMutation("profit-report") },
