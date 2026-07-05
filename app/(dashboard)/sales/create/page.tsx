@@ -582,27 +582,6 @@ export default function SalesPage() {
     getCustomerRewardBalance({ id: customerId })
   }, [customerId, getCustomerRewardBalance])
 
-  useEffect(() => {
-    if (!subtotal) {
-      setPaymentsRows((current) =>
-        current.map((row, index) =>
-          index === 0 ? { ...row, amount: "" } : row
-        )
-      )
-      return
-    }
-
-    setPaymentsRows((current) => {
-      if (!current.length) {
-        return [{ ...emptyPaymentRow(), amount: subtotal.toFixed(2) }]
-      }
-      if (current.some((row) => row.amount)) return current
-      return current.map((row, index) =>
-        index === 0 ? { ...row, amount: subtotal.toFixed(2) } : row
-      )
-    })
-  }, [subtotal])
-
   const handleOpenShift = async () => {
     if (!selectedRegisterId) {
       showToast.error(t("Please select a cash register."))
@@ -2265,6 +2244,7 @@ export default function SalesPage() {
 
       <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
         <DialogContent className="h-[92vh] max-w-6xl overflow-hidden p-0">
+          <DialogTitle className="sr-only">{t("Payment")}</DialogTitle>
           <div className="flex h-full flex-col overflow-hidden lg:flex-row">
             <div className="flex w-full shrink-0 items-center justify-between border-b bg-gray-50 px-3 py-2 lg:h-full lg:w-60 lg:flex-col lg:items-stretch lg:border-b-0 lg:border-r">
               <h3 className="text-lg font-bold">
