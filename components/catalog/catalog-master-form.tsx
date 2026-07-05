@@ -18,6 +18,7 @@ type CatalogMasterFormProps = {
   editHook: any
   getByIdHook: any
   formWidth?: string
+  nestedDrawer?: boolean
   buildPayload?: (values: Record<string, any>) => Record<string, any>
 }
 
@@ -33,6 +34,7 @@ export function CatalogMasterForm({
   editHook,
   getByIdHook,
   formWidth = "w-[520px]",
+  nestedDrawer,
   buildPayload,
 }: CatalogMasterFormProps) {
   const [createRecord] = createHook()
@@ -104,6 +106,7 @@ export function CatalogMasterForm({
       title={editId ? t(`Edit ${entityName}`) : t(`Create ${entityName}`)}
       isOpen={isOpen}
       formWidth={formWidth}
+      nestedDrawer={nestedDrawer}
       isLoading={Boolean(editId) && isLoading}
     />
   )

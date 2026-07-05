@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
+import { UnitGroupForm } from "@/app/(dashboard)/inventory/unit-groups/createUpdate"
 import { catalog } from "@/lib/api/catalog"
 
 const initialValues = {
@@ -16,6 +17,7 @@ const initialValues = {
 }
 
 export function UnitForm(props: any) {
+  const [isUnitGroupFormOpen, setIsUnitGroupFormOpen] = useState(false)
   const [getUnitGroupsDropdown, unitGroups] = (catalog as any).useGetUnitGroupsDropdownMutation()
 
   useEffect(() => {
@@ -27,6 +29,12 @@ export function UnitForm(props: any) {
     label: item.name,
     value: item.id,
   }))
+  const formInitialValues = {
+    ...initialValues,
+    group_id: unitGroupOptions[0]?.value
+      ? String(unitGroupOptions[0].value)
+      : initialValues.group_id,
+  }
 
   const fields = [
     {
@@ -36,6 +44,8 @@ export function UnitForm(props: any) {
       placeholder: "Select unit group",
       required: true,
       options: unitGroupOptions,
+      onAddNew: () => setIsUnitGroupFormOpen(true),
+      addNewLabel: "Add New Unit Group",
     },
     {
       name: "name",
@@ -79,20 +89,32 @@ export function UnitForm(props: any) {
   ]
 
   return (
-    <CatalogMasterForm
-      {...props}
-      entityName="Unit"
-      fields={fields}
-      initialValues={initialValues}
-      createHook={(catalog as any).useCreateUnitMutation}
-      editHook={(catalog as any).useEditUnitMutation}
-      getByIdHook={(catalog as any).useGetUnitByIdMutation}
-      buildPayload={(values) => ({
-        ...values,
-        group_id: Number(values.group_id),
-        value: Number(values.value || 1),
-        base_unit: Boolean(values.base_unit),
-      })}
-    />
+    <>
+      <CatalogMasterForm
+        {...props}
+        entityName="Unit"
+        fields={fields}
+        initialValues={formInitialValues}
+        createHook={(catalog as any).useCreateUnitMutation}
+        editHook={(catalog as any).useEditUnitMutation}
+        getByIdHook={(catalog as any).useGetUnitByIdMutation}
+        buildPayload={(values) => ({
+          ...values,
+          group_id: Number(values.group_id),
+          value: Number(values.value || 1),
+          base_unit: Boolean(values.base_unit),
+        })}
+      />
+      <UnitGroupForm
+        isOpen={isUnitGroupFormOpen}
+        onClose={() => setIsUnitGroupFormOpen(false)}
+        onSuccess={() => {
+          setIsUnitGroupFormOpen(false)
+          getUnitGroupsDropdown()
+        }}
+        formWidth="w-[440px]"
+        nestedDrawer
+      />
+    </>
   )
 }

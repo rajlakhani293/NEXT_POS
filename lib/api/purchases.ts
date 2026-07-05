@@ -65,7 +65,6 @@ const endpointsConfig = {
       deleteMutation(`orders/${id}/products/${productId}`)({}),
   },
   receivePurchaseOrder: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`orders/${id}/receive`)(payLoad) },
-  payPurchaseOrder: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`orders/${id}/pay`)(payLoad) },
   setPurchaseOrderAsPaid: { query: ({ id }: { id: any }) => getMutation(`orders/${id}/set-as-paid`) },
   getPurchasePreload: { query: ({ key }: { key: string }) => getMutation(`preload/${key}`) },
   storePurchasePreload: { query: postMutation("preload") },

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { Field, FieldError, FieldLabel } from "./field"
 import { LuCirclePlus } from "react-icons/lu"
 import { FaArrowRight } from "react-icons/fa"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import {
   Select,
   SelectContent,
@@ -31,6 +32,8 @@ interface UniFieldSelectProps {
   size?: "sm" | "default" | "lg"
   allowClear?: boolean
   disabled?: boolean
+  hasOptions?: boolean
+  emptyLabel?: string
 }
 
 export const UniFieldSelect = ({
@@ -48,7 +51,10 @@ export const UniFieldSelect = ({
   size = "default",
   allowClear = false,
   disabled = false,
+  hasOptions = true,
+  emptyLabel,
 }: UniFieldSelectProps) => {
+  const { t } = useTranslation()
   const hasError = Boolean(error || validationError)
 
   const handleValueChange = (val: string) => {
@@ -110,7 +116,13 @@ export const UniFieldSelect = ({
         </div>
         <SelectContent>
           <SelectGroup className="font-semibold text-gray-900">
-            {children}
+            {hasOptions ? (
+              children
+            ) : (
+              <div className="px-3 py-2 text-sm font-medium text-muted-foreground">
+                {emptyLabel ? t(emptyLabel) : t("No records found")}
+              </div>
+            )}
             {onAddNew && (
               <div className="border-t">
                 <SelectItem

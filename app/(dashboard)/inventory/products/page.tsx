@@ -63,7 +63,10 @@ export default function ProductsPage() {
         : column.key === "category_name"
           ? (val: any) => val || t("Unassigned")
           : column.key === "status"
-            ? (val: any) => val === "available" ? t("Available") : t("Hidden")
+            ? (val: any) =>
+              val === 0 || val === "0" || val === "available"
+                ? t("Available")
+                : t("Hidden")
             : column.render,
   }))
 

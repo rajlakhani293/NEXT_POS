@@ -14,9 +14,9 @@ import { cn } from "@/lib/utils"
 
 const workflowLabels: Record<string, string> = {
   draft: "Draft",
-  ordered: "Ordered",
-  partial: "Partially Received",
-  received: "Received",
+  pending: "Pending",
+  delivered: "Delivered",
+  stocked: "Stocked",
 }
 
 const paymentLabels: Record<string, string> = {
@@ -39,9 +39,9 @@ const buildColumns = (
       <span
         className={cn(
           "rounded-full px-2 py-1 text-xs font-semibold",
-          value === "received" && "bg-green-50 text-green-700",
-          value === "partial" && "bg-amber-50 text-amber-700",
-          value === "ordered" && "bg-blue-50 text-blue-700",
+          value === "stocked" && "bg-green-50 text-green-700",
+          value === "delivered" && "bg-amber-50 text-amber-700",
+          value === "pending" && "bg-blue-50 text-blue-700",
           value === "draft" && "bg-gray-100 text-gray-700"
         )}
       >

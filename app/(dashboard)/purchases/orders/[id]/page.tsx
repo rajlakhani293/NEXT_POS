@@ -10,7 +10,6 @@ import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { catalog } from "@/lib/api/catalog"
-import { payments } from "@/lib/api/payments"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { usePosOptions } from "@/lib/options"
@@ -57,7 +56,7 @@ const initialValues: PurchaseFormValues = {
   invoice_reference: "",
   order_date: today(),
   expected_date: "",
-  workflow_status: "ordered",
+  workflow_status: "pending",
   discount_amount: "",
   shipping_amount: "",
   note: "",
@@ -83,27 +82,20 @@ export default function PurchaseOrderFormPage() {
   const [formData, setFormData] = useState<PurchaseFormValues>(initialValues)
   const [items, setItems] = useState<PurchaseItemForm[]>([emptyItem()])
   const [receiveItems, setReceiveItems] = useState<Record<string, string>>({})
-  const [payment, setPayment] = useState({
-    amount: "",
-    paid_at: today(),
-    payment_type: "cash-payment",
-    reference_number: "",
-    note: "",
-  })
+  const [paymentReference, setPaymentReference] = useState("")
+  const [paymentNote, setPaymentNote] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isFooterStuck, setIsFooterStuck] = useState(false)
 
   const [getSuppliersDropdown, suppliers] = (purchases as any).useGetSuppliersDropdownMutation()
   const [getProductsDropdown, products] = (catalog as any).useGetProductsDropdownMutation()
-  const [getPaymentTypesDropdown, paymentTypes] = (payments as any).useGetPaymentTypesDropdownMutation()
   const [getUnitsDropdown, units] = (catalog as any).useGetUnitsDropdownMutation()
   const [getProductById] = (catalog as any).useGetProductByIdMutation()
   const [getPurchaseOrderById, purchaseOrder] = (purchases as any).useGetPurchaseOrderByIdMutation()
   const [createPurchaseOrder] = (purchases as any).useCreatePurchaseOrderMutation()
   const [editPurchaseOrder] = (purchases as any).useEditPurchaseOrderMutation()
   const [receivePurchaseOrder] = (purchases as any).useReceivePurchaseOrderMutation()
-  const [payPurchaseOrder] = (purchases as any).usePayPurchaseOrderMutation()
   const [changePurchasePaymentStatus] = (purchases as any).useChangePurchasePaymentStatusMutation()
   const [bulkUpdatePurchaseOrderProducts] = (purchases as any).useBulkUpdatePurchaseOrderProductsMutation()
   const [deletePurchaseOrderProduct] = (purchases as any).useDeletePurchaseOrderProductMutation()
@@ -114,8 +106,10 @@ export default function PurchaseOrderFormPage() {
   const record = purchaseOrder.data?.data
   const orderItems = record?.items || []
   const productOptions = products.data?.data || []
-  const paymentTypeOptions = paymentTypes.data?.data || []
   const supplierOptions = suppliers.data?.data || []
+  const unitOptions = units.data?.data || []
+  const isPaid = record?.payment_status === "paid"
+  const isStocked = record?.delivery_status === "stocked"
 
   const hydratePurchase = (purchase: any) => {
     setFormData({
@@ -124,7 +118,7 @@ export default function PurchaseOrderFormPage() {
       invoice_reference: purchase.invoice_reference || "",
       order_date: purchase.invoice_date ? purchase.invoice_date.slice(0, 10) : today(),
       expected_date: purchase.delivery_time ? purchase.delivery_time.slice(0, 10) : "",
-      workflow_status: purchase.delivery_status || "ordered",
+      workflow_status: purchase.delivery_status || "pending",
       discount_amount: String(purchase.discount_amount || ""),
       shipping_amount: String(purchase.shipping_amount || ""),
       note: purchase.description || "",
@@ -143,14 +137,8 @@ export default function PurchaseOrderFormPage() {
       }))
     )
 
-    const dueAmount = Math.max(
-      money(purchase.total) - money(purchase.paid_amount),
-      0
-    )
-    setPayment((current) => ({
-      ...current,
-      amount: dueAmount ? String(dueAmount) : "",
-    }))
+    setPaymentReference("")
+    setPaymentNote("")
   }
 
   const reloadOrder = async () => {
@@ -172,7 +160,6 @@ export default function PurchaseOrderFormPage() {
       await Promise.all([
         getSuppliersDropdown(),
         getProductsDropdown(),
-        getPaymentTypesDropdown(),
         getUnitsDropdown(),
       ])
       if (!isEdit) {
@@ -186,7 +173,6 @@ export default function PurchaseOrderFormPage() {
 
     load()
   }, [
-    getPaymentTypesDropdown,
     getProductsDropdown,
     getPurchaseOrderById,
     getSuppliersDropdown,
@@ -309,6 +295,7 @@ export default function PurchaseOrderFormPage() {
         invoice_reference: formData.invoice_reference || undefined,
         invoice_date: formData.order_date || undefined,
         delivery_time: formData.expected_date || undefined,
+        payment_status: "unpaid",
         delivery_status: formData.workflow_status,
         automatic_approval: formData.automatic_approval,
         description: formData.note || undefined,
@@ -369,20 +356,6 @@ export default function PurchaseOrderFormPage() {
     setReceiveItems({})
   }
 
-  const submitPayment = async () => {
-    if (money(payment.amount) <= 0) {
-      showToast.error(t("Payment amount is required."))
-      return
-    }
-
-    const response = await payPurchaseOrder({
-      id,
-      payLoad: payment,
-    }).unwrap()
-    showToast.success(response?.message || t("Procurement payment recorded."))
-    await reloadOrder()
-  }
-
   const handleUseLowStockSuggestions = async () => {
     const response = await getLowStockSuggestions().unwrap()
     const suggestions = response?.data || []
@@ -394,10 +367,15 @@ export default function PurchaseOrderFormPage() {
       ...current,
       ...suggestions.map((item: any) => ({
         id: crypto.randomUUID(),
-        product_id: String(item.id),
-        ordered_quantity: "1",
-        cost_price: String(item.purchase_price || 0),
+        product_id: String(item.product_id || ""),
+        ordered_quantity: String(item.recent_procured_quantity || item.low_quantity || 1),
+        cost_price: String(item.recent_procured_purchase_price || item.cogs || 0),
         tax_amount: "0",
+        unit_id: item.recent_procured_unit_id
+          ? String(item.recent_procured_unit_id)
+          : item.unit_id
+            ? String(item.unit_id)
+            : "",
       })),
     ])
     showToast.success(t("Low stock suggestions added."))
@@ -415,18 +393,12 @@ export default function PurchaseOrderFormPage() {
     await reloadOrder()
   }
 
-  const handlePaymentStatusChange = async (
-    payment_status: "paid" | "partial" | "unpaid"
-  ) => {
-    const payLoad: Record<string, string> = { payment_status }
-    if (payment_status === "partial") {
-      if (money(payment.amount) <= 0) {
-        showToast.error(t("Enter partial amount first."))
-        return
-      }
-      payLoad.amount = payment.amount
+  const handlePaymentStatusChange = async (payment_status: "paid" | "unpaid") => {
+    const payLoad: Record<string, string> = {
+      payment_status,
+      reference_number: paymentReference,
+      note: paymentNote,
     }
-
     const response = await changePurchasePaymentStatus({ id, payLoad }).unwrap()
     showToast.success(response?.message || t("Payment status updated."))
     await reloadOrder()
@@ -481,9 +453,11 @@ export default function PurchaseOrderFormPage() {
                   <RefreshCwIcon className="size-4" />
                   {t("Refresh")}
                 </Button>
-                <Button type="button" variant="outline" onClick={handleSetAsPaid}>
-                  {t("Set As Paid")}
-                </Button>
+                {!isPaid ? (
+                  <Button type="button" variant="outline" onClick={handleSetAsPaid}>
+                    {t("Set As Paid")}
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
                   variant="outline"
@@ -510,6 +484,7 @@ export default function PurchaseOrderFormPage() {
                   onValueChange={(value) => updateField("supplier_id", value)}
                   placeholder={t("Select Provider")}
                   error={errors.supplier_id}
+                  hasOptions={Boolean(supplierOptions.length)}
                 >
                   {supplierOptions.map((supplier: any) => (
                     <SelectItem key={supplier.id} value={String(supplier.id)}>
@@ -553,9 +528,9 @@ export default function PurchaseOrderFormPage() {
                   onValueChange={(value) => updateField("workflow_status", value)}
                 >
                   <SelectItem value="draft">{t("Draft")}</SelectItem>
-                  <SelectItem value="ordered">{t("Ordered")}</SelectItem>
-                  <SelectItem value="partial">{t("Partial")}</SelectItem>
-                  <SelectItem value="received">{t("Received")}</SelectItem>
+                  <SelectItem value="pending">{t("Pending")}</SelectItem>
+                  <SelectItem value="delivered">{t("Delivered")}</SelectItem>
+                  <SelectItem value="stocked">{t("Stocked")}</SelectItem>
                 </UniFieldSelect>
                 
                 <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50/50 px-3 py-2">
@@ -641,6 +616,7 @@ export default function PurchaseOrderFormPage() {
                         }
                         placeholder={t("Select product")}
                         error={errors[`product_${index}`]}
+                        hasOptions={Boolean(productOptions.length)}
                       >
                         {productOptions.map((product: any) => (
                           <SelectItem key={product.id} value={String(product.id)}>
@@ -657,8 +633,9 @@ export default function PurchaseOrderFormPage() {
                         }
                         placeholder={t("Select unit")}
                         error={errors[`unit_${index}`]}
+                        hasOptions={Boolean(unitOptions.length)}
                       >
-                        {(units.data?.data || []).map((unit: any) => (
+                        {unitOptions.map((unit: any) => (
                           <SelectItem key={unit.id} value={String(unit.id)}>
                             {unit.name}
                           </SelectItem>
@@ -779,6 +756,7 @@ export default function PurchaseOrderFormPage() {
                             }
                             placeholder={t("Select product")}
                             error={errors[`product_${index}`]}
+                            hasOptions={Boolean(productOptions.length)}
                           >
                             {productOptions.map((product: any) => (
                               <SelectItem key={product.id} value={String(product.id)}>
@@ -795,8 +773,9 @@ export default function PurchaseOrderFormPage() {
                             }
                             placeholder={t("Select unit")}
                             error={errors[`unit_${index}`]}
+                            hasOptions={Boolean(unitOptions.length)}
                           >
-                            {(units.data?.data || []).map((unit: any) => (
+                            {unitOptions.map((unit: any) => (
                               <SelectItem key={unit.id} value={String(unit.id)}>
                                 {unit.name}
                               </SelectItem>
@@ -884,7 +863,8 @@ export default function PurchaseOrderFormPage() {
                 </section>
 
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                  <section className="rounded-lg border border-gray-200 bg-white p-4">
+                  {!isStocked ? (
+                    <section className="rounded-lg border border-gray-200 bg-white p-4">
                     <h2 className="text-base font-bold text-gray-900">
                       {t("Stock In")}
                     </h2>
@@ -936,111 +916,47 @@ export default function PurchaseOrderFormPage() {
                     >
                       {receivePurchaseOrder.isLoading ? <Spinner /> : t("Receive Stock")}
                     </Button>
-                  </section>
+                    </section>
+                  ) : null}
 
                   <section className="rounded-lg border border-gray-200 bg-white p-4">
                     <h2 className="text-base font-bold text-gray-900">
                       {t("Provider Payment")}
                     </h2>
                     <p className="mb-4 text-xs font-medium text-gray-500">
-                      {t("Record payment against this procurement.")}
+                      {t("Mark this procurement as paid or unpaid.")}
                     </p>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <UniFieldInput
-                        label={t("Amount")}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        prefix={posOptions.currency_symbol}
-                        placeholder={t("Enter amount")}
-                        value={payment.amount}
-                        onChange={(event) =>
-                          setPayment((current) => ({
-                            ...current,
-                            amount: event.target.value,
-                          }))
-                        }
-                      />
-                      <UniFieldSelect
-                        label={t("Payment Type")}
-                        value={payment.payment_type}
-                        onValueChange={(value) =>
-                          setPayment((current) => ({
-                            ...current,
-                            payment_type: value,
-                          }))
-                        }
-                      >
-                        {paymentTypeOptions.map((type: any) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </UniFieldSelect>
-                      <UniFieldInput
-                        label={t("Paid At")}
-                        type="date"
-                        value={payment.paid_at}
-                        onChange={(event) =>
-                          setPayment((current) => ({
-                            ...current,
-                            paid_at: event.target.value,
-                          }))
-                        }
-                      />
-                      <UniFieldInput
                         label={t("Reference")}
                         placeholder={t("Transaction/reference number")}
-                        value={payment.reference_number}
-                        onChange={(event) =>
-                          setPayment((current) => ({
-                            ...current,
-                            reference_number: event.target.value,
-                          }))
-                        }
+                        value={paymentReference}
+                        onChange={(event) => setPaymentReference(event.target.value)}
                       />
                       <div className="md:col-span-2">
                         <UniFieldInput
                           as="textarea"
                           label={t("Payment Note")}
                           placeholder={t("Enter payment note")}
-                          value={payment.note}
-                          onChange={(event) =>
-                            setPayment((current) => ({
-                              ...current,
-                              note: event.target.value,
-                            }))
-                          }
+                          value={paymentNote}
+                          onChange={(event) => setPaymentNote(event.target.value)}
                         />
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      className="mt-4"
-                      onClick={submitPayment}
-                      disabled={payPurchaseOrder.isLoading}
-                    >
-                      {payPurchaseOrder.isLoading ? <Spinner /> : t("Pay Provider")}
-                    </Button>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => handlePaymentStatusChange("unpaid")}
+                        disabled={isPaid || changePurchasePaymentStatus.isLoading}
                       >
                         {t("Mark Unpaid")}
                       </Button>
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => handlePaymentStatusChange("partial")}
-                      >
-                        {t("Mark Partial")}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
                         onClick={() => handlePaymentStatusChange("paid")}
+                        disabled={isPaid || changePurchasePaymentStatus.isLoading}
                       >
                         {t("Mark Paid")}
                       </Button>

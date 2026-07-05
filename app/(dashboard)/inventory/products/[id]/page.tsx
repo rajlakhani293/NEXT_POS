@@ -396,14 +396,20 @@ export default function ProductFormPage() {
     loadKeyRef.current = loadKey
 
     const load = async () => {
-      await Promise.all([
+      const [categoriesResponse, , unitsResponse] = await Promise.all([
         getCategoriesDropdown(),
         getTaxGroupsDropdown(),
         getUnitsDropdown(),
       ])
 
       if (!isEdit) {
-        setFormData(initialValues)
+        const firstCategory = categoriesResponse?.data?.data?.[0]
+        const firstUnit = unitsResponse?.data?.data?.[0]
+        setFormData({
+          ...initialValues,
+          category_id: firstCategory?.id ? String(firstCategory.id) : "",
+          unit_id: firstUnit?.id ? String(firstUnit.id) : "",
+        })
         setInitialImageUrl("")
         setImageError("")
         return
@@ -470,6 +476,9 @@ export default function ProductFormPage() {
     taxGroups.isLoading ||
     units.isLoading ||
     (isEdit && product.isLoading)
+  const categoryOptions = toOption(categories.data?.data)
+  const unitOptions = toOption(units.data?.data)
+  const taxGroupRecords = taxGroups.data?.data || []
 
   useEffect(() => {
     const sentinel = paginationSentinelRef.current
@@ -735,8 +744,9 @@ export default function ProductFormPage() {
                       allowClear
                       onAddNew={() => setAddFormOpen("category")}
                       addNewLabel={t("Add New Category")}
+                      hasOptions={Boolean(categoryOptions.length)}
                     >
-                      {toOption(categories.data?.data).map((option) => (
+                      {categoryOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -852,8 +862,9 @@ export default function ProductFormPage() {
                       error={errors.unit_id}
                       onAddNew={() => setAddFormOpen("unit")}
                       addNewLabel={t("Add New Unit")}
+                      hasOptions={Boolean(unitOptions.length)}
                     >
-                      {toOption(units.data?.data).map((option) => (
+                      {unitOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -1028,8 +1039,9 @@ export default function ProductFormPage() {
                             onValueChange={(val) => updateUnitQuantityField("unit_id", val)}
                             placeholder={t("Select Unit")}
                             error={unitQuantityErrors.unit_id}
+                            hasOptions={Boolean(unitOptions.length)}
                           >
-                            {toOption(units.data?.data).map((option) => (
+                            {unitOptions.map((option) => (
                               <SelectItem key={option.value} value={option.value}>
                                 {option.label}
                               </SelectItem>
@@ -1041,8 +1053,9 @@ export default function ProductFormPage() {
                             value={unitQuantityForm.convert_unit_id}
                             onValueChange={(val) => updateUnitQuantityField("convert_unit_id", val)}
                             placeholder={t("Select Convert Unit")}
+                            hasOptions={Boolean(unitOptions.length)}
                           >
-                            {toOption(units.data?.data).map((option) => (
+                            {unitOptions.map((option) => (
                               <SelectItem key={option.value} value={option.value}>
                                 {option.label}
                               </SelectItem>
@@ -1167,8 +1180,9 @@ export default function ProductFormPage() {
                       allowClear
                       onAddNew={() => setAddFormOpen("taxGroup")}
                       addNewLabel={t("Add New Tax Group")}
+                      hasOptions={Boolean(taxGroupRecords.length)}
                     >
-                      {(taxGroups.data?.data || []).map((group: any) => (
+                      {taxGroupRecords.map((group: any) => (
                         <SelectItem key={group.id} value={String(group.id)}>
                           <SelectItemText>
                             <div className="flex w-full items-center justify-between gap-4">

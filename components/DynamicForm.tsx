@@ -79,6 +79,7 @@ interface DynamicFormProps<T> {
   extra?: (formikProps: any) => React.ReactNode
   onFieldChange?: (name: string, value: any, allValues: T) => T | void
   isLoading?: boolean
+  nestedDrawer?: boolean
 }
 
 const DynamicForm = <T extends Record<string, any>>({
@@ -96,6 +97,7 @@ const DynamicForm = <T extends Record<string, any>>({
   extra,
   onFieldChange,
   isLoading = false,
+  nestedDrawer = false,
 }: DynamicFormProps<T>) => {
   const { t } = useTranslation()
 
@@ -110,6 +112,7 @@ const DynamicForm = <T extends Record<string, any>>({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const drawerContentRef = useRef<HTMLDivElement>(null)
+  const emptySelectValue = "__empty__"
 
   // Reset isSubmitting when drawer closes
   useEffect(() => {
@@ -245,7 +248,13 @@ const DynamicForm = <T extends Record<string, any>>({
     >
       <DrawerContent
         ref={drawerContentRef}
-        className={`h-full ${getWidthClass(formWidth)} flex flex-col`}
+        overlayClassName={nestedDrawer ? "bg-black/10 backdrop-blur-0" : undefined}
+        className={[
+          "flex flex-col",
+          nestedDrawer
+            ? `${getWidthClass(formWidth)} rounded-l-lg border`
+            : `h-full ${getWidthClass(formWidth)}`,
+        ].join(" ")}
         tabIndex={-1}
       >
         <DrawerHeader className="shrink-0 border-b">
@@ -296,220 +305,230 @@ const DynamicForm = <T extends Record<string, any>>({
                       : Boolean(field.disabled)
 
                   return field.type === "hidden" ? (
-                  <input
-                    type="hidden"
-                    name={field.name}
-                    value={formData[field.name] || ""}
-                  />
-                ) : field.type === "select" && field.options && field.multiple ? (
-                  <div className="space-y-2 rounded-md border p-3">
-                    <div className="text-sm font-medium">
-                      {t(field.label)}
-                      {field.required && <span className="text-red-500">*</span>}
+                    <input
+                      type="hidden"
+                      name={field.name}
+                      value={formData[field.name] || ""}
+                    />
+                  ) : field.type === "select" && field.options && field.multiple ? (
+                    <div className="space-y-2 rounded-md border p-3">
+                      <div className="text-sm font-medium">
+                        {t(field.label)}
+                        {field.required && <span className="text-red-500">*</span>}
+                      </div>
+                      {field.placeholder && (
+                        <p className="text-xs text-muted-foreground">
+                          {t(field.placeholder)}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-2">
+                        {field.options
+                          ?.filter(
+                            (option) => option != null && option.value != null
+                          )
+                          .map((option) => {
+                            const current = Array.isArray(formData[field.name])
+                              ? formData[field.name]
+                              : []
+                            const value = option.value.toString()
+                            const selected = current.map(String).includes(value)
+                            return (
+                              <Button
+                                key={option.value}
+                                type="button"
+                                variant={selected ? "secondary" : "outline"}
+                                size="sm"
+                                disabled={isFieldDisabled}
+                                onClick={() => {
+                                  const next = selected
+                                    ? current.filter((item: any) => String(item) !== value)
+                                    : [...current, value]
+                                  handleChange(field.name, next)
+                                }}
+                              >
+                                {t(option.label)}
+                              </Button>
+                            )
+                          })}
+                      </div>
+                      {errors[field.name] && (
+                        <p className="text-sm text-red-500">{errors[field.name]}</p>
+                      )}
                     </div>
-                    {field.placeholder && (
-                      <p className="text-xs text-muted-foreground">
-                        {t(field.placeholder)}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap gap-2">
+                  ) : field.type === "select" && field.options ? (
+                    <UniFieldSelect
+                      label={t(field.label)}
+                      value={formData[field.name] || ""}
+                      onValueChange={(value) =>
+                        handleChange(
+                          field.name,
+                          value === emptySelectValue ? "" : value
+                        )
+                      }
+                      required={field.required}
+                      placeholder={field.placeholder ? t(field.placeholder) : t(`Select ${field.label}`)}
+                      error={errors[field.name]}
+                      onAddNew={field.onAddNew}
+                      addNewLabel={field.addNewLabel ? t(field.addNewLabel) : field.addNewLabel}
+                      allowClear={field.allowClear}
+                      disabled={isFieldDisabled}
+                      hasOptions={Boolean(field.options?.length)}
+                    >
                       {field.options
                         ?.filter(
                           (option) => option != null && option.value != null
                         )
-                        .map((option) => {
-                          const current = Array.isArray(formData[field.name])
-                            ? formData[field.name]
-                            : []
-                          const value = option.value.toString()
-                          const selected = current.map(String).includes(value)
-                          return (
-                            <Button
-                              key={option.value}
-                              type="button"
-                              variant={selected ? "secondary" : "outline"}
-                              size="sm"
-                              disabled={isFieldDisabled}
-                              onClick={() => {
-                                const next = selected
-                                  ? current.filter((item: any) => String(item) !== value)
-                                  : [...current, value]
-                                handleChange(field.name, next)
-                              }}
-                            >
-                        {t(option.label)}
-                            </Button>
-                          )
-                        })}
-                    </div>
-                    {errors[field.name] && (
-                      <p className="text-sm text-red-500">{errors[field.name]}</p>
-                    )}
-                  </div>
-                ) : field.type === "select" && field.options ? (
-                  <UniFieldSelect
-                    label={t(field.label)}
-                    value={formData[field.name] || ""}
-                    onValueChange={(value) => handleChange(field.name, value)}
-                    required={field.required}
-                    placeholder={field.placeholder ? t(field.placeholder) : t(`Select ${field.label}`)}
-                    error={errors[field.name]}
-                    onAddNew={field.onAddNew}
-                    addNewLabel={field.addNewLabel ? t(field.addNewLabel) : field.addNewLabel}
-                    allowClear={field.allowClear}
-                    disabled={isFieldDisabled}
-                  >
-                    {field.options
-                      ?.filter(
-                        (option) => option != null && option.value != null
-                      )
-                      .map((option) => (
-                        <SelectItem
-                          key={option.value}
-                          value={option.value.toString()}
-                        >
+                        .map((option) => (
+                          <SelectItem
+                            key={option.value}
+                            value={
+                              option.value.toString() === ""
+                                ? emptySelectValue
+                                : option.value.toString()
+                            }
+                          >
                             {t(option.label)}
-                        </SelectItem>
-                      ))}
-                  </UniFieldSelect>
-                ) : field.type === "textarea" ? (
-                  <UniFieldInput
-                    as="textarea"
-                    label={t(field.label)}
-                    value={formData[field.name] || ""}
-                    onChange={(e) => handleChange(field.name, e.target.value)}
-                    required={field.required}
-                    placeholder={field.placeholder ? t(field.placeholder) : field.placeholder}
-                    prefix={field.prefix}
-                    prefixPadding={field.prefixPadding}
-                    rows={field.rows || 3}
-                    maxLength={field.maxLength}
-                    error={errors[field.name]}
-                    disabled={isFieldDisabled}
-                  />
-                ) : field.type === "number" ? (
-                  <UniFieldInput
-                    type="number"
-                    label={t(field.label)}
-                    value={formData[field.name] || ""}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      // Enforce maxLength for number inputs
-                      if (field.maxLength && value.length > field.maxLength) {
-                        return // Prevent input if exceeds maxLength
+                          </SelectItem>
+                        ))}
+                    </UniFieldSelect>
+                  ) : field.type === "textarea" ? (
+                    <UniFieldInput
+                      as="textarea"
+                      label={t(field.label)}
+                      value={formData[field.name] || ""}
+                      onChange={(e) => handleChange(field.name, e.target.value)}
+                      required={field.required}
+                      placeholder={field.placeholder ? t(field.placeholder) : field.placeholder}
+                      prefix={field.prefix}
+                      prefixPadding={field.prefixPadding}
+                      rows={field.rows || 3}
+                      maxLength={field.maxLength}
+                      error={errors[field.name]}
+                      disabled={isFieldDisabled}
+                    />
+                  ) : field.type === "number" ? (
+                    <UniFieldInput
+                      type="number"
+                      label={t(field.label)}
+                      value={formData[field.name] || ""}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        // Enforce maxLength for number inputs
+                        if (field.maxLength && value.length > field.maxLength) {
+                          return // Prevent input if exceeds maxLength
+                        }
+                        handleChange(field.name, value)
+                      }}
+                      required={field.required}
+                      placeholder={field.placeholder ? t(field.placeholder) : field.placeholder}
+                      prefix={field.prefix}
+                      prefixPadding={field.prefixPadding}
+                      min="0"
+                      step="0.01"
+                      maxLength={field.maxLength}
+                      error={errors[field.name]}
+                      disabled={isFieldDisabled}
+                    />
+                  ) : field.type === "readonly" ? (
+                    <UniFieldInput
+                      type="text"
+                      label={t(field.label)}
+                      value={formData[field.name] || ""}
+                      readOnly
+                      placeholder={field.placeholder ? t(field.placeholder) : field.placeholder}
+                      prefix={field.prefix}
+                      prefixPadding={field.prefixPadding}
+                      error={errors[field.name]}
+                      disabled={isFieldDisabled}
+                    />
+                  ) : field.type === "file" ? (
+                    <UniFieldInput
+                      type="file"
+                      label={field.label}
+                      onChange={(e) =>
+                        handleChange(field.name, e.target.files?.[0] || null)
                       }
-                      handleChange(field.name, value)
-                    }}
-                    required={field.required}
-                    placeholder={field.placeholder ? t(field.placeholder) : field.placeholder}
-                    prefix={field.prefix}
-                    prefixPadding={field.prefixPadding}
-                    min="0"
-                    step="0.01"
-                    maxLength={field.maxLength}
-                    error={errors[field.name]}
-                    disabled={isFieldDisabled}
-                  />
-                ) : field.type === "readonly" ? (
-                  <UniFieldInput
-                    type="text"
-                    label={t(field.label)}
-                    value={formData[field.name] || ""}
-                    readOnly
-                    placeholder={field.placeholder ? t(field.placeholder) : field.placeholder}
-                    prefix={field.prefix}
-                    prefixPadding={field.prefixPadding}
-                    error={errors[field.name]}
-                    disabled={isFieldDisabled}
-                  />
-                ) : field.type === "file" ? (
-                  <UniFieldInput
-                    type="file"
-                    label={field.label}
-                    onChange={(e) =>
-                      handleChange(field.name, e.target.files?.[0] || null)
-                    }
-                    required={field.required}
-                    placeholder={field.placeholder}
-                    prefix={field.prefix}
-                    prefixPadding={field.prefixPadding}
-                    error={errors[field.name]}
-                    disabled={isFieldDisabled}
-                  />
-                ) : field.type === "switch" ? (
-                  <div className="flex items-center justify-between rounded-md border p-3">
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium">
-                        {t(field.label)}
+                      required={field.required}
+                      placeholder={field.placeholder}
+                      prefix={field.prefix}
+                      prefixPadding={field.prefixPadding}
+                      error={errors[field.name]}
+                      disabled={isFieldDisabled}
+                    />
+                  ) : field.type === "switch" ? (
+                    <div className="flex items-center justify-between rounded-md border p-3">
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium">
+                          {t(field.label)}
+                          {field.required && (
+                            <span className="text-red-500">*</span>
+                          )}
+                        </div>
+                        {field.note && (
+                          <p className="text-sm text-muted-foreground">
+                            {t(field.note)}
+                          </p>
+                        )}
+                      </div>
+                      <Switch
+                        checked={Boolean(formData[field.name])}
+                        disabled={isFieldDisabled}
+                        onCheckedChange={(checked) =>
+                          handleChange(field.name, checked)
+                        }
+                      />
+                    </div>
+                  ) : field.type === "radio" && field.options ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{t(field.label)}</span>
                         {field.required && (
                           <span className="text-red-500">*</span>
                         )}
                       </div>
-                      {field.note && (
-                        <p className="text-sm text-muted-foreground">
-                          {t(field.note)}
+                      <ButtonGroup>
+                        {field.options.map((option) => (
+                          <Button
+                            key={option.value}
+                            type="button"
+                            variant={
+                              formData[field.name] === option.value.toString()
+                                ? "secondary"
+                                : "outline"
+                            }
+                            onClick={() =>
+                              handleChange(field.name, option.value.toString())
+                            }
+                            disabled={isFieldDisabled}
+                            className={`flex-1 ${formData[field.name] === option.value.toString() ? "bg-blue-500 text-white hover:bg-blue-600" : ""} ${errors[field.name] ? "border-red-500" : ""}`}
+                          >
+                            {t(option.label)}
+                          </Button>
+                        ))}
+                      </ButtonGroup>
+                      {errors[field.name] && (
+                        <p className="text-sm text-red-500">
+                          {errors[field.name]}
                         </p>
                       )}
                     </div>
-                    <Switch
-                      checked={Boolean(formData[field.name])}
+                  ) : (
+                    <UniFieldInput
+                      type={field.type || "text"}
+                      label={t(field.label)}
+                      value={formData[field.name] || ""}
+                      onChange={(e) => handleChange(field.name, e.target.value)}
+                      required={field.required}
+                      placeholder={field.placeholder ? t(field.placeholder) : field.placeholder}
+                      prefix={field.prefix}
+                      prefixPadding={field.prefixPadding}
+                      inputMode={field.inputMode}
+                      pattern={field.pattern}
+                      maxLength={field.maxLength}
+                      error={errors[field.name]}
                       disabled={isFieldDisabled}
-                      onCheckedChange={(checked) =>
-                        handleChange(field.name, checked)
-                      }
                     />
-                  </div>
-                ) : field.type === "radio" && field.options ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{t(field.label)}</span>
-                      {field.required && (
-                        <span className="text-red-500">*</span>
-                      )}
-                    </div>
-                    <ButtonGroup>
-                      {field.options.map((option) => (
-                        <Button
-                          key={option.value}
-                          type="button"
-                          variant={
-                            formData[field.name] === option.value.toString()
-                              ? "secondary"
-                              : "outline"
-                          }
-                          onClick={() =>
-                            handleChange(field.name, option.value.toString())
-                          }
-                          disabled={isFieldDisabled}
-                          className={`flex-1 ${formData[field.name] === option.value.toString() ? "bg-blue-500 text-white hover:bg-blue-600" : ""} ${errors[field.name] ? "border-red-500" : ""}`}
-                        >
-                          {t(option.label)}
-                        </Button>
-                      ))}
-                    </ButtonGroup>
-                    {errors[field.name] && (
-                      <p className="text-sm text-red-500">
-                        {errors[field.name]}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <UniFieldInput
-                    type={field.type || "text"}
-                    label={t(field.label)}
-                    value={formData[field.name] || ""}
-                    onChange={(e) => handleChange(field.name, e.target.value)}
-                    required={field.required}
-                    placeholder={field.placeholder ? t(field.placeholder) : field.placeholder}
-                    prefix={field.prefix}
-                    prefixPadding={field.prefixPadding}
-                    inputMode={field.inputMode}
-                    pattern={field.pattern}
-                    maxLength={field.maxLength}
-                    error={errors[field.name]}
-                    disabled={isFieldDisabled}
-                  />
-                )
+                  )
                 })()}
 
                 {field.note && (
