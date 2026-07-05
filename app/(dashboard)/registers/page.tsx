@@ -49,6 +49,7 @@ export default function RegistersPage() {
   const [editRegisterId, setEditRegisterId] = useState<number | string | null>(null)
   const [registerValues, setRegisterValues] = useState({
     name: "",
+    register_status: "closed",
     description: "",
   })
   const [createRegister] = (registers as any).useCreateRegisterMutation()
@@ -67,7 +68,7 @@ export default function RegistersPage() {
   const closeForm = () => {
     setIsRegisterFormOpen(false)
     setEditRegisterId(null)
-    setRegisterValues({ name: "", description: "" })
+    setRegisterValues({ name: "", register_status: "closed", description: "" })
   }
 
   const refresh = () => {
@@ -77,7 +78,7 @@ export default function RegistersPage() {
   const openRegisterForm = async (record?: any) => {
     if (!record) {
       setEditRegisterId(null)
-      setRegisterValues({ name: "", description: "" })
+      setRegisterValues({ name: "", register_status: "closed", description: "" })
       setIsRegisterFormOpen(true)
       return
     }
@@ -86,6 +87,7 @@ export default function RegistersPage() {
     const data = response?.data || record
     setRegisterValues({
       name: data.name || "",
+      register_status: data.register_status || "closed",
       description: data.description || "",
     })
     setIsRegisterFormOpen(true)
@@ -94,6 +96,7 @@ export default function RegistersPage() {
   const submitRegister = async (values: any) => {
     const payLoad = {
       name: values.name,
+      register_status: values.register_status || "closed",
       description: values.description || "",
     }
     const response = editRegisterId
@@ -162,6 +165,17 @@ export default function RegistersPage() {
               label: t("Name"),
               placeholder: t("Provide a name to the resource."),
               required: true,
+            },
+            {
+              name: "register_status",
+              label: t("Status"),
+              placeholder: t("Define what is the status of the register."),
+              type: "select",
+              required: true,
+              options: [
+                { label: t("Closed"), value: "closed" },
+                { label: t("Disabled"), value: "disabled" },
+              ],
             },
             {
               name: "description",

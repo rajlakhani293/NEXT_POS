@@ -1,6 +1,5 @@
 "use client"
 
-import { useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { BanknoteIcon, FileTextIcon, PackageCheckIcon } from "lucide-react"
 
@@ -124,61 +123,8 @@ export default function PurchaseOrdersPage() {
     itemsPerPage: 10,
   })
 
-  const summaryCards = useMemo(() => {
-    const totalAmount = orders.reduce(
-      (sum: number, order: any) => sum + Number(order.total || 0),
-      0
-    )
-    const totalPaid = orders.reduce(
-      (sum: number, order: any) => sum + Number(order.paid_amount || 0),
-      0
-    )
-    const partialCount = orders.filter(
-      (order: any) => order.workflow_status === "partial"
-    ).length
-    const receivedCount = orders.filter(
-      (order: any) => order.workflow_status === "received"
-    ).length
-
-    return [
-      {
-        title: t("Visible Purchase Value"),
-        value: formatMoney(totalAmount),
-        helper: t(":count rows on this page").replace(":count", String(orders.length)),
-      },
-      {
-        title: t("Visible Paid"),
-        value: formatMoney(totalPaid),
-        helper: t("Provider payments on visible rows"),
-      },
-      {
-        title: t("Partially Received"),
-        value: String(partialCount),
-        helper: t("Procurements still waiting for stock-in"),
-      },
-      {
-        title: t("Received Procurements"),
-        value: String(receivedCount),
-        helper: t(":count total matched records").replace(":count", String(totalItems)),
-      },
-    ]
-  }, [orders, t, totalItems])
-
   return (
     <div className="h-full space-y-4">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {summaryCards.map((card) => (
-          <div
-            key={card.title}
-            className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
-          >
-            <p className="text-sm font-semibold text-slate-500">{card.title}</p>
-            <p className="mt-3 text-2xl font-bold text-slate-950">{card.value}</p>
-            <p className="mt-1 text-sm text-slate-500">{card.helper}</p>
-          </div>
-        ))}
-      </div>
-
       <DynamicTable
         data={orders}
         columns={columns}
