@@ -53,7 +53,7 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/medias", permission: PERMISSIONS.media.view },
   { path: "/settings/users/profile", permission: PERMISSIONS.special.manageProfile },
   { path: "/settings/roles/permissions-manager", permission: PERMISSIONS.roles.update },
-  { path: "/settings/roles/create", permission: PERMISSIONS.roles.create },
+  { path: "/settings/roles/new", permission: PERMISSIONS.roles.create },
   { path: "/settings/roles", permission: PERMISSIONS.roles.view },
   { path: "/settings/users", permission: PERMISSIONS.users.view },
   { path: "/settings/general", permission: PERMISSIONS.settings.view },
@@ -85,7 +85,11 @@ export function resolveRoutePermission(
   }
 
   const roleEditMatch = pathname.match(/^\/settings\/roles\/([^/]+)$/)
-  if (roleEditMatch && roleEditMatch[1] !== "create") {
+  if (
+    roleEditMatch &&
+    roleEditMatch[1] !== "create" &&
+    roleEditMatch[1] !== "new"
+  ) {
     return { permission: PERMISSIONS.roles.update }
   }
 
