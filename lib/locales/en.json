@@ -419,5 +419,10 @@
   "refunded": "Refunded",
   "partially_refunded": "Partially Refunded",
   "background_jobs": "Background Jobs",
-  "reset_database": "Reset Database"
+  "reset_database": "Reset Database",
+  "Wipe All": "Wipe All",
+  "Wipe Plus Grocery": "Wipe Plus Grocery",
+  "Create Sales (needs Procurements)": "Create Sales (needs Procurements)",
+  "The database will be cleared and all data erased. Only users and roles are kept. Would you like to proceed ?": "The database will be cleared and all data erased. Only users and roles are kept. Would you like to proceed ?",
+  "The database has been successfully seeded.": "The database has been successfully seeded."
 }

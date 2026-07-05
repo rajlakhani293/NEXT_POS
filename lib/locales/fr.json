@@ -202,5 +202,10 @@
   "Items currently below their configured minimum stock.": "Articles actuellement sous leur stock minimum configuré.",
   "Current stock quantity and stock value by product unit.": "Quantité de stock actuelle et valeur du stock par unité de produit.",
   "background_jobs": "Tâches en Arrière-plan",
-  "reset_database": "Réinitialiser la Base de Données"
+  "reset_database": "Réinitialiser la Base de Données",
+  "Wipe All": "Tout Effacer",
+  "Wipe Plus Grocery": "Effacer et Créer les Données Boutique",
+  "Create Sales (needs Procurements)": "Créer des Ventes (nécessite des Achats)",
+  "The database will be cleared and all data erased. Only users and roles are kept. Would you like to proceed ?": "La base de données sera nettoyée et toutes les données seront supprimées. Seuls les utilisateurs et les rôles seront conservés. Voulez-vous continuer ?",
+  "The database has been successfully seeded.": "La base de données a été alimentée avec succès."
 }

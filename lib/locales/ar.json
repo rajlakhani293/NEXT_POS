@@ -202,5 +202,10 @@
   "Items currently below their configured minimum stock.": "العناصر الأقل حالياً من الحد الأدنى للمخزون المحدد.",
   "Current stock quantity and stock value by product unit.": "كمية المخزون الحالية وقيمة المخزون حسب وحدة المنتج.",
   "background_jobs": "المهام الخلفية",
-  "reset_database": "إعادة ضبط قاعدة البيانات"
+  "reset_database": "إعادة ضبط قاعدة البيانات",
+  "Wipe All": "مسح الكل",
+  "Wipe Plus Grocery": "مسح وإنشاء بيانات المتجر",
+  "Create Sales (needs Procurements)": "إنشاء مبيعات (يتطلب مشتريات)",
+  "The database will be cleared and all data erased. Only users and roles are kept. Would you like to proceed ?": "سيتم مسح قاعدة البيانات وحذف جميع البيانات. سيتم الاحتفاظ بالمستخدمين والأدوار فقط. هل تريد المتابعة؟",
+  "The database has been successfully seeded.": "تم تجهيز قاعدة البيانات بنجاح."
 }

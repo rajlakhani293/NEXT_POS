@@ -15,6 +15,7 @@ const endpointsConfig = {
   getBusinessSettings: { query: () => getMutation("settings/business") },
   getSettingsForm: { query: ({ identifier }: { identifier: string }) => getMutation(`settings/${identifier}`) },
   saveSettingsForm: { query: ({ identifier, payLoad }: { identifier: string; payLoad: any }) => postMutation(`settings/${identifier}`)(payLoad) },
+  resetTenantData: { query: ({ payLoad }: { payLoad: any }) => postMutation("reset")(payLoad) },
 
   // Company
   getCompany: { query: () => getMutation("organizations/company") },

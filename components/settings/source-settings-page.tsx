@@ -150,8 +150,8 @@ const selectOptions: Record<string, { value: string; label: string }[]> = {
     { value: "yes", label: "Yes" },
   ],
   mode: [
-    { value: "soft", label: "Soft" },
-    { value: "hard", label: "Hard" },
+    { value: "wipe_all", label: "Wipe All" },
+    { value: "wipe_plus_grocery", label: "Wipe Plus Grocery" },
   ],
 }
 
@@ -253,6 +253,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
   const [getSettingsForm, formState] = (settings as any).useGetSettingsFormMutation()
   const [saveSettingsForm, saveState] = (settings as any).useSaveSettingsFormMutation()
   const [getBusinessSettings] = (settings as any).useGetBusinessSettingsMutation()
+  const [resetTenantData, resetState] = (settings as any).useResetTenantDataMutation()
 
   useEffect(() => {
     if (hasLoadedRef.current === sourceIdentifier) return
@@ -370,6 +371,16 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
   }
 
   const save = async () => {
+    if (sourceIdentifier === "reset") {
+      const confirmed = window.confirm(
+        t("The database will be cleared and all data erased. Only users and roles are kept. Would you like to proceed ?")
+      )
+      if (!confirmed) return
+      const response = await resetTenantData({ payLoad: values }).unwrap()
+      showToast.success(response?.message || t("The database has been successfully seeded."))
+      return
+    }
+
     const response = await saveSettingsForm({
       identifier: sourceIdentifier,
       payLoad: values,
@@ -430,8 +441,8 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
 
       {tabs.length ? (
         <div className="flex justify-end border-t bg-white pt-4">
-          <Button type="button" onClick={save} disabled={saveState.isLoading}>
-            {saveState.isLoading ? <Spinner /> : null}
+          <Button type="button" onClick={save} disabled={saveState.isLoading || resetState.isLoading}>
+            {saveState.isLoading || resetState.isLoading ? <Spinner /> : null}
             {t("Save Settings")}
           </Button>
         </div>
