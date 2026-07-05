@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 
+import { ImageUpload } from "@/components/imageUpload"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { SelectItem } from "@/components/ui/select"
@@ -9,6 +10,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
+import { media } from "@/lib/api/media"
 import { settings } from "@/lib/api/settings"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { supportedLanguages } from "@/lib/i18n/languages"
@@ -252,10 +254,13 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
   const hasLoadedRef = useRef("")
   const [activeTab, setActiveTab] = useState("")
   const [values, setValues] = useState<Record<string, any>>({})
+  const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<string, string>>({})
+  const [mediaErrors, setMediaErrors] = useState<Record<string, string>>({})
   const [getSettingsForm, formState] = (settings as any).useGetSettingsFormMutation()
   const [saveSettingsForm, saveState] = (settings as any).useSaveSettingsFormMutation()
   const [getBusinessSettings] = (settings as any).useGetBusinessSettingsMutation()
   const [resetTenantData, resetState] = (settings as any).useResetTenantDataMutation()
+  const [uploadMedia, uploadMediaState] = (media as any).useUploadMediaMutation()
 
   useEffect(() => {
     if (hasLoadedRef.current === sourceIdentifier) return
@@ -283,6 +288,35 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
 
   const updateValue = (name: string, value: any) => {
     setValues((current) => ({ ...current, [name]: value }))
+  }
+
+  const uploadMediaField = async (field: SourceSettingField, file: File | null) => {
+    if (!file) {
+      updateValue(field.name, "")
+      setMediaPreviewUrls((current) => ({ ...current, [field.name]: "" }))
+      setMediaErrors((current) => ({ ...current, [field.name]: "" }))
+      return
+    }
+
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      const response = await uploadMedia(formData).unwrap()
+      const uploaded = response?.data
+      updateValue(field.name, uploaded?.id ? String(uploaded.id) : "")
+      setMediaPreviewUrls((current) => ({
+        ...current,
+        [field.name]: uploaded?.sizes?.thumb || uploaded?.sizes?.original || "",
+      }))
+      setMediaErrors((current) => ({ ...current, [field.name]: "" }))
+      showToast.success(response?.message || t("Media uploaded successfully."))
+    } catch (error: any) {
+      setMediaErrors((current) => ({
+        ...current,
+        [field.name]: error?.data?.message || t("Unable to upload media."),
+      }))
+    }
   }
 
   const renderField = (field: SourceSettingField) => {
@@ -317,6 +351,35 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
               onCheckedChange={(checked) => updateValue(field.name, checked)}
             />
           )}
+        </div>
+      )
+    }
+
+    if (field.type === "media") {
+      const previewUrl =
+        mediaPreviewUrls[field.name] ||
+        (typeof value === "string" && value.startsWith("http") ? value : "")
+      return (
+        <div className="rounded-md border bg-white px-4 py-3">
+          <ImageUpload
+            label={label}
+            initialUrl={previewUrl}
+            value={null}
+            onChange={(file) => uploadMediaField(field, file)}
+            onError={(message) =>
+              setMediaErrors((current) => ({ ...current, [field.name]: message }))
+            }
+            error={mediaErrors[field.name]}
+          />
+          {description ? (
+            <p className="mt-2 text-xs font-medium text-gray-500">{description}</p>
+          ) : null}
+          {uploadMediaState.isLoading ? (
+            <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-gray-500">
+              <Spinner />
+              {t("Uploading...")}
+            </div>
+          ) : null}
         </div>
       )
     }
