@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { PermissionGuard } from "@/components/permission-guard"
+import { usePermissions } from "@/hooks/use-permissions"
 import { settings } from "@/lib/api/settings"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { useAppDispatch } from "@/lib/redux/hooks"
@@ -71,6 +72,7 @@ const initialCompany = companyFields.reduce<Record<string, string>>(
 
 export default function CompanySettingsPage() {
   const { t } = useTranslation()
+  const { hasPermission } = usePermissions()
   const dispatch = useAppDispatch()
   const [getCompany, companyState] = (settings as any).useGetCompanyMutation()
   const [updateCompany, updateState] = (settings as any).useUpdateCompanyMutation()
@@ -99,6 +101,7 @@ export default function CompanySettingsPage() {
   }, [company])
 
   const canSave = useMemo(() => values.name.trim().length > 0, [values.name])
+  const canUpdate = hasPermission(PERMISSIONS.settings.update)
 
   const updateValue = (name: string, value: string) => {
     setValues((current) => ({ ...current, [name]: value }))
@@ -128,14 +131,16 @@ export default function CompanySettingsPage() {
             <h1 className="text-xl font-semibold text-gray-900">{t("Company")}</h1>
             <p className="text-sm text-muted-foreground">{t("Store Details")}</p>
           </div>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={!canSave || updateState.isLoading}
-          >
-            {updateState.isLoading ? <Spinner className="mr-2 size-4" /> : null}
-            {t("Save")}
-          </Button>
+          {canUpdate ? (
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={!canSave || updateState.isLoading}
+            >
+              {updateState.isLoading ? <Spinner className="mr-2 size-4" /> : null}
+              {t("Save")}
+            </Button>
+          ) : null}
         </div>
 
         <div className="grid gap-4 rounded-md border bg-white p-4 md:grid-cols-2">

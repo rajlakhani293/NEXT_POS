@@ -46,7 +46,11 @@ export function UserForm(props: any) {
   const [getGroupsDropdown, groups] = (customers as any).useGetCustomerGroupsDropdownMutation()
 
   useEffect(() => {
-    if (!props.isOpen || hasLoadedRef.current) return
+    if (!props.isOpen) {
+      hasLoadedRef.current = false
+      return
+    }
+    if (hasLoadedRef.current) return
     hasLoadedRef.current = true
     getRoles()
     getGroupsDropdown()

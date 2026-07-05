@@ -228,7 +228,7 @@ export default function RoleFormPage() {
   const { t } = useTranslation()
   const params = useParams()
   const id = params.id as string
-  const isEdit = id !== "create"
+  const isEdit = id !== "create" && id !== "new"
   const rolesListPath = "/settings/roles"
 
   const [values, setValues] = useState<RoleFormValues>(initialValues)

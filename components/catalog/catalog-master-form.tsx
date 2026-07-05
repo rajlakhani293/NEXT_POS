@@ -53,6 +53,20 @@ export function CatalogMasterForm({
     return fields.reduce(
       (current, field) => {
         if (
+          field.name === "active" &&
+          Object.prototype.hasOwnProperty.call(current, "status")
+        ) {
+          current.active = Number(current.status) === 0
+        }
+        if (field.type === "select" && field.multiple && Array.isArray(current[field.name])) {
+          current[field.name] = current[field.name].map((item: any) => {
+            if (item && typeof item === "object") {
+              return item.id ?? item.value ?? ""
+            }
+            return item
+          }).filter((item: any) => item !== "")
+        }
+        if (
           field.type === "select" &&
           !field.multiple &&
           current[field.name] !== undefined &&
