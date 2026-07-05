@@ -20,6 +20,7 @@ type SourceSettingField = {
   name: string
   type: string
   label: string
+  description?: string
   validation?: string
   value: any
   options?: { value: string; label: string }[] | null
@@ -286,6 +287,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
 
   const renderField = (field: SourceSettingField) => {
     const label = t(field.label)
+    const description = field.description ? t(field.description) : ""
     const value = values[field.name]
     const required = String(field.validation || "").includes("required")
     const fieldOptions = (field.options || []).map((option) => ({
@@ -300,6 +302,9 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
           <div className="text-sm font-semibold text-gray-800">
             {label}
             {required ? <span className="text-red-500">*</span> : null}
+            {description ? (
+              <p className="mt-1 text-xs font-medium text-gray-500">{description}</p>
+            ) : null}
           </div>
           {field.type === "checkbox" ? (
             <Checkbox
@@ -318,18 +323,24 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
 
     if (field.type === "select" || field.type === "search-select") {
       return (
-        <UniFieldSelect
-          label={label}
-          required={required}
-          value={selectValue(field.name, value)}
-          onValueChange={(nextValue) => updateValue(field.name, nextValue)}
-        >
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {t(option.label)}
-            </SelectItem>
-          ))}
-        </UniFieldSelect>
+        <div className="grid gap-1">
+          <UniFieldSelect
+            label={label}
+            required={required}
+            value={selectValue(field.name, value)}
+            onValueChange={(nextValue) => updateValue(field.name, nextValue)}
+            placeholder={t("Select an option")}
+          >
+            {options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {t(option.label)}
+              </SelectItem>
+            ))}
+          </UniFieldSelect>
+          {description ? (
+            <p className="text-xs font-medium text-gray-500">{description}</p>
+          ) : null}
+        </div>
       )
     }
 
@@ -343,6 +354,9 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
       return (
         <div className="rounded-md border bg-white px-4 py-3">
           <div className="mb-3 text-sm font-semibold text-gray-800">{label}</div>
+          {description ? (
+            <p className="mb-3 text-xs font-medium text-gray-500">{description}</p>
+          ) : null}
           <div className="grid gap-2 sm:grid-cols-2">
             {optionsList.map((option) => (
               <label key={option.value} className="flex items-center gap-2 text-sm font-medium">
@@ -366,14 +380,19 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
     }
 
     return (
-      <UniFieldInput
-        label={label}
-        required={required}
-        as={field.type === "textarea" ? "textarea" : "input"}
-        type={field.type === "number" ? "number" : "text"}
-        value={value ?? ""}
-        onChange={(event) => updateValue(field.name, event.target.value)}
-      />
+      <div className="grid gap-1">
+        <UniFieldInput
+          label={label}
+          required={required}
+          as={field.type === "textarea" ? "textarea" : "input"}
+          type={field.type === "number" ? "number" : "text"}
+          value={value ?? ""}
+          onChange={(event) => updateValue(field.name, event.target.value)}
+        />
+        {description ? (
+          <p className="text-xs font-medium text-gray-500">{description}</p>
+        ) : null}
+      </div>
     )
   }
 
