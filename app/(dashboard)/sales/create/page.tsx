@@ -206,6 +206,8 @@ export default function SalesPage() {
   const [selectedCouponId, setSelectedCouponId] = useState("")
   const [orderType, setOrderType] = useState("takeaway")
   const [saleNote, setSaleNote] = useState("")
+  const [cartTaxGroupId, setCartTaxGroupId] = useState("")
+  const [cartTaxType, setCartTaxType] = useState("exclusive")
 
   // POS Grid state
   const [gridData, setGridData] = useState<POSGridData>({
@@ -283,6 +285,7 @@ export default function SalesPage() {
     (promotions as any).useGetCouponsDropdownMutation()
   const [getPOSGrid] = (catalog as any).useGetPOSGridMutation()
   const [getPOSGridByCategory] = (catalog as any).useGetPOSGridByCategoryMutation()
+  const [getTaxGroupsDropdown, { data: taxGroupsData }] = (catalog as any).useGetTaxGroupsDropdownMutation()
   const [getProductsData, productSearchState] = (catalog as any).useGetProductsDataMutation()
   const [getProductById] = (catalog as any).useGetProductByIdMutation()
   const [searchProductUsingBarcode, barcodeSearchState] = (
@@ -312,6 +315,7 @@ export default function SalesPage() {
   const paymentTypeOptions = paymentTypesData?.data || []
   const couponOptions = couponsData?.data || []
   const registerOptions = registersDropdownData?.data || []
+  const taxGroupOptions = taxGroupsData?.data || []
   const rewardBalances = rewardBalanceState.data?.data || []
   const redeemableReward = rewardBalances.find(
     (balance: any) =>
@@ -440,12 +444,14 @@ export default function SalesPage() {
     getCustomersDropdown()
     getPaymentTypesDropdown()
     getCouponsDropdown()
+    getTaxGroupsDropdown()
     loadGrid()
   }, [
     getCouponsDropdown,
     getCurrentShift,
     getCustomersDropdown,
     getPaymentTypesDropdown,
+    getTaxGroupsDropdown,
     loadGrid,
   ])
 
@@ -453,6 +459,11 @@ export default function SalesPage() {
     setItemsMergeEnabled(Boolean(posOptions.items_merge))
     setForceAutoFocus(Boolean(posOptions.force_autofocus))
   }, [posOptions.force_autofocus, posOptions.items_merge])
+
+  useEffect(() => {
+    setCartTaxGroupId(posOptions.pos_tax_group ? String(posOptions.pos_tax_group) : "")
+    setCartTaxType(posOptions.pos_tax_type ? String(posOptions.pos_tax_type) : "exclusive")
+  }, [posOptions.pos_tax_group, posOptions.pos_tax_type])
 
   useEffect(() => {
     if (!forceAutoFocus || !barcode.trim()) return
@@ -906,6 +917,8 @@ export default function SalesPage() {
     setCouponInput("")
     setSelectedCouponId("")
     setOrderType("takeaway")
+    setCartTaxGroupId(posOptions.pos_tax_group ? String(posOptions.pos_tax_group) : "")
+    setCartTaxType(posOptions.pos_tax_type ? String(posOptions.pos_tax_type) : "exclusive")
     setSaleNote("")
     setCartDiscountVal("")
     setCartDiscountType("flat")
@@ -965,6 +978,8 @@ export default function SalesPage() {
     setDraftId(String(heldSale.id))
     setCustomerId(heldSale.customer_id ? String(heldSale.customer_id) : "")
     setCouponInput((heldSale.coupon_codes || []).join(", "))
+    setCartTaxGroupId(heldSale.tax_group_id ? String(heldSale.tax_group_id) : "")
+    setCartTaxType(heldSale.tax_type || posOptions.pos_tax_type || "exclusive")
     setSaleNote(heldSale.note_text || "")
     setPaymentsRows(
       (heldSale.payments || []).length
@@ -1070,6 +1085,8 @@ export default function SalesPage() {
       note: [holdReference ? `${t("Order Reference")}: ${holdReference}` : "", saleNote]
         .filter(Boolean)
         .join("\n"),
+      tax_group_id: cartTaxGroupId ? Number(cartTaxGroupId) : null,
+      tax_type: cartTaxType || null,
       discount_amount: cartDiscountType === "flat" ? String(money(cartDiscountVal)) : "0",
       discount_percentage: cartDiscountType === "percentage" ? String(money(cartDiscountVal)) : "0",
       items: cartItems.map((item) => ({
@@ -1152,6 +1169,8 @@ export default function SalesPage() {
       note: saleNote,
       coupon_codes: couponCodes,
       payment_status: requestedPaymentStatus,
+      tax_group_id: cartTaxGroupId ? Number(cartTaxGroupId) : null,
+      tax_type: cartTaxType || null,
       discount_amount: cartDiscountType === "flat" ? String(money(cartDiscountVal)) : "0",
       discount_percentage: cartDiscountType === "percentage" ? String(money(cartDiscountVal)) : "0",
       items: cartItems.map((item) => ({
@@ -2972,22 +2991,75 @@ export default function SalesPage() {
       <Dialog open={isTaxesDialogOpen} onOpenChange={setIsTaxesDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("Taxes")}</DialogTitle>
+            <DialogTitle>{t("Tax & Summary")}</DialogTitle>
             <DialogDescription>
               {t("Set the taxes to apply to the cart.")}
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm font-medium text-gray-700">
-            <div className="flex justify-between">
-              <span>{t("Tax Type")}</span>
-              <span>{String(posOptions.pos_tax_type || "-")}</span>
-            </div>
-            <div className="mt-2 flex justify-between">
-              <span>{t("Tax Group")}</span>
-              <span>{String(posOptions.pos_tax_group || "-")}</span>
+          <div className="space-y-4">
+            {["variable_vat", "products_variable_vat"].includes(String(posOptions.pos_vat)) ? (
+              <div className="space-y-3 rounded border border-gray-200 bg-white p-3">
+                <UniFieldSelect
+                  label={t("Select Tax")}
+                  value={cartTaxGroupId}
+                  onValueChange={setCartTaxGroupId}
+                  placeholder={t("Select Tax")}
+                >
+                  {taxGroupOptions.map((group: any) => (
+                    <SelectItem key={group.id} value={String(group.id)}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
+                </UniFieldSelect>
+                <UniFieldSelect
+                  label={t("Type")}
+                  value={cartTaxType}
+                  onValueChange={setCartTaxType}
+                  placeholder={t("Type")}
+                >
+                  <SelectItem value="exclusive">{t("Exclusive")}</SelectItem>
+                  <SelectItem value="inclusive">{t("Inclusive")}</SelectItem>
+                </UniFieldSelect>
+              </div>
+            ) : (
+              <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm font-medium text-gray-700">
+                <div className="flex justify-between">
+                  <span>{t("Tax Type")}</span>
+                  <span>{cartTaxType || "-"}</span>
+                </div>
+                <div className="mt-2 flex justify-between">
+                  <span>{t("Tax Group")}</span>
+                  <span>
+                    {taxGroupOptions.find((group: any) => String(group.id) === cartTaxGroupId)?.name ||
+                      cartTaxGroupId ||
+                      "-"}
+                  </span>
+                </div>
+              </div>
+            )}
+            <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+              <div className="flex justify-between font-semibold">
+                <span>{t("Summary")}</span>
+                <span>{formatMoney(subtotal)}</span>
+              </div>
+              <div className="mt-2 flex justify-between">
+                <span>{t("VAT")}</span>
+                <span>{String(posOptions.pos_vat || "disabled")}</span>
+              </div>
+              {posOptions.pos_vat === "products_vat" ? (
+                <div className="mt-2 flex justify-between">
+                  <span>{t("Product Taxes")}</span>
+                  <span>{t("Applied from products")}</span>
+                </div>
+              ) : null}
             </div>
           </div>
           <DialogFooter>
+            {["variable_vat", "products_variable_vat"].includes(String(posOptions.pos_vat)) ? (
+              <Button onClick={() => setIsTaxesDialogOpen(false)}>
+                {t("Save")}
+              </Button>
+            ) : null}
             <Button onClick={() => setIsTaxesDialogOpen(false)}>
               {t("Close")}
             </Button>
