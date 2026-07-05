@@ -17,6 +17,12 @@ export default function PurchaseInvoicePage() {
   const posOptions = usePosOptions()
   const formatMoney = (value: any) =>
     `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const formatDate = (value: any) => {
+    if (!value) return "-"
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return String(value)
+    return date.toLocaleDateString()
+  }
   const id = params.id as string
   const [getPurchaseOrderById, purchaseOrder] = (
     purchases as any
@@ -115,10 +121,10 @@ export default function PurchaseInvoicePage() {
             {t("Dates")}
           </p>
           <p className="mt-2 text-base font-bold text-slate-900">
-            {order.order_date || "-"}
+            {formatDate(order.order_date)}
           </p>
           <p className="text-sm text-slate-500">
-            {t("Expected")} {order.expected_date || "-"}
+            {t("Expected")} {formatDate(order.expected_date)}
           </p>
         </div>
       </div>

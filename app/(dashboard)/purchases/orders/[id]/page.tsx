@@ -82,8 +82,6 @@ export default function PurchaseOrderFormPage() {
   const [formData, setFormData] = useState<PurchaseFormValues>(initialValues)
   const [items, setItems] = useState<PurchaseItemForm[]>([emptyItem()])
   const [receiveItems, setReceiveItems] = useState<Record<string, string>>({})
-  const [paymentReference, setPaymentReference] = useState("")
-  const [paymentNote, setPaymentNote] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isFooterStuck, setIsFooterStuck] = useState(false)
@@ -96,7 +94,6 @@ export default function PurchaseOrderFormPage() {
   const [createPurchaseOrder] = (purchases as any).useCreatePurchaseOrderMutation()
   const [editPurchaseOrder] = (purchases as any).useEditPurchaseOrderMutation()
   const [receivePurchaseOrder] = (purchases as any).useReceivePurchaseOrderMutation()
-  const [changePurchasePaymentStatus] = (purchases as any).useChangePurchasePaymentStatusMutation()
   const [bulkUpdatePurchaseOrderProducts] = (purchases as any).useBulkUpdatePurchaseOrderProductsMutation()
   const [deletePurchaseOrderProduct] = (purchases as any).useDeletePurchaseOrderProductMutation()
   const [getLowStockSuggestions] = (purchases as any).useGetLowStockSuggestionsMutation()
@@ -110,6 +107,14 @@ export default function PurchaseOrderFormPage() {
   const unitOptions = units.data?.data || []
   const isPaid = record?.payment_status === "paid"
   const isStocked = record?.delivery_status === "stocked"
+  const hasPendingReceive = orderItems.some(
+    (item: any) =>
+      Math.max(
+        money(item.ordered_quantity ?? item.quantity) -
+          money(item.received_quantity ?? (money(item.quantity) - money(item.available_quantity))),
+        0
+      ) > 0
+  )
 
   const hydratePurchase = (purchase: any) => {
     setFormData({
@@ -137,8 +142,6 @@ export default function PurchaseOrderFormPage() {
       }))
     )
 
-    setPaymentReference("")
-    setPaymentNote("")
   }
 
   const reloadOrder = async () => {
@@ -390,17 +393,6 @@ export default function PurchaseOrderFormPage() {
   const handleSetAsPaid = async () => {
     const response = await setPurchaseOrderAsPaid({ id }).unwrap()
     showToast.success(response?.message || t("Procurement marked as paid."))
-    await reloadOrder()
-  }
-
-  const handlePaymentStatusChange = async (payment_status: "paid" | "unpaid") => {
-    const payLoad: Record<string, string> = {
-      payment_status,
-      reference_number: paymentReference,
-      note: paymentNote,
-    }
-    const response = await changePurchasePaymentStatus({ id, payLoad }).unwrap()
-    showToast.success(response?.message || t("Payment status updated."))
     await reloadOrder()
   }
 
@@ -737,7 +729,10 @@ export default function PurchaseOrderFormPage() {
                       const existingItem = orderItems.find(
                         (orderItem: any) => orderItem.id === item.purchase_item_id
                       )
-                      const receivedQuantity = money(existingItem?.received_quantity)
+                      const receivedQuantity = money(
+                        existingItem?.received_quantity ??
+                          (money(existingItem?.quantity) - money(existingItem?.available_quantity))
+                      )
                       const rowTotal =
                         money(item.ordered_quantity) * money(item.cost_price) +
                         money(item.tax_amount)
@@ -862,8 +857,8 @@ export default function PurchaseOrderFormPage() {
                   </div>
                 </section>
 
-                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                  {!isStocked ? (
+                {!isStocked && hasPendingReceive ? (
+                  <div className="grid grid-cols-1 gap-4">
                     <section className="rounded-lg border border-gray-200 bg-white p-4">
                     <h2 className="text-base font-bold text-gray-900">
                       {t("Stock In")}
@@ -874,7 +869,11 @@ export default function PurchaseOrderFormPage() {
                     <div className="space-y-3">
                       {orderItems.map((item: any) => {
                         const pending = Math.max(
-                          money(item.ordered_quantity) - money(item.received_quantity),
+                          money(item.ordered_quantity ?? item.quantity) -
+                            money(
+                              item.received_quantity ??
+                                (money(item.quantity) - money(item.available_quantity))
+                            ),
                           0
                         )
                         return (
@@ -917,52 +916,8 @@ export default function PurchaseOrderFormPage() {
                       {receivePurchaseOrder.isLoading ? <Spinner /> : t("Receive Stock")}
                     </Button>
                     </section>
-                  ) : null}
-
-                  <section className="rounded-lg border border-gray-200 bg-white p-4">
-                    <h2 className="text-base font-bold text-gray-900">
-                      {t("Provider Payment")}
-                    </h2>
-                    <p className="mb-4 text-xs font-medium text-gray-500">
-                      {t("Mark this procurement as paid or unpaid.")}
-                    </p>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <UniFieldInput
-                        label={t("Reference")}
-                        placeholder={t("Transaction/reference number")}
-                        value={paymentReference}
-                        onChange={(event) => setPaymentReference(event.target.value)}
-                      />
-                      <div className="md:col-span-2">
-                        <UniFieldInput
-                          as="textarea"
-                          label={t("Payment Note")}
-                          placeholder={t("Enter payment note")}
-                          value={paymentNote}
-                          onChange={(event) => setPaymentNote(event.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => handlePaymentStatusChange("unpaid")}
-                        disabled={isPaid || changePurchasePaymentStatus.isLoading}
-                      >
-                        {t("Mark Unpaid")}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => handlePaymentStatusChange("paid")}
-                        disabled={isPaid || changePurchasePaymentStatus.isLoading}
-                      >
-                        {t("Mark Paid")}
-                      </Button>
-                    </div>
-                  </section>
-                </div>
+                  </div>
+                ) : null}
               </>
             )}
           </div>
