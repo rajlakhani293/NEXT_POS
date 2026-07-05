@@ -198,6 +198,9 @@
   "Company updated successfully.": "Entreprise mise à jour avec succès.",
   "You have successfully logged in.": "Vous êtes connecté avec succès.",
   "The account has been successfully created.": "Le compte a été créé avec succès.",
+  "Low Stock": "Stock Faible",
+  "Items currently below their configured minimum stock.": "Articles actuellement sous leur stock minimum configuré.",
+  "Current stock quantity and stock value by product unit.": "Quantité de stock actuelle et valeur du stock par unité de produit.",
   "background_jobs": "Tâches en Arrière-plan",
   "reset_database": "Réinitialiser la Base de Données"
 }

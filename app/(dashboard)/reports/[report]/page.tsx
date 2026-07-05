@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { accounting } from "@/lib/api/accounting"
 import { customers } from "@/lib/api/customers"
 import { reports } from "@/lib/api/reports"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
@@ -83,9 +82,12 @@ export default function ReportViewPage() {
   const [getLowStockReport, lowStockState] = (
     reports as any
   ).useGetLowStockReportMutation()
-  const [getTransactionHistoryData, accountingState] = (
-    accounting as any
-  ).useGetTransactionHistoryDataMutation()
+  const [getStockReport, stockReportState] = (
+    reports as any
+  ).useGetStockReportMutation()
+  const [getTransactionsReport, transactionsState] = (
+    reports as any
+  ).useGetTransactionsReportMutation()
   const [getAnnualReport, annualState] = (
     reports as any
   ).useGetAnnualReportMutation()
@@ -100,7 +102,8 @@ export default function ReportViewPage() {
     paymentTypesState.isLoading ||
     productsState.isLoading ||
     lowStockState.isLoading ||
-    accountingState.isLoading ||
+    stockReportState.isLoading ||
+    transactionsState.isLoading ||
     annualState.isLoading
 
   const rowsPayload = useMemo(() => {
@@ -153,10 +156,11 @@ export default function ReportViewPage() {
       sales_progress: getProductsReport,
       customers_statement: (payLoad: any) => getCustomerStatement({ id: selectedCustomerId, payLoad }),
       low_stock: getLowStockReport,
+      stock_report: getStockReport,
       stock_ledger: getProductHistoryCombinedReport,
       sold_stock: getSoldStockReport,
       profit: getProfitReport,
-      accounting: getTransactionHistoryData,
+      accounting: getTransactionsReport,
       annual: getAnnualReport,
       payment_types: getPaymentTypesReport,
     }
@@ -171,6 +175,35 @@ export default function ReportViewPage() {
           setRows(data.months || [])
           setTotalItems(12)
           setAnnualTotals(data.totals || null)
+        } else if (activeReport === "accounting") {
+          const accountRows = Object.values(data.accounts || {}).flatMap((group: any) => [
+            {
+              id: `group-${group.name}`,
+              name: group.name,
+              debits: group.debits,
+              credits: group.credits,
+              is_group: true,
+            },
+            ...((group.transactions || []).map((account: any) => ({
+              ...account,
+              name: account.name,
+              is_group: false,
+            }))),
+          ])
+          setRows(accountRows)
+          setTotalItems(accountRows.length)
+          setAnnualTotals({
+            total_debits: data.debits,
+            total_credits: data.credits,
+            profit: data.profit,
+          })
+        } else if (activeReport === "stock_report") {
+          const items = (data.items || []).map((item: any) => ({
+            ...item,
+            stock_value: Number(item.current_stock || 0) * Number(item.selling_price || 0),
+          }))
+          setRows(items)
+          setTotalItems(data.total || 0)
         } else {
           setRows(data.items || [])
           setTotalItems(data.total || 0)
@@ -190,7 +223,8 @@ export default function ReportViewPage() {
     getSaleReport,
     getSoldStockReport,
     getProductHistoryCombinedReport,
-    getTransactionHistoryData,
+    getStockReport,
+    getTransactionsReport,
     rowsPayload,
     selectedCustomerId,
   ])
@@ -272,6 +306,27 @@ export default function ReportViewPage() {
     </div>
   ) : undefined
 
+  const stockReportTypeSelector =
+    activeReport === "stock_report" || activeReport === "low_stock" ? (
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold text-gray-500">
+          {t("Report Type")}:
+        </span>
+        <Select
+          value={activeReport}
+          onValueChange={(val) => router.push(`/reports/${val}`)}
+        >
+          <SelectTrigger className="h-9 w-[180px]">
+            <SelectValue placeholder={t("Report Type")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="stock_report">{t("Stock Report")}</SelectItem>
+            <SelectItem value="low_stock">{t("Low Stock")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    ) : undefined
+
   const formattedColumns = useMemo(() => {
     const rawColumns = reportColumns[activeReport] || []
     return rawColumns.map((col: any) => {
@@ -290,6 +345,7 @@ export default function ReportViewPage() {
         "profit_amount",
         "amount",
         "sold_amount",
+        "stock_value",
         "selling_price",
         "purchase_price",
         "owed_amount",
@@ -304,7 +360,21 @@ export default function ReportViewPage() {
         "total_taxes",
         "total_expenses",
         "net_income",
+        "debits",
+        "credits",
       ]
+
+      if (activeReport === "accounting" && col.key === "name") {
+        return {
+          ...col,
+          title: t(col.title),
+          render: (val: any, record: any) => (
+            <span className={record.is_group ? "font-bold" : "pl-4"}>
+              {val || "-"}
+            </span>
+          ),
+        }
+      }
 
       if (col.key === "due_amount") {
         return {
@@ -359,6 +429,13 @@ export default function ReportViewPage() {
   }, [activeReport, formatMoney, t])
 
   const footerSummary = useMemo(() => {
+    if (activeReport === "accounting" && annualTotals) {
+      return [
+        { label: t("Debit"), value: formatMoney(annualTotals.total_debits) },
+        { label: t("Credit"), value: formatMoney(annualTotals.total_credits) },
+        { label: t("Profit"), value: formatMoney(annualTotals.profit) },
+      ]
+    }
     if (activeReport !== "annual" || !annualTotals) return undefined
     return [
       { label: t("Total Sales"), value: formatMoney(annualTotals.total_sales) },
@@ -413,7 +490,7 @@ export default function ReportViewPage() {
           onFilterChange={handleFilterChange}
           isLoading={isTableLoading}
           hideActions
-          secondaryActionButton={yearSelector || customerSelector}
+          secondaryActionButton={yearSelector || customerSelector || stockReportTypeSelector}
           footerSummary={footerSummary}
         />
       </div>

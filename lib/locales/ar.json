@@ -198,6 +198,9 @@
   "Company updated successfully.": "تم تحديث الشركة بنجاح.",
   "You have successfully logged in.": "تم تسجيل الدخول بنجاح.",
   "The account has been successfully created.": "تم إنشاء الحساب بنجاح.",
+  "Low Stock": "مخزون منخفض",
+  "Items currently below their configured minimum stock.": "العناصر الأقل حالياً من الحد الأدنى للمخزون المحدد.",
+  "Current stock quantity and stock value by product unit.": "كمية المخزون الحالية وقيمة المخزون حسب وحدة المنتج.",
   "background_jobs": "المهام الخلفية",
   "reset_database": "إعادة ضبط قاعدة البيانات"
 }

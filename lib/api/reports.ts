@@ -13,6 +13,8 @@ const endpointsConfig = {
   getPaymentTypesReport: { query: postMutation("payment-types") },
   getProductsReport: { query: postMutation("products-report") },
   getLowStockReport: { query: postMutation("low-stock") },
+  getStockReport: { query: postMutation("stock-report") },
+  getTransactionsReport: { query: postMutation("transactions") },
   getCustomerStatement: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`customers-statement/${id}`)(payLoad) },
   getAnnualReport: { query: postMutation("annual-report") },
 }
