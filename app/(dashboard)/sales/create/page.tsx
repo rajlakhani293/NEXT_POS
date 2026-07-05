@@ -61,6 +61,9 @@ type CartItem = {
   unit_quantity_id?: string
   unit_id?: string
   unit_label?: string
+  mode?: string
+  product_type?: string
+  rate?: number
   name: string
   qty: number
   price: number
@@ -139,6 +142,17 @@ const emptyPaymentRow = (): PaymentRow => ({
   amount: "",
   reference_number: "",
   note: "",
+})
+
+const emptyQuickProductForm = () => ({
+  name: "",
+  product_type: "product",
+  rate: "",
+  unit_price: "0",
+  quantity: "1",
+  unit_id: "",
+  tax_type: "inclusive",
+  tax_group_id: "",
 })
 
 const getCartItemDiscount = (item: CartItem) => {
@@ -247,6 +261,7 @@ export default function SalesPage() {
   const [isOrderSettingsOpen, setIsOrderSettingsOpen] = useState(false)
   const [isTaxesDialogOpen, setIsTaxesDialogOpen] = useState(false)
   const [isQuickProductDialogOpen, setIsQuickProductDialogOpen] = useState(false)
+  const [quickProductForm, setQuickProductForm] = useState(emptyQuickProductForm)
   const [isCartDiscountDialogOpen, setIsCartDiscountDialogOpen] = useState(false)
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false)
   const [productSearchTerm, setProductSearchTerm] = useState("")
@@ -286,6 +301,14 @@ export default function SalesPage() {
   const [getPOSGrid] = (catalog as any).useGetPOSGridMutation()
   const [getPOSGridByCategory] = (catalog as any).useGetPOSGridByCategoryMutation()
   const [getTaxGroupsDropdown, { data: taxGroupsData }] = (catalog as any).useGetTaxGroupsDropdownMutation()
+  const [getUnitsDropdown, { data: unitsDropdownData, isLoading: isUnitsLoading }] =
+    (catalog as any).useGetUnitsDropdownMutation()
+  const [createProduct, { isLoading: isCreatingQuickProduct }] = (
+    catalog as any
+  ).useCreateProductMutation()
+  const [createProductUnitQuantity] = (
+    catalog as any
+  ).useCreateProductUnitQuantityMutation()
   const [getProductsData, productSearchState] = (catalog as any).useGetProductsDataMutation()
   const [getProductById] = (catalog as any).useGetProductByIdMutation()
   const [searchProductUsingBarcode, barcodeSearchState] = (
@@ -316,6 +339,7 @@ export default function SalesPage() {
   const couponOptions = couponsData?.data || []
   const registerOptions = registersDropdownData?.data || []
   const taxGroupOptions = taxGroupsData?.data || []
+  const unitOptions = unitsDropdownData?.data || []
   const rewardBalances = rewardBalanceState.data?.data || []
   const redeemableReward = rewardBalances.find(
     (balance: any) =>
@@ -445,6 +469,7 @@ export default function SalesPage() {
     getPaymentTypesDropdown()
     getCouponsDropdown()
     getTaxGroupsDropdown()
+    getUnitsDropdown()
     loadGrid()
   }, [
     getCouponsDropdown,
@@ -452,6 +477,7 @@ export default function SalesPage() {
     getCustomersDropdown,
     getPaymentTypesDropdown,
     getTaxGroupsDropdown,
+    getUnitsDropdown,
     loadGrid,
   ])
 
@@ -464,6 +490,25 @@ export default function SalesPage() {
     setCartTaxGroupId(posOptions.pos_tax_group ? String(posOptions.pos_tax_group) : "")
     setCartTaxType(posOptions.pos_tax_type ? String(posOptions.pos_tax_type) : "exclusive")
   }, [posOptions.pos_tax_group, posOptions.pos_tax_type])
+
+  useEffect(() => {
+    setQuickProductForm((current) => ({
+      ...current,
+      unit_id:
+        current.unit_id ||
+        (posOptions.quick_product_default_unit
+          ? String(posOptions.quick_product_default_unit)
+          : ""),
+      tax_group_id:
+        current.tax_group_id ||
+        (posOptions.pos_tax_group ? String(posOptions.pos_tax_group) : ""),
+      tax_type: current.tax_type || posOptions.pos_tax_type || "inclusive",
+    }))
+  }, [
+    posOptions.pos_tax_group,
+    posOptions.pos_tax_type,
+    posOptions.quick_product_default_unit,
+  ])
 
   useEffect(() => {
     if (!forceAutoFocus || !barcode.trim()) return
@@ -701,6 +746,9 @@ export default function SalesPage() {
               ? String(product.unit_id)
               : undefined,
           unit_label: unitLabel,
+          mode: product.mode || "normal",
+          product_type: product.product_type || "product",
+          rate: Number(product.rate || 0),
           name: product.name,
           qty: initialQty,
           price,
@@ -804,6 +852,114 @@ export default function SalesPage() {
     handleGridProductClick(fullProduct)
   }
 
+  const updateQuickProductForm = (field: keyof ReturnType<typeof emptyQuickProductForm>, value: string) => {
+    setQuickProductForm((current) => ({ ...current, [field]: value }))
+  }
+
+  const resetQuickProductForm = () => {
+    setQuickProductForm({
+      ...emptyQuickProductForm(),
+      unit_id: posOptions.quick_product_default_unit
+        ? String(posOptions.quick_product_default_unit)
+        : "",
+      tax_group_id: posOptions.pos_tax_group ? String(posOptions.pos_tax_group) : "",
+      tax_type: posOptions.pos_tax_type || "inclusive",
+    })
+  }
+
+  const handleCreateQuickProduct = async () => {
+    const form = quickProductForm
+    const isDynamic = form.product_type === "dynamic"
+    const name = form.name.trim()
+    const unitPrice = money(form.unit_price)
+    const quantity = isDynamic ? 1 : money(form.quantity)
+    const rate = money(form.rate)
+
+    if (!name) {
+      showToast.error(t("Provide a unique name for the product."))
+      return
+    }
+    if (isDynamic && rate <= 0) {
+      showToast.error(t("In case the product is computed based on a percentage, define the rate here."))
+      return
+    }
+    if (!isDynamic && (!form.unit_id || unitPrice < 0 || quantity <= 0)) {
+      showToast.error(t("Unable to proceed. The form is not valid."))
+      return
+    }
+
+    const selectedUnit = unitOptions.find((unit: any) => String(unit.id) === String(form.unit_id))
+    const productForm = new FormData()
+    productForm.append("name", name)
+    productForm.append("product_type", "product")
+    productForm.append("type", isDynamic ? "dematerialized" : "materialized")
+    productForm.append("stock_management", "disabled")
+    productForm.append("searchable", "true")
+    productForm.append("auto_cogs", "true")
+    productForm.append("accurate_tracking", "false")
+    if (isDynamic) {
+      productForm.append("tax_type", "exclusive")
+    } else if (form.tax_type) {
+      productForm.append("tax_type", form.tax_type)
+    }
+    if (form.tax_group_id && !isDynamic) {
+      productForm.append("tax_group_id", form.tax_group_id)
+    }
+    if (selectedUnit?.group_id && !isDynamic) {
+      productForm.append("unit_group_id", String(selectedUnit.group_id))
+    }
+
+    const productResponse = await createProduct(productForm).unwrap()
+    const product = productResponse?.data
+    if (!product?.id) {
+      showToast.error(t("Unable to proceed. The form is not valid."))
+      return
+    }
+
+    let unitQuantity: POSUnitQuantity | any = undefined
+    if (!isDynamic) {
+      const unitResponse = await createProductUnitQuantity({
+        productId: product.id,
+        payLoad: {
+          unit_id: Number(form.unit_id),
+          quantity: 0,
+          sale_price: unitPrice,
+          sale_price_edit: unitPrice,
+          sale_price_net: unitPrice,
+          sale_price_gross: unitPrice,
+          visible: true,
+        },
+      }).unwrap()
+      unitQuantity = {
+        ...(unitResponse?.data || {}),
+        unit_name: selectedUnit?.name,
+        unit_identifier: selectedUnit?.identifier,
+        sale_price: unitPrice,
+        sale_price_net: unitPrice,
+        sale_price_gross: unitPrice,
+        quantity: 0,
+      }
+    }
+
+    const cartProduct = {
+      ...product,
+      name,
+      mode: "custom",
+      product_type: isDynamic ? "dynamic" : "product",
+      rate: isDynamic ? rate : 0,
+      stock_management: "disabled",
+      type: isDynamic ? "dematerialized" : "materialized",
+      unit_id: form.unit_id ? Number(form.unit_id) : undefined,
+      unit_name: selectedUnit?.name || (isDynamic ? t("N/A") : ""),
+    }
+    const added = addProductToCart(cartProduct, unitQuantity, quantity)
+    if (!added) return
+    showToast.success(t("{product} added to cart.").replace("{product}", name))
+    resetQuickProductForm()
+    setIsQuickProductDialogOpen(false)
+    await loadGrid()
+  }
+
   useEffect(() => {
     if (!isProductSearchOpen || !productSearchTerm.trim()) return
     const searchTimer = window.setTimeout(() => {
@@ -862,6 +1018,10 @@ export default function SalesPage() {
 
   const openPriceEditDialog = (item: CartItem) => {
     if (!posOptions.unit_price_editable) return
+    if (item.product_type === "dynamic") {
+      showToast.error(t("Dynamic product can't have their price updated."))
+      return
+    }
     setPriceEditItem(item)
     setPriceInput(String(item.price || ""))
   }
@@ -997,7 +1157,12 @@ export default function SalesPage() {
         product_id: String(item.product_id),
         line_id: crypto.randomUUID(),
         unit_quantity_id: item.unit_quantity_id ? String(item.unit_quantity_id) : undefined,
-        name: item.product_name,
+        unit_id: item.unit_id ? String(item.unit_id) : undefined,
+        unit_label: item.unit_name || item.unit__name || "",
+        mode: item.mode || "normal",
+        product_type: item.product_type || "product",
+        rate: Number(item.rate || 0),
+        name: item.product_name || item.name,
         qty: Number(item.quantity || 0),
         price: Number(item.unit_price || 0),
         available_stock: 0,
@@ -1091,6 +1256,11 @@ export default function SalesPage() {
       discount_percentage: cartDiscountType === "percentage" ? String(money(cartDiscountVal)) : "0",
       items: cartItems.map((item) => ({
         product_id: Number(item.product_id),
+        name: item.name,
+        unit_name: item.unit_label || "",
+        mode: item.mode || "normal",
+        product_type: item.product_type || "product",
+        rate: String(item.rate || 0),
         unit_quantity_id: item.unit_quantity_id
           ? Number(item.unit_quantity_id)
           : null,
@@ -1175,6 +1345,11 @@ export default function SalesPage() {
       discount_percentage: cartDiscountType === "percentage" ? String(money(cartDiscountVal)) : "0",
       items: cartItems.map((item) => ({
         product_id: Number(item.product_id),
+        name: item.name,
+        unit_name: item.unit_label || "",
+        mode: item.mode || "normal",
+        product_type: item.product_type || "product",
+        rate: String(item.rate || 0),
         unit_quantity_id: item.unit_quantity_id
           ? Number(item.unit_quantity_id)
           : null,
@@ -2934,22 +3109,105 @@ export default function SalesPage() {
       <Dialog open={isQuickProductDialogOpen} onOpenChange={setIsQuickProductDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("Product")}</DialogTitle>
-            <DialogDescription>
-              {t("Create a new product and add it from the product grid once saved.")}
-            </DialogDescription>
+            <DialogTitle>{t("Product / Service")}</DialogTitle>
           </DialogHeader>
+          <div className="space-y-4 py-2">
+            <UniFieldInput
+              label={t("Name")}
+              value={quickProductForm.name}
+              onChange={(event) => updateQuickProductForm("name", event.target.value)}
+              autoFocus
+              required
+            />
+            <UniFieldSelect
+              label={t("Product Type")}
+              value={quickProductForm.product_type}
+              onValueChange={(value) => updateQuickProductForm("product_type", value)}
+              required
+            >
+              <SelectItem value="product">{t("Normal")}</SelectItem>
+              <SelectItem value="dynamic">{t("Dynamic")}</SelectItem>
+            </UniFieldSelect>
+
+            {quickProductForm.product_type === "dynamic" ? (
+              <UniFieldInput
+                label={t("Rate")}
+                value={quickProductForm.rate}
+                onChange={(event) => updateQuickProductForm("rate", event.target.value)}
+                type="number"
+                min="0"
+                required
+              />
+            ) : (
+              <>
+                <UniFieldInput
+                  label={t("Unit Price")}
+                  value={quickProductForm.unit_price}
+                  onChange={(event) => updateQuickProductForm("unit_price", event.target.value)}
+                  type="number"
+                  min="0"
+                  prefix={posOptions.currency_symbol}
+                  required
+                />
+                <UniFieldInput
+                  label={t("Quantity")}
+                  value={quickProductForm.quantity}
+                  onChange={(event) => updateQuickProductForm("quantity", event.target.value)}
+                  type="number"
+                  min="0"
+                  required
+                />
+                <UniFieldSelect
+                  label={t("Unit")}
+                  value={quickProductForm.unit_id}
+                  onValueChange={(value) => updateQuickProductForm("unit_id", value)}
+                  placeholder={isUnitsLoading ? t("Loading") : t("Unit")}
+                  required
+                >
+                  {unitOptions.map((unit: any) => (
+                    <SelectItem key={unit.id} value={String(unit.id)}>
+                      {unit.name}
+                    </SelectItem>
+                  ))}
+                </UniFieldSelect>
+                <UniFieldSelect
+                  label={t("Tax Type")}
+                  value={quickProductForm.tax_type || "disabled"}
+                  onValueChange={(value) =>
+                    updateQuickProductForm("tax_type", value === "disabled" ? "" : value)
+                  }
+                >
+                  <SelectItem value="disabled">{t("Disabled")}</SelectItem>
+                  <SelectItem value="inclusive">{t("Inclusive")}</SelectItem>
+                  <SelectItem value="exclusive">{t("Exclusive")}</SelectItem>
+                </UniFieldSelect>
+                <UniFieldSelect
+                  label={t("Tax Group")}
+                  value={quickProductForm.tax_group_id}
+                  onValueChange={(value) => updateQuickProductForm("tax_group_id", value)}
+                  placeholder={t("Tax Group")}
+                >
+                  {taxGroupOptions.map((group: any) => (
+                    <SelectItem key={group.id} value={String(group.id)}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
+                </UniFieldSelect>
+              </>
+            )}
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsQuickProductDialogOpen(false)}>
-              {t("Cancel")}
-            </Button>
             <Button
+              variant="outline"
               onClick={() => {
+                resetQuickProductForm()
                 setIsQuickProductDialogOpen(false)
-                router.push("/inventory/products/create")
               }}
             >
-              {t("Add Product")}
+              {t("Cancel")}
+            </Button>
+            <Button onClick={handleCreateQuickProduct} disabled={isCreatingQuickProduct}>
+              {isCreatingQuickProduct ? <Spinner /> : t("Create")}
             </Button>
           </DialogFooter>
         </DialogContent>

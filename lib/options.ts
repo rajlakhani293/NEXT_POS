@@ -13,6 +13,7 @@ const defaultOptions: OptionMap = {
   enable_cash_registers: true,
   allow_decimal_quantities: true,
   quick_product_enabled: true,
+  quick_product_default_unit: "",
   cart_discount: true,
   products_discount: true,
   edit_settings: true,
@@ -65,6 +66,7 @@ export function usePosOptions() {
 
   return useMemo(() => {
     const options = { ...defaultOptions, ...(settings || {}) }
+    const optionMap = options as OptionMap
     return {
       ...options,
       allow_partial_orders: normalizeBoolOption(options.allow_partial_orders),
@@ -73,6 +75,11 @@ export function usePosOptions() {
       enable_cash_registers: normalizeBoolOption(options.enable_cash_registers, true),
       allow_decimal_quantities: normalizeBoolOption(options.allow_decimal_quantities, true),
       quick_product_enabled: normalizeBoolOption(options.quick_product_enabled, true),
+      quick_product_default_unit: String(
+        optionMap.quick_product_default_unit ||
+          optionMap.pos_quick_product_default_unit ||
+          ""
+      ),
       cart_discount: normalizeBoolOption(options.cart_discount, true),
       products_discount: normalizeBoolOption(options.products_discount, true),
       edit_settings: normalizeBoolOption(options.edit_settings, true),
