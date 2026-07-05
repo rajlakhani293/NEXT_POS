@@ -74,6 +74,21 @@ const selectOptions: Record<string, { value: string; label: string }[]> = {
     { value: "15", label: "15 Days" },
     { value: "30", label: "30 Days" },
   ],
+  pos_registers_enabled: yesNoOptions,
+  pos_idle_counter: [
+    { value: "disabled", label: "Disabled" },
+    { value: "5min", label: "5 Minutes" },
+    { value: "10min", label: "10 Minutes" },
+    { value: "15min", label: "15 Minutes" },
+    { value: "20min", label: "20 Minutes" },
+    { value: "30min", label: "30 Minutes" },
+  ],
+  pos_disbursement: yesNoOptions,
+  pos_registers_default_change_payment_type: [
+    { value: "cash-payment", label: "Cash" },
+    { value: "bank-payment", label: "Bank Payment" },
+    { value: "account-payment", label: "Customer Account" },
+  ],
   pos_layout: [
     { value: "grid", label: "Grid" },
     { value: "list", label: "List" },
@@ -101,9 +116,25 @@ const selectOptions: Record<string, { value: string; label: string }[]> = {
     { value: "exclusive", label: "Exclusive" },
   ],
   pos_prefered_price: [
-    { value: "sale_price", label: "Sale Price" },
-    { value: "net_prices", label: "Net Price" },
-    { value: "wholesale_price", label: "Wholesale Price" },
+    { value: "gross_prices", label: "Gross Prices" },
+    { value: "net_prices", label: "Net Prices" },
+  ],
+  pos_numpad: [
+    { value: "default", label: "Default" },
+    { value: "advanced", label: "Advanced" },
+  ],
+  pos_action_permission_duration: [
+    { value: "1", label: "1 Minute" },
+    { value: "5", label: "5 Minutes" },
+    { value: "10", label: "10 Minutes" },
+  ],
+  pos_action_permission_cooldown_features: [
+    { value: "0", label: "No Cooldown" },
+    { value: "5", label: "5 Minutes" },
+    { value: "10", label: "10 Minutes" },
+    { value: "15", label: "15 Minutes" },
+    { value: "30", label: "30 Minutes" },
+    { value: "60", label: "1 Hour" },
   ],
   scale_barcode_type: [
     { value: "weight", label: "Weight" },
@@ -129,7 +160,68 @@ const multiSelectOptions: Record<string, { value: string; label: string }[]> = {
     { value: "takeaway", label: "Take Order" },
     { value: "delivery", label: "Delivery" },
   ],
+  pos_action_permission_restricted_features: [
+    { value: "pos.cart.product-discount", label: "Cart: Change Product Discount" },
+    { value: "pos.cart.product-price", label: "Cart: Edit Product Price" },
+    { value: "pos.cart.product-wholesale-price", label: "Cart: Use Wholesale Price" },
+    { value: "pos.cart.product-delete", label: "Cart: Product Delete" },
+    { value: "pos.cart.settings", label: "Cart: Change Settings" },
+    { value: "pos.cart.taxes", label: "Cart: Set Taxes" },
+    { value: "pos.cart.comments", label: "Cart: Add Comments" },
+    { value: "pos.cart.order-type", label: "Cart: Change Order Type" },
+    { value: "pos.cart.coupons", label: "Cart: Apply Coupons" },
+    { value: "pos.cart.products", label: "Cart: Create Quick Product" },
+    { value: "pos.cart.void", label: "Cart: Void Order" },
+    { value: "pos.cart.discount", label: "Cart: Apply Discount" },
+    { value: "pos.cart.hold", label: "Cart: Hold Order" },
+  ],
+  pos_keyboard_cancel_order: [],
+  pos_keyboard_hold_order: [],
+  pos_keyboard_create_customer: [],
+  pos_keyboard_payment: [],
+  pos_keyboard_shipping: [],
+  pos_keyboard_note: [],
+  pos_keyboard_order_type: [],
+  pos_keyboard_fullscreen: [],
+  pos_keyboard_quick_search: [],
+  pos_keyboard_toggle_merge: [],
 }
+
+const shortcutOptions = [
+  "ctrl",
+  "shift",
+  "alt",
+  "space",
+  "enter",
+  "escape",
+  "backspace",
+  "tab",
+  "f1",
+  "f2",
+  "f3",
+  "f4",
+  "f5",
+  "f6",
+  "f7",
+  "f8",
+  "f9",
+  "f10",
+  "f11",
+  "f12",
+].map((value) => ({ value, label: value }))
+
+const shortcutFieldNames = new Set([
+  "pos_keyboard_cancel_order",
+  "pos_keyboard_hold_order",
+  "pos_keyboard_create_customer",
+  "pos_keyboard_payment",
+  "pos_keyboard_shipping",
+  "pos_keyboard_note",
+  "pos_keyboard_order_type",
+  "pos_keyboard_fullscreen",
+  "pos_keyboard_quick_search",
+  "pos_keyboard_toggle_merge",
+])
 
 function normalizeIdentifier(identifier: string) {
   if (identifier === "invoices") return "invoice"
@@ -143,6 +235,12 @@ function sourceFieldValue(field: SourceSettingField) {
     return ""
   }
   return field.value
+}
+
+function selectValue(fieldName: string, value: any) {
+  if (typeof value === "boolean") return value ? "yes" : "no"
+  if (value === null || value === undefined) return ""
+  return String(value)
 }
 
 export function SourceSettingsPage({ identifier }: { identifier: string }) {
@@ -217,7 +315,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
         <UniFieldSelect
           label={label}
           required={required}
-          value={String(value ?? "")}
+          value={selectValue(field.name, value)}
           onValueChange={(nextValue) => updateValue(field.name, nextValue)}
         >
           {options.map((option) => (
@@ -229,9 +327,11 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
       )
     }
 
-    if (field.type === "multiselect") {
+    if (field.type === "multiselect" || field.type === "inline-multiselect") {
       const selected = Array.isArray(value) ? value : []
-      const optionsList = multiSelectOptions[field.name] || []
+      const optionsList = shortcutFieldNames.has(field.name)
+        ? shortcutOptions
+        : multiSelectOptions[field.name] || []
       return (
         <div className="rounded-md border bg-white px-4 py-3">
           <div className="mb-3 text-sm font-semibold text-gray-800">{label}</div>
