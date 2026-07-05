@@ -1196,7 +1196,7 @@ export default function SalesPage() {
 
   const handlePrintPendingOrder = (order: any) => {
     setIsHeldCartDialogOpen(false)
-    router.push(`/sales/${order.id}/receipt`)
+    router.push(getPrintedDocumentUrl(order.id))
   }
 
   const handleDeleteHeldSale = async (heldSaleId: number | string) => {
@@ -1378,6 +1378,12 @@ export default function SalesPage() {
       const paymentStatus = sale.payment_status || requestedPaymentStatus
       router.push(shouldOpenReceipt(paymentStatus) ? getPrintedDocumentUrl(sale.id) : `/sales/${sale.id}`)
     }
+  }
+
+  const handleSaveAsUnpaid = () => {
+    const proceed = window.confirm(t("Are you sure you want to save this order as unpaid?"))
+    if (!proceed) return
+    handleCompleteSale({ paymentStatus: "unpaid" })
   }
 
   const isInitialLoading =
@@ -2484,7 +2490,7 @@ export default function SalesPage() {
                     {totalPaid === 0 ? (
                       <Button
                         variant="outline"
-                        onClick={() => handleCompleteSale({ paymentStatus: "unpaid" })}
+                        onClick={handleSaveAsUnpaid}
                         disabled={isCreatingSale || !ordersAllowUnpaid}
                       >
                         {t("Save As Unpaid")}
