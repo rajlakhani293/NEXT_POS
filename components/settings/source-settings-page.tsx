@@ -22,6 +22,7 @@ type SourceSettingField = {
   label: string
   validation?: string
   value: any
+  options?: { value: string; label: string }[] | null
 }
 
 type SourceSettingTab = {
@@ -287,7 +288,11 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
     const label = t(field.label)
     const value = values[field.name]
     const required = String(field.validation || "").includes("required")
-    const options = selectOptions[field.name] || yesNoOptions
+    const fieldOptions = (field.options || []).map((option) => ({
+      value: String(option.value),
+      label: option.label,
+    }))
+    const options = fieldOptions.length ? fieldOptions : selectOptions[field.name] || yesNoOptions
 
     if (field.type === "switch" || field.type === "checkbox") {
       return (
@@ -311,7 +316,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
       )
     }
 
-    if (field.type === "select") {
+    if (field.type === "select" || field.type === "search-select") {
       return (
         <UniFieldSelect
           label={label}
@@ -329,10 +334,12 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
     }
 
     if (field.type === "multiselect" || field.type === "inline-multiselect") {
-      const selected = Array.isArray(value) ? value : []
+      const selected = Array.isArray(value) ? value.map(String) : []
       const optionsList = shortcutFieldNames.has(field.name)
         ? shortcutOptions
-        : multiSelectOptions[field.name] || []
+        : fieldOptions.length
+          ? fieldOptions
+          : multiSelectOptions[field.name] || []
       return (
         <div className="rounded-md border bg-white px-4 py-3">
           <div className="mb-3 text-sm font-semibold text-gray-800">{label}</div>
