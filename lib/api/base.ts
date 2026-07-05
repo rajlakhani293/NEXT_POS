@@ -30,9 +30,13 @@ export const createBaseQueryWithInterceptor = (
     let modifiedArgs = args
 
     if (typeof args === "string") {
-      modifiedArgs = `${reducerPath}/${args}`
+      modifiedArgs = args.startsWith("/") ? args.slice(1) : `${reducerPath}/${args}`
     } else if (args && typeof args === "object" && "url" in args) {
-      modifiedArgs = { ...args, url: `${reducerPath}/${args.url}` }
+      const url = String(args.url)
+      modifiedArgs = {
+        ...args,
+        url: url.startsWith("/") ? url.slice(1) : `${reducerPath}/${url}`,
+      }
     }
 
     const result = await actualBaseQuery(modifiedArgs, api, extraOptions)

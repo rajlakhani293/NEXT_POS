@@ -30,17 +30,17 @@ const endpointsConfig = {
     query: ({ id }: { id: number }) => getMutation(`accounts/${id}`),
   },
 
-  createManualTransaction: { query: createMutation("transactions/") },
+  createManualTransaction: { query: createMutation("/transactions/") },
   editTransaction: {
     query: ({ id, payLoad }: { id: any; payLoad: any }) =>
-      putMutation(`transactions/${id}`, payLoad),
+      putMutation(`/transactions/${id}`, payLoad),
   },
   getTransactionById: {
-    query: ({ id }: { id: number | string }) => getMutation(`transactions/${id}`),
+    query: ({ id }: { id: number | string }) => getMutation(`/transactions/${id}`),
   },
   deleteTransaction: {
     query: ({ ids }: { ids: Array<number | string> }) => ({
-      url: `transactions/${ids[0]}`,
+      url: `/transactions/${ids[0]}`,
       method: "DELETE",
     }),
   },
@@ -48,7 +48,7 @@ const endpointsConfig = {
   getTransactionHistoryData: { query: postMutation("history/get-transactions") },
   triggerTransaction: {
     query: ({ id }: { id: number | string }) =>
-      getMutation(`transactions/trigger/${id}`),
+      getMutation(`/transactions/trigger/${id}`),
   },
   bootstrapAccounting: { query: () => postMutation("bootstrap")({}) },
   getAccountingActions: {
