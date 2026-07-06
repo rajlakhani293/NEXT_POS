@@ -7,6 +7,7 @@ const endpointsConfig = {
   getDashboardSummary: { query: postMutation("dashboard-summary"), type: "query" },
   refreshDashboardSnapshot: { query: postMutation("dashboard-snapshot/refresh") },
   getProductHistoryCombinedReport: { query: postMutation("product-history-combined") },
+  computeProductHistoryCombinedReport: { query: postMutation("compute-combined-report") },
   getSaleReport: { query: postMutation("sale-report") },
   getSoldStockReport: { query: postMutation("sold-stock-report") },
   getProfitReport: { query: postMutation("profit-report") },
@@ -17,6 +18,7 @@ const endpointsConfig = {
   getTransactionsReport: { query: postMutation("transactions") },
   getCustomerStatement: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`customers-statement/${id}`)(payLoad) },
   getAnnualReport: { query: postMutation("annual-report") },
+  computeAnnualReport: { query: postMutation("compute/yearly") },
 }
 
 export const reports = createApi({

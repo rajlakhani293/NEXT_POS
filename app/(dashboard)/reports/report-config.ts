@@ -59,6 +59,12 @@ export const reportCards: Array<{
     group: "Inventory",
   },
   {
+    key: "low_stock",
+    title: "Low Stock Report",
+    description: "Products below their configured alert quantity.",
+    group: "Inventory",
+  },
+  {
     key: "stock_ledger",
     title: "Stock History",
     description: "Inventory movement history with quantity and balance.",
@@ -194,12 +200,8 @@ export const reportColumns: Record<ReportKey, any[]> = {
     { key: "order_count", title: "Orders" },
   ],
   payment_types: [
-    { key: "sale_order__code", title: "Order" },
-    { key: "payment_type", title: "Payment" },
-    { key: "amount", title: "Amount" },
-    { key: "paid_at", title: "Paid At" },
-    { key: "reference_number", title: "Reference" },
-    { key: "note", title: "Note" },
+    { key: "label", title: "Summary" },
+    { key: "total", title: "Total" },
   ],
 }
 

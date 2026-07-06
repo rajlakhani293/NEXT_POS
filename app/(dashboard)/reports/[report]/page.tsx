@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { notFound, useParams, useRouter } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, PrinterIcon, RefreshCwIcon } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,7 @@ import { reports } from "@/lib/api/reports"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { usePosOptions } from "@/lib/options"
 import { getDateRange } from "@/lib/utils"
+import { showToast } from "@/lib/toast"
 import {
   isReportKey,
   reportColumns,
@@ -64,6 +65,9 @@ export default function ReportViewPage() {
   const [getProductHistoryCombinedReport, stockHistoryState] = (
     reports as any
   ).useGetProductHistoryCombinedReportMutation()
+  const [computeProductHistoryCombinedReport, computeStockHistoryState] = (
+    reports as any
+  ).useComputeProductHistoryCombinedReportMutation()
   const [getSaleReport, saleReportState] = (
     reports as any
   ).useGetSaleReportMutation()
@@ -91,6 +95,9 @@ export default function ReportViewPage() {
   const [getAnnualReport, annualState] = (
     reports as any
   ).useGetAnnualReportMutation()
+  const [computeAnnualReport, computeAnnualState] = (
+    reports as any
+  ).useComputeAnnualReportMutation()
 
   const isTableLoading =
     customerStatementState.isLoading ||
@@ -104,7 +111,9 @@ export default function ReportViewPage() {
     lowStockState.isLoading ||
     stockReportState.isLoading ||
     transactionsState.isLoading ||
-    annualState.isLoading
+    annualState.isLoading ||
+    computeAnnualState.isLoading ||
+    computeStockHistoryState.isLoading
 
   const rowsPayload = useMemo(() => {
     if (activeReport === "annual") {
@@ -204,6 +213,10 @@ export default function ReportViewPage() {
           }))
           setRows(items)
           setTotalItems(data.total || 0)
+        } else if (activeReport === "payment_types") {
+          setRows(data.summary || [])
+          setTotalItems((data.summary || []).length)
+          setAnnualTotals({ total: data.total })
         } else {
           setRows(data.items || [])
           setTotalItems(data.total || 0)
@@ -327,6 +340,60 @@ export default function ReportViewPage() {
       </div>
     ) : undefined
 
+  const handlePrint = () => {
+    window.print()
+  }
+
+  const handleRecomputeAnnual = async () => {
+    const response = await computeAnnualReport({ year: selectedYear }).unwrap()
+    showToast.success(response?.message || t("The report will be computed for the current year."))
+  }
+
+  const handleGenerateStockHistory = async () => {
+    const response = await computeProductHistoryCombinedReport({
+      date: dateFilters.endDate || dateFilters.startDate,
+    }).unwrap()
+    showToast.success(response?.message || t("Stock combined report recomputed successfully."))
+    lastRowsRequestRef.current = ""
+    setPage(1)
+  }
+
+  const reportActions = (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      {yearSelector}
+      {customerSelector}
+      {stockReportTypeSelector}
+      {activeReport === "annual" ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleRecomputeAnnual}
+          disabled={computeAnnualState.isLoading}
+        >
+          <RefreshCwIcon className="size-4" />
+          {t("Recompute")}
+        </Button>
+      ) : null}
+      {activeReport === "stock_ledger" ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleGenerateStockHistory}
+          disabled={computeStockHistoryState.isLoading}
+        >
+          <RefreshCwIcon className="size-4" />
+          {t("Generate Report")}
+        </Button>
+      ) : null}
+      <Button type="button" variant="outline" size="sm" onClick={handlePrint}>
+        <PrinterIcon className="size-4" />
+        {t("Print")}
+      </Button>
+    </div>
+  )
+
   const formattedColumns = useMemo(() => {
     const rawColumns = reportColumns[activeReport] || []
     return rawColumns.map((col: any) => {
@@ -436,6 +503,9 @@ export default function ReportViewPage() {
         { label: t("Profit"), value: formatMoney(annualTotals.profit) },
       ]
     }
+    if (activeReport === "payment_types" && annualTotals) {
+      return [{ label: t("Total"), value: formatMoney(annualTotals.total) }]
+    }
     if (activeReport !== "annual" || !annualTotals) return undefined
     return [
       { label: t("Total Sales"), value: formatMoney(annualTotals.total_sales) },
@@ -490,7 +560,7 @@ export default function ReportViewPage() {
           onFilterChange={handleFilterChange}
           isLoading={isTableLoading}
           hideActions
-          secondaryActionButton={yearSelector || customerSelector || stockReportTypeSelector}
+          secondaryActionButton={reportActions}
           footerSummary={footerSummary}
         />
       </div>
