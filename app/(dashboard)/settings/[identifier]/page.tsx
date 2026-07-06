@@ -12,6 +12,7 @@ const allowedSettingsIdentifiers = new Set([
   "orders",
   "reports",
   "invoices",
+  "workers",
   "about",
 ])
 

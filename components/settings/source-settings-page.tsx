@@ -68,13 +68,15 @@ const selectOptions: Record<string, { value: string; label: string }[]> = {
   customers_force_unique_phone: yesNoOptions,
   customers_credit_enabled: yesNoOptions,
   orders_code_type: [
-    { value: "sequential", label: "Sequential" },
-    { value: "random", label: "Random" },
+    { value: "date_sequential", label: "Sequential" },
+    { value: "random_code", label: "Random Code" },
+    { value: "number_sequential", label: "Number Sequential" },
   ],
   orders_quotation_expiration: [
     { value: "never", label: "Never" },
-    { value: "1", label: "1 Day" },
-    { value: "7", label: "7 Days" },
+    { value: "3", label: "3 Days" },
+    { value: "5", label: "5 Days" },
+    { value: "10", label: "10 Days" },
     { value: "15", label: "15 Days" },
     { value: "30", label: "30 Days" },
   ],
@@ -94,8 +96,8 @@ const selectOptions: Record<string, { value: string; label: string }[]> = {
     { value: "account-payment", label: "Customer Account" },
   ],
   pos_layout: [
-    { value: "grid", label: "Grid" },
-    { value: "list", label: "List" },
+    { value: "grocery_shop", label: "Retail Layout" },
+    { value: "clothing_shop", label: "Clothing Shop" },
   ],
   pos_printing_document: [
     { value: "invoice", label: "Invoice" },
@@ -112,8 +114,9 @@ const selectOptions: Record<string, { value: string; label: string }[]> = {
   ],
   pos_vat: [
     { value: "disabled", label: "Disabled" },
-    { value: "products_vat", label: "Products VAT" },
-    { value: "flat_vat", label: "Flat VAT" },
+    { value: "flat_vat", label: "Flat Rate" },
+    { value: "variable_vat", label: "Flexible Rate" },
+    { value: "products_vat", label: "Products Vat" },
   ],
   pos_tax_type: [
     { value: "inclusive", label: "Inclusive" },
@@ -228,13 +231,24 @@ const shortcutFieldNames = new Set([
 ])
 
 function normalizeIdentifier(identifier: string) {
-  if (identifier === "invoices") return "invoice"
   return identifier
+}
+
+function sourceSwitchChecked(value: any) {
+  if (typeof value === "boolean") return value
+  if (typeof value === "number") return value === 1
+  if (typeof value === "string") return ["yes", "true", "1", "enabled"].includes(value.toLowerCase())
+  return false
+}
+
+function nextSourceSwitchValue(checked: boolean) {
+  return checked ? "yes" : "no"
 }
 
 function sourceFieldValue(field: SourceSettingField) {
   if (field.value === null || field.value === undefined) {
-    if (field.type === "switch" || field.type === "checkbox") return false
+    if (field.type === "switch") return "no"
+    if (field.type === "checkbox") return false
     if (field.type === "multiselect") return []
     return ""
   }
@@ -347,8 +361,8 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
             />
           ) : (
             <Switch
-              checked={Boolean(value)}
-              onCheckedChange={(checked) => updateValue(field.name, checked)}
+              checked={sourceSwitchChecked(value)}
+              onCheckedChange={(checked) => updateValue(field.name, nextSourceSwitchValue(checked))}
             />
           )}
         </div>

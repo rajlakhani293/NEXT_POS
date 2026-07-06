@@ -211,5 +211,8 @@
   "Wipe Plus Grocery": "Borrar y Crear Datos de Tienda",
   "Create Sales (needs Procurements)": "Crear Ventas (requiere Compras)",
   "The database will be cleared and all data erased. Only users and roles are kept. Would you like to proceed ?": "La base de datos se limpiará y todos los datos serán eliminados. Solo se conservarán usuarios y roles. ¿Desea continuar?",
-  "The database has been successfully seeded.": "La base de datos se ha preparado correctamente."
+  "The database has been successfully seeded.": "La base de datos se ha preparado correctamente.",
+  "Workers": "Trabajadores",
+  "Workers Settings": "Configuración de trabajadores",
+  "Configure workers settings.": "Configurar ajustes de trabajadores."
 }

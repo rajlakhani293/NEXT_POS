@@ -211,5 +211,8 @@
   "Wipe Plus Grocery": "مسح وإنشاء بيانات المتجر",
   "Create Sales (needs Procurements)": "إنشاء مبيعات (يتطلب مشتريات)",
   "The database will be cleared and all data erased. Only users and roles are kept. Would you like to proceed ?": "سيتم مسح قاعدة البيانات وحذف جميع البيانات. سيتم الاحتفاظ بالمستخدمين والأدوار فقط. هل تريد المتابعة؟",
-  "The database has been successfully seeded.": "تم تجهيز قاعدة البيانات بنجاح."
+  "The database has been successfully seeded.": "تم تجهيز قاعدة البيانات بنجاح.",
+  "Workers": "العاملون",
+  "Workers Settings": "إعدادات العاملين",
+  "Configure workers settings.": "تكوين إعدادات العاملين."
 }

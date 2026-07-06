@@ -359,6 +359,12 @@ const settingsNavSections: DashboardNavSection[] = [
     permission: PERMISSIONS.settings.view,
   },
   {
+    title: "Workers",
+    url: "/settings/workers",
+    icon: <Server />,
+    permission: PERMISSIONS.settings.view,
+  },
+  {
     title: "Reset",
     url: "/settings/reset",
     icon: <AlertTriangle />,
