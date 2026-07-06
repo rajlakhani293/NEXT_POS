@@ -214,5 +214,7 @@
   "The database has been successfully seeded.": "La base de datos se ha preparado correctamente.",
   "Workers": "Trabajadores",
   "Workers Settings": "Configuración de trabajadores",
-  "Configure workers settings.": "Configurar ajustes de trabajadores."
+  "Configure workers settings.": "Configurar ajustes de trabajadores.",
+  "Amount must be a valid number.": "El monto debe ser un número válido.",
+  "Unable to process the register action.": "No se pudo procesar la acción de la caja."
 }

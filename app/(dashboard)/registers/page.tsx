@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { History } from "lucide-react"
+import { ArrowDownCircle, ArrowUpCircle, History, Lock, LockOpen } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import DynamicForm from "@/components/DynamicForm"
@@ -39,6 +39,14 @@ const buildRegisterColumns = (
   },
 ]
 
+type RegisterActionState = {
+  action: "open" | "close" | "register-cash-in" | "register-cash-out"
+  register: any
+  title: string
+  description: string
+  confirmLabel: string
+}
+
 export default function RegistersPage() {
   const router = useRouter()
   const { t } = useTranslation()
@@ -52,15 +60,25 @@ export default function RegistersPage() {
     register_status: "closed",
     description: "",
   })
+  const [registerAction, setRegisterAction] = useState<RegisterActionState | null>(null)
+  const [registerActionValues, setRegisterActionValues] = useState({
+    amount: "",
+    description: "",
+  })
   const [createRegister] = (registers as any).useCreateRegisterMutation()
   const [editRegister] = (registers as any).useEditRegisterMutation()
   const [deleteRegister] = (registers as any).useDeleteRegisterMutation()
   const [updateRegisterStatus] = (registers as any).useUpdateRegisterStatusMutation()
   const [getRegisterById] = (registers as any).useGetRegisterByIdMutation()
+  const [performRegisterAction] = (registers as any).usePerformRegisterActionMutation()
   const { hasPermission } = usePermissions()
   const canCreate = hasPermission(PERMISSIONS.cashRegister.create)
   const canUpdate = hasPermission(PERMISSIONS.cashRegister.update)
   const canDelete = hasPermission(PERMISSIONS.cashRegister.delete)
+  const canOpen = hasPermission(PERMISSIONS.cashRegister.open)
+  const canClose = hasPermission(PERMISSIONS.cashRegister.close)
+  const canCashIn = hasPermission(PERMISSIONS.cashRegister.cashIn)
+  const canCashOut = hasPermission(PERMISSIONS.cashRegister.cashOut)
   const registerTable = useTableData({
     getMaster: (registers as any).useGetRegistersDataMutation,
     itemsPerPage: 10,
@@ -107,6 +125,115 @@ export default function RegistersPage() {
     refresh()
   }
 
+  const openRegisterActionForm = (action: RegisterActionState["action"], record: any) => {
+    const actionConfig = {
+      open: {
+        title: t("Open Register : %s").replace("%s", record.name || t("Cash Register")),
+        description: t("Further observation while proceeding."),
+        confirmLabel: t("Open Register"),
+      },
+      close: {
+        title: t("Close Register"),
+        description: t("Further observation while proceeding."),
+        confirmLabel: t("Close Register"),
+      },
+      "register-cash-in": {
+        title: t("Cash In"),
+        description: t("define the amount of the transaction."),
+        confirmLabel: t("Cash In"),
+      },
+      "register-cash-out": {
+        title: t("Cash Out"),
+        description: t("define the amount of the transaction."),
+        confirmLabel: t("Cash Out"),
+      },
+    }[action]
+    setRegisterAction({ action, register: record, ...actionConfig })
+    setRegisterActionValues({ amount: "", description: "" })
+  }
+
+  const closeRegisterActionForm = () => {
+    setRegisterAction(null)
+    setRegisterActionValues({ amount: "", description: "" })
+  }
+
+  const submitRegisterAction = async (values: any) => {
+    if (!registerAction?.register?.id) return
+    const amount = Number(values.amount || 0)
+    if (amount < 0 || Number.isNaN(amount)) {
+      showToast.error(t("Amount must be a valid number."))
+      return
+    }
+    try {
+      const response = await performRegisterAction({
+        id: registerAction.register.id,
+        action: registerAction.action,
+        payLoad: {
+          amount,
+          description: values.description || "",
+        },
+      }).unwrap()
+      showToast.success(response?.message || t("The operation was successful."))
+      closeRegisterActionForm()
+      refresh()
+    } catch (error: any) {
+      showToast.error(error?.data?.message || t("Unable to process the register action."))
+      throw error
+    }
+  }
+
+  const registerRowActions = (_: any, record: any) => {
+    const isClosed = record.register_status === "closed"
+    const isOpen = record.register_status === "opened" || record.register_status === "in-use"
+    const actions: any[] = []
+    if (canOpen && isClosed) {
+      actions.push({
+        key: "open",
+        label: t("Open Register"),
+        labelText: t("Open Register"),
+        icon: <LockOpen className="size-4" />,
+        onClick: () => openRegisterActionForm("open", record),
+      })
+    }
+    if (isOpen) {
+      if (canClose) {
+        actions.push({
+          key: "close",
+          label: t("Close Register"),
+          labelText: t("Close Register"),
+          icon: <Lock className="size-4" />,
+          onClick: () => openRegisterActionForm("close", record),
+        })
+      }
+      if (canCashIn) {
+        actions.push({
+          key: "cash-in",
+          label: t("Cash In"),
+          labelText: t("Cash In"),
+          icon: <ArrowDownCircle className="size-4" />,
+          onClick: () => openRegisterActionForm("register-cash-in", record),
+        })
+      }
+      if (canCashOut) {
+        actions.push({
+          key: "cash-out",
+          label: t("Cash Out"),
+          labelText: t("Cash Out"),
+          icon: <ArrowUpCircle className="size-4" />,
+          onClick: () => openRegisterActionForm("register-cash-out", record),
+        })
+      }
+    }
+    actions.push({
+      key: "history",
+      label: t("Register History"),
+      labelText: t("Register History"),
+      icon: <History className="size-4" />,
+      onClick: () => router.push(`/registers/${record.id}`),
+    })
+    return actions
+  }
+
   return (
     <PermissionGuard permission={PERMISSIONS.cashRegister.view}>
       <div className="space-y-4">
@@ -140,15 +267,7 @@ export default function RegistersPage() {
           statusChangeMutation={({ ids, status }: any) =>
             updateRegisterStatus({ payLoad: { ids, status } })
           }
-          rowActions={(_, record) => [
-            {
-              key: "history",
-              label: t("Register History"),
-              labelText: t("Register History"),
-              icon: <History className="size-4" />,
-              onClick: () => router.push(`/registers/${record.id}`),
-            },
-          ]}
+          rowActions={registerRowActions}
           triggerRefresh={refresh}
           deleteModalTitle={t("Delete Cash Register")}
           deleteModalDescription={t("Would you like to delete this ?")}
@@ -185,6 +304,39 @@ export default function RegistersPage() {
             },
           ]}
           onSubmit={submitRegister}
+        />
+
+        <DynamicForm
+          isOpen={Boolean(registerAction)}
+          onClose={closeRegisterActionForm}
+          title={registerAction?.title || t("Cash Register")}
+          note={`${t("Balance")}: ${formatMoney(registerAction?.register?.balance || 0)}. ${registerAction?.description || ""}`}
+          initialValues={registerActionValues}
+          fields={[
+            {
+              name: "amount",
+              label: t("Amount"),
+              placeholder: t("Amount"),
+              type: "number",
+              required: registerAction?.action === "register-cash-in" || registerAction?.action === "register-cash-out",
+              inputMode: "decimal",
+              validate: (value: any) => {
+                const numericValue = Number(value || 0)
+                if (Number.isNaN(numericValue)) return t("Amount must be a valid number.")
+                if (registerAction?.action !== "open" && numericValue <= 0) {
+                  return t("Amount must be greater than 0.")
+                }
+                return ""
+              },
+            },
+            {
+              name: "description",
+              label: t("Description"),
+              placeholder: t("Further observation while proceeding."),
+              type: "textarea",
+            },
+          ]}
+          onSubmit={submitRegisterAction}
         />
       </div>
     </PermissionGuard>

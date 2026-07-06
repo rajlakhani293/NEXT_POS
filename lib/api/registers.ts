@@ -27,6 +27,10 @@ const endpointsConfig = {
   },
   cashIn: { query: postMutation("shifts/cash-in") },
   cashOut: { query: postMutation("shifts/cash-out") },
+  performRegisterAction: {
+    query: ({ id, action, payLoad }: { id: number | string; action: string; payLoad: any }) =>
+      postMutation(`${action}/${id}`)(payLoad),
+  },
 }
 
 export const registers = createApi({

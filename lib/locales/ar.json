@@ -214,5 +214,7 @@
   "The database has been successfully seeded.": "تم تجهيز قاعدة البيانات بنجاح.",
   "Workers": "العاملون",
   "Workers Settings": "إعدادات العاملين",
-  "Configure workers settings.": "تكوين إعدادات العاملين."
+  "Configure workers settings.": "تكوين إعدادات العاملين.",
+  "Amount must be a valid number.": "يجب أن يكون المبلغ رقماً صالحاً.",
+  "Unable to process the register action.": "تعذرت معالجة إجراء صندوق النقد."
 }

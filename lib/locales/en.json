@@ -431,5 +431,7 @@
   "The database has been successfully seeded.": "The database has been successfully seeded.",
   "Workers": "Workers",
   "Workers Settings": "Workers Settings",
-  "Configure workers settings.": "Configure workers settings."
+  "Configure workers settings.": "Configure workers settings.",
+  "Amount must be a valid number.": "Amount must be a valid number.",
+  "Unable to process the register action.": "Unable to process the register action."
 }
