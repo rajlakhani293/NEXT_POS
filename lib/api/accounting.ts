@@ -15,6 +15,10 @@ const endpointsConfig = {
     type: "query",
     query: () => getMutation("accounts/dropdown-list"),
   },
+  getTransactionAccountsFromCategory: {
+    query: ({ payLoad }: { payLoad: any }) =>
+      postMutation("../transactions-accounts/category-identifier")(payLoad),
+  },
   getAccountsData: { query: postMutation("accounts/get-transactions") },
   createAccount: { query: createMutation("accounts/") },
   editAccount: {
@@ -46,6 +50,16 @@ const endpointsConfig = {
   },
   getTransactionsData: { query: postMutation("transactions/get-transactions") },
   getTransactionHistoryData: { query: postMutation("history/get-transactions") },
+  deleteTransactionHistory: {
+    query: ({ ids }: { ids: Array<number | string> }) => ({
+      url: `history/${ids[0]}`,
+      method: "DELETE",
+    }),
+  },
+  createTransactionReflection: {
+    query: ({ id }: { id: number | string }) =>
+      getMutation(`/transactions/history/${id}/create-reflection`),
+  },
   triggerTransaction: {
     query: ({ id }: { id: number | string }) =>
       getMutation(`/transactions/trigger/${id}`),

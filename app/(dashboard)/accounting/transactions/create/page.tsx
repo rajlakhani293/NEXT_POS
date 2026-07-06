@@ -40,7 +40,7 @@ const transactionTypes = [
 
 const occurrenceOptions = [
   { label: "Start of Month", value: "month_starts" },
-  { label: "Mid of Month", value: "month_mid" },
+  { label: "Mid of Month", value: "month_mids" },
   { label: "End of Month", value: "month_ends" },
   { label: "X days Before Month Ends", value: "x_before_month_ends" },
   { label: "X days After Month Starts", value: "x_after_month_starts" },
