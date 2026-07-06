@@ -7,6 +7,8 @@ import DynamicTable from "@/components/DynamicTable"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { sales } from "@/lib/api/sales"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
 
@@ -27,15 +29,47 @@ const deliveryStatusColors: Record<string, string> = {
   delivered: "bg-green-50 text-green-700",
 }
 
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
+const statusLabelKeys: Record<string, string> = {
+  hold: "Hold",
+  unpaid: "Unpaid",
+  partially_paid: "Partially Paid",
+  paid: "Paid",
+  refunded: "Refunded",
+  partially_refunded: "Partially Refunded",
+  void: "Voided",
+  order_void: "Voided",
+  due: "Due",
+  partially_due: "Due With Payment",
+  pending: "Pending",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  takeaway: "Take Away",
+  delivery: "Delivery",
+}
 
-const columns = [
-  { key: "code", title: "Code" },
-  { key: "order_type", title: "Type", render: (value: string) => String(value || "-").replaceAll("_", " ") },
-  { key: "customer__full_name", title: "Customer", render: (value: any) => value || "Walk-in Customer" },
+const getStatusLabel = (value: any, t: (key: string) => string) => {
+  const key = String(value || "").trim()
+  return key ? t(statusLabelKeys[key] || key.replaceAll("_", " ")) : "-"
+}
+
+const buildColumns = (
+  t: (key: string) => string,
+  formatMoney: (value: any) => string
+) => [
+  { key: "code", title: t("Code") },
+  {
+    key: "order_type",
+    title: t("Type"),
+    render: (value: string) => getStatusLabel(value, t),
+  },
+  {
+    key: "customer__full_name",
+    title: t("Customer"),
+    render: (value: any) => value || t("Walk-in Customer"),
+  },
   {
     key: "delivery_status",
-    title: "Delivery",
+    title: t("Delivery"),
     render: (value: string) => (
       <span
         className={cn(
@@ -43,13 +77,13 @@ const columns = [
           deliveryStatusColors[value] || "bg-gray-100 text-gray-700"
         )}
       >
-        {value || "pending"}
+        {getStatusLabel(value || "pending", t)}
       </span>
     ),
   },
   {
     key: "payment_status",
-    title: "Payment",
+    title: t("Payment"),
     render: (value: string) => (
       <span
         className={cn(
@@ -57,22 +91,35 @@ const columns = [
           paymentStatusColors[value] || "bg-gray-100 text-gray-700"
         )}
       >
-        {String(value || "-").replaceAll("_", " ")}
+        {getStatusLabel(value, t)}
       </span>
     ),
   },
-  { key: "tax_amount", title: "Tax", render: formatMoney },
-  { key: "total", title: "Total", render: formatMoney },
-  { key: "author_username", title: "Author" },
+  { key: "tax_amount", title: t("Tax"), render: formatMoney },
+  { key: "total", title: t("Total"), render: formatMoney },
+  { key: "author_username", title: t("Author") },
   {
     key: "created_at",
-    title: "Created At",
+    title: t("Created At"),
     render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
   },
 ]
 
 export default function SalesHistoryPage() {
   const router = useRouter()
+  const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const formatMoney = (value: any) => {
+    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
+    const indicator =
+      posOptions.currency_preferred === "iso"
+        ? posOptions.currency_iso
+        : posOptions.currency_symbol
+    return posOptions.currency_position === "after"
+      ? `${amount}${indicator}`
+      : `${indicator}${amount}`
+  }
+  const columns = buildColumns(t, formatMoney)
   const { hasPermission } = usePermissions()
   const canCreateSale = hasPermission(PERMISSIONS.sales.create)
   const canUpdateSale = hasPermission(PERMISSIONS.sales.update)
@@ -102,8 +149,8 @@ export default function SalesHistoryPage() {
       <DynamicTable
         data={orders}
         columns={columns}
-        tableTitle="Orders List"
-        title={canCreateSale ? "Add a new order" : undefined}
+        tableTitle={t("Orders List")}
+        title={canCreateSale ? t("Add a new order") : undefined}
         showSearch
         showDateRange
         searchTerm={searchTerm}
@@ -130,8 +177,8 @@ export default function SalesHistoryPage() {
         rowActions={(_, record) => [
           {
             key: "options",
-            label: "Options",
-            labelText: "Options",
+            label: t("Options"),
+            labelText: t("Options"),
             icon: <Settings className="size-4" />,
             onClick: () => router.push(`/sales/${record.id}`),
           },
@@ -139,8 +186,8 @@ export default function SalesHistoryPage() {
             ? [
                 {
                   key: "refund_receipt",
-                  label: "Refund Receipt",
-                  labelText: "Refund Receipt",
+                  label: t("Refund Receipt"),
+                  labelText: t("Refund Receipt"),
                   icon: <ReceiptText className="size-4" />,
                   onClick: () => router.push(`/sales/${record.id}/receipt?doc=refund&refund_id=${record.latest_refund_id}`),
                 },
@@ -148,15 +195,15 @@ export default function SalesHistoryPage() {
             : []),
           {
             key: "invoice",
-            label: "Invoice",
-            labelText: "Invoice",
+            label: t("Invoice"),
+            labelText: t("Invoice"),
             icon: <FileText className="size-4" />,
             onClick: () => router.push(`/sales/${record.id}/receipt?doc=invoice`),
           },
           {
             key: "receipt",
-            label: "Receipt",
-            labelText: "Receipt",
+            label: t("Receipt"),
+            labelText: t("Receipt"),
             icon: <ReceiptText className="size-4" />,
             onClick: () => router.push(`/sales/${record.id}/receipt`),
           },

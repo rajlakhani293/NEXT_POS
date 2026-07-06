@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, ReceiptText } from "lucide-react"
+import { ArrowLeft, Printer, ReceiptText } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,6 +28,8 @@ import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { usePermissions } from "@/hooks/use-permissions"
 import { payments } from "@/lib/api/payments"
 import { sales } from "@/lib/api/sales"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
@@ -67,7 +69,35 @@ type InstallmentLineForm = {
   amount: string
 }
 
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
+const statusLabelKeys: Record<string, string> = {
+  hold: "Hold",
+  unpaid: "Unpaid",
+  partially_paid: "Partially Paid",
+  paid: "Paid",
+  refunded: "Refunded",
+  partially_refunded: "Partially Refunded",
+  void: "Voided",
+  order_void: "Voided",
+  due: "Due",
+  partially_due: "Due With Payment",
+  pending: "Pending",
+  processing: "Processing",
+  ready: "Ready",
+  completed: "Completed",
+  packed: "Packed",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  good: "Good",
+  damaged: "Damaged",
+  refund: "Refund",
+  credit_note: "Credit Note",
+  exchange: "Exchange",
+}
+
+const getStatusLabel = (value: any, t: (key: string) => string) => {
+  const key = String(value || "").trim()
+  return key ? t(statusLabelKeys[key] || key.replaceAll("_", " ")) : "-"
+}
 
 const money = (value: string | number | null | undefined) =>
   Number(value || 0) || 0
@@ -104,6 +134,24 @@ export default function SaleDetailPage() {
   const params = useParams()
   const id = params.id as string
   const loadKeyRef = useRef("")
+  const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const currencyIndicator =
+    posOptions.currency_preferred === "iso"
+      ? posOptions.currency_iso
+      : posOptions.currency_symbol
+  const formatMoney = (value: any) => {
+    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
+    return posOptions.currency_position === "after"
+      ? `${amount}${currencyIndicator}`
+      : `${currencyIndicator}${amount}`
+  }
+  const getPrintedDocumentUrl = (saleId: number | string) => {
+    const documentType = posOptions.printing_document === "invoice" ? "invoice" : "receipt"
+    return documentType === "invoice"
+      ? `/sales/${saleId}/receipt?doc=invoice`
+      : `/sales/${saleId}/receipt`
+  }
 
   const { hasPermission } = usePermissions()
   const canRefundOrder = hasPermission(PERMISSIONS.special.refundOrder)
@@ -249,23 +297,28 @@ export default function SaleDetailPage() {
 
   const handleSubmitReturn = async () => {
     if (!selectedReturnItems.length) {
-      showToast.error("Enter return quantity for at least one item.")
+      showToast.error(t("Enter return quantity for at least one item."))
       return
     }
     const invalidLine = selectedReturnItems.find(
       (line) => money(line.quantity) > line.refundable_quantity
     )
     if (invalidLine) {
-      showToast.error(`Return quantity exceeds available quantity for ${invalidLine.product_name}.`)
+      showToast.error(
+        t("Return quantity exceeds available quantity for {product}.").replace(
+          "{product}",
+          invalidLine.product_name
+        )
+      )
       return
     }
 
     if ((returnType === "refund" || returnType === "exchange") && !refundPaymentType) {
-      showToast.error("Choose refund payment type.")
+      showToast.error(t("Choose refund payment type."))
       return
     }
     if (returnType === "exchange" && !exchangeSaleId) {
-      showToast.error("Enter exchange sale id.")
+      showToast.error(t("Enter exchange sale id."))
       return
     }
 
@@ -290,7 +343,7 @@ export default function SaleDetailPage() {
     }
 
     const response = await createSaleReturn({ id, payLoad }).unwrap()
-    showToast.success(response?.message || "Return processed successfully.")
+    showToast.success(response?.message || t("Return processed successfully."))
     setIsReturnDialogOpen(false)
     await getSaleById({ id })
   }
@@ -300,7 +353,7 @@ export default function SaleDetailPage() {
       id,
       payLoad: { note: "Voided from sale details." },
     }).unwrap()
-    showToast.success(response?.message || "Sale voided successfully.")
+    showToast.success(response?.message || t("Sale voided successfully."))
     await getSaleById({ id })
   }
 
@@ -335,7 +388,7 @@ export default function SaleDetailPage() {
       }))
 
     if (!payments.length) {
-      showToast.error("Enter at least one due payment.")
+      showToast.error(t("Enter at least one due payment."))
       return
     }
 
@@ -346,7 +399,7 @@ export default function SaleDetailPage() {
         note: dueNote,
       },
     }).unwrap()
-    showToast.success(response?.message || "Due collected successfully.")
+    showToast.success(response?.message || t("Due collected successfully."))
     setIsCollectDueDialogOpen(false)
     await getSaleById({ id })
   }
@@ -357,7 +410,7 @@ export default function SaleDetailPage() {
       id,
       payLoad: { status: value },
     }).unwrap()
-    showToast.success(response?.message || "Processing status updated.")
+    showToast.success(response?.message || t("Processing status updated."))
     await getSaleById({ id })
   }
 
@@ -367,7 +420,7 @@ export default function SaleDetailPage() {
       id,
       payLoad: { status: value },
     }).unwrap()
-    showToast.success(response?.message || "Delivery status updated.")
+    showToast.success(response?.message || t("Delivery status updated."))
     await getSaleById({ id })
   }
 
@@ -413,7 +466,7 @@ export default function SaleDetailPage() {
       (row) => row.due_date && money(row.amount) > 0
     )
     if (!lines.length) {
-      showToast.error("Add at least one installment line.")
+      showToast.error(t("Add at least one installment line."))
       return
     }
 
@@ -428,7 +481,7 @@ export default function SaleDetailPage() {
         })),
       },
     }).unwrap()
-    showToast.success(response?.message || "Installments saved successfully.")
+    showToast.success(response?.message || t("Installments saved successfully."))
     setIsInstallmentDialogOpen(false)
     await getSaleById({ id })
   }
@@ -436,7 +489,7 @@ export default function SaleDetailPage() {
   const handlePayInstallment = async () => {
     if (!installmentTarget) return
     if (money(installmentPaymentAmount) <= 0) {
-      showToast.error("Enter installment payment amount.")
+      showToast.error(t("Enter installment payment amount."))
       return
     }
 
@@ -449,7 +502,7 @@ export default function SaleDetailPage() {
         note: installmentPaymentNote,
       },
     }).unwrap()
-    showToast.success(response?.message || "Installment paid successfully.")
+    showToast.success(response?.message || t("Installment paid successfully."))
     setIsInstallmentPayDialogOpen(false)
     setInstallmentTarget(null)
     await getSaleById({ id })
@@ -460,7 +513,7 @@ export default function SaleDetailPage() {
       <div className="flex h-full items-center justify-center bg-gray-50">
         <div className="flex items-center gap-3 text-sm font-medium text-gray-600">
           <Spinner className="h-5 w-5" />
-          Loading sale details...
+          {t("Loading sale details...")}
         </div>
       </div>
     )
@@ -471,10 +524,10 @@ export default function SaleDetailPage() {
       <div className="flex h-full items-center justify-center">
         <div className="space-y-3 text-center">
           <p className="text-sm font-medium text-gray-600">
-            Sale details not found.
+            {t("Sale details not found.")}
           </p>
           <Button variant="outline" onClick={() => router.push("/sales")}>
-            Back to Sales History
+            {t("Back to Sales History")}
           </Button>
         </div>
       </div>
@@ -497,10 +550,10 @@ export default function SaleDetailPage() {
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-slate-900">
-                Sale {sale.code}
+                {t("Order Options")} {sale.code}
               </h1>
               <p className="text-sm text-slate-500">
-                Review billed items, payments, coupons and return history.
+                {t("Review billed items, payments, coupons and return history.")}
               </p>
             </div>
           </div>
@@ -509,15 +562,22 @@ export default function SaleDetailPage() {
             Number(sale.due_amount || 0) > 0 &&
             !["void", "order_void", "refunded"].includes(sale.payment_status) ? (
               <Button variant="outline" onClick={openCollectDueDialog}>
-                Collect Due
+                {t("Collect Due")}
               </Button>
             ) : null}
+            <Button
+              variant="outline"
+              onClick={() => router.push(getPrintedDocumentUrl(sale.id))}
+            >
+              <Printer className="size-4" />
+              {t("Print")}
+            </Button>
             <Button
               variant="outline"
               onClick={() => router.push(`/sales/${sale.id}/receipt`)}
             >
               <ReceiptText className="size-4" />
-              Receipt
+              {t("Receipt")}
             </Button>
             {canVoidSale &&
             !["void", "order_void", "refunded", "partially_refunded"].includes(
@@ -528,11 +588,11 @@ export default function SaleDetailPage() {
                 onClick={handleVoidSale}
                 disabled={voidSaleState.isLoading}
               >
-                {voidSaleState.isLoading ? "Voiding..." : "Void Sale"}
+                {voidSaleState.isLoading ? t("Voiding...") : t("Void")}
               </Button>
             ) : null}
             {canRefundOrder && refundableItems.length ? (
-              <Button onClick={openReturnDialog}>Refund / Exchange</Button>
+              <Button onClick={openReturnDialog}>{t("Refund & Return")}</Button>
             ) : null}
             <span
               className={cn(
@@ -540,7 +600,7 @@ export default function SaleDetailPage() {
                 statusColors[sale.payment_status] || "bg-gray-100 text-gray-700"
               )}
             >
-              {String(sale.payment_status || "-").replaceAll("_", " ")}
+              {getStatusLabel(sale.payment_status, t)}
             </span>
           </div>
         </div>
@@ -548,77 +608,77 @@ export default function SaleDetailPage() {
       <div className="grid gap-4 px-6 py-6 lg:grid-cols-4">
           <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Customer
+              {t("Customer")}
             </p>
             <p className="mt-2 text-base font-bold text-slate-900">
-              {sale.customer?.name || "Walk-in customer"}
+              {sale.customer?.name || t("Walk-in Customer")}
             </p>
             <p className="text-sm text-slate-500">{sale.customer?.phone || "-"}</p>
           </div>
           <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Total
+              {t("Total")}
             </p>
             <p className="mt-2 text-base font-bold text-slate-900">
               {formatMoney(sale.total)}
             </p>
             <p className="text-sm text-slate-500">
-              Paid {formatMoney(sale.totals_summary?.paid_amount)}
+              {t("Paid")} {formatMoney(sale.totals_summary?.paid_amount)}
             </p>
           </div>
           <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Due Amount
+              {t("Due Amount")}
             </p>
             <p className="mt-2 text-base font-bold text-slate-900">
               {formatMoney(sale.due_amount)}
             </p>
             <p className="text-sm text-slate-500">
-              Change {formatMoney(sale.change_amount)}
+              {t("Change")} {formatMoney(sale.change_amount)}
             </p>
           </div>
           <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Refunded
+              {t("Refunded")}
             </p>
             <p className="mt-2 text-base font-bold text-slate-900">
               {formatMoney(sale.totals_summary?.refunded_amount)}
             </p>
             <p className="text-sm text-slate-500">
-              {sale.refunds?.length || 0} return(s)
+              {String(t("{count} return(s)")).replace("{count}", String(sale.refunds?.length || 0))}
             </p>
           </div>
         </div>
 
         <div className="grid gap-4 border-t border-gray-100 px-6 py-6 lg:grid-cols-2">
           <UniFieldSelect
-            label="Processing Status"
+            label={t("Processing Status")}
             value={processingStatus || "none"}
             onValueChange={(value) =>
               handleUpdateProcessing(value === "none" ? "" : value)
             }
             disabled={!canUpdateSale || updateProcessingState.isLoading}
           >
-            <SelectItem value="none">Not Set</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="processing">Processing</SelectItem>
-            <SelectItem value="ready">Ready</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="none">{t("Not Set")}</SelectItem>
+            <SelectItem value="pending">{t("Pending")}</SelectItem>
+            <SelectItem value="processing">{t("Processing")}</SelectItem>
+            <SelectItem value="ready">{t("Ready")}</SelectItem>
+            <SelectItem value="completed">{t("Completed")}</SelectItem>
           </UniFieldSelect>
 
           <UniFieldSelect
-            label="Delivery Status"
+            label={t("Delivery Status")}
             value={deliveryStatus || "none"}
             onValueChange={(value) =>
               handleUpdateDelivery(value === "none" ? "" : value)
             }
             disabled={!canUpdateSale || updateDeliveryState.isLoading}
           >
-            <SelectItem value="none">Not Set</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="packed">Packed</SelectItem>
-            <SelectItem value="shipped">Shipped</SelectItem>
-            <SelectItem value="delivered">Delivered</SelectItem>
+            <SelectItem value="none">{t("Not Set")}</SelectItem>
+            <SelectItem value="pending">{t("Pending")}</SelectItem>
+            <SelectItem value="packed">{t("Packed")}</SelectItem>
+            <SelectItem value="shipped">{t("Shipped")}</SelectItem>
+            <SelectItem value="delivered">{t("Delivered")}</SelectItem>
           </UniFieldSelect>
         </div>
       </div>
@@ -626,18 +686,18 @@ export default function SaleDetailPage() {
       <div className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
         <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-100 px-6 py-4">
-            <h2 className="text-lg font-bold text-slate-900">Sale Items</h2>
+            <h2 className="text-lg font-bold text-slate-900">{t("Products")}</h2>
           </div>
           <div className="overflow-x-auto px-4 py-4">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Qty</TableHead>
-                  <TableHead>Refunded</TableHead>
-                  <TableHead>Remaining</TableHead>
-                  <TableHead>Rate</TableHead>
-                  <TableHead>Total</TableHead>
+                  <TableHead>{t("Product")}</TableHead>
+                  <TableHead>{t("Qty")}</TableHead>
+                  <TableHead>{t("Refunded")}</TableHead>
+                  <TableHead>{t("Remaining")}</TableHead>
+                  <TableHead>{t("Rate")}</TableHead>
+                  <TableHead>{t("Total")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -649,7 +709,7 @@ export default function SaleDetailPage() {
                           {item.product__name}
                         </p>
                         <p className="text-xs text-slate-500">
-                          SKU: {item.product__sku || "-"}
+                          {t("SKU")}: {item.product__sku || "-"}
                         </p>
                       </div>
                     </TableCell>
@@ -668,7 +728,7 @@ export default function SaleDetailPage() {
         <div className="space-y-4">
           <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
             <div className="border-b border-gray-100 px-6 py-4">
-              <h2 className="text-lg font-bold text-slate-900">Payments</h2>
+              <h2 className="text-lg font-bold text-slate-900">{t("Payments")}</h2>
             </div>
             <div className="space-y-3 px-6 py-5">
               {(sale.payments || []).length ? (
@@ -686,19 +746,19 @@ export default function SaleDetailPage() {
                       </p>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      Ref: {payment.reference_number || "-"}
+                      {t("Reference")}: {payment.reference_number || "-"}
                     </p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-slate-500">No payments recorded.</p>
+                <p className="text-sm text-slate-500">{t("No payments recorded.")}</p>
               )}
             </div>
           </section>
 
           <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
             <div className="border-b border-gray-100 px-6 py-4">
-              <h2 className="text-lg font-bold text-slate-900">Applied Coupons</h2>
+              <h2 className="text-lg font-bold text-slate-900">{t("Applied Coupons")}</h2>
             </div>
             <div className="space-y-3 px-6 py-5">
               {(sale.applied_coupons || []).length ? (
@@ -714,12 +774,12 @@ export default function SaleDetailPage() {
                       </p>
                     </div>
                     <p className="mt-1 text-xs capitalize text-slate-500">
-                      {String(coupon.type || "-").replaceAll("_", " ")}
+                      {getStatusLabel(coupon.type, t)}
                     </p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-slate-500">No coupon used on this sale.</p>
+                <p className="text-sm text-slate-500">{t("No coupon used on this sale.")}</p>
               )}
             </div>
           </section>
@@ -729,14 +789,14 @@ export default function SaleDetailPage() {
       <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Instalments</h2>
+            <h2 className="text-lg font-bold text-slate-900">{t("Instalments")}</h2>
             <p className="text-sm text-slate-500">
-              Payment schedule and installment collections for this sale.
+              {t("Payment schedule and installment collections for this sale.")}
             </p>
           </div>
           {canUpdateSale && Number(sale.due_amount || 0) > 0 ? (
             <Button type="button" variant="outline" onClick={openInstallmentDialog}>
-              {installmentPlan ? "Update Instalments" : "Create Instalments"}
+              {installmentPlan ? t("Update Instalments") : t("Create Instalments")}
             </Button>
           ) : null}
         </div>
@@ -744,12 +804,12 @@ export default function SaleDetailPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Paid</TableHead>
-                <TableHead>Remaining</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Action</TableHead>
+                <TableHead>{t("Due Date")}</TableHead>
+                <TableHead>{t("Amount")}</TableHead>
+                <TableHead>{t("Paid")}</TableHead>
+                <TableHead>{t("Remaining")}</TableHead>
+                <TableHead>{t("Status")}</TableHead>
+                <TableHead>{t("Action")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -763,7 +823,7 @@ export default function SaleDetailPage() {
                       {formatMoney(money(line.amount) - money(line.paid_amount))}
                     </TableCell>
                     <TableCell className="capitalize">
-                      {String(line.installment_status || "-").replaceAll("_", " ")}
+                      {getStatusLabel(line.installment_status, t)}
                     </TableCell>
                     <TableCell>
                       {canCreatePayment &&
@@ -774,7 +834,7 @@ export default function SaleDetailPage() {
                           variant="outline"
                           onClick={() => openInstallmentPayDialog(line)}
                         >
-                          Pay
+                          {t("Pay")}
                         </Button>
                       ) : (
                         "-"
@@ -788,7 +848,7 @@ export default function SaleDetailPage() {
                     colSpan={6}
                     className="py-10 text-center text-sm text-slate-500"
                   >
-                    No installments created for this sale.
+                    {t("No installments created for this sale.")}
                   </TableCell>
                 </TableRow>
               )}
@@ -799,18 +859,18 @@ export default function SaleDetailPage() {
 
       <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
         <div className="border-b border-gray-100 px-6 py-4">
-          <h2 className="text-lg font-bold text-slate-900">Return History</h2>
+          <h2 className="text-lg font-bold text-slate-900">{t("Return History")}</h2>
         </div>
         <div className="overflow-x-auto px-4 py-4">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Return ID</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Cashier</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Note</TableHead>
+                <TableHead>{t("Return ID")}</TableHead>
+                <TableHead>{t("Type")}</TableHead>
+                <TableHead>{t("Status")}</TableHead>
+                <TableHead>{t("Cashier")}</TableHead>
+                <TableHead>{t("Total")}</TableHead>
+                <TableHead>{t("Note")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -819,10 +879,10 @@ export default function SaleDetailPage() {
                   <TableRow key={refund.id}>
                     <TableCell>#{refund.id}</TableCell>
                     <TableCell className="capitalize">
-                      {String(refund.return_type || "-").replaceAll("_", " ")}
+                      {getStatusLabel(refund.return_type, t)}
                     </TableCell>
                     <TableCell className="capitalize">
-                      {String(refund.return_status || "-").replaceAll("_", " ")}
+                      {getStatusLabel(refund.return_status, t)}
                     </TableCell>
                     <TableCell>{refund.cashier__full_name || "-"}</TableCell>
                     <TableCell>{formatMoney(refund.total)}</TableCell>
@@ -835,7 +895,7 @@ export default function SaleDetailPage() {
                     colSpan={6}
                     className="py-10 text-center text-sm text-slate-500"
                   >
-                    No returns recorded for this sale.
+                    {t("No returns recorded for this sale.")}
                   </TableCell>
                 </TableRow>
               )}
@@ -847,29 +907,29 @@ export default function SaleDetailPage() {
       <Dialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}>
         <DialogContent className="max-w-5xl">
           <DialogHeader>
-            <DialogTitle>Process Return</DialogTitle>
+            <DialogTitle>{t("Refund & Return")}</DialogTitle>
             <DialogDescription>
-              Choose refund, credit note or exchange and enter return quantities.
+              {t("Choose refund, credit note or exchange and enter return quantities.")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 md:grid-cols-3">
             <UniFieldSelect
-              label="Return Type"
+              label={t("Return Type")}
               value={returnType}
               onValueChange={setReturnType}
             >
-              <SelectItem value="refund">Refund</SelectItem>
-              <SelectItem value="credit_note">Credit Note</SelectItem>
-              <SelectItem value="exchange">Exchange</SelectItem>
+              <SelectItem value="refund">{t("Refund")}</SelectItem>
+              <SelectItem value="credit_note">{t("Credit Note")}</SelectItem>
+              <SelectItem value="exchange">{t("Exchange")}</SelectItem>
             </UniFieldSelect>
 
             {returnType === "refund" || returnType === "exchange" ? (
               <UniFieldSelect
-                label={returnType === "exchange" ? "Difference Refund Type" : "Refund Payment Type"}
+                label={returnType === "exchange" ? t("Difference Refund Type") : t("Refund Payment Type")}
                 value={refundPaymentType}
                 onValueChange={setRefundPaymentType}
-                placeholder="Choose payment type"
+                placeholder={t("Choose payment type")}
               >
                 {paymentTypeOptions.map((payment: any) => (
                   <SelectItem
@@ -884,19 +944,19 @@ export default function SaleDetailPage() {
 
             {returnType === "exchange" ? (
               <UniFieldInput
-                label="Exchange Sale ID"
+                label={t("Exchange Sale ID")}
                 value={exchangeSaleId}
                 onChange={(event) => setExchangeSaleId(event.target.value)}
-                placeholder="Linked sale id"
+                placeholder={t("Linked sale id")}
                 type="number"
               />
             ) : null}
 
             <UniFieldInput
-              label="Note"
+              label={t("Note")}
               value={returnNote}
               onChange={(event) => setReturnNote(event.target.value)}
-              placeholder="Return note"
+              placeholder={t("Return note")}
             />
           </div>
 
@@ -904,12 +964,12 @@ export default function SaleDetailPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Available</TableHead>
-                  <TableHead>Return Qty</TableHead>
-                  <TableHead>Unit Price</TableHead>
-                  <TableHead>Condition</TableHead>
-                  <TableHead>Note</TableHead>
+                  <TableHead>{t("Product")}</TableHead>
+                  <TableHead>{t("Available")}</TableHead>
+                  <TableHead>{t("Return Qty")}</TableHead>
+                  <TableHead>{t("Unit Price")}</TableHead>
+                  <TableHead>{t("Condition")}</TableHead>
+                  <TableHead>{t("Note")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -948,7 +1008,7 @@ export default function SaleDetailPage() {
                               )
                             }
                           >
-                            Max
+                            {t("Max")}
                           </Button>
                         </div>
                       </TableCell>
@@ -964,7 +1024,7 @@ export default function SaleDetailPage() {
                           }
                           placeholder="0"
                           type="number"
-                          prefix="₹"
+                          prefix={currencyIndicator}
                         />
                       </TableCell>
                       <TableCell className="min-w-36">
@@ -974,8 +1034,8 @@ export default function SaleDetailPage() {
                             updateReturnLine(line.sale_item_id, "condition", value)
                           }
                         >
-                          <SelectItem value="good">Good</SelectItem>
-                          <SelectItem value="damaged">Damaged</SelectItem>
+                          <SelectItem value="good">{t("Good")}</SelectItem>
+                          <SelectItem value="damaged">{t("Damaged")}</SelectItem>
                         </UniFieldSelect>
                       </TableCell>
                       <TableCell className="min-w-48">
@@ -988,7 +1048,7 @@ export default function SaleDetailPage() {
                               event.target.value
                             )
                           }
-                          placeholder="Item note"
+                          placeholder={t("Item note")}
                         />
                       </TableCell>
                     </TableRow>
@@ -999,7 +1059,7 @@ export default function SaleDetailPage() {
                       colSpan={6}
                       className="py-10 text-center text-sm text-slate-500"
                     >
-                      No refundable items remaining.
+                      {t("No refundable items remaining.")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -1010,10 +1070,10 @@ export default function SaleDetailPage() {
           <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
             <div>
               <p className="text-sm font-semibold text-slate-900">
-                Selected Items: {selectedReturnItems.length}
+                {t("Selected Items")}: {selectedReturnItems.length}
               </p>
               <p className="text-xs text-slate-500">
-                Estimated return total without tax split preview.
+                {t("Estimated return total without tax split preview.")}
               </p>
             </div>
             <p className="text-lg font-bold text-slate-900">
@@ -1026,13 +1086,13 @@ export default function SaleDetailPage() {
               variant="outline"
               onClick={() => setIsReturnDialogOpen(false)}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               onClick={handleSubmitReturn}
               disabled={createReturnState.isLoading || !returnLines.length}
             >
-              {createReturnState.isLoading ? "Processing..." : "Submit Return"}
+              {createReturnState.isLoading ? t("Processing...") : t("Submit Return")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1044,21 +1104,21 @@ export default function SaleDetailPage() {
       >
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Collect Due</DialogTitle>
+            <DialogTitle>{t("Collect Due")}</DialogTitle>
             <DialogDescription>
-              Add one or more payments to reduce the remaining due amount.
+              {t("Add one or more payments to reduce the remaining due amount.")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-500">Remaining Due</span>
+              <span className="text-slate-500">{t("Remaining Due")}</span>
               <span className="font-semibold text-slate-900">
                 {formatMoney(sale.due_amount)}
               </span>
             </div>
             <div className="mt-2 flex items-center justify-between text-sm">
-              <span className="text-slate-500">Entered Payment</span>
+              <span className="text-slate-500">{t("Entered Payment")}</span>
               <span className="font-semibold text-slate-900">
                 {formatMoney(dueCollectedAmount)}
               </span>
@@ -1067,9 +1127,9 @@ export default function SaleDetailPage() {
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-900">Payments</p>
+              <p className="text-sm font-semibold text-slate-900">{t("Payments")}</p>
               <Button type="button" variant="outline" size="sm" onClick={addDuePaymentRow}>
-                Add Payment
+                {t("Add Payment")}
               </Button>
             </div>
 
@@ -1080,7 +1140,7 @@ export default function SaleDetailPage() {
               >
                 <div className="grid gap-3 md:grid-cols-[1fr_140px_44px]">
                   <UniFieldSelect
-                    label={index === 0 ? "Payment Type" : undefined}
+                    label={index === 0 ? t("Payment Type") : undefined}
                     value={row.payment_type}
                     onValueChange={(value) =>
                       updateDuePaymentRow(row.id, "payment_type", value)
@@ -1096,13 +1156,13 @@ export default function SaleDetailPage() {
                     ))}
                   </UniFieldSelect>
                   <UniFieldInput
-                    label={index === 0 ? "Amount" : undefined}
+                    label={index === 0 ? t("Amount") : undefined}
                     value={row.amount}
                     onChange={(event) =>
                       updateDuePaymentRow(row.id, "amount", event.target.value)
                     }
                     placeholder="0.00"
-                    prefix="₹"
+                    prefix={currencyIndicator}
                     type="number"
                   />
                   <div className="flex items-end">
@@ -1113,7 +1173,7 @@ export default function SaleDetailPage() {
                       className="text-red-500 hover:text-red-600"
                       onClick={() => removeDuePaymentRow(row.id)}
                     >
-                      <span className="sr-only">Remove payment</span>
+                      <span className="sr-only">{t("Remove payment")}</span>
                       x
                     </Button>
                   </div>
@@ -1128,14 +1188,14 @@ export default function SaleDetailPage() {
                         event.target.value
                       )
                     }
-                    placeholder="Reference number"
+                    placeholder={t("Reference number")}
                   />
                   <UniFieldInput
                     value={row.note}
                     onChange={(event) =>
                       updateDuePaymentRow(row.id, "note", event.target.value)
                     }
-                    placeholder="Payment note"
+                    placeholder={t("Payment note")}
                   />
                 </div>
               </div>
@@ -1143,10 +1203,10 @@ export default function SaleDetailPage() {
           </div>
 
           <UniFieldInput
-            label="Collection Note"
+            label={t("Collection Note")}
             value={dueNote}
             onChange={(event) => setDueNote(event.target.value)}
-            placeholder="Optional note"
+            placeholder={t("Optional note")}
           />
 
           <DialogFooter>
@@ -1154,10 +1214,10 @@ export default function SaleDetailPage() {
               variant="outline"
               onClick={() => setIsCollectDueDialogOpen(false)}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button onClick={handleCollectDue} disabled={collectDueState.isLoading}>
-              {collectDueState.isLoading ? "Collecting..." : "Collect Due"}
+              {collectDueState.isLoading ? t("Collecting...") : t("Collect Due")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1169,15 +1229,15 @@ export default function SaleDetailPage() {
       >
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Save Instalments</DialogTitle>
+            <DialogTitle>{t("Save Instalments")}</DialogTitle>
             <DialogDescription>
-              Create payment schedule lines for the current due amount.
+              {t("Create payment schedule lines for the current due amount.")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-500">Current Due</span>
+              <span className="text-slate-500">{t("Current Due")}</span>
               <span className="font-semibold text-slate-900">
                 {formatMoney(sale.due_amount)}
               </span>
@@ -1186,9 +1246,9 @@ export default function SaleDetailPage() {
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-900">Installment Lines</p>
+              <p className="text-sm font-semibold text-slate-900">{t("Installment Lines")}</p>
               <Button type="button" variant="outline" size="sm" onClick={addInstallmentLine}>
-                Add Line
+                {t("Add Line")}
               </Button>
             </div>
 
@@ -1198,7 +1258,7 @@ export default function SaleDetailPage() {
                 className="grid gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1fr_1fr_44px]"
               >
                 <UniFieldInput
-                  label={index === 0 ? "Due Date" : undefined}
+                  label={index === 0 ? t("Due Date") : undefined}
                   type="date"
                   value={line.due_date}
                   onChange={(event) =>
@@ -1206,13 +1266,13 @@ export default function SaleDetailPage() {
                   }
                 />
                 <UniFieldInput
-                  label={index === 0 ? "Amount" : undefined}
+                  label={index === 0 ? t("Amount") : undefined}
                   value={line.amount}
                   onChange={(event) =>
                     updateInstallmentLine(line.id, "amount", event.target.value)
                   }
                   placeholder="0.00"
-                  prefix="₹"
+                  prefix={currencyIndicator}
                   type="number"
                 />
                 <div className="flex items-end">
@@ -1223,7 +1283,7 @@ export default function SaleDetailPage() {
                     className="text-red-500 hover:text-red-600"
                     onClick={() => removeInstallmentLine(line.id)}
                   >
-                    <span className="sr-only">Remove installment line</span>
+                    <span className="sr-only">{t("Remove installment line")}</span>
                     x
                   </Button>
                 </div>
@@ -1236,13 +1296,13 @@ export default function SaleDetailPage() {
               variant="outline"
               onClick={() => setIsInstallmentDialogOpen(false)}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               onClick={handleCreateInstallments}
               disabled={createInstallmentsState.isLoading}
             >
-              {createInstallmentsState.isLoading ? "Saving..." : "Save Instalments"}
+              {createInstallmentsState.isLoading ? t("Saving...") : t("Save Instalments")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1254,21 +1314,21 @@ export default function SaleDetailPage() {
       >
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Pay Instalment</DialogTitle>
+            <DialogTitle>{t("Pay Instalment")}</DialogTitle>
             <DialogDescription>
-              Record payment against the selected installment line.
+              {t("Record payment against the selected installment line.")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">Due Date</span>
+              <span className="text-slate-500">{t("Due Date")}</span>
               <span className="font-semibold text-slate-900">
                 {installmentTarget?.due_date || "-"}
               </span>
             </div>
             <div className="mt-2 flex items-center justify-between">
-              <span className="text-slate-500">Remaining</span>
+              <span className="text-slate-500">{t("Remaining")}</span>
               <span className="font-semibold text-slate-900">
                 {formatMoney(
                   money(installmentTarget?.amount) - money(installmentTarget?.paid_amount)
@@ -1279,7 +1339,7 @@ export default function SaleDetailPage() {
 
           <div className="grid gap-4">
             <UniFieldSelect
-              label="Payment Type"
+              label={t("Payment Type")}
               value={installmentPaymentType}
               onValueChange={setInstallmentPaymentType}
             >
@@ -1293,18 +1353,18 @@ export default function SaleDetailPage() {
               ))}
             </UniFieldSelect>
             <UniFieldInput
-              label="Amount"
+              label={t("Amount")}
               value={installmentPaymentAmount}
               onChange={(event) => setInstallmentPaymentAmount(event.target.value)}
               placeholder="0.00"
-              prefix="₹"
+              prefix={currencyIndicator}
               type="number"
             />
             <UniFieldInput
-              label="Note"
+              label={t("Note")}
               value={installmentPaymentNote}
               onChange={(event) => setInstallmentPaymentNote(event.target.value)}
-              placeholder="Optional note"
+              placeholder={t("Optional note")}
             />
           </div>
 
@@ -1313,10 +1373,10 @@ export default function SaleDetailPage() {
               variant="outline"
               onClick={() => setIsInstallmentPayDialogOpen(false)}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button onClick={handlePayInstallment} disabled={payInstallmentState.isLoading}>
-              {payInstallmentState.isLoading ? "Paying..." : "Pay Instalment"}
+              {payInstallmentState.isLoading ? t("Paying...") : t("Pay Instalment")}
             </Button>
           </DialogFooter>
         </DialogContent>
