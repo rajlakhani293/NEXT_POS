@@ -28,7 +28,7 @@ export default function TaxesPage() {
       statusHook={(catalog as any).useUpdateTaxStatusMutation}
       FormComponent={TaxForm}
       deleteTitle="Delete Tax"
-      deleteDescription="Would you like to delete this tax?"
+      deleteDescription="Would you like to delete this ?"
       permissions={PERMISSIONS.taxes}
     />
   )

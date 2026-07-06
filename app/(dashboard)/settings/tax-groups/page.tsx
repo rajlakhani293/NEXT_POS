@@ -26,7 +26,7 @@ export default function TaxGroupsPage() {
       statusHook={(catalog as any).useUpdateTaxGroupStatusMutation}
       FormComponent={TaxGroupForm}
       deleteTitle="Delete Tax Group"
-      deleteDescription="Would you like to delete this tax group?"
+      deleteDescription="Would you like to delete this ?"
       permissions={PERMISSIONS.taxes}
     />
   )
