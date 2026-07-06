@@ -15,11 +15,12 @@ const buildColumns = (
   formatMoney: (value: any) => string
 ) => [
   { key: "name", title: t("Name") },
-  { key: "invoice_reference", title: t("Invoice") },
-  { key: "payment_status", title: t("Payment") },
   { key: "delivery_status", title: t("Delivery") },
+  { key: "payment_status", title: t("Payment") },
+  { key: "tax_value", title: t("Tax"), render: (value: any) => formatMoney(value) },
   { key: "total_items", title: t("Items") },
   { key: "value", title: t("Value"), render: (value: any) => formatMoney(value) },
+  { key: "user_username", title: t("By") },
   { key: "created_at", title: t("Created At"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 
@@ -66,12 +67,12 @@ export default function ProviderProcurementsPage() {
         <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={() => router.push("/providers")}>
           <ArrowLeft className="size-4" />
         </Button>
-        <h1 className="text-xl font-bold text-gray-900">{t("Provider Procurements")}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{t("Provider Procurements List")}</h1>
       </div>
       <DynamicTable
         data={rows}
         columns={columns}
-        tableTitle={t("Provider Procurements")}
+        tableTitle={t("Provider Procurements List")}
         showSearch
         searchTerm={searchTerm}
         onFilterChange={(action, payload) => {

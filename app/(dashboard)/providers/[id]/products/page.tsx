@@ -15,14 +15,14 @@ const buildColumns = (
   formatMoney: (value: any) => string
 ) => [
   { key: "name", title: t("Name") },
-  { key: "product_name", title: t("Product") },
-  { key: "procurement_name", title: t("Procurement") },
   { key: "purchase_price", title: t("Purchase Price"), render: (value: any) => formatMoney(value) },
   { key: "quantity", title: t("Quantity") },
-  { key: "available_quantity", title: t("Available") },
-  { key: "unit_name", title: t("Unit") },
-  { key: "total", title: t("Total"), render: (value: any) => formatMoney(value) },
-  { key: "created_at", title: t("Created At"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+  { key: "tax_group_name", title: t("Tax Group") },
+  { key: "barcode", title: t("Barcode") },
+  { key: "expiration_date", title: t("Expiration Date"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+  { key: "tax_type", title: t("Tax Type") },
+  { key: "tax_value", title: t("Tax Value"), render: (value: any) => formatMoney(value) },
+  { key: "total_purchase_price", title: t("Total Price"), render: (value: any) => formatMoney(value) },
 ]
 
 export default function ProviderProductsPage() {
@@ -68,12 +68,12 @@ export default function ProviderProductsPage() {
         <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={() => router.push("/providers")}>
           <ArrowLeft className="size-4" />
         </Button>
-        <h1 className="text-xl font-bold text-gray-900">{t("Provider Products")}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{t("Provider Products List")}</h1>
       </div>
       <DynamicTable
         data={rows}
         columns={columns}
-        tableTitle={t("Provider Products")}
+        tableTitle={t("Provider Products List")}
         showSearch
         searchTerm={searchTerm}
         onFilterChange={(action, payload) => {
