@@ -8,14 +8,24 @@ import { PermissionGuard } from "@/components/permission-guard"
 import { useTableData } from "@/hooks/useTableData"
 import { sales } from "@/lib/api/sales"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
-
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
 export default function SaleInstalmentsPage() {
   const router = useRouter()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const currencyIndicator =
+    posOptions.currency_preferred === "iso"
+      ? posOptions.currency_iso
+      : posOptions.currency_symbol
+  const formatMoney = (value: any) => {
+    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
+    return posOptions.currency_position === "after"
+      ? `${amount}${currencyIndicator}`
+      : `${currencyIndicator}${amount}`
+  }
 
   const {
     orders,
@@ -37,17 +47,17 @@ export default function SaleInstalmentsPage() {
   })
 
   const columns = [
-    { key: "customer", title: t("customer") },
-    { key: "order_code", title: t("order") },
-    { key: "amount", title: t("amount"), render: formatMoney },
+    { key: "customer", title: t("Customer") },
+    { key: "order_code", title: t("Order") },
+    { key: "amount", title: t("Amount"), render: formatMoney },
     {
       key: "date",
-      title: t("date"),
+      title: t("Date"),
       render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
     },
     {
       key: "paid",
-      title: t("paid"),
+      title: t("Paid"),
       render: (value: boolean) => (
         <span
           className={cn(
@@ -55,7 +65,7 @@ export default function SaleInstalmentsPage() {
             value ? "bg-green-50 text-green-700" : "bg-rose-50 text-rose-700"
           )}
         >
-          {value ? t("yes") : t("no")}
+          {value ? t("Yes") : t("No")}
         </span>
       ),
     },
@@ -67,7 +77,7 @@ export default function SaleInstalmentsPage() {
         <DynamicTable
           data={orders}
           columns={columns}
-          tableTitle={t("instalments")}
+          tableTitle={t("Instalments")}
           showSearch
           showDateRange
           searchTerm={searchTerm}
@@ -85,8 +95,8 @@ export default function SaleInstalmentsPage() {
           rowActions={(_, record) => [
             {
               key: "view-order",
-              label: t("view_order"),
-              labelText: t("view_order"),
+              label: t("View Order"),
+              labelText: t("View Order"),
               icon: <Eye className="size-4" />,
               onClick: () => router.push(`/sales/${record.order_id}`),
             },

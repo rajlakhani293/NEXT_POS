@@ -2,6 +2,7 @@
 
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { payments } from "@/lib/api/payments"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 const initialValues = {
   label: "",
@@ -12,36 +13,38 @@ const initialValues = {
 }
 
 export function PaymentTypeForm(props: any) {
+  const { t } = useTranslation()
   const fields = [
     {
       name: "label",
-      label: "Label",
+      label: t("Label"),
       type: "text",
-      placeholder: "Provide a label to the resource.",
+      placeholder: t("Provide a label to the resource."),
       required: true,
     },
     {
       name: "active",
-      label: "Active",
+      label: t("Active"),
       type: "switch",
-      note: "Determine whether this payment type can be used.",
+      note: t("Determine whether this payment type can be used."),
     },
     {
       name: "priority",
-      label: "Priority",
+      label: t("Priority"),
       type: "number",
-      placeholder:
-        'Define the order for the payment. The lower the number is, the first it will display on the payment popup. Must start from "0".',
+      placeholder: t(
+        'Define the order for the payment. The lower the number is, the first it will display on the payment popup. Must start from "0".'
+      ),
     },
     {
       name: "identifier",
-      label: "Identifier",
+      label: t("Identifier"),
       type: "text",
-      placeholder: "Leave empty to generate it from the label.",
+      placeholder: t("Leave empty to generate it from the label."),
     },
     {
       name: "description",
-      label: "Description",
+      label: t("Description"),
       type: "textarea",
       rows: 3,
     },
@@ -50,7 +53,7 @@ export function PaymentTypeForm(props: any) {
   return (
     <CatalogMasterForm
       {...props}
-      entityName="Payment Type"
+      entityName={t("Payment Type")}
       fields={fields}
       initialValues={initialValues}
       createHook={(payments as any).useCreatePaymentTypeMutation}

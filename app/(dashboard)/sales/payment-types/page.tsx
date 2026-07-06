@@ -9,38 +9,38 @@ import { PaymentTypeForm } from "./createUpdate"
 export default function PaymentTypesPage() {
   const { t } = useTranslation()
   const columns = [
-    { key: "identifier", title: "Identifier" },
-    { key: "label", title: "Label" },
+    { key: "identifier", title: t("Identifier") },
+    { key: "label", title: t("Label") },
     {
       key: "active",
-      title: "Active",
+      title: t("Active"),
       render: (value: any) => (value ? t("Yes") : t("No")),
     },
-    { key: "priority", title: "Priority" },
+    { key: "priority", title: t("Priority") },
     {
       key: "created_at",
-      title: "Created On",
+      title: t("Created On"),
       render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
     },
     {
       key: "readonly",
-      title: "Readonly",
+      title: t("Readonly"),
       render: (value: any) => (value ? t("Yes") : t("No")),
     },
-    { key: "user_username", title: "Author" },
+    { key: "user_username", title: t("Author") },
   ]
 
   return (
     <CatalogPageShell
-      tableTitle="Payment Types List"
-      addTitle="Add a new payment type"
+      tableTitle={t("Payment Types List")}
+      addTitle={t("Add a new payment type")}
       columns={columns}
       getDataHook={(payments as any).useGetPaymentTypesDataMutation}
       deleteHook={(payments as any).useDeletePaymentTypeMutation}
       statusHook={(payments as any).useUpdatePaymentTypeStatusMutation}
       FormComponent={PaymentTypeForm}
-      deleteTitle="Delete Payment Type"
-      deleteDescription="Would you like to delete this ?"
+      deleteTitle={t("Delete Payment Type")}
+      deleteDescription={t("Would you like to delete this ?")}
       permissions={PERMISSIONS.payments}
     />
   )
