@@ -38,6 +38,9 @@ export default function UploadModulePage() {
     <PermissionGuard permission={PERMISSIONS.special.manageModules}>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-slate-950">{t("Upload A Module")}</h1>
+          </div>
           <Button asChild type="button" variant="outline">
             <Link href="/modules">
               <ArrowLeftIcon className="size-4" />
