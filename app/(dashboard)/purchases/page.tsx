@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { BanknoteIcon, FileTextIcon, PackageCheckIcon } from "lucide-react"
+import { CheckCircle2Icon, FileTextIcon, RefreshCwIcon } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { usePermissions } from "@/hooks/use-permissions"
@@ -10,6 +10,7 @@ import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
+import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
 const workflowLabels: Record<string, string> = {
@@ -102,8 +103,10 @@ export default function PurchaseOrdersPage() {
   const canCreate = hasPermission(PERMISSIONS.purchases.create)
   const canUpdate = hasPermission(PERMISSIONS.purchases.update)
   const canDelete = hasPermission(PERMISSIONS.purchases.delete)
-  const canReceive = hasPermission(PERMISSIONS.purchases.receive)
-  const canPay = hasPermission(PERMISSIONS.purchases.pay)
+  const canMarkPaid = hasPermission(PERMISSIONS.purchases.update)
+  const canRefresh = hasPermission(PERMISSIONS.purchases.view)
+  const [refreshPurchaseOrder] = (purchases as any).useRefreshPurchaseOrderMutation()
+  const [setPurchaseOrderAsPaid] = (purchases as any).useSetPurchaseOrderAsPaidMutation()
 
   const {
     orders,
@@ -153,27 +156,33 @@ export default function PurchaseOrdersPage() {
         deleteModalTitle={t("Delete Procurement")}
         deleteModalDescription={t("Would you like to delete this ?")}
         rowActions={(_, record) => [
-          ...(canReceive
+          ...(canMarkPaid && record.payment_status !== "paid"
             ? [
               {
-                key: "receive",
-                label: t("Stock In"),
-                labelText: t("Stock In"),
-                icon: <PackageCheckIcon className="size-4" />,
-                onClick: () =>
-                  router.push(`/purchases/orders/${record.id}?action=receive`),
+                key: "set_paid",
+                label: t("Set Paid"),
+                labelText: t("Set Paid"),
+                icon: <CheckCircle2Icon className="size-4" />,
+                onClick: async () => {
+                  const response = await setPurchaseOrderAsPaid({ id: record.id }).unwrap()
+                  showToast.success(response?.message || t("The procurement has been marked as paid."))
+                  triggerRefresh()
+                },
               },
             ]
             : []),
-          ...(canPay
+          ...(canRefresh
             ? [
               {
-                key: "pay",
-                label: t("Pay Provider"),
-                labelText: t("Pay Provider"),
-                icon: <BanknoteIcon className="size-4" />,
-                onClick: () =>
-                  router.push(`/purchases/orders/${record.id}?action=pay`),
+                key: "refresh",
+                label: t("Refresh"),
+                labelText: t("Refresh"),
+                icon: <RefreshCwIcon className="size-4" />,
+                onClick: async () => {
+                  const response = await refreshPurchaseOrder({ id: record.id }).unwrap()
+                  showToast.success(response?.message || t("The refresh process has started. You'll get informed once it's complete."))
+                  triggerRefresh()
+                },
               },
             ]
             : []),
