@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import {
   ArrowLeft,
-  CheckIcon,
-  ChevronDownIcon,
   Pencil,
   Plus,
   Trash2,
@@ -19,12 +17,6 @@ import { TaxGroupForm } from "@/app/(dashboard)/settings/tax-groups/createUpdate
 import { ImageUpload } from "@/components/imageUpload"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { SelectItem, SelectItemText } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
@@ -35,57 +27,6 @@ import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
-
-function TaxModeDropdown({
-  isInclusive,
-  onChange,
-}: {
-  isInclusive: boolean
-  onChange: (value: boolean) => void
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="h-10 min-w-28 border-2 bg-muted/30 px-3 text-sm font-semibold text-gray-700 shadow-none"
-        >
-          {isInclusive ? "with Tax" : "without Tax"}
-          <ChevronDownIcon className="size-4 opacity-60" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-32">
-        <DropdownMenuItem
-          onClick={() => onChange(true)}
-          className={cn(
-            isInclusive && "bg-accent font-semibold text-accent-foreground"
-          )}
-        >
-          {isInclusive ? (
-            <CheckIcon className="size-4" />
-          ) : (
-            <span className="size-4" />
-          )}
-          with Tax
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => onChange(false)}
-          className={cn(
-            !isInclusive && "bg-accent font-semibold text-accent-foreground"
-          )}
-        >
-          {!isInclusive ? (
-            <CheckIcon className="size-4" />
-          ) : (
-            <span className="size-4" />
-          )}
-          without Tax
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
 
 type ProductFormValues = {
   name: string
@@ -298,7 +239,16 @@ export default function ProductFormPage() {
   const posOptions = usePosOptions()
   const id = params.id as string
   const isEdit = id !== "create"
-  const currencySymbol = posOptions.currency_symbol
+  const currencyIndicator =
+    posOptions.currency_preferred === "iso"
+      ? posOptions.currency_iso
+      : posOptions.currency_symbol
+  const formatMoney = (value: any) => {
+    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
+    return posOptions.currency_position === "after"
+      ? `${amount}${currencyIndicator}`
+      : `${currencyIndicator}${amount}`
+  }
 
   const [formData, setFormData] = useState<ProductFormValues>(initialValues)
   const [activeTab, setActiveTab] = useState<"identification" | "units" | "expiry" | "taxes" | "images">("identification")
@@ -915,7 +865,7 @@ export default function ProductFormPage() {
                       type="number"
                       min="0"
                       step="0.01"
-                      prefix={currencySymbol}
+                      prefix={currencyIndicator}
                       value={formData.selling_price}
                       onChange={(event) => updateField("selling_price", event.target.value)}
                       error={errors.selling_price}
@@ -927,7 +877,7 @@ export default function ProductFormPage() {
                       placeholder={t("Enter Wholesale Price")}
                       min="0"
                       step="0.01"
-                      prefix={currencySymbol}
+                      prefix={currencyIndicator}
                       value={formData.wholesale_price}
                       onChange={(event) => updateField("wholesale_price", event.target.value)}
                     />
@@ -938,7 +888,7 @@ export default function ProductFormPage() {
                       placeholder={t("Enter COGS")}
                       min="0"
                       step="0.01"
-                      prefix={currencySymbol}
+                      prefix={currencyIndicator}
                       value={formData.purchase_price}
                       onChange={(event) => updateField("purchase_price", event.target.value)}
                     />
@@ -949,7 +899,7 @@ export default function ProductFormPage() {
                       placeholder={t("Enter MRP")}
                       min="0"
                       step="0.01"
-                      prefix={currencySymbol}
+                      prefix={currencyIndicator}
                       value={formData.mrp}
                       onChange={(event) => updateField("mrp", event.target.value)}
                     />
@@ -1018,7 +968,7 @@ export default function ProductFormPage() {
                                 {Number(record.quantity).toLocaleString()} {record.convert_unit_short_name || t("base unit")} {t("per")} {record.unit_short_name || record.unit_name}
                               </p>
                               <p className="text-xs font-bold text-gray-800 mt-1">
-                                {t("Sale")}: {currencySymbol}{Number(record.sale_price).toFixed(2)} · {t("Buy/COGS")}: {currencySymbol}{Number(record.cogs).toFixed(2)}
+                                {t("Sale")}: {formatMoney(record.sale_price)} · {t("Buy/COGS")}: {formatMoney(record.cogs)}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -1078,7 +1028,7 @@ export default function ProductFormPage() {
                             type="number"
                             min="0"
                             step="0.01"
-                            prefix={currencySymbol}
+                            prefix={currencyIndicator}
                             value={unitQuantityForm.sale_price}
                             onChange={(e) => updateUnitQuantityField("sale_price", e.target.value)}
                             error={unitQuantityErrors.sale_price}
@@ -1090,7 +1040,7 @@ export default function ProductFormPage() {
                             type="number"
                             min="0"
                             step="0.01"
-                            prefix={currencySymbol}
+                            prefix={currencyIndicator}
                             value={unitQuantityForm.purchase_price}
                             onChange={(e) => updateUnitQuantityField("purchase_price", e.target.value)}
                           />

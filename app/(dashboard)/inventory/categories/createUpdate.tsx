@@ -101,35 +101,35 @@ export function CategoryForm({
   const fields = [
     {
       name: "name",
-      label: "Name",
+      label: t("Name"),
       type: "text",
-      placeholder: "Enter category name",
+      placeholder: t("Enter category name"),
       required: true,
     },
     {
       name: "parent_id",
-      label: "Parent Category",
+      label: t("Parent Category"),
       type: "select",
       options: categoryOptions,
-      placeholder: "Select parent category",
+      placeholder: t("Select parent category"),
     },
     {
       name: "displays_on_pos",
-      label: "Displays On POS",
+      label: t("Displays On POS"),
       type: "switch",
       required: true,
     },
     {
       name: "preview_url",
-      label: "Preview URL",
+      label: t("Preview URL"),
       type: "text",
-      placeholder: "Enter preview URL",
+      placeholder: t("Enter preview URL"),
     },
     {
       name: "description",
-      label: "Description",
+      label: t("Description"),
       type: "textarea",
-      placeholder: "Enter description",
+      placeholder: t("Enter description"),
       rows: 3,
     },
   ]
@@ -142,7 +142,7 @@ export function CategoryForm({
       onSubmit={handleSubmit}
       onClose={onClose}
       onSuccess={onSuccess}
-      title={editId ? "Edit Category" : "Create Category"}
+      title={editId ? t("Edit Category") : t("Create Category")}
       isOpen={isOpen}
       formWidth="w-[520px]"
       isLoading={Boolean(editId) && isLoading}

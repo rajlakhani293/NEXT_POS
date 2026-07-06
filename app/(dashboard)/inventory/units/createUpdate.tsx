@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { UnitGroupForm } from "@/app/(dashboard)/inventory/unit-groups/createUpdate"
 import { catalog } from "@/lib/api/catalog"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 const initialValues = {
   group_id: "",
@@ -17,6 +18,7 @@ const initialValues = {
 }
 
 export function UnitForm(props: any) {
+  const { t } = useTranslation()
   const [isUnitGroupFormOpen, setIsUnitGroupFormOpen] = useState(false)
   const [getUnitGroupsDropdown, unitGroups] = (catalog as any).useGetUnitGroupsDropdownMutation()
 
@@ -39,52 +41,52 @@ export function UnitForm(props: any) {
   const fields = [
     {
       name: "group_id",
-      label: "Unit Group",
+      label: t("Unit Group"),
       type: "select",
-      placeholder: "Select unit group",
+      placeholder: t("Select unit group"),
       required: true,
       options: unitGroupOptions,
       onAddNew: () => setIsUnitGroupFormOpen(true),
-      addNewLabel: "Add New Unit Group",
+      addNewLabel: t("Add New Unit Group"),
     },
     {
       name: "name",
-      label: "Name",
+      label: t("Name"),
       type: "text",
-      placeholder: "Enter unit name",
+      placeholder: t("Enter unit name"),
       required: true,
     },
     {
       name: "identifier",
-      label: "Identifier (Short Name)",
+      label: t("Identifier"),
       type: "text",
-      placeholder: "e.g. kg, pc, ltr",
+      placeholder: t("Provide a unique value for this unit. Might be composed from a name but shouldn't include space or special characters."),
       required: true,
     },
     {
       name: "value",
-      label: "Value",
+      label: t("Value"),
       type: "number",
       placeholder: "1",
       required: true,
     },
     {
       name: "base_unit",
-      label: "Base Unit",
+      label: t("Base Unit"),
       type: "switch",
-      note: "Only one base unit is allowed inside one unit group.",
+      note: t("Determine if the unit is the base unit from the group."),
     },
     {
       name: "preview_url",
-      label: "Preview URL",
+      label: t("Preview URL"),
       type: "text",
-      placeholder: "Enter preview URL",
+      placeholder: t("Preview of the unit."),
     },
     {
       name: "description",
-      label: "Description",
+      label: t("Description"),
       type: "textarea",
-      placeholder: "Enter description",
+      placeholder: t("Provide a short description about the unit."),
     },
   ]
 
@@ -92,7 +94,7 @@ export function UnitForm(props: any) {
     <>
       <CatalogMasterForm
         {...props}
-        entityName="Unit"
+        entityName={t("Unit")}
         fields={fields}
         initialValues={formInitialValues}
         createHook={(catalog as any).useCreateUnitMutation}

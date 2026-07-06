@@ -56,7 +56,17 @@ export default function PrintLabelsPage() {
     (state) => state.session.businessSettings?.settings?.store_name
   )
   const companyName = useAppSelector((state) => state.session.company?.name)
-  const storeName = storeNameSetting || companyName || "POS Store"
+  const storeName = storeNameSetting || companyName || t("POS Store")
+  const currencyIndicator =
+    posOptions.currency_preferred === "iso"
+      ? posOptions.currency_iso
+      : posOptions.currency_symbol
+  const formatMoney = (value: any) => {
+    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
+    return posOptions.currency_position === "after"
+      ? `${amount}${currencyIndicator}`
+      : `${currencyIndicator}${amount}`
+  }
 
   const [getProductsDropdown, { data: productsResponse, isLoading: isProductsLoading }] = (
     catalog as any
@@ -279,7 +289,7 @@ export default function PrintLabelsPage() {
 
                       {showProductPrice && (
                         <p className="text-xs font-bold text-black leading-none mt-0.5">
-                          {posOptions.currency_symbol}{label.price.toFixed(2)}
+                          {formatMoney(label.price)}
                         </p>
                       )}
                     </div>
@@ -366,7 +376,7 @@ export default function PrintLabelsPage() {
                             <SelectContent className="max-h-40">
                               {product.unit_quantities.map((uq: any) => (
                                 <SelectItem key={uq.id} value={String(uq.id)}>
-                                  {uq.unit_name || uq.unit__name} ({posOptions.currency_symbol}{Number(uq.sale_price).toFixed(2)})
+                                  {uq.unit_name || uq.unit__name} ({formatMoney(uq.sale_price)})
                                 </SelectItem>
                               ))}
                             </SelectContent>

@@ -33,6 +33,10 @@ export default function StockLedgerPage() {
   const searchParams = useSearchParams()
   const productId = searchParams.get("product_id")
   const productName = searchParams.get("product_name")
+  const currencyIndicator =
+    posOptions.currency_preferred === "iso"
+      ? posOptions.currency_iso
+      : posOptions.currency_symbol
   const {
     orders,
     totalItems,
@@ -50,7 +54,12 @@ export default function StockLedgerPage() {
     itemsPerPage: 10,
     selectedFilters: productId ? { product_id: Number(productId) } : {},
   })
-  const formatMoney = (value: any) => `${posOptions.currency_symbol}${Number(value || 0).toFixed(2)}`
+  const formatMoney = (value: any) => {
+    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
+    return posOptions.currency_position === "after"
+      ? `${amount}${currencyIndicator}`
+      : `${currencyIndicator}${amount}`
+  }
   const translatedColumns = columns.map((column) => ({
     ...column,
     title: t(column.title),

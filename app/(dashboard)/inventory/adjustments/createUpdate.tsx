@@ -33,6 +33,10 @@ export function StockAdjustmentForm({
 }: StockAdjustmentFormProps) {
   const { t } = useTranslation()
   const posOptions = usePosOptions()
+  const currencyIndicator =
+    posOptions.currency_preferred === "iso"
+      ? posOptions.currency_iso
+      : posOptions.currency_symbol
   const loadedRef = useRef(false)
   const [createStockAdjustment] = (
     inventory as any
@@ -77,8 +81,8 @@ export function StockAdjustmentForm({
       fields={[
         {
           name: "product_id",
-          label: "Product",
-          placeholder: "Select product",
+          label: t("Product"),
+          placeholder: t("Select product"),
           type: "select",
           required: true,
           options: productFieldOptions,
@@ -86,43 +90,43 @@ export function StockAdjustmentForm({
         },
         {
           name: "adjustment_type",
-          label: "Select Action",
-          placeholder: "Select action",
+          label: t("Select Action"),
+          placeholder: t("Select action"),
           type: "select",
           required: true,
           options: [
-            { label: "Add", value: "added" },
-            { label: "Delete", value: "deleted" },
-            { label: "Defective", value: "defective" },
-            { label: "Lost", value: "lost" },
-            { label: "Set", value: "set" },
+            { label: t("Add"), value: "added" },
+            { label: t("Delete"), value: "deleted" },
+            { label: t("Defective"), value: "defective" },
+            { label: t("Lost"), value: "lost" },
+            { label: t("Set"), value: "set" },
           ],
         },
         {
           name: "quantity",
-          label: "Quantity",
-          placeholder: "Enter quantity. For Set, enter final stock.",
+          label: t("Quantity"),
+          placeholder: t("Enter quantity. For Set, enter final stock."),
           type: "number",
           required: true,
         },
         {
           name: "unit_cost",
-          label: "Unit Cost",
-          placeholder: "Optional cost",
+          label: t("Unit Cost"),
+          placeholder: t("Optional cost"),
           type: "number",
-          prefix: posOptions.currency_symbol,
+          prefix: currencyIndicator,
         },
         {
           name: "reason",
-          label: "Reason",
-          placeholder: "Useful to describe why this adjustment is needed",
+          label: t("Reason"),
+          placeholder: t("Useful to describe why this adjustment is needed"),
           type: "text",
           required: true,
         },
         {
           name: "note",
-          label: "Note",
-          placeholder: "Optional note",
+          label: t("Note"),
+          placeholder: t("Optional note"),
           type: "textarea",
           rows: 3,
         },
@@ -133,7 +137,7 @@ export function StockAdjustmentForm({
       }}
       onSubmit={handleSubmit}
       onClose={onClose}
-      title="Stock Adjustment"
+      title={t("Stock Adjustment")}
       isOpen={isOpen}
       formWidth="w-[560px]"
     />

@@ -3,6 +3,7 @@
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { CatalogPageShell } from "@/components/catalog/catalog-page-shell"
 import { catalog } from "@/lib/api/catalog"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 const columns = [
   { key: "name", title: "Name" },
@@ -21,43 +22,44 @@ const initialValues = {
 }
 
 function ScaleRangeForm(props: any) {
+  const { t } = useTranslation()
   return (
     <CatalogMasterForm
       {...props}
-      entityName="Scale Range"
+      entityName={t("Scale Range")}
       fields={[
         {
           name: "name",
-          label: "Name",
-          placeholder: "Provide a name for this PLU range.",
+          label: t("Name"),
+          placeholder: t("Provide a name for this PLU range."),
           type: "text",
           required: true,
         },
         {
           name: "range_start",
-          label: "Range Start",
-          placeholder: "The starting PLU code for this range (e.g., 100 for 0100).",
+          label: t("Range Start"),
+          placeholder: t("The starting PLU code for this range (e.g., 100 for 0100)."),
           type: "number",
           required: true,
         },
         {
           name: "range_end",
-          label: "Range End",
-          placeholder: "The ending PLU code for this range (e.g., 999 for 0999).",
+          label: t("Range End"),
+          placeholder: t("The ending PLU code for this range (e.g., 999 for 0999)."),
           type: "number",
           required: true,
         },
         {
           name: "next_scale_plu",
-          label: "Next PLU",
-          placeholder: "The next PLU code to be assigned in this range.",
+          label: t("Next PLU"),
+          placeholder: t("The next PLU code to be assigned in this range."),
           type: "number",
           required: true,
         },
         {
           name: "description",
-          label: "Description",
-          placeholder: "Optional description for this PLU range.",
+          label: t("Description"),
+          placeholder: t("Optional description for this PLU range."),
           type: "textarea",
         },
       ]}
@@ -77,17 +79,23 @@ function ScaleRangeForm(props: any) {
 }
 
 export default function ScaleRangesPage() {
+  const { t } = useTranslation()
+  const translatedColumns = columns.map((column) => ({
+    ...column,
+    title: t(column.title),
+  }))
+
   return (
     <CatalogPageShell
-      tableTitle="Scale Ranges List"
-      addTitle="Add a new scale range"
-      columns={columns}
+      tableTitle={t("Scale Ranges List")}
+      addTitle={t("Add a new scale range")}
+      columns={translatedColumns}
       getDataHook={(catalog as any).useGetScaleRangesDataMutation}
       deleteHook={(catalog as any).useDeleteScaleRangeMutation}
       statusHook={(catalog as any).useUpdateScaleRangeStatusMutation}
       FormComponent={ScaleRangeForm}
-      deleteTitle="Delete Scale Range"
-      deleteDescription="Would you like to delete this scale range?"
+      deleteTitle={t("Delete Scale Range")}
+      deleteDescription={t("Would you like to delete this scale range?")}
     />
   )
 }
