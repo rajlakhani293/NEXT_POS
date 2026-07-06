@@ -32,16 +32,16 @@ const initialValues: CustomerGroupFormValues = {
 const buildFields = (rewardSystems: any[], t: (key: string) => string) => [
   {
     name: "name",
-    label: t("Group Name"),
+    label: t("Name"),
     type: "text",
-    placeholder: t("Enter group name"),
+    placeholder: t("Provide a name to the resource."),
     required: true,
   },
   {
     name: "minimal_credit_payment",
-    label: t("Minimum Credit Payment"),
+    label: t("Minimum Credit Amount"),
     type: "number",
-    placeholder: t("Enter minimum payment percentage"),
+    placeholder: t('Determine in percentage, what is the first minimum credit payment made by all customers on the group, in case of credit order. If left to "0", no minimal credit amount is required.'),
     suffix: "%",
     min: 0,
   },
@@ -49,7 +49,7 @@ const buildFields = (rewardSystems: any[], t: (key: string) => string) => [
     name: "reward_system_id",
     label: t("Reward System"),
     type: "select",
-    placeholder: t("Select reward system"),
+    placeholder: t("Select which Reward system applies to the group"),
     allowClear: true,
     options: rewardSystems.map((system: any) => ({
       label: system.name,
@@ -60,7 +60,7 @@ const buildFields = (rewardSystems: any[], t: (key: string) => string) => [
     name: "description",
     label: t("Description"),
     type: "textarea",
-    placeholder: t("Enter description"),
+    placeholder: t("A brief description about what this group is about"),
     rows: 3,
   },
 ]
@@ -136,7 +136,7 @@ export function CustomerGroupForm({
       onSubmit={handleSubmit}
       onClose={onClose}
       onSuccess={onSuccess}
-      title={editId ? t("Edit Customer Group") : t("Create Customer Group")}
+      title={editId ? t("Edit Customers Group") : t("Create a new Customers Group")}
       isOpen={isOpen}
       formWidth="w-[560px]"
       isLoading={Boolean(editId) && isLoading}
