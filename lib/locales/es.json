@@ -279,5 +279,10 @@
   "Billing First Address.": "Primera dirección de facturación.",
   "Billing Second Address.": "Segunda dirección de facturación.",
   "Billing Country.": "País de facturación.",
-  "Postal Address": "Dirección postal"
+  "Postal Address": "Dirección postal",
+  "Account Activation": "Activación de cuenta",
+  "Your account is now activated.": "Tu cuenta ya está activada.",
+  "Invalid activation token.": "Token de activación no válido.",
+  "No activation is needed for this account.": "No se necesita activación para esta cuenta.",
+  "The expiration token has expired.": "El token de expiración ha caducado."
 }

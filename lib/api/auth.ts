@@ -87,6 +87,12 @@ const endpointsConfig = {
       },
     }),
   },
+  activateAccount: {
+    query: (payLoad: { user_id: string | number; token: string }) => ({
+      url: `auth/activate/${payLoad.user_id}/${payLoad.token}`,
+      method: "GET",
+    }),
+  },
   updateProfile: {
     query: (payLoad: any) => ({
       url: "users/profile",
@@ -138,6 +144,10 @@ export const auth = createApi({
       ApiEnvelope<any>,
       { user_id: string | number; token: string; password: string; password_confirm: string }
     >(endpointsConfig.newPassword),
+    activateAccount: builder.query<
+      ApiEnvelope<any>,
+      { user_id: string | number; token: string }
+    >(endpointsConfig.activateAccount),
     updateProfile: builder.mutation<ApiEnvelope<AuthUser>, any>(
       endpointsConfig.updateProfile
     ),
@@ -161,6 +171,7 @@ export const {
   useSwitchBranchMutation,
   usePasswordLostMutation,
   useNewPasswordMutation,
+  useActivateAccountQuery,
   useUpdateProfileMutation,
   useGetTokensQuery,
   useCreateTokenMutation,

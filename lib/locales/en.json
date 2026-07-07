@@ -496,5 +496,10 @@
   "Billing First Address.": "Billing First Address.",
   "Billing Second Address.": "Billing Second Address.",
   "Billing Country.": "Billing Country.",
-  "Postal Address": "Postal Address"
+  "Postal Address": "Postal Address",
+  "Account Activation": "Account Activation",
+  "Your account is now activated.": "Your account is now activated.",
+  "Invalid activation token.": "Invalid activation token.",
+  "No activation is needed for this account.": "No activation is needed for this account.",
+  "The expiration token has expired.": "The expiration token has expired."
 }

@@ -279,5 +279,10 @@
   "Billing First Address.": "عنوان الفوترة الأول.",
   "Billing Second Address.": "عنوان الفوترة الثاني.",
   "Billing Country.": "بلد الفوترة.",
-  "Postal Address": "العنوان البريدي"
+  "Postal Address": "العنوان البريدي",
+  "Account Activation": "تفعيل الحساب",
+  "Your account is now activated.": "حسابك مُفَعّل الآن.",
+  "Invalid activation token.": "رمز التنشيط غير صالح.",
+  "No activation is needed for this account.": "لا يلزم التنشيط لهذا الحساب.",
+  "The expiration token has expired.": "انتهت صلاحية رمز التفعيل."
 }
