@@ -115,6 +115,44 @@ export function resolveRoutePermission(
     return { permission: PERMISSIONS.payments.collectDue }
   }
 
+  const reportMatch = pathname.match(/^\/reports\/([^/]+)$/)
+  if (reportMatch) {
+    const reportPermissions: Record<string, ResolvedRoutePermission> = {
+      sales: { permission: PERMISSIONS.reports.sales },
+      sales_progress: { permission: PERMISSIONS.reports.products },
+      customers_statement: { permission: PERMISSIONS.reports.customersStatement },
+      low_stock: { permission: PERMISSIONS.reports.lowStock },
+      stock_report: {
+        permission: [PERMISSIONS.reports.inventory, PERMISSIONS.reports.lowStock],
+        match: "any",
+      },
+      stock_ledger: { permission: PERMISSIONS.reports.stockHistory },
+      sold_stock: { permission: PERMISSIONS.reports.sales },
+      profit: { permission: PERMISSIONS.reports.sales },
+      accounting: { permission: PERMISSIONS.reports.transactions },
+      annual: { permission: PERMISSIONS.reports.yearly },
+      payment_types: { permission: PERMISSIONS.reports.paymentTypes },
+    }
+    return reportPermissions[reportMatch[1]]
+  }
+
+  if (pathname === "/reports") {
+    return {
+      permission: [
+        PERMISSIONS.reports.sales,
+        PERMISSIONS.reports.products,
+        PERMISSIONS.reports.customersStatement,
+        PERMISSIONS.reports.lowStock,
+        PERMISSIONS.reports.inventory,
+        PERMISSIONS.reports.stockHistory,
+        PERMISSIONS.reports.transactions,
+        PERMISSIONS.reports.yearly,
+        PERMISSIONS.reports.paymentTypes,
+      ],
+      match: "any",
+    }
+  }
+
   const saleDetailMatch = pathname.match(/^\/sales\/([^/]+)$/)
   if (saleDetailMatch && saleDetailMatch[1] !== "history") {
     return { permission: PERMISSIONS.sales.view }

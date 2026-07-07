@@ -139,8 +139,17 @@ export const PERMISSIONS = {
     delete: "promotions_delete",
   },
   reports: {
-    view: "reports_view",
+    view: "pos.reports.sales",
     export: "reports_export",
+    sales: "pos.reports.sales",
+    products: "pos.reports.products-report",
+    customersStatement: "pos.reports.customers-statement",
+    lowStock: "pos.reports.low-stock",
+    inventory: "pos.reports.inventory",
+    stockHistory: "pos.reports.stock-history",
+    transactions: "pos.reports.transactions",
+    yearly: "pos.reports.yearly",
+    paymentTypes: "pos.reports.payment-types",
   },
   special: {
     refundOrder: "refund_order",

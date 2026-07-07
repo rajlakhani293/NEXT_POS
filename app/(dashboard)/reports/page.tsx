@@ -4,11 +4,20 @@ import { useRouter } from "next/navigation"
 import { ArrowRight } from "lucide-react"
 
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePermissions } from "@/hooks/use-permissions"
 import { reportCards, reportGroups } from "./report-config"
 
 export default function ReportsPage() {
   const router = useRouter()
   const { t } = useTranslation()
+  const { hasPermission } = usePermissions()
+
+  const visibleCards = reportCards.filter((report) =>
+    hasPermission(report.permission, report.permissionMatch)
+  )
+  const visibleGroups = reportGroups.filter((group) =>
+    visibleCards.some((report) => report.group === group)
+  )
 
   return (
     <div className="space-y-6">
@@ -19,13 +28,13 @@ export default function ReportsPage() {
         </p>
       </div>
 
-      {reportGroups.map((group) => (
+      {visibleGroups.map((group) => (
         <section key={group} className="space-y-3">
           <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
             {t(group)}
           </h2>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {reportCards
+            {visibleCards
               .filter((report) => report.group === group)
               .map((report) => (
                 <button

@@ -1,3 +1,5 @@
+import { PERMISSIONS, type PermissionRequirement } from "@/lib/permissions"
+
 export const reportTabs = [
   "sales",
   "sales_progress",
@@ -33,72 +35,79 @@ export const reportCards: Array<{
   title: string
   description: string
   group: string
+  permission: PermissionRequirement
+  permissionMatch?: "all" | "any"
 }> = [
   {
     key: "sales",
     title: "Sale Report",
-    description: "Orders, payment status, totals, paid and due amount.",
+    description: "Provides an overview over the sales during a specific period",
     group: "Sales",
+    permission: PERMISSIONS.reports.sales,
   },
   {
     key: "sales_progress",
     title: "Sales Progress",
-    description: "Product sales progress with sold quantity and sale amount.",
+    description: "Provides an overview over the best products sold during a specific period.",
     group: "Sales",
+    permission: PERMISSIONS.reports.products,
   },
   {
     key: "customers_statement",
     title: "Customers Statement",
-    description: "Customer balances, wallet and credit limit summary.",
-    group: "Sales",
+    description: "Display the complete customer statement.",
+    group: "Customers",
+    permission: PERMISSIONS.reports.customersStatement,
   },
   {
     key: "stock_report",
     title: "Stock Report",
-    description: "Current stock quantity and stock value by product unit.",
+    description: "Provides an overview of the products stock.",
     group: "Inventory",
-  },
-  {
-    key: "low_stock",
-    title: "Low Stock Report",
-    description: "Products below their configured alert quantity.",
-    group: "Inventory",
+    permission: [PERMISSIONS.reports.inventory, PERMISSIONS.reports.lowStock],
+    permissionMatch: "any",
   },
   {
     key: "stock_ledger",
     title: "Stock History",
-    description: "Inventory movement history with quantity and balance.",
+    description: "Provides a combined report for every transactions on products.",
     group: "Inventory",
+    permission: PERMISSIONS.reports.stockHistory,
   },
   {
     key: "sold_stock",
     title: "Sold Stock",
-    description: "Sold products with quantity, tax, discount and cost.",
+    description: "Provides an overview over the sold stock during a specific period.",
     group: "Sales",
+    permission: PERMISSIONS.reports.sales,
   },
   {
     key: "profit",
     title: "Incomes & Losses",
-    description: "Sales value, product cost and profit per sold item.",
+    description: "Provides an overview of the provide of the products sold.",
     group: "Finance",
+    permission: PERMISSIONS.reports.sales,
   },
   {
     key: "accounting",
     title: "Transactions",
-    description: "Account transaction history with balance movement.",
+    description: "Provides an overview on the activity for a specific period.",
     group: "Finance",
+    permission: PERMISSIONS.reports.transactions,
   },
   {
     key: "annual",
     title: "Annual Report",
-    description: "Monthly breakdown of sales, taxes, expenses and net income for a chosen year.",
+    description: "Provides an overview over the sales during a specific period",
     group: "Finance",
+    permission: PERMISSIONS.reports.yearly,
   },
   {
     key: "payment_types",
     title: "Sales By Payments",
-    description: "Payment collection grouped by cash, bank, card and online.",
+    description: "Provide a report of the sales by payment types, for a specific period.",
     group: "Sales",
+    permission: PERMISSIONS.reports.paymentTypes,
   },
 ]
 
