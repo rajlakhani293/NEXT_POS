@@ -284,5 +284,6 @@
   "Your account is now activated.": "Votre compte est maintenant activé.",
   "Invalid activation token.": "Jeton d'activation invalide.",
   "No activation is needed for this account.": "Aucune activation n'est nécessaire pour ce compte.",
-  "The expiration token has expired.": "Le jeton d'expiration a expiré."
+  "The expiration token has expired.": "Le jeton d'expiration a expiré.",
+  "Assigned Orders": "Commandes assignées"
 }

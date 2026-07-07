@@ -501,5 +501,6 @@
   "Your account is now activated.": "Your account is now activated.",
   "Invalid activation token.": "Invalid activation token.",
   "No activation is needed for this account.": "No activation is needed for this account.",
-  "The expiration token has expired.": "The expiration token has expired."
+  "The expiration token has expired.": "The expiration token has expired.",
+  "Assigned Orders": "Assigned Orders"
 }

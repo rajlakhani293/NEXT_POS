@@ -284,5 +284,6 @@
   "Your account is now activated.": "Tu cuenta ya está activada.",
   "Invalid activation token.": "Token de activación no válido.",
   "No activation is needed for this account.": "No se necesita activación para esta cuenta.",
-  "The expiration token has expired.": "El token de expiración ha caducado."
+  "The expiration token has expired.": "El token de expiración ha caducado.",
+  "Assigned Orders": "Órdenes asignadas"
 }

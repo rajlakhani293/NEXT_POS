@@ -77,6 +77,11 @@ const mainNavSections: DashboardNavSection[] = [
         url: "/sales/payment-types",
         permission: PERMISSIONS.payments.view,
       },
+      {
+        title: "Assigned Orders",
+        url: "/sales/assigned",
+        permission: PERMISSIONS.sales.deliver,
+      },
     ],
   },
   {
