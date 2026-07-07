@@ -11,6 +11,18 @@ const getCurrentFinancialYear = () => {
   return `FY ${currentFY}-${nextFY.toString().padStart(2, "0")}`
 }
 
+const formatApiDate = (value: any) => {
+  if (!value) return undefined
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const year = value.getFullYear()
+    const month = String(value.getMonth() + 1).padStart(2, "0")
+    const day = String(value.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}`
+  }
+  if (typeof value === "string") return value.slice(0, 10)
+  return value
+}
+
 interface UseTableDataProps {
   getMaster: any
   enabled?: boolean
@@ -101,8 +113,8 @@ export const useTableData = ({
       ...(disableDateFilter
         ? {}
         : {
-            startDate: dateFilters.startDate,
-            endDate: dateFilters.endDate,
+            startDate: formatApiDate(dateFilters.startDate),
+            endDate: formatApiDate(dateFilters.endDate),
           }),
       sortBy: sortConfig?.key || undefined,
       sortDirection: sortConfig?.direction || undefined,

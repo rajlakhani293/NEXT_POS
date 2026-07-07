@@ -62,13 +62,21 @@ export default function PermissionsManagerPage() {
 
   const roles: RoleRecord[] = rolesState.data?.data || []
   const permissions: PermissionRecord[] = permissionsState.data?.data || []
+  const uniquePermissions = useMemo(() => {
+    const seen = new Set<string>()
+    return permissions.filter((permission) => {
+      if (!permission.codename || seen.has(permission.codename)) return false
+      seen.add(permission.codename)
+      return true
+    })
+  }, [permissions])
   const filteredPermissions = useMemo(() => {
     const term = search.trim().toLowerCase()
-    if (!term) return permissions
-    return permissions.filter((permission) =>
+    if (!term) return uniquePermissions
+    return uniquePermissions.filter((permission) =>
       `${permission.name} ${permission.codename}`.toLowerCase().includes(term)
     )
-  }, [permissions, search])
+  }, [search, uniquePermissions])
 
   const isLoading = rolesState.isLoading || permissionsState.isLoading
   const isSaving = editRoleState.isLoading
@@ -151,8 +159,8 @@ export default function PermissionsManagerPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPermissions.map((permission) => (
-                    <tr key={permission.codename} className="hover:bg-gray-50">
+                  {filteredPermissions.map((permission, index) => (
+                    <tr key={`${permission.codename}-${index}`} className="hover:bg-gray-50">
                       <td className="border-b border-r px-4 py-3">
                         <div className="font-medium text-slate-900">
                           {t(permissionLabel(permission))}
