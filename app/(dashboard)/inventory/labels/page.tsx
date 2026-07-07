@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import JsBarcode from "jsbarcode"
 
 import { Button } from "@/components/ui/button"
+import { PermissionGuard } from "@/components/permission-guard"
 import { Spinner } from "@/components/ui/spinner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -14,6 +15,7 @@ import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { usePosOptions } from "@/lib/options"
 import { useAppSelector } from "@/lib/redux/hooks"
 import { showToast } from "@/lib/toast"
+import { PERMISSIONS } from "@/lib/permissions"
 
 // Barcode rendering component wrapping JsBarcode
 function BarcodeRender({ value, height = 40, displayValue = true }: { value: string; height?: number; displayValue?: boolean }) {
@@ -193,7 +195,8 @@ export default function PrintLabelsPage() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <PermissionGuard permission={PERMISSIONS.products.labels}>
+      <div className="flex h-full min-h-0 flex-col">
       {/* Top Header Section */}
       <div className="flex-none border-b border-gray-200 bg-white px-6 py-4 no-print">
         <div className="flex items-center justify-between">
@@ -545,6 +548,7 @@ export default function PrintLabelsPage() {
           }
         `
       }} />
-    </div>
+      </div>
+    </PermissionGuard>
   )
 }

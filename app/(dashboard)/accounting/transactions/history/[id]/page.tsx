@@ -40,8 +40,8 @@ export default function AccountingTransactionScopedHistoryPage() {
   const searchParams = useSearchParams()
   const { t } = useTranslation()
   const { hasPermission } = usePermissions()
-  const canCreateReflection = hasPermission(PERMISSIONS.expenses.create)
-  const canDelete = hasPermission(PERMISSIONS.expenses.delete)
+  const canCreateReflection = hasPermission(PERMISSIONS.transactionHistory.create)
+  const canDelete = hasPermission(PERMISSIONS.transactionHistory.delete)
   const posOptions = usePosOptions()
   const formatMoney = (value: any) =>
     `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
@@ -73,7 +73,7 @@ export default function AccountingTransactionScopedHistoryPage() {
   }, [searchParams, t, transactionId, triggerRefresh, triggerTransaction])
 
   return (
-    <PermissionGuard permission={PERMISSIONS.expenses.view}>
+    <PermissionGuard permission={PERMISSIONS.transactionHistory.view}>
       <DynamicTable
         data={table.orders}
         columns={buildColumns(t, formatMoney)}

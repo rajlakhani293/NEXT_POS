@@ -4,6 +4,7 @@ import { CatalogPageShell } from "@/components/catalog/catalog-page-shell"
 import { catalog } from "@/lib/api/catalog"
 import { UnitForm } from "./createUpdate"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { PERMISSIONS } from "@/lib/permissions"
 
 const columns = [
   { key: "name", title: "Name" },
@@ -43,6 +44,7 @@ export default function UnitsPage() {
       FormComponent={UnitForm}
       deleteTitle="Delete Unit"
       deleteDescription="Would you like to delete this ?"
+      permissions={PERMISSIONS.productUnits}
     />
   )
 }

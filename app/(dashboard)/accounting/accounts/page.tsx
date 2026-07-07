@@ -36,9 +36,9 @@ export default function TransactionAccountsPage() {
   const [deleteRecord] = (accounting as any).useDeleteAccountMutation()
   const [updateStatus] = (accounting as any).useUpdateAccountStatusMutation()
   const { hasPermission } = usePermissions()
-  const canCreate = hasPermission(PERMISSIONS.expenses.create)
-  const canUpdate = hasPermission(PERMISSIONS.expenses.update)
-  const canDelete = hasPermission(PERMISSIONS.expenses.delete)
+  const canCreate = hasPermission(PERMISSIONS.transactionAccounts.create)
+  const canUpdate = hasPermission(PERMISSIONS.transactionAccounts.update)
+  const canDelete = hasPermission(PERMISSIONS.transactionAccounts.delete)
   const table = useTableData({
     getMaster: (accounting as any).useGetAccountsDataMutation,
     itemsPerPage: 10,

@@ -98,22 +98,22 @@ const mainNavSections: DashboardNavSection[] = [
       {
         title: "Print Labels",
         url: "/inventory/labels",
-        permission: PERMISSIONS.products.view,
+        permission: PERMISSIONS.products.labels,
       },
       {
         title: "Categories",
         url: "/inventory/categories",
-        permission: PERMISSIONS.products.view,
+        permission: PERMISSIONS.categories.view,
       },
       {
         title: "Units",
         url: "/inventory/units",
-        permission: PERMISSIONS.products.view,
+        permission: PERMISSIONS.productUnits.view,
       },
       {
         title: "Unit Groups",
         url: "/inventory/unit-groups",
-        permission: PERMISSIONS.products.view,
+        permission: PERMISSIONS.productUnits.view,
       },
       {
         title: "Stock Adjustment",
@@ -198,7 +198,7 @@ const mainNavSections: DashboardNavSection[] = [
       {
         title: "Transaction History",
         url: "/accounting/transactions/history",
-        permission: PERMISSIONS.expenses.view,
+        permission: PERMISSIONS.transactionHistory.view,
       },
       {
         title: "Rules",
@@ -208,7 +208,7 @@ const mainNavSections: DashboardNavSection[] = [
       {
         title: "Accounts",
         url: "/accounting/accounts",
-        permission: PERMISSIONS.expenses.view,
+        permission: PERMISSIONS.transactionAccounts.view,
       },
     ],
   },

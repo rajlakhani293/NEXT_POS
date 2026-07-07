@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { Calculator } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
+import { PermissionGuard } from "@/components/permission-guard"
 import { CategoryForm } from "@/app/(dashboard)/inventory/categories/createUpdate"
 import { catalog } from "@/lib/api/catalog"
 import { PERMISSIONS } from "@/lib/permissions"
@@ -47,9 +48,9 @@ export default function CategoriesPage() {
     catalog as any
   ).useComputeCategoryProductsMutation()
   const { hasPermission } = usePermissions()
-  const canCreate = hasPermission(PERMISSIONS.products.create)
-  const canUpdate = hasPermission(PERMISSIONS.products.update)
-  const canDelete = hasPermission(PERMISSIONS.products.delete)
+  const canCreate = hasPermission(PERMISSIONS.categories.create)
+  const canUpdate = hasPermission(PERMISSIONS.categories.update)
+  const canDelete = hasPermission(PERMISSIONS.categories.delete)
 
   const {
     orders,
@@ -103,7 +104,8 @@ export default function CategoriesPage() {
   }))
 
   return (
-    <div className="h-full space-y-4">
+    <PermissionGuard permission={PERMISSIONS.categories.view}>
+      <div className="h-full space-y-4">
       <DynamicTable
         data={orders}
         columns={translatedColumns}
@@ -163,6 +165,7 @@ export default function CategoriesPage() {
         onSuccess={triggerRefresh}
         editId={editId}
       />
-    </div>
+      </div>
+    </PermissionGuard>
   )
 }

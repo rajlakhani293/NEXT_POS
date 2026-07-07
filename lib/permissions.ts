@@ -32,6 +32,19 @@ export const PERMISSIONS = {
     create: "products_create",
     update: "products_update",
     delete: "products_delete",
+    labels: "products_labels_create",
+  },
+  categories: {
+    view: "categories_view",
+    create: "categories_create",
+    update: "categories_update",
+    delete: "categories_delete",
+  },
+  productUnits: {
+    view: "product_units_view",
+    create: "product_units_create",
+    update: "product_units_update",
+    delete: "product_units_delete",
   },
   taxes: {
     view: "taxes_view",
@@ -64,6 +77,18 @@ export const PERMISSIONS = {
     create: "expenses_create",
     update: "expenses_update",
     delete: "expenses_delete",
+  },
+  transactionHistory: {
+    view: "pos.read.transactions-history",
+    create: "pos.create.transactions-history",
+    update: "pos.update.transactions-history",
+    delete: "pos.delete.transactions-history",
+  },
+  transactionAccounts: {
+    view: "pos.read.transactions-account",
+    create: "pos.create.transactions-account",
+    update: "pos.update.transactions-account",
+    delete: "pos.delete.transactions-account",
   },
   sales: {
     view: "sales_view",
