@@ -9,23 +9,21 @@ export type RoutePermission = {
 export type ResolvedRoutePermission = Omit<RoutePermission, "path">
 
 export const ROUTE_PERMISSIONS: RoutePermission[] = [
-  { path: "/dashboard", permission: PERMISSIONS.reports.view },
+  { path: "/dashboard", permission: PERMISSIONS.dashboard.view },
   { path: "/sales/create", permission: PERMISSIONS.sales.create },
+  { path: "/sales/assigned", permission: PERMISSIONS.sales.deliver },
+  { path: "/sales/instalments", permission: PERMISSIONS.payments.collectDue },
   { path: "/sales/payment-types", permission: PERMISSIONS.payments.view },
   { path: "/sales", permission: PERMISSIONS.sales.view },
-  { path: "/sales/history", permission: PERMISSIONS.sales.view },
-  { path: "/sales/receipt", permission: PERMISSIONS.sales.view },
   { path: "/customers/groups", permission: PERMISSIONS.customers.view },
   { path: "/customers/rewards-system", permission: PERMISSIONS.rewards.view },
   { path: "/customers/credit", permission: PERMISSIONS.customers.view },
   { path: "/customers/coupons", permission: PERMISSIONS.promotions.view },
   { path: "/customers/coupons-generated", permission: PERMISSIONS.promotions.view },
-  { path: "/customers/rewards", permission: PERMISSIONS.rewards.view },
   { path: "/customers", permission: PERMISSIONS.customers.view },
   { path: "/providers", permission: PERMISSIONS.providers.view },
   { path: "/purchases/orders/create", permission: PERMISSIONS.purchases.create },
   { path: "/purchases/products", permission: PERMISSIONS.purchases.view },
-  { path: "/purchases/orders", permission: PERMISSIONS.purchases.view },
   { path: "/purchases", permission: PERMISSIONS.purchases.view },
   {
     path: "/accounting/transactions/create",
@@ -34,19 +32,17 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   },
   { path: "/accounting/transactions/history", permission: PERMISSIONS.expenses.view },
   { path: "/accounting/transactions", permission: PERMISSIONS.expenses.view },
-  { path: "/accounting/accounts", permission: PERMISSIONS.expenses.view },
+  { path: "/accounting/accounts", permission: PERMISSIONS.transactionAccounts.view },
   { path: "/accounting/rules", permission: PERMISSIONS.expenses.update },
   { path: "/registers", permission: PERMISSIONS.cashRegister.view },
-  { path: "/reports", permission: PERMISSIONS.reports.view },
   { path: "/inventory/products/create", permission: PERMISSIONS.products.create },
   { path: "/inventory/products", permission: PERMISSIONS.products.view },
-  { path: "/inventory/labels", permission: PERMISSIONS.products.view },
-  { path: "/inventory/categories", permission: PERMISSIONS.products.view },
-  { path: "/inventory/brands", permission: PERMISSIONS.products.view },
-  { path: "/inventory/unit-groups", permission: PERMISSIONS.products.view },
-  { path: "/inventory/units", permission: PERMISSIONS.products.view },
+  { path: "/inventory/labels", permission: PERMISSIONS.products.labels },
+  { path: "/inventory/categories", permission: PERMISSIONS.categories.view },
+  { path: "/inventory/unit-groups", permission: PERMISSIONS.productUnits.view },
+  { path: "/inventory/units", permission: PERMISSIONS.productUnits.view },
   { path: "/inventory/adjustments", permission: PERMISSIONS.inventory.adjust },
-  { path: "/inventory/ledger", permission: PERMISSIONS.inventory.view },
+  { path: "/inventory/ledger", permission: PERMISSIONS.products.view },
   { path: "/inventory/scale-range", permission: PERMISSIONS.inventory.adjust },
   { path: "/modules/upload", permission: PERMISSIONS.special.manageModules },
   { path: "/modules", permission: PERMISSIONS.special.manageModules },
@@ -76,6 +72,11 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
 export function resolveRoutePermission(
   pathname: string
 ): ResolvedRoutePermission | undefined {
+  const exactRoute = ROUTE_PERMISSIONS.find((route) => pathname === route.path)
+  if (exactRoute) {
+    return exactRoute
+  }
+
   if (pathname === "/sales/create") {
     return { permission: PERMISSIONS.sales.create }
   }
@@ -94,7 +95,7 @@ export function resolveRoutePermission(
     return { permission: PERMISSIONS.roles.update }
   }
 
-  const customerEditMatch = pathname.match(/^\/customers\/([^/]+)$/)
+  const customerEditMatch = pathname.match(/^\/customers\/(\d+)$/)
   if (customerEditMatch && customerEditMatch[1] !== "create") {
     return { permission: PERMISSIONS.customers.update }
   }
@@ -109,10 +110,6 @@ export function resolveRoutePermission(
       ],
       match: "any",
     }
-  }
-
-  if (pathname === "/sales/instalments") {
-    return { permission: PERMISSIONS.payments.collectDue }
   }
 
   const reportMatch = pathname.match(/^\/reports\/([^/]+)$/)
@@ -153,12 +150,10 @@ export function resolveRoutePermission(
     }
   }
 
-  const saleDetailMatch = pathname.match(/^\/sales\/([^/]+)$/)
+  const saleDetailMatch = pathname.match(/^\/sales\/(\d+)$/)
   if (saleDetailMatch && saleDetailMatch[1] !== "history") {
     return { permission: PERMISSIONS.sales.view }
   }
 
-  return ROUTE_PERMISSIONS.find(
-    (route) => pathname === route.path || pathname.startsWith(`${route.path}/`)
-  )
+  return ROUTE_PERMISSIONS.find((route) => pathname.startsWith(`${route.path}/`))
 }

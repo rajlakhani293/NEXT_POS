@@ -60,6 +60,7 @@ const mainNavSections: DashboardNavSection[] = [
     title: "Dashboard",
     url: "/dashboard",
     icon: <LayoutGridIcon />,
+    permission: PERMISSIONS.dashboard.view,
   },
   {
     title: "Sales",
