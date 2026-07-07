@@ -2180,6 +2180,9 @@ export default function SalesPage() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>{t("Search Product")}</DialogTitle>
+            <DialogDescription>
+              {t("Search and select a product to add to the current cart.")}
+            </DialogDescription>
           </DialogHeader>
           <div className="flex min-h-[360px] flex-col overflow-hidden">
             <div className="border-b pb-3">
@@ -2245,6 +2248,9 @@ export default function SalesPage() {
       <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
         <DialogContent className="h-[92vh] max-w-6xl overflow-hidden p-0">
           <DialogTitle className="sr-only">{t("Payment")}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {t("Complete the payment for the current order.")}
+          </DialogDescription>
           <div className="flex h-full flex-col overflow-hidden lg:flex-row">
             <div className="flex w-full shrink-0 items-center justify-between border-b bg-gray-50 px-3 py-2 lg:h-full lg:w-60 lg:flex-col lg:items-stretch lg:border-b-0 lg:border-r">
               <h3 className="text-lg font-bold">
@@ -2660,6 +2666,9 @@ export default function SalesPage() {
         <DialogContent className="flex h-[75vh] max-w-4xl flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>{t("Orders")}</DialogTitle>
+            <DialogDescription>
+              {t("Review held, unpaid, and partially paid orders.")}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="flex min-h-0 flex-auto flex-col overflow-hidden">
@@ -2784,6 +2793,9 @@ export default function SalesPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("Hold Order")}</DialogTitle>
+            <DialogDescription>
+              {t("Set a reference before placing the current order on hold.")}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex h-16 items-center justify-center border-b text-4xl font-bold">
@@ -3096,6 +3108,9 @@ export default function SalesPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("Product / Service")}</DialogTitle>
+            <DialogDescription>
+              {t("Create a quick product or service for the current sale.")}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <UniFieldInput

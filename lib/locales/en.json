@@ -580,5 +580,10 @@
   "Generate Report": "Generate Report",
   "Recompute": "Recompute",
   "The report will be computed for the current year.": "The report will be computed for the current year.",
-  "Stock combined report recomputed successfully.": "Stock combined report recomputed successfully."
+  "Stock combined report recomputed successfully.": "Stock combined report recomputed successfully.",
+  "Search and select a product to add to the current cart.": "Search and select a product to add to the current cart.",
+  "Complete the payment for the current order.": "Complete the payment for the current order.",
+  "Review held, unpaid, and partially paid orders.": "Review held, unpaid, and partially paid orders.",
+  "Set a reference before placing the current order on hold.": "Set a reference before placing the current order on hold.",
+  "Create a quick product or service for the current sale.": "Create a quick product or service for the current sale."
 }

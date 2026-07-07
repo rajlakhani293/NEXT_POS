@@ -380,5 +380,10 @@
   "Review this report with search, date filters and pagination.": "Consultez ce rapport avec recherche, filtres de date et pagination.",
   "Monthly summary breakdown of sales, taxes, expenses, and net income.": "Resume mensuel des ventes, taxes, depenses et revenu net.",
   "The report will be computed for the current year.": "Le rapport sera calcule pour l annee en cours.",
-  "Stock combined report recomputed successfully.": "Le rapport combine du stock a ete recalcule avec succes."
+  "Stock combined report recomputed successfully.": "Le rapport combine du stock a ete recalcule avec succes.",
+  "Search and select a product to add to the current cart.": "Recherchez et selectionnez un produit a ajouter au panier actuel.",
+  "Complete the payment for the current order.": "Completez le paiement de la commande actuelle.",
+  "Review held, unpaid, and partially paid orders.": "Consultez les commandes en attente, impayees et partiellement payees.",
+  "Set a reference before placing the current order on hold.": "Definissez une reference avant de mettre la commande actuelle en attente.",
+  "Create a quick product or service for the current sale.": "Creez un produit ou service rapide pour la vente actuelle."
 }

@@ -380,5 +380,10 @@
   "Review this report with search, date filters and pagination.": "راجع هذا التقرير باستخدام البحث وفلاتر التاريخ والترقيم.",
   "Monthly summary breakdown of sales, taxes, expenses, and net income.": "ملخص شهري للمبيعات والضرائب والمصروفات وصافي الدخل.",
   "The report will be computed for the current year.": "سيتم حساب التقرير للسنة الحالية.",
-  "Stock combined report recomputed successfully.": "تمت إعادة حساب تقرير المخزون المجمع بنجاح."
+  "Stock combined report recomputed successfully.": "تمت إعادة حساب تقرير المخزون المجمع بنجاح.",
+  "Search and select a product to add to the current cart.": "ابحث وحدد منتجا لإضافته إلى السلة الحالية.",
+  "Complete the payment for the current order.": "أكمل دفع الطلب الحالي.",
+  "Review held, unpaid, and partially paid orders.": "راجع الطلبات المعلقة وغير المدفوعة والمدفوعة جزئيا.",
+  "Set a reference before placing the current order on hold.": "حدد مرجعا قبل وضع الطلب الحالي قيد الانتظار.",
+  "Create a quick product or service for the current sale.": "أنشئ منتجا أو خدمة سريعة للبيع الحالي."
 }
