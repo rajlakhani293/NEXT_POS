@@ -33,6 +33,7 @@ export default function BranchesPage() {
       deleteTitle="Delete Branch"
       deleteDescription="Would you like to delete this branch?"
       permissions={PERMISSIONS.branches}
+      refreshSessionOnMutation={true}
     />
   )
 }

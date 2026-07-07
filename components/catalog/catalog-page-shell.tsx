@@ -10,6 +10,7 @@ import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { useSession } from "@/lib/redux/session-provider"
 
 type CatalogPageShellProps = {
   tableTitle: string
@@ -33,6 +34,7 @@ type CatalogPageShellProps = {
     delete?: string
   }
   showDateRange?: boolean
+  refreshSessionOnMutation?: boolean
 }
 
 export function CatalogPageShell({
@@ -47,6 +49,7 @@ export function CatalogPageShell({
   deleteDescription,
   permissions = PERMISSIONS.products,
   showDateRange = true,
+  refreshSessionOnMutation = false,
 }: CatalogPageShellProps) {
   const searchParams = useSearchParams()
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -55,6 +58,7 @@ export function CatalogPageShell({
   const [updateStatus] = statusHook()
   const { hasPermission } = usePermissions()
   const { t } = useTranslation()
+  const { refreshSession } = useSession()
   const canCreate = hasPermission(permissions.create)
   const canUpdate = hasPermission(permissions.update)
   const canDelete = hasPermission(permissions.delete)
@@ -83,6 +87,13 @@ export function CatalogPageShell({
     itemsPerPage: 10,
     disableDateFilter: !showDateRange,
   })
+
+  const handleRefresh = async () => {
+    triggerRefresh()
+    if (refreshSessionOnMutation) {
+      await refreshSession()
+    }
+  }
 
   const handleAdd = (open: boolean) => {
     setEditId(null)
@@ -134,7 +145,7 @@ export function CatalogPageShell({
           statusChangeMutation={({ ids, status }: any) =>
             updateStatus({ payLoad: { ids, status } })
           }
-          triggerRefresh={triggerRefresh}
+          triggerRefresh={handleRefresh}
           deleteModalTitle={t(deleteTitle)}
           deleteModalDescription={t(deleteDescription)}
           showDateRange={showDateRange}
@@ -145,7 +156,7 @@ export function CatalogPageShell({
         <FormComponent
           isOpen={isFormOpen}
           onClose={handleClose}
-          onSuccess={triggerRefresh}
+          onSuccess={handleRefresh}
           editId={editId}
         />
       </div>

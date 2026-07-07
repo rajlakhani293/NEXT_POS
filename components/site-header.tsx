@@ -211,9 +211,9 @@ export function SiteHeader({
                 <p className="truncate text-sm font-semibold text-slate-900">
                   {companyName || t("Enter your company name")}
                 </p>
-                <p className="truncate text-[10px] font-medium text-slate-500">
+                {/* <p className="truncate text-[10px] font-medium text-slate-500">
                   {companyCode ? `${t("Company")} · ${companyCode}` : t("Company")}
-                </p>
+                </p> */}
               </div>
             </button>
 
@@ -232,9 +232,9 @@ export function SiteHeader({
                     <p className="truncate text-sm font-semibold text-slate-900">
                       {branchName || t("Main Branch")}
                     </p>
-                    <p className="truncate text-[10px] font-medium text-slate-500">
+                    {/* <p className="truncate text-[10px] font-medium text-slate-500">
                       {branchCode ? `${t("Current Branch")} · ${branchCode}` : t("Current Branch")}
-                    </p>
+                    </p> */}
                   </div>
                 </button>
               </DropdownMenuTrigger>
