@@ -12,8 +12,8 @@ export const PERMISSIONS = {
     delete: "roles_delete",
   },
   settings: {
-    view: "settings_view",
-    update: "settings_update",
+    view: "manage.options",
+    update: "manage.options",
   },
   branches: {
     view: "branches_view",

@@ -36,6 +36,7 @@ const endpointsConfig = {
   getRoleById: { query: ({ id }: { id: number | string }) => getMutation(`accounts/roles/${id}`) },
   createRole: { query: createMutation("accounts/roles") },
   editRole: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`accounts/roles/${id}`, payLoad) },
+  updateRolesPermissions: { query: ({ payLoad }: { payLoad: any }) => putMutation("users/roles", payLoad) },
   deleteRole: { query: ({ id }: { id: number }) => ({ url: `accounts/roles/${id}`, method: "DELETE" }) },
   cloneRole: { query: ({ id }: { id: number | string }) => getMutation(`users/roles/${id}/clone`) },
 

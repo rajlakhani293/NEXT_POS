@@ -37,7 +37,7 @@ export default function PermissionsManagerPage() {
   const [dirtyRoleIds, setDirtyRoleIds] = useState<Set<number>>(new Set())
   const [getRoles, rolesState] = (settings as any).useGetRolesMutation()
   const [getPermissions, permissionsState] = (settings as any).useGetPermissionsMutation()
-  const [editRole, editRoleState] = (settings as any).useEditRoleMutation()
+  const [updateRolesPermissions, updateRolesPermissionsState] = (settings as any).useUpdateRolesPermissionsMutation()
 
   useEffect(() => {
     if (hasLoadedRef.current) return
@@ -79,7 +79,7 @@ export default function PermissionsManagerPage() {
   }, [search, uniquePermissions])
 
   const isLoading = rolesState.isLoading || permissionsState.isLoading
-  const isSaving = editRoleState.isLoading
+  const isSaving = updateRolesPermissionsState.isLoading
 
   const togglePermission = (role: RoleRecord, codename: string, checked: boolean) => {
     setMatrix((current) => {
@@ -95,14 +95,23 @@ export default function PermissionsManagerPage() {
   }
 
   const savePermissions = async () => {
+    const roleById = new Map(roles.map((role) => [role.id, role]))
+    const payload: Record<string, Record<string, boolean>> = {}
+
     for (const roleId of dirtyRoleIds) {
-      await editRole({
-        id: roleId,
-        payLoad: {
-          permission_codenames: matrix[roleId] || [],
+      const role = roleById.get(roleId)
+      if (!role) continue
+      const selected = new Set(matrix[roleId] || [])
+      payload[role.namespace] = uniquePermissions.reduce(
+        (current: Record<string, boolean>, permission) => {
+          current[permission.codename] = selected.has(permission.codename)
+          return current
         },
-      }).unwrap()
+        {}
+      )
     }
+
+    await updateRolesPermissions({ payLoad: payload }).unwrap()
     setDirtyRoleIds(new Set())
     showToast.success(t("The permissions has been updated."))
   }
