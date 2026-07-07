@@ -20,7 +20,9 @@ export type AuthUser = {
   company_id?: number | null
   branch_id?: number | null
   profile_image?: string | null
+  avatar_link?: string | null
   permissions?: string[]
+  addresses?: Record<string, any>
   role?: unknown
   is_superuser?: boolean
 }

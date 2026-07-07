@@ -264,5 +264,20 @@
   "Confirm Password": "تأكيد كلمة المرور",
   "define your new password.": "حدد كلمة المرور الجديدة.",
   "confirm your new password.": "أكد كلمة المرور الجديدة.",
-  "Your password has been updated.": "تم تحديث كلمة المرور."
+  "Your password has been updated.": "تم تحديث كلمة المرور.",
+  "Shipping": "الشحن",
+  "Billing": "الفوترة",
+  "First Name": "الاسم الأول",
+  "Last Name": "اسم العائلة",
+  "Address 1": "العنوان 1",
+  "Address 2": "العنوان 2",
+  "Country": "البلد",
+  "PO.Box": "صندوق بريد",
+  "Provide the billing first name.": "أدخل الاسم الأول للفوترة.",
+  "Provide the billing last name.": "أدخل اسم العائلة للفوترة.",
+  "Billing phone number.": "رقم هاتف الفوترة.",
+  "Billing First Address.": "عنوان الفوترة الأول.",
+  "Billing Second Address.": "عنوان الفوترة الثاني.",
+  "Billing Country.": "بلد الفوترة.",
+  "Postal Address": "العنوان البريدي"
 }

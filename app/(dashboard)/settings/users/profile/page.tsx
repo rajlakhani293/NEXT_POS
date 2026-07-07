@@ -29,6 +29,19 @@ type ProfileValues = {
   password_confirm: string
 }
 
+type AddressValues = {
+  email: string
+  first_name: string
+  last_name: string
+  phone: string
+  address_1: string
+  address_2: string
+  country: string
+  city: string
+  pobox: string
+  company: string
+}
+
 const emptyProfile: ProfileValues = {
   username: "",
   full_name: "",
@@ -40,6 +53,19 @@ const emptyProfile: ProfileValues = {
   old_password: "",
   password: "",
   password_confirm: "",
+}
+
+const emptyAddress: AddressValues = {
+  email: "",
+  first_name: "",
+  last_name: "",
+  phone: "",
+  address_1: "",
+  address_2: "",
+  country: "",
+  city: "",
+  pobox: "",
+  company: "",
 }
 
 const profileFields = [
@@ -61,6 +87,19 @@ const securityFields = [
   { name: "password_confirm", label: "Password Confirmation", description: "Change your password with a better stronger password." },
 ] as const
 
+const addressFields = [
+  { name: "first_name", label: "First Name", description: "Provide the billing first name." },
+  { name: "last_name", label: "Last Name", description: "Provide the billing last name." },
+  { name: "phone", label: "Phone", description: "Billing phone number." },
+  { name: "address_1", label: "Address 1", description: "Billing First Address." },
+  { name: "address_2", label: "Address 2", description: "Billing Second Address." },
+  { name: "country", label: "Country", description: "Billing Country." },
+  { name: "city", label: "City", description: "City" },
+  { name: "pobox", label: "PO.Box", description: "Postal Address" },
+  { name: "company", label: "Company", description: "Company" },
+  { name: "email", label: "Email", description: "Email" },
+] as const
+
 function dateLabel(value?: string | null) {
   if (!value) return "Never"
   return value
@@ -71,6 +110,8 @@ export default function UserProfilePage() {
   const dispatch = useAppDispatch()
   const user = useAppSelector((state) => state.session.user)
   const [values, setValues] = useState<ProfileValues>(emptyProfile)
+  const [billing, setBilling] = useState<AddressValues>(emptyAddress)
+  const [shipping, setShipping] = useState<AddressValues>(emptyAddress)
   const [tokenName, setTokenName] = useState("")
   const [generatedToken, setGeneratedToken] = useState("")
   const [updateProfile, updateState] = auth.useUpdateProfileMutation()
@@ -89,6 +130,8 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     if (!user) return
+    const billingAddress = user.addresses?.billing || {}
+    const shippingAddress = user.addresses?.shipping || {}
     setValues({
       username: user.username || "",
       full_name: user.full_name || "",
@@ -101,10 +144,43 @@ export default function UserProfilePage() {
       password: "",
       password_confirm: "",
     })
+    setBilling({
+      email: billingAddress.email || "",
+      first_name: billingAddress.first_name || "",
+      last_name: billingAddress.last_name || "",
+      phone: billingAddress.phone || "",
+      address_1: billingAddress.address_1 || "",
+      address_2: billingAddress.address_2 || "",
+      country: billingAddress.country || "",
+      city: billingAddress.city || "",
+      pobox: billingAddress.pobox || "",
+      company: billingAddress.company || "",
+    })
+    setShipping({
+      email: shippingAddress.email || "",
+      first_name: shippingAddress.first_name || "",
+      last_name: shippingAddress.last_name || "",
+      phone: shippingAddress.phone || "",
+      address_1: shippingAddress.address_1 || "",
+      address_2: shippingAddress.address_2 || "",
+      country: shippingAddress.country || "",
+      city: shippingAddress.city || "",
+      pobox: shippingAddress.pobox || "",
+      company: shippingAddress.company || "",
+    })
   }, [user])
 
   const setField = (field: keyof ProfileValues, value: string) => {
     setValues((current) => ({ ...current, [field]: value }))
+  }
+
+  const setAddressField = (
+    addressType: "billing" | "shipping",
+    field: keyof AddressValues,
+    value: string
+  ) => {
+    const setAddress = addressType === "billing" ? setBilling : setShipping
+    setAddress((current) => ({ ...current, [field]: value }))
   }
 
   const saveProfile = async () => {
@@ -119,7 +195,7 @@ export default function UserProfilePage() {
     }
 
     try {
-      const payload: Record<string, string> = {
+      const payload: Record<string, any> = {
         username: values.username,
         full_name: values.full_name,
         email: values.email,
@@ -127,6 +203,8 @@ export default function UserProfilePage() {
         theme: values.theme,
         language: values.language,
         avatar_link: values.avatar_link,
+        billing,
+        shipping,
       }
 
       if (values.password) {
@@ -186,6 +264,33 @@ export default function UserProfilePage() {
     showToast.success(t("Token copied successfully."))
   }
 
+  const renderAddressForm = (addressType: "billing" | "shipping") => {
+    const addressValues = addressType === "billing" ? billing : shipping
+    return (
+      <div className="rounded-md border bg-white p-5 shadow-sm">
+        <div className="grid gap-4 md:grid-cols-2">
+          {addressFields.map((field) => (
+            <div key={`${addressType}-${field.name}`} className="space-y-2">
+              <Label htmlFor={`${addressType}-${field.name}`}>{t(field.label)}</Label>
+              <Input
+                id={`${addressType}-${field.name}`}
+                value={addressValues[field.name]}
+                onChange={(event) => setAddressField(addressType, field.name, event.target.value)}
+              />
+              <p className="text-xs text-slate-500">{t(field.description)}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 flex justify-end">
+          <Button onClick={saveProfile} disabled={updateState.isLoading}>
+            <Save className="mr-2 size-4" />
+            {t("Save")}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <PermissionGuard permission={PERMISSIONS.special.manageProfile}>
       <div className="max-w-5xl space-y-4">
@@ -202,6 +307,8 @@ export default function UserProfilePage() {
         <Tabs defaultValue="general" className="space-y-4">
           <TabsList>
             <TabsTrigger value="general">{t("General")}</TabsTrigger>
+            <TabsTrigger value="shipping">{t("Shipping")}</TabsTrigger>
+            <TabsTrigger value="billing">{t("Billing")}</TabsTrigger>
             <TabsTrigger value="security">{t("Security")}</TabsTrigger>
             <TabsTrigger value="token">{t("API Token")}</TabsTrigger>
           </TabsList>
@@ -242,6 +349,14 @@ export default function UserProfilePage() {
                 {t("Save")}
               </Button>
             </div>
+          </TabsContent>
+
+          <TabsContent value="shipping">
+            {renderAddressForm("shipping")}
+          </TabsContent>
+
+          <TabsContent value="billing">
+            {renderAddressForm("billing")}
           </TabsContent>
 
           <TabsContent value="security" className="rounded-md border bg-white p-5 shadow-sm">

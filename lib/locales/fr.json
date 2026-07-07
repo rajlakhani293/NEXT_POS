@@ -264,5 +264,20 @@
   "Confirm Password": "Confirmer le mot de passe",
   "define your new password.": "définissez votre nouveau mot de passe.",
   "confirm your new password.": "confirmez votre nouveau mot de passe.",
-  "Your password has been updated.": "Votre mot de passe a été mis à jour."
+  "Your password has been updated.": "Votre mot de passe a été mis à jour.",
+  "Shipping": "Expédition",
+  "Billing": "Facturation",
+  "First Name": "Prénom",
+  "Last Name": "Nom",
+  "Address 1": "Adresse 1",
+  "Address 2": "Adresse 2",
+  "Country": "Pays",
+  "PO.Box": "Boîte postale",
+  "Provide the billing first name.": "Indiquez le prénom de facturation.",
+  "Provide the billing last name.": "Indiquez le nom de facturation.",
+  "Billing phone number.": "Numéro de téléphone de facturation.",
+  "Billing First Address.": "Première adresse de facturation.",
+  "Billing Second Address.": "Deuxième adresse de facturation.",
+  "Billing Country.": "Pays de facturation.",
+  "Postal Address": "Adresse postale"
 }

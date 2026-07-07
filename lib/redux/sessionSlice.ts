@@ -23,6 +23,7 @@ interface User {
   company_id?: number
   branch_id?: number
   branch_access?: number[]
+  addresses?: Record<string, any>
   groups?: any[]
   roles?: any[]
   permissions?: string[]

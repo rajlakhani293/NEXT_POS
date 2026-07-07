@@ -481,5 +481,20 @@
   "Confirm Password": "Confirm Password",
   "define your new password.": "define your new password.",
   "confirm your new password.": "confirm your new password.",
-  "Your password has been updated.": "Your password has been updated."
+  "Your password has been updated.": "Your password has been updated.",
+  "Shipping": "Shipping",
+  "Billing": "Billing",
+  "First Name": "First Name",
+  "Last Name": "Last Name",
+  "Address 1": "Address 1",
+  "Address 2": "Address 2",
+  "Country": "Country",
+  "PO.Box": "PO.Box",
+  "Provide the billing first name.": "Provide the billing first name.",
+  "Provide the billing last name.": "Provide the billing last name.",
+  "Billing phone number.": "Billing phone number.",
+  "Billing First Address.": "Billing First Address.",
+  "Billing Second Address.": "Billing Second Address.",
+  "Billing Country.": "Billing Country.",
+  "Postal Address": "Postal Address"
 }
