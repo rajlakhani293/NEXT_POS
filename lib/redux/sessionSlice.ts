@@ -14,6 +14,9 @@ interface User {
   address?: string
   pincode?: string
   profile_image?: string
+  avatar_link?: string
+  theme?: string
+  language?: string
   city_id?: number
   state?: string
   country_id?: number

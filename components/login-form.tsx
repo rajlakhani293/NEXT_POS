@@ -95,8 +95,10 @@ export function LoginForm({
           t(mode === "login" ? "You have successfully logged in." : "The account has been successfully created.")
       )
       await completeLogin(response.data.token, response.data.user)
-    } catch {
-      // API errors are displayed by the base query interceptor.
+    } catch (error: any) {
+      if (!error?.data?.message) {
+        showToast.error(t("Unable to process authentication request."))
+      }
     }
   }
 
@@ -205,7 +207,7 @@ export function LoginForm({
                     <>
                       <div className="mx-4 h-[15px] border-l" />
                       <Link
-                        href="/register"
+                        href="/sign-up"
                         className="text-sm text-blue-600 hover:underline"
                       >
                         {t("Register")}
@@ -216,7 +218,7 @@ export function LoginForm({
                     <>
                       <div className="mx-4 h-[15px] border-l" />
                       <Link
-                        href="/login"
+                        href="/sign-in"
                         className="text-sm text-blue-600 hover:underline"
                       >
                         {t("Sign In")}

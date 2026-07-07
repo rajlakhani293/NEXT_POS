@@ -30,17 +30,27 @@ export type LoginResponse = {
   user: AuthUser
 }
 
+export type AccessTokenRecord = {
+  id: number
+  name?: string | null
+  token?: string | null
+  created_at?: string | null
+  last_used_at?: string | null
+  expires_at?: string | null
+  expired?: boolean
+}
+
 const endpointsConfig = {
   login: {
     query: (payLoad: any) => ({
-      url: "accounts/login",
+      url: "auth/sign-in",
       method: "POST",
       body: payLoad,
     }),
   },
   register: {
     query: (payLoad: any) => ({
-      url: "accounts/register",
+      url: "auth/sign-up",
       method: "POST",
       body: payLoad,
     }),
@@ -56,6 +66,49 @@ const endpointsConfig = {
       url: "accounts/switch-branch",
       method: "POST",
       body: payLoad,
+    }),
+  },
+  passwordLost: {
+    query: (payLoad: { email: string }) => ({
+      url: "auth/password-lost",
+      method: "POST",
+      body: payLoad,
+    }),
+  },
+  newPassword: {
+    query: (payLoad: { user_id: string | number; token: string; password: string; password_confirm: string }) => ({
+      url: `auth/new-password/${payLoad.user_id}/${payLoad.token}`,
+      method: "POST",
+      body: {
+        password: payLoad.password,
+        password_confirm: payLoad.password_confirm,
+      },
+    }),
+  },
+  updateProfile: {
+    query: (payLoad: any) => ({
+      url: "users/profile",
+      method: "POST",
+      body: payLoad,
+    }),
+  },
+  getTokens: {
+    query: () => ({
+      url: "users/tokens",
+      method: "GET",
+    }),
+  },
+  createToken: {
+    query: (payLoad: { name: string }) => ({
+      url: "users/create-token",
+      method: "POST",
+      body: payLoad,
+    }),
+  },
+  deleteToken: {
+    query: (tokenId: number) => ({
+      url: `users/tokens/${tokenId}`,
+      method: "DELETE",
     }),
   },
 }
@@ -76,6 +129,25 @@ export const auth = createApi({
     switchBranch: builder.mutation<ApiEnvelope<any>, { branch_id: number }>(
       endpointsConfig.switchBranch
     ),
+    passwordLost: builder.mutation<ApiEnvelope<any>, { email: string }>(
+      endpointsConfig.passwordLost
+    ),
+    newPassword: builder.mutation<
+      ApiEnvelope<any>,
+      { user_id: string | number; token: string; password: string; password_confirm: string }
+    >(endpointsConfig.newPassword),
+    updateProfile: builder.mutation<ApiEnvelope<AuthUser>, any>(
+      endpointsConfig.updateProfile
+    ),
+    getTokens: builder.query<ApiEnvelope<AccessTokenRecord[]>, void>(
+      endpointsConfig.getTokens
+    ),
+    createToken: builder.mutation<ApiEnvelope<any>, { name: string }>(
+      endpointsConfig.createToken
+    ),
+    deleteToken: builder.mutation<ApiEnvelope<any>, number>(
+      endpointsConfig.deleteToken
+    ),
   }),
 })
 
@@ -85,4 +157,10 @@ export const {
   useGetSessionDataQuery,
   useLazyGetSessionDataQuery,
   useSwitchBranchMutation,
+  usePasswordLostMutation,
+  useNewPasswordMutation,
+  useUpdateProfileMutation,
+  useGetTokensQuery,
+  useCreateTokenMutation,
+  useDeleteTokenMutation,
 } = auth
