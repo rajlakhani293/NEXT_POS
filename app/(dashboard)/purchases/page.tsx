@@ -86,7 +86,7 @@ const buildColumns = (
     title: t("Taxes"),
     render: (value: any) => formatMoney(value),
   },
-  { key: "user_username", title: t("Author") },
+  { key: "user_username", title: t("User") },
 ]
 
 export default function PurchaseOrdersPage() {

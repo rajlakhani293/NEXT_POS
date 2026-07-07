@@ -9,7 +9,7 @@ const columns = [
   { key: "name", title: "Name" },
   { key: "parent_name", title: "Parent" },
   { key: "rate", title: "Rate", render: (value: any) => `${value}%` },
-  { key: "user_username", title: "Author" },
+  { key: "user_username", title: "User" },
   {
     key: "created_at",
     title: "Created At",

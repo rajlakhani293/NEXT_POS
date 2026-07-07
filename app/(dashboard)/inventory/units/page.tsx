@@ -15,7 +15,7 @@ const columns = [
     render: (value: boolean) => (value ? "Yes" : "No"),
   },
   { key: "group_name", title: "Group" },
-  { key: "user_username", title: "Author" },
+  { key: "user_username", title: "User" },
   {
     key: "created_at",
     title: "Created At",

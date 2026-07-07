@@ -23,7 +23,7 @@ const buildColumns = (
   { key: "phone", title: t("Phone") },
   { key: "amount_due", title: t("Amount Due"), render: (value: any) => formatMoney(value) },
   { key: "amount_paid", title: t("Amount Paid"), render: (value: any) => formatMoney(value) },
-  { key: "user_username", title: t("Author") },
+  { key: "user_username", title: t("User") },
   { key: "created_at", title: t("Created At"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 

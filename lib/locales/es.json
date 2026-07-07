@@ -13,6 +13,8 @@
   "settings": "Ajustes",
   "pos": "POS",
   "cashier": "Cajero",
+  "Cashier": "Cajero",
+  "User": "Usuario",
   "cart": "Carrito",
   "subtotal": "Subtotal",
   "total": "Total",

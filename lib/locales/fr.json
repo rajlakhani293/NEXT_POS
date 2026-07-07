@@ -13,6 +13,8 @@
   "settings": "Paramètres",
   "pos": "POS",
   "cashier": "Caissier",
+  "Cashier": "Caissier",
+  "User": "Utilisateur",
   "cart": "Panier",
   "subtotal": "Sous-total",
   "total": "Total",

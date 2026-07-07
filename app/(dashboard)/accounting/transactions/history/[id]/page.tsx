@@ -27,7 +27,7 @@ const buildColumns = (
     title: t("Value"),
     render: (val: any) => formatMoney(val),
   },
-  { key: "user_username", title: t("Author") },
+  { key: "user_username", title: t("User") },
   {
     key: "created_at",
     title: t("Triggered On"),

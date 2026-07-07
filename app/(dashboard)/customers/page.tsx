@@ -37,7 +37,7 @@ const buildColumns = (
     title: t("Purchase Amount"),
     render: (value: any) => formatMoney(value),
   },
-  { key: "user_username", title: t("Author") },
+  { key: "user_username", title: t("User") },
 ]
 
 export default function CustomersPage() {

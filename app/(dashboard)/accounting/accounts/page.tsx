@@ -20,7 +20,7 @@ const buildColumns = (t: (key: string) => string) => [
   },
   { key: "name", title: t("Name") },
   { key: "account", title: t("Account") },
-  { key: "user_username", title: t("Author") },
+  { key: "user_username", title: t("User") },
   {
     key: "created_at",
     title: t("Created At"),

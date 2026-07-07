@@ -35,7 +35,7 @@ const buildColumns = (
   },
   { key: "valid_hours_start", title: t("Valid From") },
   { key: "valid_hours_end", title: t("Valid Till") },
-  { key: "user_username", title: t("Author") },
+  { key: "user_username", title: t("User") },
   { key: "created_at", title: t("Created On"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 

@@ -18,7 +18,7 @@ const columns = [
   { key: "quantity", title: "Quantity" },
   { key: "after_quantity", title: "New Quantity" },
   { key: "total_price", title: "Total Price" },
-  { key: "user_username", title: "Author" },
+  { key: "user_username", title: "User" },
   {
     key: "created_at",
     title: "Created At",

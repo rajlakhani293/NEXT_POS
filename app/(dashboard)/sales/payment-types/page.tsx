@@ -27,7 +27,7 @@ export default function PaymentTypesPage() {
       title: t("Readonly"),
       render: (value: any) => (value ? t("Yes") : t("No")),
     },
-    { key: "user_username", title: t("Author") },
+    { key: "user_username", title: t("User") },
   ]
 
   return (

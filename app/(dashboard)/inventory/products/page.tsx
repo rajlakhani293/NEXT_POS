@@ -18,7 +18,7 @@ const columns = [
   { key: "sku", title: "SKU" },
   { key: "category_name", title: "Category" },
   { key: "status", title: "Status" },
-  { key: "user_username", title: "Author" },
+  { key: "user_username", title: "User" },
   {
     key: "created_at",
     title: "Date",

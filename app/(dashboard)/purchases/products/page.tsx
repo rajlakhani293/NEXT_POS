@@ -23,7 +23,7 @@ const buildColumns = (
   { key: "total_purchase_price", title: t("Total Price"), render: (value: any) => formatMoney(value) },
   { key: "barcode", title: t("Barcode") },
   { key: "expiration_date", title: t("Expiration Date"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
-  { key: "user_username", title: t("Author") },
+  { key: "user_username", title: t("User") },
   { key: "created_at", title: t("On"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 

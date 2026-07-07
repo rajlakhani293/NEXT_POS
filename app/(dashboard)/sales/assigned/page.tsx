@@ -88,7 +88,7 @@ const buildColumns = (
   },
   { key: "tax_amount", title: t("Tax"), render: formatMoney },
   { key: "total", title: t("Total"), render: formatMoney },
-  { key: "author_username", title: t("Author") },
+  { key: "author_username", title: t("Cashier") },
   {
     key: "created_at",
     title: t("Created At"),

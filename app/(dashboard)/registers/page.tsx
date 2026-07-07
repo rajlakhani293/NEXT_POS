@@ -31,7 +31,7 @@ const buildRegisterColumns = (
   },
   { key: "cashier_username", title: t("Used By"), render: (value: any) => value || t("N/A") },
   { key: "balance", title: t("Balance"), render: formatMoney },
-  { key: "user_username", title: t("Author") },
+  { key: "user_username", title: t("User") },
   {
     key: "created_at",
     title: t("Created At"),

@@ -15,7 +15,7 @@ const buildColumns = (t: (key: string) => string) => [
   { key: "name", title: t("Name") },
   { key: "target", title: t("Target") },
   { key: "coupon_name", title: t("Coupon") },
-  { key: "user_username", title: t("Author") },
+  { key: "user_username", title: t("User") },
   { key: "created_at", title: t("Created On"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 

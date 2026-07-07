@@ -24,7 +24,7 @@ const buildColumns = (
   { key: "value", title: t("Value"), render: (value: any) => formatMoney(value) },
   { key: "recurring", title: t("Recurring"), render: (value: any) => (value ? t("Yes") : t("No")) },
   { key: "occurrence", title: t("Occurrence") },
-  { key: "user_username", title: t("Author") },
+  { key: "user_username", title: t("User") },
   { key: "created_at", title: t("Created At") },
 ]
 

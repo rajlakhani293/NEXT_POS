@@ -27,7 +27,7 @@ const columns = [
     title: "Displays On POS",
     render: (value: any) => (value ? "Yes" : "No"),
   },
-  { key: "user_username", title: "Author" },
+  { key: "user_username", title: "User" },
   {
     key: "created_at",
     title: "Created At",

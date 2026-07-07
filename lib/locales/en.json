@@ -13,6 +13,8 @@
   "settings": "Settings",
   "pos": "POS",
   "cashier": "Cashier",
+  "Cashier": "Cashier",
+  "User": "User",
   "cart": "Cart",
   "subtotal": "Subtotal",
   "total": "Total",

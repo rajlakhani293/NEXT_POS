@@ -17,7 +17,7 @@ import { showToast } from "@/lib/toast"
 const buildColumns = (t: (key: string) => string) => [
   { key: "name", title: t("Name") },
   { key: "reward_name", title: t("Reward System") },
-  { key: "user_username", title: t("Author") },
+  { key: "user_username", title: t("User") },
   { key: "created_at", title: t("Created On"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
 ]
 

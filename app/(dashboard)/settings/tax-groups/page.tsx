@@ -7,7 +7,7 @@ import { TaxGroupForm } from "./createUpdate"
 
 const columns = [
   { key: "name", title: "Name" },
-  { key: "user_username", title: "Author" },
+  { key: "user_username", title: "User" },
   {
     key: "created_at",
     title: "Created At",
