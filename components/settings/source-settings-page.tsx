@@ -473,6 +473,47 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
     )
   }
 
+  const renderShortcutField = (field: SourceSettingField) => {
+    const selected = Array.isArray(values[field.name])
+      ? values[field.name].map(String)
+      : []
+    return (
+      <div
+        key={field.name}
+        className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-gray-100 py-3 last:border-0"
+      >
+        <span className="w-44 shrink-0 text-sm font-medium text-gray-700">
+          {t(field.label)}
+        </span>
+        <div className="flex flex-wrap gap-1.5">
+          {shortcutOptions.map((option) => {
+            const isSelected = selected.includes(option.value)
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() =>
+                  updateValue(
+                    field.name,
+                    isSelected
+                      ? selected.filter((s: string) => s !== option.value)
+                      : [...selected, option.value]
+                  )
+                }
+                className={`rounded-md border px-2.5 py-1 font-mono text-xs font-semibold transition-all ${isSelected
+                  ? "border-gray-900 bg-gray-900 text-white shadow-sm"
+                  : "border-gray-200 bg-white text-gray-500 hover:border-gray-400 hover:text-gray-800"
+                  }`}
+              >
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   const save = async () => {
     if (sourceIdentifier === "reset") {
       const confirmed = window.confirm(
@@ -507,49 +548,97 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
   const activeFields = tabs.find((tab) => tab.identifier === activeTab)?.fields || []
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-950">{t(form.title)}</h1>
-        <p className="mt-1 text-sm text-gray-500">{t(form.description)}</p>
-      </div>
-
-      {tabs.length ? (
-        <div className="flex flex-wrap gap-2">
-          {tabs.map((tab) => (
-            <Button
-              key={tab.identifier}
-              type="button"
-              variant={activeTab === tab.identifier ? "default" : "outline"}
-              onClick={() => setActiveTab(tab.identifier)}
-            >
-              {t(tab.label)}
-            </Button>
-          ))}
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* Page header */}
+      <div className="mb-2 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">{t(form.title)}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t(form.description)}</p>
         </div>
-      ) : null}
-
-      {tabs.length ? (
-        <div className="min-h-0 flex-1 overflow-y-auto rounded-md border bg-white p-5">
-          <div className="grid max-w-3xl gap-4">
-            {activeFields.map((field) => (
-              <div key={field.name}>{renderField(field)}</div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-md border bg-white p-5 text-sm text-gray-500">
-          {t("There is nothing to display here.")}
-        </div>
-      )}
-
-      {tabs.length ? (
-        <div className="flex justify-end border-t bg-white pt-4">
-          <Button type="button" onClick={save} disabled={saveState.isLoading || resetState.isLoading}>
+        {tabs.length ? (
+          <Button
+            type="button"
+            onClick={save}
+            disabled={saveState.isLoading || resetState.isLoading}
+            className="shrink-0"
+          >
             {saveState.isLoading || resetState.isLoading ? <Spinner /> : null}
             {t("Save Settings")}
           </Button>
+        ) : null}
+      </div>
+
+      {tabs.length ? (
+        <div className="flex min-h-0 flex-1 flex-col">
+          {/* Underline tab bar */}
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex overflow-x-auto">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.identifier
+                return (
+                  <button
+                    key={tab.identifier}
+                    type="button"
+                    onClick={() => setActiveTab(tab.identifier)}
+                    className={`shrink-0 border-b-2 px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${isActive
+                      ? "border-gray-900 text-gray-900"
+                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                      }`}
+                  >
+                    {t(tab.label)}
+                  </button>
+                )
+              })}
+            </nav>
+          </div>
+
+          {/* Fields area */}
+          <div className="min-h-0 flex-1 overflow-y-auto py-6 px-1">
+            {(() => {
+              const shortcutFields = activeFields.filter(
+                (f) => shortcutFieldNames.has(f.name)
+              )
+              const regularFields = activeFields.filter(
+                (f) => !shortcutFieldNames.has(f.name)
+              )
+              return (
+                <div className="space-y-6">
+                  {shortcutFields.length > 0 && (
+                    <div className="rounded-xl border border-gray-200 bg-white">
+                      {/* Header */}
+                      <div className="flex flex-wrap items-center gap-x-6 border-b border-gray-100 px-5 py-2.5">
+                        <span className="w-44 shrink-0 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                          {t("Action")}
+                        </span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                          {t("Keys")}
+                        </span>
+                      </div>
+                      {/* Rows */}
+                      <div className="px-5">
+                        {shortcutFields.map((field) => renderShortcutField(field))}
+                      </div>
+                    </div>
+                  )}
+                  {regularFields.length > 0 && (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {regularFields.map((field) => (
+                        <div key={field.name}>{renderField(field)}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+          </div>
+
+
         </div>
-      ) : null}
+      ) : (
+        <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-500">
+          {t("There is nothing to display here.")}
+        </div>
+      )}
     </div>
   )
 }
