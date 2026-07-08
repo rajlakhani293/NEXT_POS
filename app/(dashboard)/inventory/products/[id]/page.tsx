@@ -159,7 +159,7 @@ function buildProductFormData(values: ProductFormValues, isEdit: boolean, unitsL
   appendIfPresent(formData, "category_id", values.category_id)
   appendIfPresent(formData, "tax_group_id", values.tax_group_id)
   appendIfPresent(formData, "unit_id", values.unit_id)
-  
+
   const selectedUnit = (unitsList || []).find((u: any) => String(u.id) === String(values.unit_id))
   if (selectedUnit?.group_id) {
     formData.append("unit_group_id", String(selectedUnit.group_id))
@@ -209,14 +209,14 @@ function buildProductFormData(values: ProductFormValues, isEdit: boolean, unitsL
     "expiry_tracking_enabled",
     String(
       values.product_type === "product" &&
-        Boolean(values.expiry_tracking_enabled)
+      Boolean(values.expiry_tracking_enabled)
     )
   )
   formData.append(
     "expires",
     String(
       values.product_type === "product" &&
-        Boolean(values.expires)
+      Boolean(values.expires)
     )
   )
   appendIfPresent(formData, "on_expiration", values.on_expiration)
@@ -258,7 +258,7 @@ export default function ProductFormPage() {
   const [imageError, setImageError] = useState("")
   const [initialImageUrl, setInitialImageUrl] = useState("")
   const [gallery, setGallery] = useState<any[]>([])
-  
+
   const [addProductGalleryImage, { isLoading: isUploadingGallery }] = (
     catalog as any
   ).useAddProductGalleryImageMutation()
@@ -620,51 +620,68 @@ export default function ProductFormPage() {
     <>
       <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
         <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-9 w-9"
-              onClick={goBack}
-            >
-              <ArrowLeft className="size-4" />
-            </Button>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                {isEdit ? t("Edit Product") : t("Create Product")}
-              </h1>
-              <p className="text-xs font-medium text-gray-500">
-                {t("Product details, pricing, tax and inventory setup.")}
-              </p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={goBack}
+              >
+                <ArrowLeft className="size-4" />
+              </Button>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">
+                  {isEdit ? t("Edit Product") : t("Create Product")}
+                </h1>
+                <p className="text-xs font-medium text-gray-500">
+                  {t("Product details, pricing, tax and inventory setup.")}
+                </p>
+              </div>
             </div>
+            <Button
+              type="submit"
+              form="product-form"
+              disabled={isSubmitting}
+              className="min-w-28 shrink-0 bg-black text-white hover:bg-black/90"
+            >
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <Spinner />
+                  {t("Saving...")}
+                </span>
+              ) : isEdit ? (
+                t("Update Product")
+              ) : (
+                t("Save Product")
+              )}
+            </Button>
           </div>
         </div>
 
         {/* Tab Selector Header */}
-        <div className="flex-none border-b border-gray-200 bg-gray-50/50 px-4">
-          <div className="flex gap-4">
+        <div className="flex-none border-b border-gray-200">
+          <nav className="-mb-px flex overflow-x-auto">
             {(["identification", "units", "expiry", "taxes", "images"] as const).map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={cn(
-                  "border-b-2 px-4 py-4 text-sm font-bold capitalize transition-all duration-200 -mb-px",
-                  activeTab === tab
-                    ? "border-black text-black"
-                    : "border-transparent text-gray-400 hover:text-gray-600"
-                )}
+                className={`shrink-0 border-b-2 px-5 py-3 text-sm font-medium whitespace-nowrap capitalize transition-colors ${activeTab === tab
+                  ? "border-gray-900 text-gray-900"
+                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  }`}
               >
                 {t(tab === "expiry" ? "Expiry" : tab)}
               </button>
             ))}
-          </div>
+          </nav>
         </div>
 
         <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto bg-gray-50/50 p-6">
-          <form onSubmit={handleSubmit} noValidate className="max-w-4xl mx-auto space-y-6">
-            
+          <form id="product-form" onSubmit={handleSubmit} noValidate className="space-y-6">
+
             {/* Main Name Field */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
               <UniFieldInput
@@ -679,11 +696,11 @@ export default function ProductFormPage() {
 
             {/* Tab Content Panel */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-              
+
               {/* 1. Identification Tab */}
               {activeTab === "identification" && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                     <UniFieldSelect
                       label={t("Category")}
                       required
@@ -703,31 +720,6 @@ export default function ProductFormPage() {
                       ))}
                     </UniFieldSelect>
 
-                    <UniFieldSelect
-                      label={t("Product Type")}
-                      value={formData.product_type}
-                      onValueChange={(value) => updateField("product_type", value as any)}
-                    >
-                      <SelectItem value="product">{t("Materialized Product")}</SelectItem>
-                      <SelectItem value="service">{t("Dematerialized Product")}</SelectItem>
-                    </UniFieldSelect>
-
-                    <UniFieldInput
-                      label={t("SKU")}
-                      placeholder={t("Enter SKU")}
-                      value={formData.sku}
-                      onChange={(event) => updateField("sku", event.target.value)}
-                    />
-
-                    <UniFieldSelect
-                      label={t("Status")}
-                      value={formData.status}
-                      onValueChange={(value) => updateField("status", value)}
-                    >
-                      <SelectItem value="0">{t("On Sale")}</SelectItem>
-                      <SelectItem value="1">{t("Hidden")}</SelectItem>
-                    </UniFieldSelect>
-
                     <UniFieldInput
                       label={t("Barcode")}
                       placeholder="2273546838467"
@@ -745,6 +737,13 @@ export default function ProductFormPage() {
                       }
                     />
 
+                    <UniFieldInput
+                      label={t("SKU")}
+                      placeholder={t("Enter SKU")}
+                      value={formData.sku}
+                      onChange={(event) => updateField("sku", event.target.value)}
+                    />
+
                     <UniFieldSelect
                       label={t("Barcode Type")}
                       value={formData.barcode_type}
@@ -759,9 +758,27 @@ export default function ProductFormPage() {
                       <SelectItem value="upca">UPC A</SelectItem>
                       <SelectItem value="upce">UPC E</SelectItem>
                     </UniFieldSelect>
+
+                    <UniFieldSelect
+                      label={t("Product Type")}
+                      value={formData.product_type}
+                      onValueChange={(value) => updateField("product_type", value as any)}
+                    >
+                      <SelectItem value="product">{t("Materialized Product")}</SelectItem>
+                      <SelectItem value="service">{t("Dematerialized Product")}</SelectItem>
+                    </UniFieldSelect>
+
+                    <UniFieldSelect
+                      label={t("Status")}
+                      value={formData.status}
+                      onValueChange={(value) => updateField("status", value)}
+                    >
+                      <SelectItem value="0">{t("On Sale")}</SelectItem>
+                      <SelectItem value="1">{t("Hidden")}</SelectItem>
+                    </UniFieldSelect>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 border-t border-gray-100 pt-6">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 border-t border-gray-100 pt-6">
                     <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-4">
                       <div>
                         <div className="text-sm font-semibold text-gray-900">{t("Stock Management Enabled")}</div>
@@ -802,24 +819,17 @@ export default function ProductFormPage() {
               {/* 2. Units Tab */}
               {activeTab === "units" && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <UniFieldSelect
-                      label={t("Primary Unit")}
-                      required
-                      value={formData.unit_id}
-                      onValueChange={(value) => updateField("unit_id", value)}
-                      placeholder={t("Select Unit")}
-                      error={errors.unit_id}
-                      onAddNew={() => setAddFormOpen("unit")}
-                      addNewLabel={t("Add New Unit")}
-                      hasOptions={Boolean(unitOptions.length)}
-                    >
-                      {unitOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </UniFieldSelect>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+                    <UniFieldInput
+                      label={t("Weight")}
+                      type="number"
+                      placeholder={t("Enter Weight")}
+                      min="0"
+                      step="0.001"
+                      value={formData.weight}
+                      onChange={(event) => updateField("weight", event.target.value)}
+                    />
 
                     <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-4">
                       <div>
@@ -845,6 +855,24 @@ export default function ProductFormPage() {
                       />
                     </div>
 
+                    <UniFieldSelect
+                      label={t("Primary Unit")}
+                      required
+                      value={formData.unit_id}
+                      onValueChange={(value) => updateField("unit_id", value)}
+                      placeholder={t("Select Unit")}
+                      error={errors.unit_id}
+                      onAddNew={() => setAddFormOpen("unit")}
+                      addNewLabel={t("Add New Unit")}
+                      hasOptions={Boolean(unitOptions.length)}
+                    >
+                      {unitOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </UniFieldSelect>
+
                     <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-4">
                       <div>
                         <div className="text-sm font-semibold text-gray-900">{t("Allow Decimal Qty")}</div>
@@ -857,7 +885,7 @@ export default function ProductFormPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 border-t border-gray-100 pt-6">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 border-t border-gray-100 pt-6">
                     <UniFieldInput
                       label={t("Sale Price")}
                       required
@@ -903,20 +931,10 @@ export default function ProductFormPage() {
                       value={formData.mrp}
                       onChange={(event) => updateField("mrp", event.target.value)}
                     />
-
-                    <UniFieldInput
-                      label={t("Weight")}
-                      type="number"
-                      placeholder={t("Enter Weight")}
-                      min="0"
-                      step="0.001"
-                      value={formData.weight}
-                      onChange={(event) => updateField("weight", event.target.value)}
-                    />
                   </div>
 
                   {isStockProduct && (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3 border-t border-gray-100 pt-6">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 border-t border-gray-100 pt-6">
                       {!isEdit && (
                         <UniFieldInput
                           label={t("Opening Stock")}
@@ -981,7 +999,7 @@ export default function ProductFormPage() {
 
                       <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 space-y-4">
                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">{unitQuantityForm.id ? t("Edit Alternate Unit") : t("Add Alternate Unit")}</h4>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                           <UniFieldSelect
                             label={t("Assigned Unit")}
                             required
@@ -1088,7 +1106,7 @@ export default function ProductFormPage() {
               {/* 3. Expiry Tab */}
               {activeTab === "expiry" && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                     <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-4">
                       <div>
                         <div className="text-sm font-semibold text-gray-900">{t("Product Expires")}</div>
@@ -1120,7 +1138,7 @@ export default function ProductFormPage() {
               {/* 4. Taxes Tab */}
               {activeTab === "taxes" && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                     <UniFieldSelect
                       label={t("Tax Group")}
                       value={formData.tax_group_id}
@@ -1227,46 +1245,6 @@ export default function ProductFormPage() {
 
             </div>
 
-            <footer
-              className={cn(
-                "sticky z-50 transition-all duration-300 ease-in-out",
-                isFooterStuck ? "bottom-2 mx-3" : "bottom-0 mx-0"
-              )}
-            >
-              <div
-                className={cn(
-                  "flex items-center justify-end gap-x-2 rounded-b-xl bg-white/90 p-3 backdrop-blur-md transition-shadow duration-200",
-                  isFooterStuck
-                    ? "rounded-t-xl border border-gray-200"
-                    : "rounded-t-none border-t-2 border-gray-100"
-                )}
-              >
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={goBack}
-                  disabled={isSubmitting}
-                >
-                  {t("Cancel")}
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="min-w-28 bg-black text-white hover:bg-black/90"
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      <Spinner />
-                      {t("Saving...")}
-                    </span>
-                  ) : isEdit ? (
-                    t("Update Product")
-                  ) : (
-                    t("Save Product")
-                  )}
-                </Button>
-              </div>
-            </footer>
           </form>
         </div>
 
