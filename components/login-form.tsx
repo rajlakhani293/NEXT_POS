@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Cookies from "js-cookie"
 import { BiLoaderCircle } from "react-icons/bi"
+import { AlertCircle } from "lucide-react"
 
 import { auth, type AuthUser } from "@/lib/api/auth"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
@@ -22,7 +23,6 @@ import {
 import { UniFieldInput } from "@/components/ui/unifield-input"
 
 const defaultDeviceName = "Web App"
-const recoveryEnabled = true
 
 export function LoginForm({
   initialMode = "login",
@@ -34,11 +34,14 @@ export function LoginForm({
   const dispatch = useAppDispatch()
   const { refreshSession } = useSession()
   const mode = initialMode
+
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [passwordConfirm, setPasswordConfirm] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
   const [login, { isLoading: isLoggingIn }] = auth.useLoginMutation()
   const [register, { isLoading: isRegistering }] = auth.useRegisterMutation()
   const isLoading = isLoggingIn || isRegistering
@@ -72,6 +75,7 @@ export function LoginForm({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setErrorMessage(null)
     if (!validate()) return
 
     try {
@@ -80,170 +84,169 @@ export function LoginForm({
         password,
         device_name: defaultDeviceName,
         ...(mode === "register"
-          ? {
-              email: email.trim(),
-              password_confirm: passwordConfirm,
-            }
+          ? { email: email.trim(), password_confirm: passwordConfirm }
           : {}),
       }
       const response =
         mode === "login"
           ? await login(payLoad).unwrap()
           : await register(payLoad).unwrap()
+
       showToast.success(
         response.message ||
-          t(mode === "login" ? "You have successfully logged in." : "The account has been successfully created.")
+        t(
+          mode === "login"
+            ? "You have successfully logged in."
+            : "The account has been successfully created."
+        )
       )
       await completeLogin(response.data.token, response.data.user)
-    } catch (error: any) {
-      if (!error?.data?.message) {
+    } catch (error) {
+      const err = error as { data?: { message?: string }; message?: string }
+      const msg =
+        err?.data?.message ||
+        err?.message ||
+        t("Unable to process authentication request.")
+      if (!err?.data?.message) {
         showToast.error(t("Unable to process authentication request."))
       }
+      setErrorMessage(msg)
     }
   }
 
   return (
     <div
-      className={cn("flex w-full max-w-md flex-col gap-6", className)}
+      className={cn("w-full max-w-sm", className)}
       {...props}
     >
-      <div className="flex justify-center py-6">
-        <div className="flex h-14 min-w-32 items-center justify-center rounded bg-white px-6 text-2xl font-semibold tracking-tight text-slate-950 shadow-sm">
-          {t("POS")}
+      {/* Logo / App name */}
+      <div className="mb-8 text-center">
+        <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-white text-lg font-bold shadow">
+          P
         </div>
+        <h1 className="text-xl font-semibold text-slate-900">
+          {mode === "login" ? t("Sign in to your account") : t("Create an account")}
+        </h1>
       </div>
-      <div className="overflow-hidden rounded bg-white shadow">
-        <div className="p-3">
-          <form id="auth-form" onSubmit={handleSubmit} onKeyUp={(event) => {
-            if (event.key === "Enter") {
-              event.currentTarget.requestSubmit()
-            }
-          }}>
-            <FieldGroup>
+
+      {/* Card */}
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="p-6">
+          {/* Error message */}
+          {errorMessage && (
+            <div className="mb-5 flex items-start gap-2.5 rounded-lg border border-red-100 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+              <AlertCircle className="mt-0.5 size-4 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          <form id="auth-form" onSubmit={handleSubmit}>
+            <FieldGroup className="gap-4">
               <Field>
-                <FieldLabel htmlFor="username">{t("Username")}</FieldLabel>
                 <UniFieldInput
+                  label={t("Username")}
                   id="username"
                   value={username}
-                  placeholder={t("Provide your username.")}
+                  placeholder={t("Enter your username")}
                   autoComplete="username"
                   disabled={isLoading}
                   error={errors.username}
-                  onChange={(event) => {
-                    setUsername(event.target.value)
-                    setErrors((current) => ({ ...current, username: "" }))
+                  onChange={(e) => {
+                    setUsername(e.target.value)
+                    setErrors((c) => ({ ...c, username: "" }))
+                    setErrorMessage(null)
                   }}
                 />
               </Field>
 
-              {mode === "register" ? (
+              {mode === "register" && (
                 <Field>
-                  <FieldLabel htmlFor="email">{t("Email")}</FieldLabel>
                   <UniFieldInput
+                    label={t("Email")}
                     id="email"
                     type="email"
                     value={email}
-                    placeholder={t("Provide your email.")}
+                    placeholder={t("Enter your email")}
                     autoComplete="email"
                     disabled={isLoading}
                     error={errors.email}
-                    onChange={(event) => {
-                      setEmail(event.target.value)
-                      setErrors((current) => ({ ...current, email: "" }))
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      setErrors((c) => ({ ...c, email: "" }))
+                      setErrorMessage(null)
                     }}
                   />
                 </Field>
-              ) : null}
+              )}
 
               <Field>
-                <FieldLabel htmlFor="password">{t("Password")}</FieldLabel>
                 <UniFieldInput
+                  label={t("Password")}
                   id="password"
                   type="password"
                   value={password}
-                  placeholder={t("Provide your password.")}
-                  autoComplete={
-                    mode === "login" ? "current-password" : "new-password"
-                  }
+                  placeholder={t("Enter your password")}
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
                   disabled={isLoading}
                   error={errors.password}
-                  onChange={(event) => {
-                    setPassword(event.target.value)
-                    setErrors((current) => ({ ...current, password: "" }))
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    setErrors((c) => ({ ...c, password: "" }))
+                    setErrorMessage(null)
                   }}
                 />
               </Field>
 
-              {mode === "register" ? (
+              {mode === "register" && (
                 <Field>
-                  <FieldLabel htmlFor="password-confirm">
-                    {t("Password Confirm")}
-                  </FieldLabel>
                   <UniFieldInput
+                    label={t("Confirm Password")}
                     id="password-confirm"
                     type="password"
                     value={passwordConfirm}
-                    placeholder={t("Should be the same as the password.")}
+                    placeholder={t("Re-enter your password")}
                     autoComplete="new-password"
                     disabled={isLoading}
                     error={errors.passwordConfirm}
-                    onChange={(event) => {
-                      setPasswordConfirm(event.target.value)
-                      setErrors((current) => ({
-                        ...current,
-                        passwordConfirm: "",
-                      }))
+                    onChange={(e) => {
+                      setPasswordConfirm(e.target.value)
+                      setErrors((c) => ({ ...c, passwordConfirm: "" }))
+                      setErrorMessage(null)
                     }}
                   />
                 </Field>
-              ) : null}
-
-              {recoveryEnabled ? (
-                <div className="flex w-full items-center justify-center py-4">
-                  <a href="/password-lost" className="text-sm text-blue-600 hover:underline">
-                    {t("Password Forgotten ?")}
-                  </a>
-                  {mode === "login" ? (
-                    <>
-                      <div className="mx-4 h-[15px] border-l" />
-                      <Link
-                        href="/sign-up"
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        {t("Register")}
-                      </Link>
-                    </>
-                  ) : null}
-                  {mode === "register" ? (
-                    <>
-                      <div className="mx-4 h-[15px] border-l" />
-                      <Link
-                        href="/sign-in"
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        {t("Sign In")}
-                      </Link>
-                    </>
-                  ) : null}
-                </div>
-              ) : null}
+              )}
             </FieldGroup>
+
+            <Button
+              type="submit"
+              variant="blue"
+              disabled={isLoading}
+              className="mt-6 w-full justify-center"
+            >
+              {isLoading && <BiLoaderCircle className="mr-2 size-4 animate-spin" />}
+              {mode === "login" ? t("Sign In") : t("Register")}
+            </Button>
           </form>
         </div>
-        <div className="flex items-center justify-end border-t bg-slate-50 p-3">
-          <Button
-            type="button"
-            variant="blue"
-            disabled={isLoading}
-            className="justify-between"
-            onClick={() => {
-              const form = document.querySelector<HTMLFormElement>("#auth-form")
-              form?.requestSubmit()
-            }}
-          >
-            {isLoading ? <BiLoaderCircle className="mr-2 size-5 animate-spin" /> : null}
-            <span>{mode === "login" ? t("Sign In") : t("Register")}</span>
-          </Button>
+
+        {/* Footer toggle */}
+        <div className="border-t border-slate-100 px-6 py-4 text-center text-sm text-slate-500">
+          {mode === "login" ? (
+            <>
+              {t("Don't have an account?")}{" "}
+              <Link href="/sign-up" className="font-medium text-slate-900 hover:underline">
+                {t("Register")}
+              </Link>
+            </>
+          ) : (
+            <>
+              {t("Already have an account?")}{" "}
+              <Link href="/sign-in" className="font-medium text-slate-900 hover:underline">
+                {t("Sign In")}
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>
