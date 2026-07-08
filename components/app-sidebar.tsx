@@ -350,18 +350,6 @@ const settingsNavSections: DashboardNavSection[] = [
       PERMISSIONS.roles.update,
     ],
     permissionMatch: "any",
-    items: [
-      {
-        title: "Roles",
-        url: "/settings/roles",
-        permission: PERMISSIONS.roles.view,
-      },
-      {
-        title: "Permissions Manager",
-        url: "/settings/roles/permissions-manager",
-        permission: PERMISSIONS.roles.update,
-      },
-    ],
   },
   {
     title: "Reports",
