@@ -40,16 +40,6 @@ export function UnitForm(props: any) {
 
   const fields = [
     {
-      name: "group_id",
-      label: t("Unit Group"),
-      type: "select",
-      placeholder: t("Select unit group"),
-      required: true,
-      options: unitGroupOptions,
-      onAddNew: () => setIsUnitGroupFormOpen(true),
-      addNewLabel: t("Add New Unit Group"),
-    },
-    {
       name: "name",
       label: t("Name"),
       type: "text",
@@ -61,7 +51,13 @@ export function UnitForm(props: any) {
       label: t("Identifier"),
       type: "text",
       placeholder: t("Provide a unique value for this unit. Might be composed from a name but shouldn't include space or special characters."),
-      required: true,
+      // required: true,
+    },
+    {
+      name: "preview_url",
+      label: t("Preview URL"),
+      type: "text",
+      placeholder: t("Preview of the unit."),
     },
     {
       name: "value",
@@ -71,16 +67,20 @@ export function UnitForm(props: any) {
       required: true,
     },
     {
+      name: "group_id",
+      label: t("Unit Group"),
+      type: "select",
+      placeholder: t("Select unit group"),
+      required: true,
+      options: unitGroupOptions,
+      onAddNew: () => setIsUnitGroupFormOpen(true),
+      addNewLabel: t("Add New Unit Group"),
+    },
+    {
       name: "base_unit",
       label: t("Base Unit"),
       type: "switch",
       note: t("Determine if the unit is the base unit from the group."),
-    },
-    {
-      name: "preview_url",
-      label: t("Preview URL"),
-      type: "text",
-      placeholder: t("Preview of the unit."),
     },
     {
       name: "description",

@@ -464,11 +464,11 @@ const DynamicForm = <T extends Record<string, any>>({
                             <span className="text-red-500">*</span>
                           )}
                         </div>
-                        {field.note && (
+                        {/* {field.note && (
                           <p className="text-sm text-muted-foreground">
                             {t(field.note)}
                           </p>
-                        )}
+                        )} */}
                       </div>
                       <Switch
                         checked={Boolean(formData[field.name])}

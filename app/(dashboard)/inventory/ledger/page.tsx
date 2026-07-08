@@ -88,6 +88,7 @@ export default function StockLedgerPage() {
         onSort={handleSort}
         sortableFields={sortableFields}
         isLoading={isLoading}
+        showEdit={false}
       />
     </div>
   )
