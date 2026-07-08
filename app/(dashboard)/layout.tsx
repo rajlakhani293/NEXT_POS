@@ -42,6 +42,7 @@ export default function DashboardLayout({
     /^\/reports\/[^/]+$/,
     /^\/settings\/roles\/(create|\d+)$/,
     "/accounting/transactions/create",
+    "/inventory/labels",
   ]
   const isNoPaddingPage = noPaddingRules.some((rule) =>
     typeof rule === "string" ? pathname === rule : rule.test(pathname)
