@@ -11,7 +11,7 @@ import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
-import { CustomerForm } from "./createUpdate"
+
 
 const buildColumns = (
   t: (key: string) => string,
@@ -57,8 +57,6 @@ export default function CustomersPage() {
   const canCreate = hasPermission(PERMISSIONS.customers.create)
   const canUpdate = hasPermission(PERMISSIONS.customers.update)
   const canDelete = hasPermission(PERMISSIONS.customers.delete)
-  const showCredit = posOptions.enable_credit_account
-  const showRewards = posOptions.enable_customer_rewards
 
   const {
     orders,
@@ -79,7 +77,7 @@ export default function CustomersPage() {
   })
 
   const handleAdd = (open: boolean) => {
-    if (open) setIsFormOpen(true)
+    if (open) router.push("/customers/create")
   }
 
   const handleEdit = (record: any) => {
@@ -88,80 +86,72 @@ export default function CustomersPage() {
 
   useEffect(() => {
     if (searchParams.get("create") === "1" && canCreate) {
-      setIsFormOpen(true)
+      router.push("/customers/create")
     }
   }, [canCreate, searchParams])
 
   return (
     <div className="h-full space-y-4">
-      {isFormOpen ? (
-        <CustomerForm
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          onSuccess={triggerRefresh}
-        />
-      ) : (
-        <DynamicTable
-          data={orders}
-          columns={columns}
-          tableTitle={t("Customers List")}
-          title={canCreate ? t("Add a new customer") : undefined}
-          showSearch
-          searchTerm={searchTerm}
-          currentPage={currentPage}
-          itemsPerPage={itemsPerPage}
-          totalItems={totalItems}
-          onPageChange={setCurrentPage}
-          onFilterChange={handleFilterChange}
-          sortConfig={sortConfig}
-          onSort={handleSort}
-          sortableFields={sortableFields}
-          isLoading={isLoading}
-          setAddEntityOpen={canCreate ? handleAdd : undefined}
-          showEdit={canUpdate}
-          onEdit={handleEdit}
-          showDelete={canDelete}
-          deleteMutation={deleteCustomer}
-          showDateRange
-          showStatus={canUpdate}
-          statusChangeMutation={({ ids, status }: any) =>
-            updateCustomerStatus({ payLoad: { ids, status } })
-          }
-          triggerRefresh={triggerRefresh}
-          deleteModalTitle={t("Delete Customer")}
-          deleteModalDescription={t("Would you like to delete this ?")}
-          rowActions={(_, record) => [
-            {
-              key: "orders",
-              label: t("Orders"),
-              labelText: t("Orders"),
-              icon: <ReceiptText className="size-4" />,
-              onClick: () => router.push(`/customers/${record.id}?tab=orders`),
-            },
-            showCredit ? {
-              key: "credit",
-              label: t("Wallet History"),
-              labelText: t("Wallet History"),
-              icon: <Wallet className="size-4" />,
-              onClick: () => router.push(`/customers/${record.id}/account-history`),
-            } : null,
-            showRewards ? {
-              key: "rewards",
-              label: t("Rewards"),
-              labelText: t("Rewards"),
-              icon: <Gift className="size-4" />,
-              onClick: () => router.push(`/customers/${record.id}/rewards`),
-            } : null,
-            {
-              key: "coupons",
-              label: t("Coupons"),
-              labelText: t("Coupons"),
-              icon: <TicketPercent className="size-4" />,
-              onClick: () => router.push(`/customers/${record.id}/coupons`),
-            },
-          ].filter(Boolean) as any}
-        />
-      )}
+      <DynamicTable
+        data={orders}
+        columns={columns}
+        tableTitle={t("Customers List")}
+        title={canCreate ? t("Add a new customer") : undefined}
+        showSearch
+        searchTerm={searchTerm}
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+        totalItems={totalItems}
+        onPageChange={setCurrentPage}
+        onFilterChange={handleFilterChange}
+        sortConfig={sortConfig}
+        onSort={handleSort}
+        sortableFields={sortableFields}
+        isLoading={isLoading}
+        setAddEntityOpen={canCreate ? handleAdd : undefined}
+        showEdit={canUpdate}
+        onEdit={handleEdit}
+        showDelete={canDelete}
+        deleteMutation={deleteCustomer}
+        showDateRange
+        showStatus={canUpdate}
+        statusChangeMutation={({ ids, status }: any) =>
+          updateCustomerStatus({ payLoad: { ids, status } })
+        }
+        triggerRefresh={triggerRefresh}
+        deleteModalTitle={t("Delete Customer")}
+        deleteModalDescription={t("Would you like to delete this ?")}
+        rowActions={(_, record) => [
+          {
+            key: "orders",
+            label: t("Orders"),
+            labelText: t("Orders"),
+            icon: <ReceiptText className="size-4" />,
+            onClick: () => router.push(`/customers/${record.id}/orders`),
+          },
+          {
+            key: "credit",
+            label: t("Wallet History"),
+            labelText: t("Wallet History"),
+            icon: <Wallet className="size-4" />,
+            onClick: () => router.push(`/customers/${record.id}/account-history`),
+          },
+          {
+            key: "rewards",
+            label: t("Rewards"),
+            labelText: t("Rewards"),
+            icon: <Gift className="size-4" />,
+            onClick: () => router.push(`/customers/${record.id}/rewards`),
+          },
+          {
+            key: "coupons",
+            label: t("Coupons"),
+            labelText: t("Coupons"),
+            icon: <TicketPercent className="size-4" />,
+            onClick: () => router.push(`/customers/${record.id}/coupons`),
+          },
+        ].filter(Boolean) as any}
+      />
     </div>
   )
 }

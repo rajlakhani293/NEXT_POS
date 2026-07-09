@@ -36,7 +36,7 @@ export default function DashboardLayout({
   const noPaddingRules = [
     "/sales/create",
     /^\/inventory\/products\/[^/]+$/,
-    /^\/customers\/\d+$/,
+    /^\/customers\/[^/]+(\/orders)?$/,
     /^\/purchases\/orders\/[^/]+$/,
     /^\/registers\/[^/]$/,
     /^\/reports\/[^/]+$/,
