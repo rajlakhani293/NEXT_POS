@@ -112,73 +112,77 @@ export default function CustomerCouponsHistoryPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="h-9 w-9"
-          onClick={() => router.push("/customers")}
-        >
-          <ArrowLeft className="size-4" />
-        </Button>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">{t("Customer Coupons")}</h1>
-          <p className="text-sm font-medium text-gray-500">
-            {t("Issued coupons and usage history for this customer.")}
-          </p>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
+      <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => router.push("/customers")}
+          >
+            <ArrowLeft className="size-4" />
+          </Button>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">{t("Customer Coupons")}</h1>
+            <p className="text-xs font-medium text-gray-500">
+              {t("Issued coupons and usage history for this customer.")}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">{t("Issued Coupons")}</p>
-          <p className="mt-3 text-2xl font-bold text-slate-950">{totalCoupons}</p>
+      <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50/50 p-6 space-y-4">
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-500">{t("Issued Coupons")}</p>
+            <p className="mt-3 text-2xl font-bold text-slate-950">{totalCoupons}</p>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-500">{t("Selected Coupon")}</p>
+            <p className="mt-3 text-lg font-bold text-slate-950">
+              {selectedCoupon?.code || "-"}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-500">{t("Usage History")}</p>
+            <p className="mt-3 text-2xl font-bold text-slate-950">{totalHistory}</p>
+          </div>
         </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">{t("Selected Coupon")}</p>
-          <p className="mt-3 text-lg font-bold text-slate-950">
-            {selectedCoupon?.code || "-"}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">{t("Usage History")}</p>
-          <p className="mt-3 text-2xl font-bold text-slate-950">{totalHistory}</p>
-        </div>
+
+        <DynamicTable
+          data={coupons}
+          columns={couponColumns}
+          tableTitle={t("Issued Customer Coupons")}
+          currentPage={couponsPage}
+          itemsPerPage={10}
+          totalItems={totalCoupons}
+          onPageChange={setCouponsPage}
+          isLoading={couponsState.isLoading}
+          hideActions
+          onRowClick={(row) => {
+            setSelectedCoupon(row)
+            setHistoryPage(1)
+          }}
+        />
+
+        <DynamicTable
+          data={historyRows}
+          columns={historyColumns}
+          tableTitle={
+            selectedCoupon?.code
+              ? `${t("Coupon Usage History")} - ${selectedCoupon.code}`
+              : t("Coupon Usage History")
+          }
+          currentPage={historyPage}
+          itemsPerPage={10}
+          totalItems={totalHistory}
+          onPageChange={setHistoryPage}
+          isLoading={historyState.isLoading}
+          hideActions
+        />
       </div>
-
-      <DynamicTable
-        data={coupons}
-        columns={couponColumns}
-        tableTitle={t("Issued Customer Coupons")}
-        currentPage={couponsPage}
-        itemsPerPage={10}
-        totalItems={totalCoupons}
-        onPageChange={setCouponsPage}
-        isLoading={couponsState.isLoading}
-        hideActions
-        onRowClick={(row) => {
-          setSelectedCoupon(row)
-          setHistoryPage(1)
-        }}
-      />
-
-      <DynamicTable
-        data={historyRows}
-        columns={historyColumns}
-        tableTitle={
-          selectedCoupon?.code
-            ? `${t("Coupon Usage History")} - ${selectedCoupon.code}`
-            : t("Coupon Usage History")
-        }
-        currentPage={historyPage}
-        itemsPerPage={10}
-        totalItems={totalHistory}
-        onPageChange={setHistoryPage}
-        isLoading={historyState.isLoading}
-        hideActions
-      />
     </div>
   )
 }

@@ -7,13 +7,8 @@ import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { UniFieldSelect } from "@/components/ui/unifield-select"
+import { SelectItem } from "@/components/ui/select"
 import { customers } from "@/lib/api/customers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { usePosOptions } from "@/lib/options"
@@ -300,8 +295,8 @@ export default function CustomerFormPage() {
               type="button"
               onClick={() => setActiveTab(tab)}
               className={`shrink-0 border-b-2 px-5 py-3 text-sm font-medium whitespace-nowrap capitalize transition-colors ${activeTab === tab
-                  ? "border-gray-900 text-gray-900"
-                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                ? "border-gray-900 text-gray-900"
+                : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                 }`}
             >
               {t(
@@ -350,29 +345,21 @@ export default function CustomerFormPage() {
                       error={errors.last_name}
                       onChange={(event) => updateField("last_name", event.target.value)}
                     />
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-gray-700">
-                        {t("Group")} <span className="text-red-500">*</span>
-                      </label>
-                      <Select
-                        value={values.group_id}
-                        onValueChange={(val) => updateField("group_id", val)}
-                      >
-                        <SelectTrigger className="h-10 w-full border-2 bg-white">
-                          <SelectValue placeholder={t("Select Group")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {groups.map((g) => (
-                            <SelectItem key={g.id} value={String(g.id)}>
-                              {g.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {errors.group_id && (
-                        <p className="text-xs text-red-500 font-semibold">{errors.group_id}</p>
-                      )}
-                    </div>
+                    <UniFieldSelect
+                      label={t("Group")}
+                      required
+                      value={values.group_id}
+                      onValueChange={(val) => updateField("group_id", val)}
+                      placeholder={t("Select Group")}
+                      error={errors.group_id}
+                      hasOptions={Boolean(groups.length)}
+                    >
+                      {groups.map((g) => (
+                        <SelectItem key={g.id} value={String(g.id)}>
+                          {g.name}
+                        </SelectItem>
+                      ))}
+                    </UniFieldSelect>
                     <UniFieldInput
                       label={t("Phone Number")}
                       placeholder={t("Enter 10 digit number")}
@@ -394,22 +381,17 @@ export default function CustomerFormPage() {
                       error={errors.email}
                       onChange={(event) => updateField("email", event.target.value)}
                     />
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-gray-700">{t("Gender")}</label>
-                      <Select
-                        value={values.gender || "not_defined"}
-                        onValueChange={(val) => updateField("gender", val === "not_defined" ? "" : val)}
-                      >
-                        <SelectTrigger className="h-10 w-full border-2 bg-white">
-                          <SelectValue placeholder={t("Not Defined")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="not_defined">{t("Not Defined")}</SelectItem>
-                          <SelectItem value="male">{t("Male")}</SelectItem>
-                          <SelectItem value="female">{t("Female")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <UniFieldSelect
+                      label={t("Gender")}
+                      value={values.gender || "not_defined"}
+                      onValueChange={(val) => updateField("gender", val === "not_defined" ? "" : val)}
+                      placeholder={t("Not Defined")}
+                      allowClear
+                    >
+                      <SelectItem value="not_defined">{t("Not Defined")}</SelectItem>
+                      <SelectItem value="male">{t("Male")}</SelectItem>
+                      <SelectItem value="female">{t("Female")}</SelectItem>
+                    </UniFieldSelect>
                     <UniFieldInput
                       label={t("Birth Date")}
                       type="date"

@@ -89,44 +89,50 @@ export default function CustomerAccountHistoryPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="h-9 w-9"
-          onClick={() => router.push("/customers")}
-        >
-          <ArrowLeft className="size-4" />
-        </Button>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">{t("Customer Accounts List")}</h1>
-          <p className="text-sm font-medium text-gray-500">
-            {t("Display all customer accounts.")}
-          </p>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
+      <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => router.push("/customers")}
+          >
+            <ArrowLeft className="size-4" />
+          </Button>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">
+              {t("Customer Account History")}
+            </h1>
+            <p className="text-xs font-medium text-gray-500">
+              {t("Display all customer accounts.")}
+            </p>
+          </div>
         </div>
       </div>
 
-      <DynamicTable
-        data={rows}
-        columns={columns}
-        tableTitle={t("Customer Accounts List")}
-        showSearch
-        searchTerm={searchTerm}
-        onFilterChange={handleFilterChange}
-        currentPage={page}
-        itemsPerPage={10}
-        totalItems={totalItems}
-        onPageChange={setPage}
-        isLoading={ledgerState.isLoading}
-        secondaryActionButton={
-          <Button disabled={!customerId} onClick={() => setIsFormOpen(true)}>
-            {t("Add a new customer account")}
-          </Button>
-        }
-        hideActions
-      />
+      <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50/50 p-6">
+        <DynamicTable
+          data={rows}
+          columns={columns}
+          tableTitle={t("Customer Accounts List")}
+          showSearch
+          searchTerm={searchTerm}
+          onFilterChange={handleFilterChange}
+          currentPage={page}
+          itemsPerPage={10}
+          totalItems={totalItems}
+          onPageChange={setPage}
+          isLoading={ledgerState.isLoading}
+          secondaryActionButton={
+            <Button disabled={!customerId} onClick={() => setIsFormOpen(true)}>
+              {t("Add a new customer account")}
+            </Button>
+          }
+          hideActions
+        />
+      </div>
 
       <DynamicForm
         isOpen={isFormOpen}

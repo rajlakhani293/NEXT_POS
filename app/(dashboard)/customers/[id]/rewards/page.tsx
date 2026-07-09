@@ -84,79 +84,83 @@ export default function CustomerRewardsHistoryPage() {
   )
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="h-9 w-9"
-          onClick={() => router.push("/customers")}
-        >
-          <ArrowLeft className="size-4" />
-        </Button>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">{t("Customer Rewards")}</h1>
-          <p className="text-sm font-medium text-gray-500">
-            {t("Reward balances and redeemed coupon history for this customer.")}
-          </p>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
+      <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => router.push("/customers")}
+          >
+            <ArrowLeft className="size-4" />
+          </Button>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">{t("Customer Rewards")}</h1>
+            <p className="text-xs font-medium text-gray-500">
+              {t("Reward balances and redeemed coupon history for this customer.")}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">{t("Reward Systems")}</p>
-          <p className="mt-3 text-2xl font-bold text-slate-950">{balances.length}</p>
+      <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50/50 p-6 space-y-4">
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-500">{t("Reward Systems")}</p>
+            <p className="mt-3 text-2xl font-bold text-slate-950">{balances.length}</p>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-500">{t("Available Points")}</p>
+            <p className="mt-3 text-2xl font-bold text-slate-950">{totalPoints}</p>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-500">{t("Redemptions")}</p>
+            <p className="mt-3 text-2xl font-bold text-slate-950">{totalItems}</p>
+          </div>
         </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">{t("Available Points")}</p>
-          <p className="mt-3 text-2xl font-bold text-slate-950">{totalPoints}</p>
-        </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">{t("Redemptions")}</p>
-          <p className="mt-3 text-2xl font-bold text-slate-950">{totalItems}</p>
-        </div>
-      </div>
 
-      <div className="flex gap-2">
-        <Button
-          variant={tab === "balances" ? "default" : "outline"}
-          onClick={() => setTab("balances")}
-        >
-          {t("Balances")}
-        </Button>
-        <Button
-          variant={tab === "redemptions" ? "default" : "outline"}
-          onClick={() => setTab("redemptions")}
-        >
-          {t("Redemptions")}
-        </Button>
-      </div>
+        <div className="flex gap-2">
+          <Button
+            variant={tab === "balances" ? "default" : "outline"}
+            onClick={() => setTab("balances")}
+          >
+            {t("Balances")}
+          </Button>
+          <Button
+            variant={tab === "redemptions" ? "default" : "outline"}
+            onClick={() => setTab("redemptions")}
+          >
+            {t("Redemptions")}
+          </Button>
+        </div>
 
-      {tab === "balances" ? (
-        <DynamicTable
-          data={balances}
-          columns={balanceColumns}
-          tableTitle={t("Reward Balances")}
-          currentPage={1}
-          itemsPerPage={balances.length || 10}
-          totalItems={balances.length}
-          showEdit
-          onEdit={(record: any) => router.push(`/customers/${id}/rewards/edit/${record.id}`)}
-        />
-      ) : (
-        <DynamicTable
-          data={redemptions}
-          columns={redemptionColumns}
-          tableTitle={t("Reward Redemptions")}
-          currentPage={page}
-          itemsPerPage={10}
-          totalItems={totalItems}
-          onPageChange={setPage}
-          isLoading={redemptionsState.isLoading}
-          hideActions
-        />
-      )}
+        {tab === "balances" ? (
+          <DynamicTable
+            data={balances}
+            columns={balanceColumns}
+            tableTitle={t("Reward Balances")}
+            currentPage={1}
+            itemsPerPage={balances.length || 10}
+            totalItems={balances.length}
+            showEdit
+            onEdit={(record: any) => router.push(`/customers/${id}/rewards/edit/${record.id}`)}
+          />
+        ) : (
+          <DynamicTable
+            data={redemptions}
+            columns={redemptionColumns}
+            tableTitle={t("Reward Redemptions")}
+            currentPage={page}
+            itemsPerPage={10}
+            totalItems={totalItems}
+            onPageChange={setPage}
+            isLoading={redemptionsState.isLoading}
+            hideActions
+          />
+        )}
+      </div>
     </div>
   )
 }
