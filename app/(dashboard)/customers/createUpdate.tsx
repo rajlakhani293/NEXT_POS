@@ -1,12 +1,23 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { ArrowLeft } from "lucide-react"
 
-import DynamicForm from "@/components/DynamicForm"
+import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
+import { UniFieldInput } from "@/components/ui/unifield-input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { customers } from "@/lib/api/customers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
+import { cn } from "@/lib/utils"
 
 type CustomerFormProps = {
   isOpen: boolean
@@ -79,194 +90,7 @@ const initialValues: CustomerFormValues = {
   shipping_company_name: "",
 }
 
-const buildCustomerFields = (
-  groups: { id: number | string; name: string }[],
-  t: (key: string) => string,
-  currencySymbol: string
-) => [
-  {
-    name: "first_name",
-    label: t("Customer Name"),
-    type: "text",
-    placeholder: t("Provide a unique name for the customer."),
-    required: true,
-  },
-  {
-    name: "last_name",
-    label: t("Last Name"),
-    type: "text",
-    placeholder: t("Provide the customer last name"),
-  },
-  {
-    name: "credit_limit_amount",
-    label: t("Credit Limit"),
-    type: "number",
-    placeholder: t("Set what should be the limit of the purchase on credit."),
-    prefix: currencySymbol,
-  },
-  {
-    name: "group_id",
-    label: t("Group"),
-    type: "select",
-    placeholder: t("Assign the customer to a group"),
-    required: true,
-    options: groups.map((group) => ({
-      label: group.name,
-      value: group.id,
-    })),
-  },
-  {
-    name: "birth_date",
-    label: t("Birth Date"),
-    type: "date",
-    placeholder: t("Displays the customer birth date"),
-  },
-  {
-    name: "phone",
-    label: t("Phone Number"),
-    type: "text",
-    placeholder: t("Enter 10 digit phone number"),
-    prefix: "+91",
-    prefixPadding: "pl-12",
-    maxLength: 10,
-    inputMode: "numeric",
-    sanitize: (value: string) => value.replace(/\D/g, "").slice(0, 10),
-    validate: (value: string) => {
-      if (!value) return ""
-      if (value.length > 0 && value.length < 6) return t("The phone number provided is too short.")
-      return ""
-    },
-  },
-  {
-    name: "email",
-    label: t("Email"),
-    type: "email",
-    placeholder: t("Enter customer email"),
-    validate: (value: string) => {
-      if (!value) return ""
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return t("Enter valid email")
-      return ""
-    },
-  },
-  {
-    name: "pobox",
-    label: t("PO Box"),
-    type: "text",
-    placeholder: t("Provide the customer PO.Box"),
-  },
-  {
-    name: "gender",
-    label: t("Gender"),
-    type: "select",
-    placeholder: t("Provide the customer gender"),
-    allowClear: true,
-    options: [
-      { label: t("Not Defined"), value: "not_defined" },
-      { label: t("Male"), value: "male" },
-      { label: t("Female"), value: "female" },
-    ],
-  },
-  {
-    name: "billing_first_name",
-    label: t("Billing First Name"),
-    type: "text",
-  },
-  {
-    name: "billing_last_name",
-    label: t("Billing Last Name"),
-    type: "text",
-  },
-  {
-    name: "billing_phone",
-    label: t("Billing Phone"),
-    type: "text",
-  },
-  {
-    name: "billing_email",
-    label: t("Billing Email"),
-    type: "email",
-  },
-  {
-    name: "billing_address_1",
-    label: t("Billing Address 1"),
-    type: "text",
-  },
-  {
-    name: "billing_address_2",
-    label: t("Billing Address 2"),
-    type: "text",
-  },
-  {
-    name: "billing_country",
-    label: t("Billing Country"),
-    type: "text",
-  },
-  {
-    name: "billing_city",
-    label: t("Billing City"),
-    type: "text",
-  },
-  {
-    name: "billing_pobox",
-    label: t("Billing PO.Box"),
-    type: "text",
-  },
-  {
-    name: "billing_company_name",
-    label: t("Billing Company"),
-    type: "text",
-  },
-  {
-    name: "shipping_first_name",
-    label: t("Shipping First Name"),
-    type: "text",
-  },
-  {
-    name: "shipping_last_name",
-    label: t("Shipping Last Name"),
-    type: "text",
-  },
-  {
-    name: "shipping_phone",
-    label: t("Shipping Phone"),
-    type: "text",
-  },
-  {
-    name: "shipping_email",
-    label: t("Shipping Email"),
-    type: "email",
-  },
-  {
-    name: "shipping_address_1",
-    label: t("Shipping Address 1"),
-    type: "text",
-  },
-  {
-    name: "shipping_address_2",
-    label: t("Shipping Address 2"),
-    type: "text",
-  },
-  {
-    name: "shipping_country",
-    label: t("Shipping Country"),
-    type: "text",
-  },
-  {
-    name: "shipping_city",
-    label: t("Shipping City"),
-    type: "text",
-  },
-  {
-    name: "shipping_pobox",
-    label: t("Shipping PO.Box"),
-    type: "text",
-  },
-  {
-    name: "shipping_company_name",
-    label: t("Shipping Company"),
-    type: "text",
-  },
-]
+const sanitizePhone = (value: string) => value.replace(/\D/g, "").slice(0, 10)
 
 export function CustomerForm({
   isOpen,
@@ -276,6 +100,7 @@ export function CustomerForm({
 }: CustomerFormProps) {
   const { t } = useTranslation()
   const posOptions = usePosOptions()
+
   const [createCustomer] = (customers as any).useCreateCustomerMutation()
   const [editCustomer] = (customers as any).useEditCustomerMutation()
   const [getCustomerById, { data, isLoading }] = (
@@ -284,7 +109,12 @@ export function CustomerForm({
   const [getCustomerGroupsDropdown] = (
     customers as any
   ).useGetCustomerGroupsDropdownMutation()
+
   const [groups, setGroups] = useState<{ id: number | string; name: string }[]>([])
+  const [values, setValues] = useState<CustomerFormValues>(initialValues)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [activeTab, setActiveTab] = useState<"general" | "billing" | "shipping">("general")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (isOpen && editId) {
@@ -296,55 +126,89 @@ export function CustomerForm({
     if (!isOpen) return
 
     const loadGroups = async () => {
-      const response = await getCustomerGroupsDropdown().unwrap()
-      setGroups(response?.data || [])
+      try {
+        const response = await getCustomerGroupsDropdown().unwrap()
+        setGroups(response?.data || [])
+      } catch (err) {
+        console.error("Failed to load customer groups", err)
+      }
     }
 
     loadGroups()
   }, [getCustomerGroupsDropdown, isOpen])
 
   const record = data?.data
-  const billingAddress = record?.addresses?.billing || record?.address || {}
-  const shippingAddress = record?.addresses?.shipping || {}
-  const customerFields = buildCustomerFields(groups, t, posOptions.currency_symbol)
-  const formValues: CustomerFormValues =
-    editId && record
-      ? {
-          first_name: record.first_name || "",
-          last_name: record.last_name || "",
-          phone: record.phone || "",
-          email: record.email || "",
-          credit_limit_amount: record.credit_limit_amount
-            ? String(record.credit_limit_amount)
-            : "",
-          group_id: record.group_id ? String(record.group_id) : "",
-          birth_date: record.birth_date ? String(record.birth_date).split(" ")[0] : "",
-          pobox: record.pobox || "",
-          gender: record.gender || "not_defined",
-          billing_first_name: billingAddress.first_name || "",
-          billing_last_name: billingAddress.last_name || "",
-          billing_phone: billingAddress.phone || "",
-          billing_email: billingAddress.email || "",
-          billing_address_1: billingAddress.address_1 || "",
-          billing_address_2: billingAddress.address_2 || "",
-          billing_country: billingAddress.country || "",
-          billing_city: billingAddress.city || "",
-          billing_pobox: billingAddress.pobox || "",
-          billing_company_name: billingAddress.company_name || "",
-          shipping_first_name: shippingAddress.first_name || "",
-          shipping_last_name: shippingAddress.last_name || "",
-          shipping_phone: shippingAddress.phone || "",
-          shipping_email: shippingAddress.email || "",
-          shipping_address_1: shippingAddress.address_1 || "",
-          shipping_address_2: shippingAddress.address_2 || "",
-          shipping_country: shippingAddress.country || "",
-          shipping_city: shippingAddress.city || "",
-          shipping_pobox: shippingAddress.pobox || "",
-          shipping_company_name: shippingAddress.company_name || "",
-        }
-      : initialValues
 
-  const handleSubmit = async (values: CustomerFormValues) => {
+  useEffect(() => {
+    if (isOpen && editId && record) {
+      const billingAddress = record.addresses?.billing || record.address || {}
+      const shippingAddress = record.addresses?.shipping || {}
+      setValues({
+        first_name: record.first_name || "",
+        last_name: record.last_name || "",
+        phone: record.phone || "",
+        email: record.email || "",
+        credit_limit_amount: record.credit_limit_amount
+          ? String(record.credit_limit_amount)
+          : "",
+        group_id: record.group_id ? String(record.group_id) : "",
+        birth_date: record.birth_date ? String(record.birth_date).split(" ")[0] : "",
+        pobox: record.pobox || "",
+        gender: record.gender || "not_defined",
+        billing_first_name: billingAddress.first_name || "",
+        billing_last_name: billingAddress.last_name || "",
+        billing_phone: billingAddress.phone || "",
+        billing_email: billingAddress.email || "",
+        billing_address_1: billingAddress.address_1 || "",
+        billing_address_2: billingAddress.address_2 || "",
+        billing_country: billingAddress.country || "",
+        billing_city: billingAddress.city || "",
+        billing_pobox: billingAddress.pobox || "",
+        billing_company_name: billingAddress.company_name || "",
+        shipping_first_name: shippingAddress.first_name || "",
+        shipping_last_name: shippingAddress.last_name || "",
+        shipping_phone: shippingAddress.phone || "",
+        shipping_email: shippingAddress.email || "",
+        shipping_address_1: shippingAddress.address_1 || "",
+        shipping_address_2: shippingAddress.address_2 || "",
+        shipping_country: shippingAddress.country || "",
+        shipping_city: shippingAddress.city || "",
+        shipping_pobox: shippingAddress.pobox || "",
+        shipping_company_name: shippingAddress.company_name || "",
+      })
+    } else {
+      setValues(initialValues)
+    }
+    setErrors({})
+    setActiveTab("general")
+  }, [editId, record, isOpen])
+
+  const updateField = (name: keyof CustomerFormValues, value: string) => {
+    setValues((current) => ({ ...current, [name]: value }))
+    if (errors[name]) {
+      setErrors((current) => ({ ...current, [name]: "" }))
+    }
+  }
+
+  const validate = () => {
+    const nextErrors: Record<string, string> = {}
+    if (!values.first_name.trim()) nextErrors.first_name = t("Customer Name is required")
+    if (!values.group_id) nextErrors.group_id = t("Group is required")
+    if (values.phone && !/^[6-9]\d{9}$/.test(values.phone)) {
+      nextErrors.phone = t("Enter valid Indian phone number")
+    }
+    if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
+      nextErrors.email = t("Enter valid email")
+    }
+
+    setErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!validate()) return
+
     const payLoad = {
       ...values,
       group_id: values.group_id ? Number(values.group_id) : null,
@@ -352,30 +216,360 @@ export function CustomerForm({
       gender: values.gender === "not_defined" ? "" : values.gender,
     }
 
-    if (editId) {
-      const response = await editCustomer({ id: editId, payLoad }).unwrap()
-      showToast.success(response?.message || t("Customer updated successfully."))
-    } else {
-      const response = await createCustomer(payLoad).unwrap()
-      showToast.success(response?.message || t("Customer created successfully."))
+    setIsSubmitting(true)
+    try {
+      if (editId) {
+        const response = await editCustomer({ id: editId, payLoad }).unwrap()
+        showToast.success(response?.message || t("Customer updated successfully."))
+      } else {
+        const response = await createCustomer(payLoad).unwrap()
+        showToast.success(response?.message || t("Customer created successfully."))
+      }
+      onSuccess()
+      onClose()
+    } catch (err) {
+      console.error(err)
+      showToast.error(t("Something went wrong."))
+    } finally {
+      setIsSubmitting(false)
     }
-
-    onSuccess()
-    onClose()
   }
 
+  if (!isOpen) return null
+
   return (
-    <DynamicForm
-      key={editId || "create-customer"}
-      fields={customerFields as any}
-      initialValues={formValues}
-      onSubmit={handleSubmit}
-      onClose={onClose}
-      onSuccess={onSuccess}
-      title={editId ? t("Edit customer") : t("Create a new customer")}
-      isOpen={isOpen}
-      formWidth="w-[640px]"
-      isLoading={Boolean(editId) && isLoading}
-    />
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white rounded-xl border border-gray-200">
+      <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
+              <ArrowLeft className="size-4" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">
+                {editId ? t("Edit Customer") : t("Create Customer")}
+              </h1>
+              <p className="text-xs font-medium text-gray-500">
+                {t("Customer profile details, billing, and shipping details.")}
+              </p>
+            </div>
+          </div>
+          <Button
+            type="submit"
+            form="customer-form"
+            disabled={isSubmitting}
+            className="min-w-28 shrink-0 bg-black text-white hover:bg-black/90"
+          >
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <Spinner />
+                {t("Saving...")}
+              </span>
+            ) : editId ? (
+              t("Update Customer")
+            ) : (
+              t("Save Customer")
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Tab Selector Header */}
+      <div className="flex-none border-b border-gray-200">
+        <nav className="-mb-px flex overflow-x-auto">
+          {(["general", "billing", "shipping"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`shrink-0 border-b-2 px-5 py-3 text-sm font-medium whitespace-nowrap capitalize transition-colors ${
+                activeTab === tab
+                  ? "border-gray-900 text-gray-900"
+                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+              }`}
+            >
+              {t(tab === "general" ? "General Info" : tab === "billing" ? "Billing Address" : "Shipping Address")}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50/50 p-6">
+        {isLoading && editId ? (
+          <div className="flex h-60 items-center justify-center">
+            <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm animate-pulse">
+              <Spinner className="h-5 w-5" />
+              {t("Loading customer details...")}
+            </div>
+          </div>
+        ) : (
+          <form id="customer-form" onSubmit={handleSubmit} noValidate className="space-y-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+              {activeTab === "general" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-base font-semibold text-gray-900">
+                      {t("General Information")}
+                    </h2>
+                  </div>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <UniFieldInput
+                      label={t("Customer Name")}
+                      required
+                      placeholder={t("Provide a unique name.")}
+                      value={values.first_name}
+                      error={errors.first_name}
+                      onChange={(event) => updateField("first_name", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Last Name")}
+                      placeholder={t("Provide the last name.")}
+                      value={values.last_name}
+                      error={errors.last_name}
+                      onChange={(event) => updateField("last_name", event.target.value)}
+                    />
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-gray-700">
+                        {t("Group")} <span className="text-red-500">*</span>
+                      </label>
+                      <Select
+                        value={values.group_id}
+                        onValueChange={(val) => updateField("group_id", val)}
+                      >
+                        <SelectTrigger className="h-10 w-full border-2 bg-white">
+                          <SelectValue placeholder={t("Select Group")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {groups.map((g) => (
+                            <SelectItem key={g.id} value={String(g.id)}>
+                              {g.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors.group_id && (
+                        <p className="text-xs text-red-500 font-semibold">{errors.group_id}</p>
+                      )}
+                    </div>
+                    <UniFieldInput
+                      label={t("Phone Number")}
+                      placeholder={t("Enter 10 digit number")}
+                      prefix="+91"
+                      prefixPadding="pl-12"
+                      maxLength={10}
+                      inputMode="numeric"
+                      value={values.phone}
+                      error={errors.phone}
+                      onChange={(event) =>
+                        updateField("phone", sanitizePhone(event.target.value))
+                      }
+                    />
+                    <UniFieldInput
+                      label={t("Email")}
+                      type="email"
+                      placeholder={t("Enter email address")}
+                      value={values.email}
+                      error={errors.email}
+                      onChange={(event) => updateField("email", event.target.value)}
+                    />
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-gray-700">{t("Gender")}</label>
+                      <Select
+                        value={values.gender || "not_defined"}
+                        onValueChange={(val) => updateField("gender", val === "not_defined" ? "" : val)}
+                      >
+                        <SelectTrigger className="h-10 w-full border-2 bg-white">
+                          <SelectValue placeholder={t("Not Defined")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="not_defined">{t("Not Defined")}</SelectItem>
+                          <SelectItem value="male">{t("Male")}</SelectItem>
+                          <SelectItem value="female">{t("Female")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <UniFieldInput
+                      label={t("Birth Date")}
+                      type="date"
+                      value={values.birth_date ? values.birth_date.split(" ")[0] : ""}
+                      onChange={(event) => updateField("birth_date", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("PO Box")}
+                      placeholder={t("Enter PO Box")}
+                      value={values.pobox}
+                      onChange={(event) => updateField("pobox", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Credit Limit")}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      prefix={posOptions.currency_symbol}
+                      placeholder={t("Enter credit limit")}
+                      value={values.credit_limit_amount}
+                      onChange={(event) => updateField("credit_limit_amount", event.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "billing" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-base font-semibold text-gray-900">
+                      {t("Billing Details")}
+                    </h2>
+                  </div>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <UniFieldInput
+                      label={t("Billing First Name")}
+                      placeholder={t("Enter first name")}
+                      value={values.billing_first_name}
+                      onChange={(event) => updateField("billing_first_name", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Billing Last Name")}
+                      placeholder={t("Enter last name")}
+                      value={values.billing_last_name}
+                      onChange={(event) => updateField("billing_last_name", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Billing Company")}
+                      placeholder={t("Enter company name")}
+                      value={values.billing_company_name}
+                      onChange={(event) => updateField("billing_company_name", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Billing Phone")}
+                      placeholder={t("Enter phone number")}
+                      value={values.billing_phone}
+                      onChange={(event) => updateField("billing_phone", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Billing Email")}
+                      type="email"
+                      placeholder={t("Enter email address")}
+                      value={values.billing_email}
+                      onChange={(event) => updateField("billing_email", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Billing Address 1")}
+                      placeholder={t("Address Line 1")}
+                      value={values.billing_address_1}
+                      onChange={(event) => updateField("billing_address_1", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Billing Address 2")}
+                      placeholder={t("Address Line 2")}
+                      value={values.billing_address_2}
+                      onChange={(event) => updateField("billing_address_2", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Billing Country")}
+                      placeholder={t("Enter country")}
+                      value={values.billing_country}
+                      onChange={(event) => updateField("billing_country", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Billing City")}
+                      placeholder={t("Enter city")}
+                      value={values.billing_city}
+                      onChange={(event) => updateField("billing_city", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Billing PO.Box")}
+                      placeholder={t("Enter PO.Box")}
+                      value={values.billing_pobox}
+                      onChange={(event) => updateField("billing_pobox", event.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "shipping" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-base font-semibold text-gray-900">
+                      {t("Shipping Details")}
+                    </h2>
+                  </div>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <UniFieldInput
+                      label={t("Shipping First Name")}
+                      placeholder={t("Enter first name")}
+                      value={values.shipping_first_name}
+                      onChange={(event) => updateField("shipping_first_name", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Shipping Last Name")}
+                      placeholder={t("Enter last name")}
+                      value={values.shipping_last_name}
+                      onChange={(event) => updateField("shipping_last_name", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Shipping Company")}
+                      placeholder={t("Enter company name")}
+                      value={values.shipping_company_name}
+                      onChange={(event) => updateField("shipping_company_name", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Shipping Phone")}
+                      placeholder={t("Enter phone number")}
+                      value={values.shipping_phone}
+                      onChange={(event) => updateField("shipping_phone", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Shipping Email")}
+                      type="email"
+                      placeholder={t("Enter email address")}
+                      value={values.shipping_email}
+                      onChange={(event) => updateField("shipping_email", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Shipping Address 1")}
+                      placeholder={t("Address Line 1")}
+                      value={values.shipping_address_1}
+                      onChange={(event) => updateField("shipping_address_1", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Shipping Address 2")}
+                      placeholder={t("Address Line 2")}
+                      value={values.shipping_address_2}
+                      onChange={(event) => updateField("shipping_address_2", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Shipping Country")}
+                      placeholder={t("Enter country")}
+                      value={values.shipping_country}
+                      onChange={(event) => updateField("shipping_country", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Shipping City")}
+                      placeholder={t("Enter city")}
+                      value={values.shipping_city}
+                      onChange={(event) => updateField("shipping_city", event.target.value)}
+                    />
+                    <UniFieldInput
+                      label={t("Shipping PO.Box")}
+                      placeholder={t("Enter PO.Box")}
+                      value={values.shipping_pobox}
+                      onChange={(event) => updateField("shipping_pobox", event.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
   )
 }

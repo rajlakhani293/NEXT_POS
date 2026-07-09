@@ -32,6 +32,8 @@ import {
   AlertTriangle,
   PlugIcon,
   Server,
+  Star,
+  Ticket,
 } from "lucide-react"
 
 import {
@@ -152,7 +154,7 @@ const mainNavSections: DashboardNavSection[] = [
     permission: PERMISSIONS.customers.view,
     items: [
       {
-        title: "List",
+        title: "Customers",
         url: "/customers",
         permission: PERMISSIONS.customers.view,
       },
@@ -160,18 +162,20 @@ const mainNavSections: DashboardNavSection[] = [
         title: "Customers Groups",
         url: "/customers/groups",
         permission: PERMISSIONS.customers.view,
-      },
-      {
-        title: "Reward Systems",
-        url: "/customers/rewards-system",
-        permission: PERMISSIONS.rewards.view,
-      },
-      {
-        title: "List Coupons",
-        url: "/customers/coupons",
-        permission: PERMISSIONS.promotions.view,
-      },
+      }
     ],
+  },
+  {
+    title: "Reward Systems",
+    url: "/rewards-system",
+    icon: <Star />,
+    permission: PERMISSIONS.rewards.view,
+  },
+  {
+    title: "List Coupons",
+    url: "/coupons",
+    icon: <Ticket />,
+    permission: PERMISSIONS.promotions.view,
   },
   {
     title: "Providers",
