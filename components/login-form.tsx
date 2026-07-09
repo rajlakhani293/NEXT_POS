@@ -235,14 +235,14 @@ export function LoginForm({
           {mode === "login" ? (
             <>
               {t("Don't have an account?")}{" "}
-              <Link href="/sign-up" className="font-medium text-slate-900 hover:underline">
+              <Link href="/register" className="font-medium text-slate-900 hover:underline">
                 {t("Register")}
               </Link>
             </>
           ) : (
             <>
               {t("Already have an account?")}{" "}
-              <Link href="/sign-in" className="font-medium text-slate-900 hover:underline">
+              <Link href="/login" className="font-medium text-slate-900 hover:underline">
                 {t("Sign In")}
               </Link>
             </>

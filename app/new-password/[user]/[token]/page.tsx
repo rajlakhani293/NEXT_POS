@@ -42,7 +42,7 @@ export default function NewPasswordPage({ params }: PageProps) {
         password_confirm: passwordConfirm,
       }).unwrap()
       showToast.success(response?.message || t("Your password has been updated."))
-      router.replace("/sign-in")
+      router.replace("/login")
     } catch (err: any) {
       showToast.error(err?.data?.message || t("Unable to proceed, the form is not valid."))
     }

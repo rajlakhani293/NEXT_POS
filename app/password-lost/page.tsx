@@ -63,7 +63,7 @@ export default function PasswordLostPage() {
                 />
               </Field>
               <div className="flex items-center justify-center py-4">
-                <Link href="/sign-in" className="text-sm text-blue-600 hover:underline">
+                <Link href="/login" className="text-sm text-blue-600 hover:underline">
                   {t("Sign In")}
                 </Link>
               </div>

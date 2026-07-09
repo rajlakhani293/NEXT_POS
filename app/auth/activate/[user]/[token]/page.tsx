@@ -40,7 +40,7 @@ export default function ActivateAccountPage({ params }: PageProps) {
           )}
           <div className="flex justify-end border-t pt-4">
             <Button asChild variant="blue">
-              <Link href="/sign-in">{t("Sign In")}</Link>
+              <Link href="/login">{t("Sign In")}</Link>
             </Button>
           </div>
         </div>
