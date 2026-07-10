@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 
 import { ImageUpload } from "@/components/imageUpload"
+import { TransactionAccountForm } from "@/app/(dashboard)/accounting/accounts/createUpdate"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { SelectItem } from "@/components/ui/select"
@@ -267,6 +268,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
   const { t } = useTranslation()
   const hasLoadedRef = useRef("")
   const [activeTab, setActiveTab] = useState("")
+  const [accountFormCategory, setAccountFormCategory] = useState<string | null>(null)
   const [values, setValues] = useState<Record<string, any>>({})
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<string, string>>({})
   const [mediaErrors, setMediaErrors] = useState<Record<string, string>>({})
@@ -348,6 +350,16 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
       label: option.label,
     }))
     const options = fieldOptions.length ? fieldOptions : selectOptions[field.name] || yesNoOptions
+    const isAccountingAccountField =
+      sourceIdentifier === "accounting" &&
+      [
+        "accounting_expenses_accounts",
+        "accounting_default_paid_expense_offset_account",
+      ].includes(field.name)
+    const accountingCategoryByField: Record<string, string> = {
+      accounting_expenses_accounts: "expenses",
+      accounting_default_paid_expense_offset_account: "assets",
+    }
 
     if (field.type === "switch" || field.type === "checkbox") {
       return (
@@ -403,9 +415,17 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
       )
     }
 
-    if (field.type === "select" || field.type === "search-select") {
+    if (
+      field.type === "select" ||
+      field.type === "search-select" ||
+      (sourceIdentifier === "accounting" && field.name === "accounting_expenses_accounts")
+    ) {
       const emptyOption = options.find((option) => option.value === "")
       const visibleOptions = options.filter((option) => option.value !== "")
+      const selectedValue =
+        field.name === "accounting_expenses_accounts" && Array.isArray(value)
+          ? String(value[0] || "")
+          : selectValue(field.name, value)
       const selectPlaceholder = required
         ? t("Select an option")
         : emptyOption?.label
@@ -416,12 +436,27 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
           <UniFieldSelect
             label={label}
             required={required}
-            value={selectValue(field.name, value)}
-            onValueChange={(nextValue) => updateValue(field.name, nextValue)}
+            value={selectedValue}
+            onValueChange={(nextValue) =>
+              updateValue(
+                field.name,
+                field.name === "accounting_expenses_accounts"
+                  ? nextValue
+                    ? [nextValue]
+                    : []
+                  : nextValue
+              )
+            }
             placeholder={selectPlaceholder}
             allowClear={!required}
             hasOptions={visibleOptions.length > 0}
             emptyLabel="No records found"
+            onAddNew={
+              isAccountingAccountField
+                ? () => setAccountFormCategory(accountingCategoryByField[field.name] || "assets")
+                : undefined
+            }
+            addNewLabel={isAccountingAccountField ? t("New Account") : undefined}
           >
             {visibleOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
@@ -677,6 +712,12 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
           {t("There is nothing to display here.")}
         </div>
       )}
+      <TransactionAccountForm
+        isOpen={Boolean(accountFormCategory)}
+        onClose={() => setAccountFormCategory(null)}
+        onSuccess={() => getSettingsForm({ identifier: sourceIdentifier })}
+        defaultCategory={accountFormCategory || "assets"}
+      />
     </div>
   )
 }

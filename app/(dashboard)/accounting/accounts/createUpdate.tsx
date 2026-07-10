@@ -12,6 +12,7 @@ type TransactionAccountFormProps = {
   onClose: () => void
   onSuccess: () => void
   editId?: number | string | null
+  defaultCategory?: string
 }
 
 type TransactionAccountFormValues = {
@@ -90,6 +91,7 @@ export function TransactionAccountForm({
   onClose,
   onSuccess,
   editId,
+  defaultCategory = initialValues.category_identifier,
 }: TransactionAccountFormProps) {
   const { t } = useTranslation()
   const accounts = (accounting as any).useGetAccountsDropdownQuery()
@@ -98,8 +100,10 @@ export function TransactionAccountForm({
   const [getAccountById, { data, isLoading }] = (
     accounting as any
   ).useGetAccountByIdMutation()
-  const [selectedCategory, setSelectedCategory] = useState(
-    initialValues.category_identifier
+  const [selectedCategory, setSelectedCategory] = useState(defaultCategory)
+  const formInitialValues = useMemo(
+    () => ({ ...initialValues, category_identifier: defaultCategory }),
+    [defaultCategory]
   )
 
   useEffect(() => {
@@ -107,9 +111,9 @@ export function TransactionAccountForm({
       getAccountById({ id: editId })
     }
     if (isOpen && !editId) {
-      setSelectedCategory(initialValues.category_identifier)
+      setSelectedCategory(defaultCategory)
     }
-  }, [editId, getAccountById, isOpen])
+  }, [defaultCategory, editId, getAccountById, isOpen])
 
   useEffect(() => {
     if (data?.data?.category_identifier) {
@@ -130,7 +134,7 @@ export function TransactionAccountForm({
             : "",
           description: record.description || "",
         }
-      : initialValues
+      : formInitialValues
 
   const parentAccounts = useMemo(
     () =>

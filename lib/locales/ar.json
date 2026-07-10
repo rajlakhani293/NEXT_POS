@@ -416,5 +416,9 @@
   "Legal Name": "الاسم القانوني",
   "Tax Number": "الرقم الضريبي",
   "Company Logo": "شعار الشركة",
-  "Organization updated successfully.": "تم تحديث المؤسسة بنجاح."
+  "Organization updated successfully.": "تم تحديث المؤسسة بنجاح.",
+  "Expense Accounts": "حسابات المصروفات",
+  "Paid Expense Offset": "مقاصة المصروف المدفوع",
+  "Paid Expense Offset Account": "حساب مقاصة المصروف المدفوع",
+  "New Account": "حساب جديد"
 }

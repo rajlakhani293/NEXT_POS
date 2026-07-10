@@ -416,5 +416,9 @@
   "Legal Name": "Nombre legal",
   "Tax Number": "Número fiscal",
   "Company Logo": "Logotipo de la empresa",
-  "Organization updated successfully.": "Organización actualizada correctamente."
+  "Organization updated successfully.": "Organización actualizada correctamente.",
+  "Expense Accounts": "Cuentas de gastos",
+  "Paid Expense Offset": "Compensación de gasto pagado",
+  "Paid Expense Offset Account": "Cuenta de compensación de gasto pagado",
+  "New Account": "Nueva cuenta"
 }
