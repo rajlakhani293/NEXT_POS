@@ -420,5 +420,9 @@
   "Expense Accounts": "حسابات المصروفات",
   "Paid Expense Offset": "مقاصة المصروف المدفوع",
   "Paid Expense Offset Account": "حساب مقاصة المصروف المدفوع",
-  "New Account": "حساب جديد"
+  "New Account": "حساب جديد",
+  "Orders": "الطلبات",
+  "Wallet History": "سجل المحفظة",
+  "Rewards": "المكافآت",
+  "Coupons": "القسائم"
 }

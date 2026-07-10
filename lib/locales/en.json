@@ -620,5 +620,9 @@
   "Expense Accounts": "Expense Accounts",
   "Paid Expense Offset": "Paid Expense Offset",
   "Paid Expense Offset Account": "Paid Expense Offset Account",
-  "New Account": "New Account"
+  "New Account": "New Account",
+  "Orders": "Orders",
+  "Wallet History": "Wallet History",
+  "Rewards": "Rewards",
+  "Coupons": "Coupons"
 }

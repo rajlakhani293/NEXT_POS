@@ -35,6 +35,8 @@ type CatalogPageShellProps = {
   }
   showDateRange?: boolean
   refreshSessionOnMutation?: boolean
+  rowActions?: (id: string, record: any) => any[]
+  onEditRecord?: (record: any, openEditForm: (record: any) => void) => void
 }
 
 export function CatalogPageShell({
@@ -50,6 +52,8 @@ export function CatalogPageShell({
   permissions = PERMISSIONS.products,
   showDateRange = true,
   refreshSessionOnMutation = false,
+  rowActions,
+  onEditRecord,
 }: CatalogPageShellProps) {
   const searchParams = useSearchParams()
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -101,6 +105,13 @@ export function CatalogPageShell({
   }
 
   const handleEdit = (record: any) => {
+    if (onEditRecord) {
+      onEditRecord(record, (nextRecord) => {
+        setEditId(nextRecord.id)
+        setIsFormOpen(true)
+      })
+      return
+    }
     setEditId(record.id)
     setIsFormOpen(true)
   }
@@ -139,6 +150,7 @@ export function CatalogPageShell({
           setAddEntityOpen={canCreate ? handleAdd : undefined}
           showEdit={canUpdate}
           onEdit={handleEdit}
+          rowActions={rowActions}
           showDelete={canDelete}
           deleteMutation={deleteRecord}
           showStatus={canUpdate}

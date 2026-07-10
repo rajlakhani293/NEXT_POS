@@ -420,5 +420,9 @@
   "Expense Accounts": "Comptes de dépenses",
   "Paid Expense Offset": "Compensation de dépense payée",
   "Paid Expense Offset Account": "Compte de compensation de dépense payée",
-  "New Account": "Nouveau compte"
+  "New Account": "Nouveau compte",
+  "Orders": "Commandes",
+  "Wallet History": "Historique du portefeuille",
+  "Rewards": "Récompenses",
+  "Coupons": "Coupons"
 }
