@@ -15,6 +15,9 @@ const endpointsConfig = {
     type: "query",
     query: () => getMutation("accounts/dropdown-list"),
   },
+  resetDefaultTransactionAccounts: {
+    query: () => getMutation("accounts/reset-defaults"),
+  },
   getTransactionAccountsFromCategory: {
     query: ({ payLoad }: { payLoad: any }) =>
       postMutation("../transactions-accounts/category-identifier")(payLoad),

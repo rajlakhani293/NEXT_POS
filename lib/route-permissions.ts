@@ -53,7 +53,6 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/settings/roles", permission: PERMISSIONS.roles.view },
   { path: "/settings/users", permission: PERMISSIONS.users.view },
   { path: "/settings/general", permission: PERMISSIONS.settings.view },
-  { path: "/settings/company", permission: PERMISSIONS.settings.view },
   { path: "/settings/branches", permission: PERMISSIONS.branches.view },
   { path: "/settings/pos", permission: PERMISSIONS.settings.view },
   { path: "/settings/customers", permission: PERMISSIONS.settings.view },

@@ -10,6 +10,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
+import { accounting } from "@/lib/api/accounting"
 import { media } from "@/lib/api/media"
 import { settings } from "@/lib/api/settings"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
@@ -23,6 +24,7 @@ type SourceSettingField = {
   type: string
   label: string
   description?: string
+  placeholder?: string
   validation?: string
   value: any
   options?: { value: string; label: string }[] | null
@@ -64,8 +66,6 @@ const selectOptions: Record<string, { value: string; label: string }[]> = {
   registration_enabled: yesNoOptions,
   registration_validated: yesNoOptions,
   customers_rewards_enabled: yesNoOptions,
-  customers_force_valid_email: yesNoOptions,
-  customers_force_unique_phone: yesNoOptions,
   customers_credit_enabled: yesNoOptions,
   orders_code_type: [
     { value: "date_sequential", label: "Sequential" },
@@ -230,6 +230,35 @@ const shortcutFieldNames = new Set([
   "pos_keyboard_toggle_merge",
 ])
 
+const generalCompanyLabels: Record<string, string> = {
+  store_name: "Company Name",
+  store_address: "Company Address",
+  store_city: "Company City",
+  store_phone: "Company Phone",
+  store_email: "Company Email",
+  store_pobox: "Company PO.Box",
+  store_fax: "Company Fax",
+  store_additional: "Company Additional Information",
+  store_square_logo: "Company Square Logo",
+  store_rectangle_logo: "Company Rectangle Logo",
+}
+
+const generalCompanyDescriptions: Record<string, string> = {
+  store_square_logo: "Choose what is the square logo of the company.",
+  store_rectangle_logo: "Choose what is the rectangle logo of the company.",
+}
+
+const generalCompanyPlaceholders: Record<string, string> = {
+  store_name: "Company Name",
+  store_address: "Company Address",
+  store_city: "Company City",
+  store_phone: "Company Phone",
+  store_email: "Company Email",
+  store_pobox: "Company PO.Box",
+  store_fax: "Company Fax",
+  store_additional: "Company Additional Information",
+}
+
 function normalizeIdentifier(identifier: string) {
   return identifier
 }
@@ -274,6 +303,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
   const [saveSettingsForm, saveState] = (settings as any).useSaveSettingsFormMutation()
   const [getBusinessSettings] = (settings as any).useGetBusinessSettingsMutation()
   const [resetTenantData, resetState] = (settings as any).useResetTenantDataMutation()
+  const [resetDefaultTransactionAccounts, accountingResetState] = (accounting as any).useResetDefaultTransactionAccountsMutation()
   const [uploadMedia, uploadMediaState] = (media as any).useUploadMediaMutation()
 
   useEffect(() => {
@@ -334,8 +364,21 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
   }
 
   const renderField = (field: SourceSettingField) => {
-    const label = t(field.label)
-    const description = field.description ? t(field.description) : ""
+    const labelKey =
+      sourceIdentifier === "general"
+        ? generalCompanyLabels[field.name] || field.label
+        : field.label
+    const descriptionKey =
+      sourceIdentifier === "general"
+        ? generalCompanyDescriptions[field.name] || field.description
+        : field.description
+    const placeholderKey =
+      sourceIdentifier === "general"
+        ? generalCompanyPlaceholders[field.name] || field.placeholder || labelKey
+        : field.placeholder || labelKey
+    const label = t(labelKey)
+    const description = descriptionKey ? t(descriptionKey) : ""
+    const placeholder = t(placeholderKey)
     const value = values[field.name]
     const required = String(field.validation || "").includes("required")
     const fieldOptions = (field.options || []).map((option) => ({
@@ -399,6 +442,13 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
     }
 
     if (field.type === "select" || field.type === "search-select") {
+      const emptyOption = options.find((option) => option.value === "")
+      const visibleOptions = options.filter((option) => option.value !== "")
+      const selectPlaceholder = required
+        ? t("Select an option")
+        : emptyOption?.label
+          ? t(emptyOption.label)
+          : t("Choose option")
       return (
         <div className="grid gap-1">
           <UniFieldSelect
@@ -406,9 +456,12 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
             required={required}
             value={selectValue(field.name, value)}
             onValueChange={(nextValue) => updateValue(field.name, nextValue)}
-            placeholder={t("Select an option")}
+            placeholder={selectPlaceholder}
+            allowClear={!required}
+            hasOptions={visibleOptions.length > 0}
+            emptyLabel="No records found"
           >
-            {options.map((option) => (
+            {visibleOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {t(option.label)}
               </SelectItem>
@@ -464,6 +517,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
           as={field.type === "textarea" ? "textarea" : "input"}
           type={field.type === "number" ? "number" : "text"}
           value={value ?? ""}
+          placeholder={placeholder}
           onChange={(event) => updateValue(field.name, event.target.value)}
         />
         {description ? (
@@ -536,6 +590,16 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
     showToast.success(response?.message || t("The form has been successfully saved."))
   }
 
+  const resetAccountingDefaults = async () => {
+    const confirmed = window.confirm(
+      t("This will clear all records and accounts. It's ideal if you want to start from scratch. Are you sure you want to reset default settings for accounting?")
+    )
+    if (!confirmed) return
+    const response = await resetDefaultTransactionAccounts().unwrap()
+    showToast.success(response?.message || t("The default accounting accounts has been created."))
+    getSettingsForm({ identifier: sourceIdentifier })
+  }
+
   if (formState.isLoading || !form) {
     return (
       <div className="flex h-48 items-center justify-center gap-3 text-sm font-semibold text-gray-500">
@@ -556,15 +620,27 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
           <p className="mt-1 text-sm text-gray-500">{t(form.description)}</p>
         </div>
         {tabs.length ? (
-          <Button
-            type="button"
-            onClick={save}
-            disabled={saveState.isLoading || resetState.isLoading}
-            className="shrink-0"
-          >
-            {saveState.isLoading || resetState.isLoading ? <Spinner /> : null}
-            {t("Save Settings")}
-          </Button>
+          <div className="flex shrink-0 items-center gap-2">
+            {sourceIdentifier === "accounting" ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={resetAccountingDefaults}
+                disabled={accountingResetState.isLoading}
+              >
+                {accountingResetState.isLoading ? <Spinner /> : null}
+                {t("Reset Default")}
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              onClick={save}
+              disabled={saveState.isLoading || resetState.isLoading}
+            >
+              {saveState.isLoading || resetState.isLoading ? <Spinner /> : null}
+              {t("Save Settings")}
+            </Button>
+          </div>
         ) : null}
       </div>
 
