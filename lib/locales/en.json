@@ -610,5 +610,11 @@
   "New Item Audio": "New Item Audio",
   "Reset Default": "Reset Default",
   "This will clear all records and accounts. It's ideal if you want to start from scratch. Are you sure you want to reset default settings for accounting?": "This will clear all records and accounts. It's ideal if you want to start from scratch. Are you sure you want to reset default settings for accounting?",
-  "The default accounting accounts has been created.": "The default accounting accounts has been created."
+  "The default accounting accounts has been created.": "The default accounting accounts has been created.",
+  "Company Settings": "Company Settings",
+  "Configure company profile information.": "Configure company profile information.",
+  "Legal Name": "Legal Name",
+  "Tax Number": "Tax Number",
+  "Company Logo": "Company Logo",
+  "Organization updated successfully.": "Organization updated successfully."
 }

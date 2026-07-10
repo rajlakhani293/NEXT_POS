@@ -108,7 +108,6 @@ interface BusinessSettings {
     order_types: string[]
     store_language?: string
     registration_enabled?: string
-    store_name?: string
     scale_barcode_enabled?: boolean
     scale_barcode_prefix?: string
     scale_barcode_product_length?: number

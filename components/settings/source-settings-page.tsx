@@ -230,35 +230,6 @@ const shortcutFieldNames = new Set([
   "pos_keyboard_toggle_merge",
 ])
 
-const generalCompanyLabels: Record<string, string> = {
-  store_name: "Company Name",
-  store_address: "Company Address",
-  store_city: "Company City",
-  store_phone: "Company Phone",
-  store_email: "Company Email",
-  store_pobox: "Company PO.Box",
-  store_fax: "Company Fax",
-  store_additional: "Company Additional Information",
-  store_square_logo: "Company Square Logo",
-  store_rectangle_logo: "Company Rectangle Logo",
-}
-
-const generalCompanyDescriptions: Record<string, string> = {
-  store_square_logo: "Choose what is the square logo of the company.",
-  store_rectangle_logo: "Choose what is the rectangle logo of the company.",
-}
-
-const generalCompanyPlaceholders: Record<string, string> = {
-  store_name: "Company Name",
-  store_address: "Company Address",
-  store_city: "Company City",
-  store_phone: "Company Phone",
-  store_email: "Company Email",
-  store_pobox: "Company PO.Box",
-  store_fax: "Company Fax",
-  store_additional: "Company Additional Information",
-}
-
 function normalizeIdentifier(identifier: string) {
   return identifier
 }
@@ -364,18 +335,9 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
   }
 
   const renderField = (field: SourceSettingField) => {
-    const labelKey =
-      sourceIdentifier === "general"
-        ? generalCompanyLabels[field.name] || field.label
-        : field.label
-    const descriptionKey =
-      sourceIdentifier === "general"
-        ? generalCompanyDescriptions[field.name] || field.description
-        : field.description
-    const placeholderKey =
-      sourceIdentifier === "general"
-        ? generalCompanyPlaceholders[field.name] || field.placeholder || labelKey
-        : field.placeholder || labelKey
+    const labelKey = field.label
+    const descriptionKey = field.description
+    const placeholderKey = field.placeholder || labelKey
     const label = t(labelKey)
     const description = descriptionKey ? t(descriptionKey) : ""
     const placeholder = t(placeholderKey)

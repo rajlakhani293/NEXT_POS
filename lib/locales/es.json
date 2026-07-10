@@ -410,5 +410,11 @@
   "New Item Audio": "Audio de nuevo artículo",
   "Reset Default": "Restablecer predeterminado",
   "This will clear all records and accounts. It's ideal if you want to start from scratch. Are you sure you want to reset default settings for accounting?": "Esto borrará todos los registros y cuentas. Es ideal si desea empezar desde cero. ¿Seguro que desea restablecer la configuración predeterminada de contabilidad?",
-  "The default accounting accounts has been created.": "Se han creado las cuentas contables predeterminadas."
+  "The default accounting accounts has been created.": "Se han creado las cuentas contables predeterminadas.",
+  "Company Settings": "Configuración de empresa",
+  "Configure company profile information.": "Configure la información del perfil de la empresa.",
+  "Legal Name": "Nombre legal",
+  "Tax Number": "Número fiscal",
+  "Company Logo": "Logotipo de la empresa",
+  "Organization updated successfully.": "Organización actualizada correctamente."
 }

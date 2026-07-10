@@ -56,11 +56,8 @@ export default function PrintLabelsPage() {
   const router = useRouter()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
-  const storeNameSetting = useAppSelector(
-    (state) => state.session.businessSettings?.settings?.store_name
-  )
   const companyName = useAppSelector((state) => state.session.company?.name)
-  const storeName = storeNameSetting || companyName || t("POS Store")
+  const storeName = companyName || t("POS Store")
   const currencyIndicator =
     posOptions.currency_preferred === "iso"
       ? posOptions.currency_iso

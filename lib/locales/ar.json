@@ -410,5 +410,11 @@
   "New Item Audio": "صوت عنصر جديد",
   "Reset Default": "إعادة ضبط الافتراضي",
   "This will clear all records and accounts. It's ideal if you want to start from scratch. Are you sure you want to reset default settings for accounting?": "سيؤدي هذا إلى مسح جميع السجلات والحسابات. هذا مناسب إذا كنت تريد البدء من جديد. هل أنت متأكد من إعادة ضبط الإعدادات الافتراضية للمحاسبة؟",
-  "The default accounting accounts has been created.": "تم إنشاء الحسابات المحاسبية الافتراضية."
+  "The default accounting accounts has been created.": "تم إنشاء الحسابات المحاسبية الافتراضية.",
+  "Company Settings": "إعدادات الشركة",
+  "Configure company profile information.": "قم بإعداد معلومات ملف الشركة.",
+  "Legal Name": "الاسم القانوني",
+  "Tax Number": "الرقم الضريبي",
+  "Company Logo": "شعار الشركة",
+  "Organization updated successfully.": "تم تحديث المؤسسة بنجاح."
 }

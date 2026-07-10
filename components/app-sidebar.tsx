@@ -264,6 +264,12 @@ const settingsNavSections: DashboardNavSection[] = [
     permission: PERMISSIONS.settings.view,
   },
   {
+    title: "Company",
+    url: "/settings/company",
+    icon: <StoreIcon />,
+    permission: PERMISSIONS.settings.view,
+  },
+  {
     title: "Branches",
     url: "/settings/branches",
     icon: <StoreIcon />,
