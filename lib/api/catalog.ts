@@ -38,6 +38,7 @@ const endpointsConfig = {
   deleteUnit: { query: deleteMutation("units/delete") },
   updateUnitStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("units/status", payLoad) },
   getUnitById: { query: ({ id }: { id: number }) => getMutation(`units/${id}`) },
+  getUnitSiblings: { query: ({ id }: { id: number }) => getMutation(`units/${id}/siblings`) },
 
   // Scale ranges
   getScaleRangesDropdown: { query: () => getMutation("scale-ranges/dropdown-list") },
@@ -59,6 +60,7 @@ const endpointsConfig = {
 
   // Taxes
   getTaxesDropdown: { query: () => getMutation("taxes/dropdown-list") },
+  getTaxGroupsSource: { query: () => getMutation("taxes/groups") },
   getTaxesData: { query: postMutation("taxes/get-transactions") },
   createTax: { query: createMutation("taxes/") },
   editTax: { query: ({ id, payLoad }: { id: any; payLoad: any }) => putMutation(`taxes/${id}`, payLoad) },
