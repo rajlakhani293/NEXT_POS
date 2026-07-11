@@ -701,5 +701,7 @@
   "No selling unit has been added.": "No selling unit has been added.",
   "No unit is available for this unit group.": "No unit is available for this unit group.",
   "New Group": "New Group",
-  "Remove": "Remove"
+  "Remove": "Remove",
+  "Remove Selling Unit": "Remove Selling Unit",
+  "Are you sure you want to remove this selling unit?": "Are you sure you want to remove this selling unit?"
 }

@@ -501,5 +501,7 @@
   "No selling unit has been added.": "لم تتم إضافة أي وحدة بيع.",
   "No unit is available for this unit group.": "لا توجد وحدة متاحة لهذه المجموعة.",
   "New Group": "مجموعة جديدة",
-  "Remove": "إزالة"
+  "Remove": "إزالة",
+  "Remove Selling Unit": "إزالة وحدة البيع",
+  "Are you sure you want to remove this selling unit?": "هل أنت متأكد من إزالة وحدة البيع هذه؟"
 }

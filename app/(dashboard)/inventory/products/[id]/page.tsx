@@ -19,6 +19,7 @@ import { UnitForm } from "@/app/(dashboard)/inventory/units/createUpdate"
 import { UnitGroupForm } from "@/app/(dashboard)/inventory/unit-groups/createUpdate"
 import { TaxGroupForm } from "@/app/(dashboard)/settings/tax-groups/createUpdate"
 import { Button } from "@/components/ui/button"
+import CustomModal from "@/components/ui/customModal"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SelectItem, SelectItemText } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
@@ -64,7 +65,7 @@ type ProductFormValues = {
 }
 
 type ProductUnitQuantityFormValues = {
-  id?: number
+  id?: number | string
   unit_id: string
   convert_unit_id: string
   barcode: string
@@ -403,6 +404,10 @@ export default function ProductFormPage() {
     useState<ProductUnitQuantityFormValues>(initialUnitQuantityValues)
   const [draftUnitQuantities, setDraftUnitQuantities] = useState<ProductUnitQuantityFormValues[]>([])
   const [showSellingForm, setShowSellingForm] = useState(false)
+  const [unitDeleteTarget, setUnitDeleteTarget] = useState<{
+    mode: "draft" | "saved"
+    record: any
+  } | null>(null)
 
   const [unitQuantityErrors, setUnitQuantityErrors] = useState<
     Record<string, string>
@@ -417,6 +422,7 @@ export default function ProductFormPage() {
   const loadKeyRef = useRef("")
   const mediaRequestKeyRef = useRef("")
   const mediaFileInputRef = useRef<HTMLInputElement | null>(null)
+  const draftUnitCounterRef = useRef(0)
 
   const [createProduct] = (catalog as any).useCreateProductMutation()
   const [editProduct] = (catalog as any).useEditProductMutation()
@@ -566,6 +572,14 @@ export default function ProductFormPage() {
     record.unit_name ||
     filteredUnitOptions.find((option) => option.value === String(record.unit_id))?.label ||
     t("Assigned Unit")
+  const getUnitRowKey = (record: any) =>
+    record?.id !== undefined && record?.id !== null
+      ? `id:${String(record.id)}`
+      : `unit:${String(record?.unit_id || "")}`
+  const getNextDraftUnitId = () => {
+    draftUnitCounterRef.current += 1
+    return Date.now() * 1000 + draftUnitCounterRef.current
+  }
 
   const loadMediaRecords = async (search = mediaSearch) => {
     const requestKey = `1:50:${search}`
@@ -726,7 +740,7 @@ export default function ProductFormPage() {
     }
     const nextForm: ProductUnitQuantityFormValues = {
       ...initialUnitQuantityValues,
-      id: isEdit ? undefined : Date.now(),
+      id: isEdit ? undefined : getNextDraftUnitId(),
       unit_id: String(nextUnit.value),
     }
     if (!isEdit) {
@@ -752,10 +766,11 @@ export default function ProductFormPage() {
     if (!isEdit) {
       const nextUnit = {
         ...unitQuantityForm,
-        id: unitQuantityForm.id || Date.now(),
+        id: unitQuantityForm.id || getNextDraftUnitId(),
       }
       setDraftUnitQuantities((current) => {
-        const withoutCurrent = current.filter((item) => item.id !== nextUnit.id)
+        const nextUnitKey = getUnitRowKey(nextUnit)
+        const withoutCurrent = current.filter((item) => getUnitRowKey(item) !== nextUnitKey)
         return [...withoutCurrent, nextUnit]
       })
       setUnitQuantityForm(nextUnit)
@@ -835,8 +850,21 @@ export default function ProductFormPage() {
   }
 
   const handleDeleteDraftUnitQuantity = (record: ProductUnitQuantityFormValues) => {
-    setDraftUnitQuantities((current) => current.filter((item) => item.id !== record.id))
-    if (unitQuantityForm.id === record.id) resetUnitQuantityForm()
+    const deleteKey = getUnitRowKey(record)
+    setDraftUnitQuantities((current) => {
+      const nextRows = current.filter((item) => getUnitRowKey(item) !== deleteKey)
+      if (getUnitRowKey(unitQuantityForm) === deleteKey) {
+        const nextActive = nextRows[0]
+        if (nextActive) {
+          setUnitQuantityForm(nextActive)
+          setUnitQuantityErrors({})
+          setShowSellingForm(true)
+        } else {
+          resetUnitQuantityForm()
+        }
+      }
+      return nextRows
+    })
   }
 
   const handleEditDraftUnitQuantity = (record: ProductUnitQuantityFormValues) => {
@@ -857,6 +885,23 @@ export default function ProductFormPage() {
     if (unitQuantityForm.id === record.id) {
       resetUnitQuantityForm()
     }
+  }
+
+  const requestDeleteUnitQuantity = (record: any) => {
+    setUnitDeleteTarget({
+      mode: isEdit ? "saved" : "draft",
+      record,
+    })
+  }
+
+  const confirmDeleteUnitQuantity = async () => {
+    if (!unitDeleteTarget) return
+    if (unitDeleteTarget.mode === "saved") {
+      await handleDeleteUnitQuantity(unitDeleteTarget.record)
+    } else {
+      handleDeleteDraftUnitQuantity(unitDeleteTarget.record)
+    }
+    setUnitDeleteTarget(null)
   }
 
   const handleAddGalleryImage = () => {
@@ -1270,7 +1315,6 @@ export default function ProductFormPage() {
                         {sellingUnitRows.map((record: any, index: number) => {
                           const isActive = String(unitQuantityForm.id || "") === String(record.id || "")
                           const openRecord = () => isEdit ? handleEditUnitQuantity(record) : handleEditDraftUnitQuantity(record)
-                          const removeRecord = () => isEdit ? handleDeleteUnitQuantity(record) : handleDeleteDraftUnitQuantity(record)
                           return (
                             <button
                               key={`selling-unit-tab-${record.id || record.unit_id || "draft"}-${index}`}
@@ -1289,13 +1333,13 @@ export default function ProductFormPage() {
                                 onClick={(event) => {
                                   event.preventDefault()
                                   event.stopPropagation()
-                                  removeRecord()
+                                  requestDeleteUnitQuantity(record)
                                 }}
                                 onKeyDown={(event) => {
                                   if (event.key === "Enter" || event.key === " ") {
                                     event.preventDefault()
                                     event.stopPropagation()
-                                    removeRecord()
+                                    requestDeleteUnitQuantity(record)
                                   }
                                 }}
                                 aria-label={t("Remove")}
@@ -1661,6 +1705,38 @@ export default function ProductFormPage() {
           onClose={() => setAddFormOpen(null)}
           onSuccess={() => handleAddFormSuccess("taxGroup")}
         />
+        <CustomModal
+          open={Boolean(unitDeleteTarget)}
+          onOpenChange={(open) => {
+            if (!open) setUnitDeleteTarget(null)
+          }}
+          title={t("Remove Selling Unit")}
+          showFooter
+          bodyClassName="border-y-0 py-0"
+          footerClassName="gap-2"
+          footer={
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setUnitDeleteTarget(null)}
+              >
+                {t("Cancel")}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={confirmDeleteUnitQuantity}
+              >
+                {t("Remove")}
+              </Button>
+            </>
+          }
+        >
+          <p className="text-sm text-muted-foreground">
+            {t("Are you sure you want to remove this selling unit?")}
+          </p>
+        </CustomModal>
         <Dialog open={mediaManagerOpen} onOpenChange={setMediaManagerOpen}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>

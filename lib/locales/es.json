@@ -501,5 +501,7 @@
   "No selling unit has been added.": "No se ha agregado ninguna unidad de venta.",
   "No unit is available for this unit group.": "No hay ninguna unidad disponible para este grupo de unidades.",
   "New Group": "Nuevo grupo",
-  "Remove": "Quitar"
+  "Remove": "Quitar",
+  "Remove Selling Unit": "Quitar unidad de venta",
+  "Are you sure you want to remove this selling unit?": "Seguro que desea quitar esta unidad de venta?"
 }
