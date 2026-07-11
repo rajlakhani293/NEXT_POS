@@ -480,5 +480,22 @@
   "Procurement refreshed successfully.": "Approvisionnement actualise avec succes.",
   "Procurement product deleted.": "Produit d'approvisionnement supprime.",
   "Yes": "Oui",
-  "No": "Non"
+  "No": "Non",
+  "EAN 8 barcode must contain exactly 8 digits.": "Le code EAN 8 doit contenir exactement 8 chiffres.",
+  "EAN 13 barcode must contain exactly 13 digits.": "Le code EAN 13 doit contenir exactement 13 chiffres.",
+  "UPC A barcode must contain exactly 12 digits.": "Le code UPC A doit contenir exactement 12 chiffres.",
+  "UPC E barcode must contain 6 or 8 digits.": "Le code UPC E doit contenir 6 ou 8 chiffres.",
+  "Code 11 barcode can only contain digits and dashes.": "Le code Code 11 ne peut contenir que des chiffres et des tirets.",
+  "Code 39 barcode contains unsupported characters.": "Le code Code 39 contient des caracteres non pris en charge.",
+  "Codabar barcode must start and end with A, B, C, or D.": "Le code Codabar doit commencer et finir par A, B, C ou D.",
+  "Code 128 barcode contains unsupported characters.": "Le code Code 128 contient des caracteres non pris en charge.",
+  "Selling Unit is required": "L'unite de vente est obligatoire",
+  "Select Unit Group": "Selectionner un groupe d'unites",
+  "Determine the unit for sale.": "Determinez l'unite de vente.",
+  "Select an image from Medias Manager.": "Selectionnez une image depuis le gestionnaire de medias.",
+  "Selected media has no image URL.": "Le media selectionne n'a pas d'URL d'image.",
+  "Choose an image": "Choisir une image",
+  "Add Image": "Ajouter une image",
+  "No image has been added.": "Aucune image n'a ete ajoutee.",
+  "Choose an image to add on the product gallery": "Choisissez une image a ajouter a la galerie du produit"
 }

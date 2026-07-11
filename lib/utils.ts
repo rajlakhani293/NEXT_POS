@@ -198,3 +198,18 @@ export const buildPayload = (
   })
   return payload
 }
+
+export const blankToNull = (
+  values: Record<string, any>,
+  fields: string[]
+): Record<string, any> => {
+  const payload = { ...values }
+
+  fields.forEach((field) => {
+    if (typeof payload[field] === "string" && payload[field].trim() === "") {
+      payload[field] = null
+    }
+  })
+
+  return payload
+}

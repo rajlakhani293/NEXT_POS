@@ -6,6 +6,7 @@ import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { UnitGroupForm } from "@/app/(dashboard)/inventory/unit-groups/createUpdate"
 import { catalog } from "@/lib/api/catalog"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { blankToNull } from "@/lib/utils"
 
 const initialValues = {
   group_id: "",
@@ -100,12 +101,18 @@ export function UnitForm(props: any) {
         createHook={(catalog as any).useCreateUnitMutation}
         editHook={(catalog as any).useEditUnitMutation}
         getByIdHook={(catalog as any).useGetUnitByIdMutation}
-        buildPayload={(values) => ({
-          ...values,
-          group_id: Number(values.group_id),
-          value: Number(values.value || 1),
-          base_unit: Boolean(values.base_unit),
-        })}
+        buildPayload={(values) =>
+          blankToNull(
+            {
+              ...values,
+              group_id: Number(values.group_id),
+              name: String(values.name || "").trim(),
+              value: Number(values.value || 1),
+              base_unit: Boolean(values.base_unit),
+            },
+            ["identifier", "preview_url"]
+          )
+        }
       />
       <UnitGroupForm
         isOpen={isUnitGroupFormOpen}

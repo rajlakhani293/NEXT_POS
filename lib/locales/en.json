@@ -680,5 +680,22 @@
   "Procurement refreshed successfully.": "Procurement refreshed successfully.",
   "Procurement product deleted.": "Procurement product deleted.",
   "Yes": "Yes",
-  "No": "No"
+  "No": "No",
+  "EAN 8 barcode must contain exactly 8 digits.": "EAN 8 barcode must contain exactly 8 digits.",
+  "EAN 13 barcode must contain exactly 13 digits.": "EAN 13 barcode must contain exactly 13 digits.",
+  "UPC A barcode must contain exactly 12 digits.": "UPC A barcode must contain exactly 12 digits.",
+  "UPC E barcode must contain 6 or 8 digits.": "UPC E barcode must contain 6 or 8 digits.",
+  "Code 11 barcode can only contain digits and dashes.": "Code 11 barcode can only contain digits and dashes.",
+  "Code 39 barcode contains unsupported characters.": "Code 39 barcode contains unsupported characters.",
+  "Codabar barcode must start and end with A, B, C, or D.": "Codabar barcode must start and end with A, B, C, or D.",
+  "Code 128 barcode contains unsupported characters.": "Code 128 barcode contains unsupported characters.",
+  "Selling Unit is required": "Selling Unit is required",
+  "Select Unit Group": "Select Unit Group",
+  "Determine the unit for sale.": "Determine the unit for sale.",
+  "Select an image from Medias Manager.": "Select an image from Medias Manager.",
+  "Selected media has no image URL.": "Selected media has no image URL.",
+  "Choose an image": "Choose an image",
+  "Add Image": "Add Image",
+  "No image has been added.": "No image has been added.",
+  "Choose an image to add on the product gallery": "Choose an image to add on the product gallery"
 }

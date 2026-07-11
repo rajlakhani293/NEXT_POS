@@ -480,5 +480,22 @@
   "Procurement refreshed successfully.": "تم تحديث التوريد بنجاح.",
   "Procurement product deleted.": "تم حذف منتج التوريد.",
   "Yes": "نعم",
-  "No": "لا"
+  "No": "لا",
+  "EAN 8 barcode must contain exactly 8 digits.": "يجب أن يحتوي باركود EAN 8 على 8 أرقام بالضبط.",
+  "EAN 13 barcode must contain exactly 13 digits.": "يجب أن يحتوي باركود EAN 13 على 13 رقما بالضبط.",
+  "UPC A barcode must contain exactly 12 digits.": "يجب أن يحتوي باركود UPC A على 12 رقما بالضبط.",
+  "UPC E barcode must contain 6 or 8 digits.": "يجب أن يحتوي باركود UPC E على 6 أو 8 أرقام.",
+  "Code 11 barcode can only contain digits and dashes.": "يمكن أن يحتوي باركود Code 11 على أرقام وشرطات فقط.",
+  "Code 39 barcode contains unsupported characters.": "يحتوي باركود Code 39 على أحرف غير مدعومة.",
+  "Codabar barcode must start and end with A, B, C, or D.": "يجب أن يبدأ وينتهي باركود Codabar بالحرف A أو B أو C أو D.",
+  "Code 128 barcode contains unsupported characters.": "يحتوي باركود Code 128 على أحرف غير مدعومة.",
+  "Selling Unit is required": "وحدة البيع مطلوبة",
+  "Select Unit Group": "اختر مجموعة الوحدات",
+  "Determine the unit for sale.": "حدد وحدة البيع.",
+  "Select an image from Medias Manager.": "اختر صورة من مدير الوسائط.",
+  "Selected media has no image URL.": "الوسيط المحدد لا يحتوي على رابط صورة.",
+  "Choose an image": "اختر صورة",
+  "Add Image": "إضافة صورة",
+  "No image has been added.": "لم تتم إضافة أي صورة.",
+  "Choose an image to add on the product gallery": "اختر صورة لإضافتها إلى معرض المنتج"
 }
