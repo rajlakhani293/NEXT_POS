@@ -5,6 +5,7 @@ import { useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
+import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { PermissionGuard } from "@/components/permission-guard"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/permissions"
@@ -129,49 +130,51 @@ export function CatalogPageShell({
   }, [canCreate, searchParams])
 
   return (
-    <PermissionGuard permission={permissions.view}>
-      <div className="h-full space-y-4">
-        <DynamicTable
-          data={orders}
-          columns={translatedColumns}
-          tableTitle={t(tableTitle)}
-          title={canCreate ? t(addTitle) : undefined}
-          showSearch
-          searchTerm={searchTerm}
-          currentPage={currentPage}
-          itemsPerPage={itemsPerPage}
-          totalItems={totalItems}
-          onPageChange={setCurrentPage}
-          onFilterChange={handleFilterChange}
-          sortConfig={sortConfig}
-          onSort={handleSort}
-          sortableFields={sortableFields}
-          isLoading={isLoading}
-          setAddEntityOpen={canCreate ? handleAdd : undefined}
-          showEdit={canUpdate}
-          onEdit={handleEdit}
-          rowActions={rowActions}
-          showDelete={canDelete}
-          deleteMutation={deleteRecord}
-          showStatus={canUpdate}
-          statusChangeMutation={({ ids, status }: any) =>
-            updateStatus({ payLoad: { ids, status } })
-          }
-          triggerRefresh={handleRefresh}
-          deleteModalTitle={t(deleteTitle)}
-          deleteModalDescription={t(deleteDescription)}
-          showDateRange={showDateRange}
-          selectedDateRange={selectedDateRange}
-          dateFilters={dateFilters}
-        />
+    <DashboardPage padding="default">
+      <PermissionGuard permission={permissions.view}>
+        <div className="h-full space-y-4">
+          <DynamicTable
+            data={orders}
+            columns={translatedColumns}
+            tableTitle={t(tableTitle)}
+            title={canCreate ? t(addTitle) : undefined}
+            showSearch
+            searchTerm={searchTerm}
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={totalItems}
+            onPageChange={setCurrentPage}
+            onFilterChange={handleFilterChange}
+            sortConfig={sortConfig}
+            onSort={handleSort}
+            sortableFields={sortableFields}
+            isLoading={isLoading}
+            setAddEntityOpen={canCreate ? handleAdd : undefined}
+            showEdit={canUpdate}
+            onEdit={handleEdit}
+            rowActions={rowActions}
+            showDelete={canDelete}
+            deleteMutation={deleteRecord}
+            showStatus={canUpdate}
+            statusChangeMutation={({ ids, status }: any) =>
+              updateStatus({ payLoad: { ids, status } })
+            }
+            triggerRefresh={handleRefresh}
+            deleteModalTitle={t(deleteTitle)}
+            deleteModalDescription={t(deleteDescription)}
+            showDateRange={showDateRange}
+            selectedDateRange={selectedDateRange}
+            dateFilters={dateFilters}
+          />
 
-        <FormComponent
-          isOpen={isFormOpen}
-          onClose={handleClose}
-          onSuccess={handleRefresh}
-          editId={editId}
-        />
-      </div>
-    </PermissionGuard>
+          <FormComponent
+            isOpen={isFormOpen}
+            onClose={handleClose}
+            onSuccess={handleRefresh}
+            editId={editId}
+          />
+        </div>
+      </PermissionGuard>
+    </DashboardPage>
   )
 }

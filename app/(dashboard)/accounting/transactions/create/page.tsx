@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 
 import { PermissionGuard } from "@/components/permission-guard"
+import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Button } from "@/components/ui/button"
 import { SelectItem } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -160,10 +161,11 @@ export default function CreateAccountingTransactionPage() {
   }
 
   return (
-    <PermissionGuard
-      permission={isEditing ? PERMISSIONS.expenses.update : PERMISSIONS.expenses.create}
-    >
-      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gray-50">
+    <DashboardPage padding="none">
+      <PermissionGuard
+        permission={isEditing ? PERMISSIONS.expenses.update : PERMISSIONS.expenses.create}
+      >
+        <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gray-50">
         <div className="flex flex-none items-center gap-4 border-b bg-white px-6 py-3">
           <Button
             size="icon"
@@ -325,7 +327,8 @@ export default function CreateAccountingTransactionPage() {
             {t("Save Transaction")}
           </Button>
         </div>
-      </div>
-    </PermissionGuard>
+        </div>
+      </PermissionGuard>
+    </DashboardPage>
   )
 }

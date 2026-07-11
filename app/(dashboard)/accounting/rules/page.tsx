@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Plus, RotateCcw, Save, Trash2 } from "lucide-react"
 
 import { PermissionGuard } from "@/components/permission-guard"
+import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Button } from "@/components/ui/button"
 import { SelectItem } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
@@ -205,8 +206,9 @@ export default function AccountingRulesPage() {
   ])
 
   return (
-    <PermissionGuard permission={PERMISSIONS.expenses.update}>
-      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gray-50">
+    <DashboardPage padding="none">
+      <PermissionGuard permission={PERMISSIONS.expenses.update}>
+        <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gray-50">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-white px-5 py-3">
           <div>
             <h1 className="text-xl font-semibold">{t("Rules")}</h1>
@@ -226,7 +228,8 @@ export default function AccountingRulesPage() {
           </div>
         </div>
         <div className="min-h-0 flex-1 space-y-3 overflow-auto p-4">{content}</div>
-      </div>
-    </PermissionGuard>
+        </div>
+      </PermissionGuard>
+    </DashboardPage>
   )
 }

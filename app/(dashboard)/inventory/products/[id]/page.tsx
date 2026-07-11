@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 
 import { CategoryForm } from "@/app/(dashboard)/inventory/categories/createUpdate"
+import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { UnitForm } from "@/app/(dashboard)/inventory/units/createUpdate"
 import { TaxGroupForm } from "@/app/(dashboard)/settings/tax-groups/createUpdate"
 import { ImageUpload } from "@/components/imageUpload"
@@ -617,7 +618,7 @@ export default function ProductFormPage() {
   }
 
   return (
-    <>
+    <DashboardPage padding="none">
       <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
         <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
           <div className="flex items-center justify-between gap-3">
@@ -1264,6 +1265,6 @@ export default function ProductFormPage() {
           onSuccess={() => handleAddFormSuccess("taxGroup")}
         />
       </div>
-    </>
+    </DashboardPage>
   )
 }

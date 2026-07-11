@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { DashboardPage as DashboardPageShell } from "@/components/dashboard/dashboard-page"
 import { Spinner } from "@/components/ui/spinner"
 import { reports } from "@/lib/api/reports"
 import { showToast } from "@/lib/toast"
@@ -162,7 +163,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <DashboardPageShell padding="default">
+      <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-950">Dashboard</h1>
@@ -617,7 +619,7 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </DashboardPageShell>
   )
 }
-

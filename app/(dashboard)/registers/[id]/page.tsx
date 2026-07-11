@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import DynamicTable from "@/components/DynamicTable"
+import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Button } from "@/components/ui/button"
 import { useTableData } from "@/hooks/useTableData"
 import { registers } from "@/lib/api/registers"
@@ -59,7 +60,8 @@ export default function RegisterShiftHistoryPage() {
     register?.name || table.orders[0]?.register_name || t("Cash Register")
 
   return (
-    <div>
+    <DashboardPage padding="none">
+      <div>
       <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
         <div className="flex items-center gap-3">
           <Button
@@ -116,6 +118,7 @@ export default function RegisterShiftHistoryPage() {
         shiftId={selectedShiftId}
         onClose={() => setSelectedShiftId(null)}
       />
-    </div>
+      </div>
+    </DashboardPage>
   )
 }

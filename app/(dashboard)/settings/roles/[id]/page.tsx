@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
@@ -622,7 +623,8 @@ export default function RoleFormPage() {
   const isLoading = permissions.isLoading || (isEdit && role.isLoading)
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <DashboardPage padding="none">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
         <div className="flex flex-none flex-col gap-3 border-b bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex items-center gap-3">
@@ -801,6 +803,7 @@ export default function RoleFormPage() {
           )}
         </div>
       </form>
-    </div>
+      </div>
+    </DashboardPage>
   )
 }

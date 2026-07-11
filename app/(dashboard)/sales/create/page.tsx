@@ -30,6 +30,7 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import {
   Dialog,
   DialogContent,
@@ -1453,7 +1454,8 @@ export default function SalesPage() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col" id="pos-container">
+    <DashboardPage padding="none">
+      <div className="flex h-full min-h-0 flex-col" id="pos-container">
       <div className="flex shrink-0 overflow-hidden px-2 pt-2">
         <div className="-mx-2 flex overflow-x-auto pb-1">
           <div className="flex shrink-0 px-2">
@@ -3418,6 +3420,7 @@ export default function SalesPage() {
         </DialogContent>
       </Dialog>
 
-    </div>
+      </div>
+    </DashboardPage>
   )
 }

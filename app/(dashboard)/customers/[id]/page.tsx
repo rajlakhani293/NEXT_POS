@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
@@ -243,7 +244,8 @@ export default function CustomerFormPage() {
   const tabsToRender: CustomerTab[] = ["general", "billing", "shipping"]
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
+    <DashboardPage padding="none">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
       <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -567,6 +569,7 @@ export default function CustomerFormPage() {
           </form>
         )}
       </div>
-    </div>
+      </div>
+    </DashboardPage>
   )
 }

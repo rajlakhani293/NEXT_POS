@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import JsBarcode from "jsbarcode"
 
 import { Button } from "@/components/ui/button"
+import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { PermissionGuard } from "@/components/permission-guard"
 import { Spinner } from "@/components/ui/spinner"
 import { SelectItem } from "@/components/ui/select"
@@ -203,8 +204,9 @@ export default function PrintLabelsPage() {
   }
 
   return (
-    <PermissionGuard permission={PERMISSIONS.products.labels}>
-      <div className="flex h-full min-h-0 flex-col">
+    <DashboardPage padding="none">
+      <PermissionGuard permission={PERMISSIONS.products.labels}>
+        <div className="flex h-full min-h-0 flex-col">
         {/* Top Header Section */}
         <div className="flex-none border-b border-gray-200 bg-white px-6 py-3 no-print">
           <div className="flex items-center justify-between">
@@ -539,7 +541,8 @@ export default function PrintLabelsPage() {
           }
         `
         }} />
-      </div>
-    </PermissionGuard>
+        </div>
+      </PermissionGuard>
+    </DashboardPage>
   )
 }

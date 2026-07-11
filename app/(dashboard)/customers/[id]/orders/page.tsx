@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, ReceiptText } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
+import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { customers } from "@/lib/api/customers"
@@ -103,7 +104,8 @@ export default function CustomerOrdersPage() {
   const goBack = () => router.push("/customers")
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
+    <DashboardPage padding="none">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
       <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
         <div className="flex items-center gap-3">
           <Button
@@ -183,6 +185,7 @@ export default function CustomerOrdersPage() {
           />
         )}
       </div>
-    </div>
+      </div>
+    </DashboardPage>
   )
 }

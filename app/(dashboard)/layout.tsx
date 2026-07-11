@@ -1,9 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { usePathname } from "next/navigation"
 
 import { AppSidebar } from "@/components/app-sidebar"
+import {
+  DashboardLayoutProvider,
+  useDashboardPadding,
+} from "@/components/dashboard/dashboard-page"
 import { RoutePermissionGuard } from "@/components/route-permission-guard"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -23,8 +26,16 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const pathname = usePathname()
+  return (
+    <DashboardLayoutProvider>
+      <DashboardLayoutFrame>{children}</DashboardLayoutFrame>
+    </DashboardLayoutProvider>
+  )
+}
+
+function DashboardLayoutFrame({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
+  const padding = useDashboardPadding()
   const { clearSession } = useSession()
   const user = useAppSelector((state) => state.session.user)
   const branch = useAppSelector((state) => state.session.branch)
@@ -33,23 +44,6 @@ export default function DashboardLayout({
   const [isOffline, setIsOffline] = useState(
     typeof navigator !== "undefined" ? !navigator.onLine : false
   )
-  const noPaddingRules = [
-    "/sales/create",
-    /^\/inventory\/products\/[^/]+$/,
-    /^\/customers\/[^/]+(\/orders|\/account-history|\/rewards|\/coupons)?$/,
-    /^\/purchases\/orders\/[^/]+$/,
-    /^\/registers\/[^/]$/,
-    /^\/reports\/[^/]+$/,
-    /^\/settings\/roles\/(create|\d+)$/,
-    "/accounting/transactions/create",
-    "/inventory/labels",
-    "/accounting/rules"
-  ]
-  const isNoPaddingPage = noPaddingRules.some((rule) =>
-    typeof rule === "string" ? pathname === rule : rule.test(pathname)
-  )
-
-
   useEffect(() => {
     const handleOnline = () => setIsOffline(false)
     const handleOffline = () => setIsOffline(true)
@@ -89,7 +83,7 @@ export default function DashboardLayout({
               <div
                 className={[
                   "thin-scrollbar m-2 flex min-h-0 flex-1 flex-col rounded-lg border border-gray-100 bg-white",
-                  isNoPaddingPage ? "overflow-hidden p-0" : "overflow-y-auto p-6",
+                  padding === "none" ? "overflow-hidden p-0" : "overflow-y-auto p-6",
                 ].join(" ")}
               >
                 <RoutePermissionGuard>{children}</RoutePermissionGuard>
