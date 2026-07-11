@@ -497,5 +497,9 @@
   "Choose an image": "Choisir une image",
   "Add Image": "Ajouter une image",
   "No image has been added.": "Aucune image n'a ete ajoutee.",
-  "Choose an image to add on the product gallery": "Choisissez une image a ajouter a la galerie du produit"
+  "Choose an image to add on the product gallery": "Choisissez une image a ajouter a la galerie du produit",
+  "No selling unit has been added.": "Aucune unite de vente n'a ete ajoutee.",
+  "No unit is available for this unit group.": "Aucune unite n'est disponible pour ce groupe d'unites.",
+  "New Group": "Nouveau groupe",
+  "Remove": "Retirer"
 }

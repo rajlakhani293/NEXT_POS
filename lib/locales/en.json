@@ -697,5 +697,9 @@
   "Choose an image": "Choose an image",
   "Add Image": "Add Image",
   "No image has been added.": "No image has been added.",
-  "Choose an image to add on the product gallery": "Choose an image to add on the product gallery"
+  "Choose an image to add on the product gallery": "Choose an image to add on the product gallery",
+  "No selling unit has been added.": "No selling unit has been added.",
+  "No unit is available for this unit group.": "No unit is available for this unit group.",
+  "New Group": "New Group",
+  "Remove": "Remove"
 }

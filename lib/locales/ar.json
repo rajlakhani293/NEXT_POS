@@ -497,5 +497,9 @@
   "Choose an image": "اختر صورة",
   "Add Image": "إضافة صورة",
   "No image has been added.": "لم تتم إضافة أي صورة.",
-  "Choose an image to add on the product gallery": "اختر صورة لإضافتها إلى معرض المنتج"
+  "Choose an image to add on the product gallery": "اختر صورة لإضافتها إلى معرض المنتج",
+  "No selling unit has been added.": "لم تتم إضافة أي وحدة بيع.",
+  "No unit is available for this unit group.": "لا توجد وحدة متاحة لهذه المجموعة.",
+  "New Group": "مجموعة جديدة",
+  "Remove": "إزالة"
 }

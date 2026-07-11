@@ -4,18 +4,25 @@ import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import {
   ArrowLeft,
+  ImagePlus,
   Plus,
+  Search,
   Trash2,
+  Upload,
   WandSparkles,
+  X,
 } from "lucide-react"
 
 import { CategoryForm } from "@/app/(dashboard)/inventory/categories/createUpdate"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { UnitForm } from "@/app/(dashboard)/inventory/units/createUpdate"
+import { UnitGroupForm } from "@/app/(dashboard)/inventory/unit-groups/createUpdate"
 import { TaxGroupForm } from "@/app/(dashboard)/settings/tax-groups/createUpdate"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SelectItem, SelectItemText } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
+import { Switch } from "@/components/ui/switch"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { catalog } from "@/lib/api/catalog"
@@ -23,7 +30,6 @@ import { media } from "@/lib/api/media"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
-import { cn } from "@/lib/utils"
 
 type ProductFormValues = {
   name: string
@@ -64,8 +70,13 @@ type ProductUnitQuantityFormValues = {
   barcode: string
   quantity: string
   sale_price: string
+  wholesale_price: string
   purchase_price: string
-  is_default: boolean
+  is_weighable: boolean
+  stock_alert_enabled: boolean
+  low_quantity: string
+  visible: boolean
+  preview_url: string
   scale_plu: string
 }
 
@@ -105,10 +116,15 @@ const initialUnitQuantityValues: ProductUnitQuantityFormValues = {
   unit_id: "",
   convert_unit_id: "",
   barcode: "",
-  quantity: "",
+  quantity: "1",
   sale_price: "",
+  wholesale_price: "",
   purchase_price: "",
-  is_default: false,
+  is_weighable: false,
+  stock_alert_enabled: false,
+  low_quantity: "",
+  visible: true,
+  preview_url: "",
   scale_plu: "",
 }
 
@@ -120,8 +136,32 @@ type ProductGalleryFormValues = {
   featured: boolean
 }
 
+type MediaRecord = {
+  id: number | string
+  name?: string
+  file_name?: string
+  url?: string
+  path?: string
+  full_url?: string
+  preview_url?: string
+  sizes?: {
+    thumb?: string
+    original?: string
+  }
+}
+
+const uniqueBy = <T,>(items: T[] = [], getKey: (item: T) => string) => {
+  const seen = new Set<string>()
+  return items.filter((item) => {
+    const key = getKey(item)
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 const toOption = (items: any[] = []) =>
-  items.map((item) => ({
+  uniqueBy(items, (item) => String(item?.id || "")).map((item) => ({
     label: item.short_name ? `${item.name} (${item.short_name})` : item.name,
     value: String(item.id),
   }))
@@ -129,6 +169,51 @@ const toOption = (items: any[] = []) =>
 const appendIfPresent = (formData: FormData, key: string, value: any) => {
   if (value === undefined || value === null || value === "") return
   formData.append(key, String(value))
+}
+
+const resolveAssetUrl = (value?: string | null) => {
+  if (!value) return ""
+  if (/^(https?:|data:|blob:)/.test(value)) return value
+  const base = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/api\/?$/, "").replace(/\/$/, "")
+  const path = value.startsWith("/") ? value : `/${value}`
+  return `${base}${path}`
+}
+
+const mediaImageUrl = (record?: MediaRecord | null) =>
+  resolveAssetUrl(
+    record?.sizes?.original ||
+    record?.sizes?.thumb ||
+    record?.url ||
+    record?.full_url ||
+    record?.path ||
+    record?.preview_url ||
+    ""
+  )
+
+function YesNoToggle({
+  label,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string
+  value: boolean
+  onChange: (value: boolean) => void
+  disabled?: boolean
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="flex h-[66px] items-center justify-between rounded-md border-2 border-input bg-white px-3">
+      <div>
+        <div className="text-sm font-semibold text-gray-700">{label}</div>
+        <div className="text-xs font-medium text-muted-foreground">
+          {value ? t("Yes") : t("No")}
+        </div>
+      </div>
+      <Switch checked={value} disabled={disabled} onCheckedChange={onChange} />
+    </div>
+  )
 }
 
 const generateBarcode = () => {
@@ -253,14 +338,15 @@ function buildProductFormData(
       quantity: unit.quantity || "1",
       sale_price: unit.sale_price || "0",
       sale_price_edit: unit.sale_price || "0",
-      wholesale_price: "0",
-      wholesale_price_edit: "0",
+      wholesale_price: unit.wholesale_price || "0",
+      wholesale_price_edit: unit.wholesale_price || "0",
       cogs: unit.purchase_price || "0",
-      stock_alert_enabled: values.product_type === "product",
-      low_quantity: values.min_stock || "0",
-      is_weighable: false,
+      stock_alert_enabled: Boolean(unit.stock_alert_enabled),
+      low_quantity: unit.low_quantity || "0",
+      is_weighable: Boolean(unit.is_weighable),
       scale_plu: unit.scale_plu || "",
-      visible: true,
+      visible: unit.visible !== false,
+      preview_url: unit.preview_url || "",
     })),
   }))
   formData.append("images_json", JSON.stringify(
@@ -271,7 +357,7 @@ function buildProductFormData(
         media_id: image.media_id || null,
         name: image.name || "",
         url: image.url,
-        featured: image.featured || index === 0,
+        featured: Boolean(image.featured),
       }))
   ))
 
@@ -307,24 +393,30 @@ export default function ProductFormPage() {
   const [isFooterStuck, setIsFooterStuck] = useState(false)
   const [gallery, setGallery] = useState<ProductGalleryFormValues[]>([])
   const [mediaSearch, setMediaSearch] = useState("")
-  const [selectedMediaId, setSelectedMediaId] = useState("")
-  const [selectedMediaPrimary, setSelectedMediaPrimary] = useState(false)
+  const [mediaTab, setMediaTab] = useState<"upload" | "gallery">("gallery")
+  const [mediaManagerOpen, setMediaManagerOpen] = useState(false)
+  const [activeGalleryIndex, setActiveGalleryIndex] = useState<number | null>(null)
+  const [mediaPickerTarget, setMediaPickerTarget] = useState<"gallery" | "unit-preview" | null>(null)
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false)
 
   const [unitQuantityForm, setUnitQuantityForm] =
     useState<ProductUnitQuantityFormValues>(initialUnitQuantityValues)
   const [draftUnitQuantities, setDraftUnitQuantities] = useState<ProductUnitQuantityFormValues[]>([])
+  const [showSellingForm, setShowSellingForm] = useState(false)
 
   const [unitQuantityErrors, setUnitQuantityErrors] = useState<
     Record<string, string>
   >({})
   const [isSavingUnitQuantity, setIsSavingUnitQuantity] = useState(false)
   const [addFormOpen, setAddFormOpen] = useState<
-    "category" | "unit" | "taxGroup" | null
+    "category" | "unit" | "unitGroup" | "taxGroup" | null
   >(null)
 
   const contentRef = useRef<HTMLDivElement>(null)
   const paginationSentinelRef = useRef<HTMLDivElement>(null)
   const loadKeyRef = useRef("")
+  const mediaRequestKeyRef = useRef("")
+  const mediaFileInputRef = useRef<HTMLInputElement | null>(null)
 
   const [createProduct] = (catalog as any).useCreateProductMutation()
   const [editProduct] = (catalog as any).useEditProductMutation()
@@ -352,34 +444,35 @@ export default function ProductFormPage() {
     catalog as any
   ).useGetUnitGroupsDropdownMutation()
   const [getMediaData, mediaState] = (media as any).useGetMediaDataMutation()
+  const [uploadMedia] = (media as any).useUploadMediaMutation()
 
   useEffect(() => {
-    const loadKey = `${id}:${isEdit ? "edit" : "create"}`
+    const loadKey = `${id}:${isEdit ? "edit" : "create"}:${posOptions.quick_product_default_unit || ""}`
     if (loadKeyRef.current === loadKey) return
     loadKeyRef.current = loadKey
 
     const load = async () => {
-      const [categoriesResponse, , unitsResponse, unitGroupsResponse] = await Promise.all([
+      const [, , unitsResponse, unitGroupsResponse] = await Promise.all([
         getCategoriesDropdown(),
         getTaxGroupsDropdown(),
         getUnitsDropdown(),
         getUnitGroupsDropdown(),
-        getMediaData({ page: 1, per_page: 50 }),
       ])
 
       if (!isEdit) {
-        const firstCategory = categoriesResponse?.data?.data?.[0]
-        const firstUnit = unitsResponse?.data?.data?.[0]
+        const defaultUnitId = String(posOptions.quick_product_default_unit || "")
+        const defaultUnit = (unitsResponse?.data?.data || []).find(
+          (unit: any) => String(unit.id) === defaultUnitId
+        )
+        const defaultGroupId =
+          (defaultUnit?.group_id ? String(defaultUnit.group_id) : "") ||
+          (unitGroupsResponse?.data?.data?.[0]?.id ? String(unitGroupsResponse.data.data[0].id) : "")
         setFormData({
           ...initialValues,
-          category_id: firstCategory?.id ? String(firstCategory.id) : "",
-          unit_id: firstUnit?.id ? String(firstUnit.id) : "",
-          unit_group_id: firstUnit?.group_id
-            ? String(firstUnit.group_id)
-            : unitGroupsResponse?.data?.data?.[0]?.id
-              ? String(unitGroupsResponse.data.data[0].id)
-              : "",
+          unit_id: defaultUnit?.id ? String(defaultUnit.id) : "",
+          unit_group_id: defaultGroupId,
         })
+        setDraftUnitQuantities([])
         return
       }
 
@@ -427,7 +520,7 @@ export default function ProductFormPage() {
         id: image.id,
         media_id: image.media_id,
         name: image.name || "",
-        url: image.url || "",
+        url: resolveAssetUrl(image.url || image.preview_url || ""),
         featured: Boolean(image.featured),
       })))
     }
@@ -440,9 +533,9 @@ export default function ProductFormPage() {
     getTaxGroupsDropdown,
     getUnitsDropdown,
     getUnitGroupsDropdown,
-    getMediaData,
     id,
     isEdit,
+    posOptions.quick_product_default_unit,
   ])
 
   const isStockProduct = formData.product_type === "product"
@@ -453,15 +546,41 @@ export default function ProductFormPage() {
     unitGroups.isLoading ||
     (isEdit && product.isLoading)
   const categoryOptions = toOption(categories.data?.data)
-  const unitOptions = toOption(units.data?.data)
+  const unitRecords = units.data?.data || []
+  const unitOptions = toOption(unitRecords)
   const unitGroupOptions = toOption(unitGroups.data?.data)
   const filteredUnitOptions = unitOptions.filter((option) => {
     if (!formData.unit_group_id) return true
-    const record = (units.data?.data || []).find((unit: any) => String(unit.id) === option.value)
+    const record = unitRecords.find((unit: any) => String(unit.id) === option.value)
     return String(record?.group_id || "") === String(formData.unit_group_id)
   })
-  const taxGroupRecords = taxGroups.data?.data || []
-  const mediaRecords = mediaState.data?.data?.items || mediaState.data?.data?.data || mediaState.data?.data || []
+  const taxGroupRecords = uniqueBy(taxGroups.data?.data || [], (group: any) => String(group?.id || ""))
+  const rawMediaRecords = mediaState.data?.data?.items || mediaState.data?.data?.data || mediaState.data?.data || []
+  const mediaRecords = uniqueBy(rawMediaRecords, (record: any) => String(record?.id || mediaImageUrl(record) || record?.name || ""))
+  const selectedUnitGroupName =
+    unitGroupOptions.find((option) => option.value === String(formData.unit_group_id))?.label ||
+    t("New Group")
+  const sellingUnitRows = isEdit ? (unitQuantities.data?.data || []) : draftUnitQuantities
+  const getSellingUnitLabel = (record: any) =>
+    record.unit_short_name ||
+    record.unit_name ||
+    filteredUnitOptions.find((option) => option.value === String(record.unit_id))?.label ||
+    t("Assigned Unit")
+
+  const loadMediaRecords = async (search = mediaSearch) => {
+    const requestKey = `1:50:${search}`
+    if (mediaRequestKeyRef.current === requestKey) return
+    mediaRequestKeyRef.current = requestKey
+    try {
+      await getMediaData({ page: 1, per_page: 50, search })
+    } finally {
+      window.setTimeout(() => {
+        if (mediaRequestKeyRef.current === requestKey) {
+          mediaRequestKeyRef.current = ""
+        }
+      }, 500)
+    }
+  }
 
   useEffect(() => {
     const sentinel = paginationSentinelRef.current
@@ -481,11 +600,12 @@ export default function ProductFormPage() {
   }, [isLoading])
 
   useEffect(() => {
+    if (!mediaManagerOpen || mediaTab !== "gallery") return
     const timer = window.setTimeout(() => {
-      getMediaData({ page: 1, per_page: 50, search: mediaSearch })
+      loadMediaRecords(mediaSearch)
     }, 300)
     return () => window.clearTimeout(timer)
-  }, [getMediaData, mediaSearch])
+  }, [mediaManagerOpen, mediaSearch, mediaTab])
 
   const updateField = (name: keyof ProductFormValues, value: any) => {
     setFormData((current) => {
@@ -493,6 +613,10 @@ export default function ProductFormPage() {
       if (name === "unit_group_id") {
         next.unit_id = ""
         setUnitQuantityForm((unitForm) => ({ ...unitForm, unit_id: "", convert_unit_id: "" }))
+        if (!isEdit) {
+          setDraftUnitQuantities([])
+          setShowSellingForm(false)
+        }
       }
       return next
     })
@@ -529,16 +653,21 @@ export default function ProductFormPage() {
     if (barcodeError) nextErrors.barcode = barcodeError
     const sellingUnits = isEdit
       ? (unitQuantities.data?.data || []).map((record: any) => ({
-          id: record.id,
-          unit_id: record.unit_id ? String(record.unit_id) : "",
-          convert_unit_id: record.convert_unit_id ? String(record.convert_unit_id) : "",
-          barcode: record.barcode || "",
-          quantity: record.quantity ? String(record.quantity) : "",
-          sale_price: record.sale_price ? String(record.sale_price) : "",
-          purchase_price: record.cogs ? String(record.cogs) : "",
-          is_default: Boolean(record.is_default),
-          scale_plu: record.scale_plu || "",
-        }))
+        id: record.id,
+        unit_id: record.unit_id ? String(record.unit_id) : "",
+        convert_unit_id: record.convert_unit_id ? String(record.convert_unit_id) : "",
+        barcode: record.barcode || "",
+        quantity: record.quantity ? String(record.quantity) : "",
+        sale_price: record.sale_price ? String(record.sale_price) : "",
+        wholesale_price: record.wholesale_price ? String(record.wholesale_price) : "",
+        purchase_price: record.cogs ? String(record.cogs) : "",
+        is_weighable: Boolean(record.is_weighable),
+        stock_alert_enabled: Boolean(record.stock_alert_enabled),
+        low_quantity: record.low_quantity ? String(record.low_quantity) : "",
+        visible: record.visible !== false,
+        preview_url: record.preview_url || "",
+        scale_plu: record.scale_plu || "",
+      }))
       : draftUnitQuantities
     if (!sellingUnits.length) nextErrors.unit_id = t("Selling Unit is required")
     if (formData.is_tax_inclusive && !formData.tax_group_id) {
@@ -551,10 +680,11 @@ export default function ProductFormPage() {
   const goBack = () => router.push("/inventory/products")
 
   const handleAddFormSuccess = async (
-    type: "category" | "unit" | "taxGroup"
+    type: "category" | "unit" | "unitGroup" | "taxGroup"
   ) => {
     if (type === "category") await getCategoriesDropdown()
     if (type === "unit") await getUnitsDropdown()
+    if (type === "unitGroup") await getUnitGroupsDropdown()
     if (type === "taxGroup") await getTaxGroupsDropdown()
     setAddFormOpen(null)
   }
@@ -563,7 +693,15 @@ export default function ProductFormPage() {
     name: keyof ProductUnitQuantityFormValues,
     value: any
   ) => {
-    setUnitQuantityForm((current) => ({ ...current, [name]: value }))
+    setUnitQuantityForm((current) => {
+      const next = { ...current, [name]: value }
+      if (!isEdit && next.id) {
+        setDraftUnitQuantities((rows) =>
+          rows.map((row) => (row.id === next.id ? next : row))
+        )
+      }
+      return next
+    })
     if (unitQuantityErrors[name]) {
       setUnitQuantityErrors((current) => ({ ...current, [name]: "" }))
     }
@@ -572,6 +710,31 @@ export default function ProductFormPage() {
   const resetUnitQuantityForm = () => {
     setUnitQuantityForm(initialUnitQuantityValues)
     setUnitQuantityErrors({})
+    setShowSellingForm(false)
+  }
+
+  const openNewUnitQuantityForm = () => {
+    const assignedUnitIds = new Set(
+      (isEdit ? (unitQuantities.data?.data || []) : draftUnitQuantities)
+        .map((record: any) => String(record.unit_id || ""))
+        .filter(Boolean)
+    )
+    const nextUnit = filteredUnitOptions.find((option) => !assignedUnitIds.has(String(option.value)))
+    if (!nextUnit) {
+      showToast.error(t("No unit is available for this unit group."))
+      return
+    }
+    const nextForm: ProductUnitQuantityFormValues = {
+      ...initialUnitQuantityValues,
+      id: isEdit ? undefined : Date.now(),
+      unit_id: String(nextUnit.value),
+    }
+    if (!isEdit) {
+      setDraftUnitQuantities((current) => [...current, nextForm])
+    }
+    setUnitQuantityForm(nextForm)
+    setUnitQuantityErrors({})
+    setShowSellingForm(true)
   }
 
   const validateUnitQuantity = () => {
@@ -595,7 +758,8 @@ export default function ProductFormPage() {
         const withoutCurrent = current.filter((item) => item.id !== nextUnit.id)
         return [...withoutCurrent, nextUnit]
       })
-      resetUnitQuantityForm()
+      setUnitQuantityForm(nextUnit)
+      setUnitQuantityErrors({})
       return
     }
 
@@ -609,9 +773,16 @@ export default function ProductFormPage() {
         barcode: unitQuantityForm.barcode,
         quantity: unitQuantityForm.quantity || "1",
         sale_price: unitQuantityForm.sale_price || "0",
+        sale_price_edit: unitQuantityForm.sale_price || "0",
+        wholesale_price: unitQuantityForm.wholesale_price || "0",
+        wholesale_price_edit: unitQuantityForm.wholesale_price || "0",
         cogs: unitQuantityForm.purchase_price || "0",
-        is_default: unitQuantityForm.is_default,
+        stock_alert_enabled: unitQuantityForm.stock_alert_enabled,
+        low_quantity: unitQuantityForm.low_quantity || "0",
+        visible: unitQuantityForm.visible,
+        is_weighable: unitQuantityForm.is_weighable,
         scale_plu: unitQuantityForm.scale_plu,
+        preview_url: unitQuantityForm.preview_url || null,
       }
 
       if (unitQuantityForm.id) {
@@ -650,11 +821,17 @@ export default function ProductFormPage() {
       barcode: record.barcode || "",
       quantity: record.quantity ? String(record.quantity) : "",
       sale_price: record.sale_price ? String(record.sale_price) : "",
+      wholesale_price: record.wholesale_price ? String(record.wholesale_price) : "",
       purchase_price: record.cogs ? String(record.cogs) : "",
-      is_default: Boolean(record.is_default),
+      is_weighable: Boolean(record.is_weighable),
+      stock_alert_enabled: Boolean(record.stock_alert_enabled),
+      low_quantity: record.low_quantity ? String(record.low_quantity) : "",
+      visible: record.visible !== false,
+      preview_url: record.preview_url || "",
       scale_plu: record.scale_plu || "",
     })
     setUnitQuantityErrors({})
+    setShowSellingForm(true)
   }
 
   const handleDeleteDraftUnitQuantity = (record: ProductUnitQuantityFormValues) => {
@@ -665,6 +842,7 @@ export default function ProductFormPage() {
   const handleEditDraftUnitQuantity = (record: ProductUnitQuantityFormValues) => {
     setUnitQuantityForm(record)
     setUnitQuantityErrors({})
+    setShowSellingForm(true)
   }
 
   const handleDeleteUnitQuantity = async (record: any) => {
@@ -681,32 +859,69 @@ export default function ProductFormPage() {
     }
   }
 
-  const selectedMedia = mediaRecords.find((record: any) => String(record.id) === selectedMediaId)
+  const handleAddGalleryImage = () => {
+    setGallery((current) => [
+      ...current,
+      {
+        url: "",
+        featured: false,
+      },
+    ])
+  }
 
-  const handleAddGalleryMedia = () => {
-    if (!selectedMedia) {
-      showToast.error(t("Select an image from Medias Manager."))
-      return
-    }
-    const imageUrl = selectedMedia.url || selectedMedia.path || selectedMedia.full_url || selectedMedia.preview_url
+  const updateGalleryImage = (
+    index: number,
+    values: Partial<ProductGalleryFormValues>
+  ) => {
+    setGallery((current) =>
+      current.map((image, currentIndex) => {
+        if (currentIndex !== index) return image
+        const next = { ...image, ...values }
+        if (values.featured) {
+          return { ...next, featured: true }
+        }
+        return next
+      }).map((image, currentIndex) =>
+        values.featured && currentIndex !== index ? { ...image, featured: false } : image
+      )
+    )
+  }
+
+  const openMediaManager = (index: number) => {
+    setActiveGalleryIndex(index)
+    setMediaPickerTarget("gallery")
+    setMediaTab("gallery")
+    setMediaManagerOpen(true)
+  }
+
+  const openUnitPreviewMediaManager = () => {
+    setActiveGalleryIndex(null)
+    setMediaPickerTarget("unit-preview")
+    setMediaTab("gallery")
+    setMediaManagerOpen(true)
+  }
+
+  const handleSelectMedia = (record: any) => {
+    const imageUrl = mediaImageUrl(record)
     if (!imageUrl) {
       showToast.error(t("Selected media has no image URL."))
       return
     }
-    setGallery((current) => {
-      const next = [
-        ...current.map((image) => selectedMediaPrimary ? { ...image, featured: false } : image),
-        {
-          media_id: selectedMedia.id,
-          name: selectedMedia.name || selectedMedia.file_name || "",
-          url: imageUrl,
-          featured: selectedMediaPrimary || current.length === 0,
-        },
-      ]
-      return next
+    if (mediaPickerTarget === "unit-preview") {
+      updateUnitQuantityField("preview_url", imageUrl)
+      setMediaManagerOpen(false)
+      setMediaPickerTarget(null)
+      return
+    }
+    if (activeGalleryIndex === null) return
+    updateGalleryImage(activeGalleryIndex, {
+      media_id: record.id,
+      name: record.name || record.file_name || "",
+      url: imageUrl,
     })
-    setSelectedMediaId("")
-    setSelectedMediaPrimary(false)
+    setMediaManagerOpen(false)
+    setActiveGalleryIndex(null)
+    setMediaPickerTarget(null)
   }
 
   const handleRemoveGalleryImage = (index: number) => {
@@ -722,6 +937,27 @@ export default function ProductFormPage() {
     )
   }
 
+  const handleMediaUpload = async (event: any) => {
+    const files = Array.from(event.target.files || []) as File[]
+    event.target.value = ""
+    if (!files.length) return
+
+    setIsUploadingMedia(true)
+    try {
+      for (const file of files) {
+        const formData = new FormData()
+        formData.append("file", file)
+        await uploadMedia(formData).unwrap()
+      }
+      showToast.success(t("File uploaded successfully."))
+      setMediaTab("gallery")
+      mediaRequestKeyRef.current = ""
+      await loadMediaRecords(mediaSearch)
+    } finally {
+      setIsUploadingMedia(false)
+    }
+  }
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!validate()) return
@@ -735,8 +971,13 @@ export default function ProductFormPage() {
         barcode: record.barcode || "",
         quantity: record.quantity ? String(record.quantity) : "1",
         sale_price: record.sale_price ? String(record.sale_price) : "0",
+        wholesale_price: record.wholesale_price ? String(record.wholesale_price) : "0",
         purchase_price: record.cogs ? String(record.cogs) : "0",
-        is_default: Boolean(record.is_default),
+        is_weighable: Boolean(record.is_weighable),
+        stock_alert_enabled: Boolean(record.stock_alert_enabled),
+        low_quantity: record.low_quantity ? String(record.low_quantity) : "0",
+        visible: record.visible !== false,
+        preview_url: record.preview_url || "",
         scale_plu: record.scale_plu || "",
       }))
       const sellingUnits = isEdit ? savedSellingUnits : draftUnitQuantities
@@ -839,10 +1080,10 @@ export default function ProductFormPage() {
         </div>
 
         <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto bg-gray-50/50 p-6">
-          <form id="product-form" onSubmit={handleSubmit} noValidate className="space-y-6">
+          <form id="product-form" onSubmit={handleSubmit} noValidate className="space-y-4">
 
             {/* Main Name Field */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
               <UniFieldInput
                 label={t("Name")}
                 required
@@ -854,7 +1095,7 @@ export default function ProductFormPage() {
             </div>
 
             {/* Tab Content Panel */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
 
               {/* 1. Identification Tab */}
               {activeTab === "identification" && (
@@ -872,8 +1113,8 @@ export default function ProductFormPage() {
                       addNewLabel={t("Add New Category")}
                       hasOptions={Boolean(categoryOptions.length)}
                     >
-                      {categoryOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
+                      {categoryOptions.map((option, index) => (
+                        <SelectItem key={`category-${option.value}-${index}`} value={option.value}>
                           {option.label}
                         </SelectItem>
                       ))}
@@ -940,27 +1181,21 @@ export default function ProductFormPage() {
                   </div>
 
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 border-t border-gray-100 pt-6">
-                    <UniFieldSelect
+                    <YesNoToggle
                       label={t("Stock Management Enabled")}
-                      value={formData.track_stock ? "enabled" : "disabled"}
-                      onValueChange={(value) => updateField("track_stock", value === "enabled")}
+                      value={formData.track_stock}
+                      onChange={(value) => updateField("track_stock", value)}
                       disabled={formData.product_type !== "product"}
-                    >
-                      <SelectItem value="enabled">{t("Yes")}</SelectItem>
-                      <SelectItem value="disabled">{t("No")}</SelectItem>
-                    </UniFieldSelect>
+                    />
 
-                    <UniFieldSelect
+                    <YesNoToggle
                       label={t("Pin Product")}
-                      value={formData.pinned ? "1" : "0"}
-                      onValueChange={(value) => updateField("pinned", value === "1")}
-                    >
-                      <SelectItem value="0">{t("No")}</SelectItem>
-                      <SelectItem value="1">{t("Yes")}</SelectItem>
-                    </UniFieldSelect>
+                      value={formData.pinned}
+                      onChange={(value) => updateField("pinned", value)}
+                    />
                   </div>
 
-                  <div className="border-t border-gray-100 pt-6">
+                  <div className="border-t border-gray-100 pt-4">
                     <UniFieldInput
                       as="textarea"
                       label={t("Description")}
@@ -975,79 +1210,130 @@ export default function ProductFormPage() {
 
               {/* 2. Units Tab */}
               {activeTab === "units" && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    <UniFieldSelect
-                      label={t("Unit Group")}
-                      required
-                      value={formData.unit_group_id}
-                      onValueChange={(value) => updateField("unit_group_id", value)}
-                      placeholder={t("Select Unit Group")}
-                      error={errors.unit_id}
-                      hasOptions={Boolean(unitGroupOptions.length)}
-                    >
-                      {unitGroupOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </UniFieldSelect>
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.35fr)]">
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 gap-4">
+                      <UniFieldSelect
+                        label={t("Unit Group")}
+                        required
+                        value={formData.unit_group_id}
+                        onValueChange={(value) => updateField("unit_group_id", value)}
+                        placeholder={t("Select Unit Group")}
+                        error={errors.unit_id}
+                        onAddNew={() => setAddFormOpen("unitGroup")}
+                        addNewLabel={t("Add New Unit Group")}
+                        hasOptions={Boolean(unitGroupOptions.length)}
+                      >
+                        {unitGroupOptions.map((option, index) => (
+                          <SelectItem key={`unit-group-${option.value}-${index}`} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </UniFieldSelect>
 
-                    <UniFieldSelect
-                      label={t("Accurate Tracking")}
-                      value={formData.accurate_tracking ? "1" : "0"}
-                      onValueChange={(value) => updateField("accurate_tracking", value === "1")}
-                      disabled={formData.product_type !== "product"}
-                    >
-                      <SelectItem value="0">{t("No")}</SelectItem>
-                      <SelectItem value="1">{t("Yes")}</SelectItem>
-                    </UniFieldSelect>
+                      <YesNoToggle
+                        label={t("Accurate Tracking")}
+                        value={formData.accurate_tracking}
+                        onChange={(value) => updateField("accurate_tracking", value)}
+                        disabled={formData.product_type !== "product"}
+                      />
 
-                    <UniFieldSelect
-                      label={t("Auto COGS")}
-                      value={formData.auto_cogs ? "1" : "0"}
-                      onValueChange={(value) => updateField("auto_cogs", value === "1")}
-                      disabled={formData.product_type !== "product"}
-                    >
-                      <SelectItem value="0">{t("No")}</SelectItem>
-                      <SelectItem value="1">{t("Yes")}</SelectItem>
-                    </UniFieldSelect>
+                      <YesNoToggle
+                        label={t("Auto COGS")}
+                        value={formData.auto_cogs}
+                        onChange={(value) => updateField("auto_cogs", value)}
+                        disabled={formData.product_type !== "product"}
+                      />
+                    </div>
+
                   </div>
 
-                  <div className="border-t border-gray-100 pt-6 space-y-6">
-                    <div>
-                      <h3 className="text-sm font-bold text-gray-900">{t("Selling Unit")}</h3>
-                      <p className="text-xs text-gray-500 mt-0.5">{t("Determine the unit for sale.")}</p>
-                      {errors.unit_id ? <p className="mt-1 text-xs font-medium text-red-600">{errors.unit_id}</p> : null}
+                  <div className="self-start rounded-xl border border-gray-200 bg-gray-50/50 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-gray-900">{t("Selling Unit")}</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">{t("Determine the unit for sale.")}</p>
+                        {errors.unit_id ? <p className="mt-1 text-xs font-medium text-red-600">{errors.unit_id}</p> : null}
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={openNewUnitQuantityForm}
+                      >
+                        <Plus className="size-4" />
+                        {t("Add")}
+                      </Button>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-3">
-                      {(isEdit ? (unitQuantities.data?.data || []) : draftUnitQuantities).map((record: any) => (
-                        <div key={record.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm flex justify-between items-center">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-gray-900">
-                                {record.unit_name || filteredUnitOptions.find((option) => option.value === String(record.unit_id))?.label || t("Assigned Unit")}
+                    {sellingUnitRows.length ? (
+                      <div className="mt-4 flex flex-wrap items-end border-b border-gray-200">
+                        {sellingUnitRows.map((record: any, index: number) => {
+                          const isActive = String(unitQuantityForm.id || "") === String(record.id || "")
+                          const openRecord = () => isEdit ? handleEditUnitQuantity(record) : handleEditDraftUnitQuantity(record)
+                          const removeRecord = () => isEdit ? handleDeleteUnitQuantity(record) : handleDeleteDraftUnitQuantity(record)
+                          return (
+                            <button
+                              key={`selling-unit-tab-${record.id || record.unit_id || "draft"}-${index}`}
+                              type="button"
+                              className={`mb-[-1px] flex max-w-full items-center gap-2 rounded-t-md border px-3 py-2 text-sm font-bold transition ${isActive
+                                ? "border-gray-200 border-b-white bg-white text-gray-900"
+                                : "border-transparent bg-gray-100 text-gray-600"
+                                }`}
+                              onClick={openRecord}
+                            >
+                              <span className="truncate">{getSellingUnitLabel(record)}</span>
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                onClick={(event) => {
+                                  event.preventDefault()
+                                  event.stopPropagation()
+                                  removeRecord()
+                                }}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter" || event.key === " ") {
+                                    event.preventDefault()
+                                    event.stopPropagation()
+                                    removeRecord()
+                                  }
+                                }}
+                                aria-label={t("Remove")}
+                              >
+                                <X className="size-3.5" />
                               </span>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {Number(record.quantity || 0).toLocaleString()} {t("per")} {record.unit_short_name || record.unit_name || t("unit")}
-                            </p>
-                            <p className="text-xs font-bold text-gray-800 mt-1">
-                              {t("Sale")}: {formatMoney(record.sale_price)} · {t("COGS")}: {formatMoney(record.cogs || record.purchase_price)}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button type="button" variant="outline" size="sm" onClick={() => isEdit ? handleEditUnitQuantity(record) : handleEditDraftUnitQuantity(record)}>{t("Edit")}</Button>
-                            <Button type="button" variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => isEdit ? handleDeleteUnitQuantity(record) : handleDeleteDraftUnitQuantity(record)}>{t("Delete")}</Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ) : null}
 
-                    <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 space-y-4">
-                      <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">{unitQuantityForm.id ? t("Edit Selling Unit") : t("Add Selling Unit")}</h4>
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {/* {!sellingUnitRows.length && !showSellingForm ? (
+                      <div className="mt-4 rounded-lg border border-dashed border-gray-200 bg-white p-4 text-sm font-medium text-gray-500">
+                        {t("No selling unit has been added.")}
+                      </div>
+                    ) : null} */}
+
+                    {unitQuantityForm.preview_url ? (
+                      <div className="mt-4 flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3">
+                        <div className="h-16 w-16 overflow-hidden rounded-md border bg-gray-50">
+                          <img src={resolveAssetUrl(unitQuantityForm.preview_url)} alt={t("Preview")} className="h-full w-full object-cover" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold uppercase tracking-wide text-gray-500">{t("Preview Url")}</div>
+                          <div className="truncate text-sm font-semibold text-gray-800">{unitQuantityForm.preview_url}</div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {showSellingForm ? (
+                      <>
+                        <div className="mb-4 border-t pt-4">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">
+                            {unitQuantityForm.id ? t("Edit Selling Unit") : t("Add Selling Unit")}
+                          </h4>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                           <UniFieldSelect
                             label={t("Assigned Unit")}
                             required
@@ -1059,8 +1345,8 @@ export default function ProductFormPage() {
                             addNewLabel={t("Add New Unit")}
                             hasOptions={Boolean(filteredUnitOptions.length)}
                           >
-                            {filteredUnitOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
+                            {filteredUnitOptions.map((option, index) => (
+                              <SelectItem key={`assigned-unit-${option.value}-${index}`} value={option.value}>
                                 {option.label}
                               </SelectItem>
                             ))}
@@ -1073,21 +1359,12 @@ export default function ProductFormPage() {
                             placeholder={t("Select Convert Unit")}
                             hasOptions={Boolean(filteredUnitOptions.length)}
                           >
-                            {filteredUnitOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
+                            {filteredUnitOptions.map((option, index) => (
+                              <SelectItem key={`convert-unit-${option.value}-${index}`} value={option.value}>
                                 {option.label}
                               </SelectItem>
                             ))}
                           </UniFieldSelect>
-
-                          <UniFieldInput
-                            label={t("Factor")}
-                            required
-                            placeholder={t("e.g. 12")}
-                            value={unitQuantityForm.quantity}
-                            onChange={(e) => updateUnitQuantityField("quantity", e.target.value)}
-                            error={unitQuantityErrors.quantity}
-                          />
 
                           <UniFieldInput
                             label={t("Sale Price")}
@@ -1103,6 +1380,18 @@ export default function ProductFormPage() {
                           />
 
                           <UniFieldInput
+                            label={t("Wholesale Price")}
+                            required
+                            placeholder={t("Enter Wholesale Price")}
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            prefix={currencyIndicator}
+                            value={unitQuantityForm.wholesale_price}
+                            onChange={(e) => updateUnitQuantityField("wholesale_price", e.target.value)}
+                          />
+
+                          <UniFieldInput
                             label={t("COGS")}
                             placeholder={t("Enter Cost Price")}
                             type="number"
@@ -1113,11 +1402,11 @@ export default function ProductFormPage() {
                             onChange={(e) => updateUnitQuantityField("purchase_price", e.target.value)}
                           />
 
-                          <UniFieldInput
-                            label={t("Barcode")}
-                            placeholder={t("Enter custom barcode")}
-                            value={unitQuantityForm.barcode}
-                            onChange={(e) => updateUnitQuantityField("barcode", e.target.value)}
+                          <YesNoToggle
+                            label={t("Weighable Product")}
+                            value={unitQuantityForm.is_weighable}
+                            onChange={(value) => updateUnitQuantityField("is_weighable", value)}
+                            disabled={!posOptions.scale_barcode_product_length}
                           />
 
                           <UniFieldInput
@@ -1125,27 +1414,59 @@ export default function ProductFormPage() {
                             placeholder={t("Enter PLU lookup code")}
                             value={unitQuantityForm.scale_plu}
                             onChange={(e) => updateUnitQuantityField("scale_plu", e.target.value)}
+                            disabled={!posOptions.scale_barcode_product_length}
                           />
 
-                          <UniFieldSelect
-                            label={t("Visible")}
-                            value={unitQuantityForm.is_default ? "1" : "0"}
-                            onValueChange={(value) => updateUnitQuantityField("is_default", value === "1")}
-                          >
-                            <SelectItem value="0">{t("No")}</SelectItem>
-                            <SelectItem value="1">{t("Yes")}</SelectItem>
-                          </UniFieldSelect>
-                      </div>
+                          <YesNoToggle
+                            label={t("Stock Alert")}
+                            value={unitQuantityForm.stock_alert_enabled}
+                            onChange={(value) => updateUnitQuantityField("stock_alert_enabled", value)}
+                          />
 
-                      <div className="flex justify-end gap-2 pt-2">
-                        {unitQuantityForm.id && (
-                          <Button type="button" variant="outline" onClick={resetUnitQuantityForm}>{t("Cancel")}</Button>
-                        )}
-                        <Button type="button" onClick={handleSaveUnitQuantity} disabled={isSavingUnitQuantity}>
-                          {isSavingUnitQuantity ? <Spinner /> : unitQuantityForm.id ? t("Update Selling Unit") : t("Add Selling Unit")}
-                        </Button>
-                      </div>
-                    </div>
+                          <UniFieldInput
+                            label={t("Low Quantity")}
+                            placeholder={t("Which quantity should be assumed low.")}
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={unitQuantityForm.low_quantity}
+                            onChange={(e) => updateUnitQuantityField("low_quantity", e.target.value)}
+                          />
+
+                          <YesNoToggle
+                            label={t("Visible")}
+                            value={unitQuantityForm.visible}
+                            onChange={(value) => updateUnitQuantityField("visible", value)}
+                          />
+
+                          <UniFieldInput
+                            label={t("Preview Url")}
+                            placeholder={t("Provide the preview of the current unit.")}
+                            value={unitQuantityForm.preview_url}
+                            onChange={(e) => updateUnitQuantityField("preview_url", e.target.value)}
+                            addonAfter={
+                              <Button type="button" variant="outline" className="h-10" onClick={openUnitPreviewMediaManager}>
+                                <Search className="size-4" />
+                                {t("Medias Manager")}
+                              </Button>
+                            }
+                            containerClassName="md:col-span-2"
+                          />
+                        </div>
+                        {isEdit ? (
+                          <div className="mt-4 flex justify-end gap-2 border-t pt-4">
+                            {unitQuantityForm.id ? (
+                              <Button type="button" variant="outline" onClick={resetUnitQuantityForm}>
+                                {t("Cancel")}
+                              </Button>
+                            ) : null}
+                            <Button type="button" onClick={handleSaveUnitQuantity} disabled={isSavingUnitQuantity}>
+                              {isSavingUnitQuantity ? <Spinner /> : unitQuantityForm.id ? t("Update Selling Unit") : t("Add Selling Unit")}
+                            </Button>
+                          </div>
+                        ) : null}
+                      </>
+                    ) : null}
                   </div>
                 </div>
               )}
@@ -1154,17 +1475,14 @@ export default function ProductFormPage() {
               {activeTab === "expiry" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    <UniFieldSelect
+                    <YesNoToggle
                       label={t("Product Expires")}
-                      value={formData.expires ? "1" : "0"}
-                      onValueChange={(value) => {
-                        updateField("expires", value === "1")
-                        updateField("expiry_tracking_enabled", value === "1")
+                      value={formData.expires}
+                      onChange={(value) => {
+                        updateField("expires", value)
+                        updateField("expiry_tracking_enabled", value)
                       }}
-                    >
-                      <SelectItem value="0">{t("No")}</SelectItem>
-                      <SelectItem value="1">{t("Yes")}</SelectItem>
-                    </UniFieldSelect>
+                    />
 
                     <UniFieldSelect
                       label={t("On Expiration")}
@@ -1193,8 +1511,8 @@ export default function ProductFormPage() {
                       addNewLabel={t("Add New Tax Group")}
                       hasOptions={Boolean(taxGroupRecords.length)}
                     >
-                      {taxGroupRecords.map((group: any) => (
-                        <SelectItem key={group.id} value={String(group.id)}>
+                      {taxGroupRecords.map((group: any, index: number) => (
+                        <SelectItem key={`tax-group-${group.id}-${index}`} value={String(group.id)}>
                           <SelectItemText>
                             <div className="flex w-full items-center justify-between gap-4">
                               <span>{group.name}</span>
@@ -1223,84 +1541,98 @@ export default function ProductFormPage() {
 
               {/* 5. Images Tab */}
               {activeTab === "images" && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <UniFieldInput
-                      label={t("Medias Manager")}
-                      placeholder={t("Search Medias")}
-                      value={mediaSearch}
-                      onChange={(event) => setMediaSearch(event.target.value)}
-                    />
-                    <UniFieldSelect
-                      label={t("Image")}
-                      value={selectedMediaId}
-                      onValueChange={setSelectedMediaId}
-                      placeholder={t("Choose an image")}
-                      hasOptions={Boolean(mediaRecords.length)}
-                    >
-                      {mediaRecords.map((record: any) => (
-                        <SelectItem key={record.id} value={String(record.id)}>
-                          {record.name || record.file_name || record.url}
-                        </SelectItem>
-                      ))}
-                    </UniFieldSelect>
-                    <UniFieldSelect
-                      label={t("Is Primary")}
-                      value={selectedMediaPrimary ? "1" : "0"}
-                      onValueChange={(value) => setSelectedMediaPrimary(value === "1")}
-                    >
-                      <SelectItem value="0">{t("No")}</SelectItem>
-                      <SelectItem value="1">{t("Yes")}</SelectItem>
-                    </UniFieldSelect>
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button type="button" onClick={handleAddGalleryMedia}>
+                <div className="space-y-5">
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-900">{t("Product Gallery")}</h3>
+                      <p className="text-xs text-gray-500 mt-0.5">{t("Manage product images shown to customers.")}</p>
+                    </div>
+                    <Button type="button" size="sm" onClick={handleAddGalleryImage}>
                       <Plus className="size-4" />
                       {t("Add Image")}
                     </Button>
                   </div>
 
-                  <div className="border-t border-gray-100 pt-6 space-y-4">
-                    <div>
-                      <h3 className="text-sm font-bold text-gray-900">{t("Product Gallery")}</h3>
-                      <p className="text-xs text-gray-500 mt-0.5">{t("Choose an image to add on the product gallery")}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  {/* Empty state */}
+                  {!gallery.length ? (
+                    <button
+                      type="button"
+                      onClick={handleAddGalleryImage}
+                      className="flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-8 text-center transition hover:border-gray-400 hover:bg-gray-100"
+                    >
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-500">
+                        <ImagePlus className="size-4" />
+                      </span>
+                      <span className="text-xs font-semibold text-gray-600">{t("No image has been added.")}</span>
+                      <span className="text-[11px] text-gray-400">{t("Click to add your first image")}</span>
+                    </button>
+                  ) : (
+                    /* Image grid */
+                    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
                       {gallery.map((img, index) => (
-                        <div key={`${img.id || img.media_id || img.url}-${index}`} className="relative rounded-xl border border-gray-200 bg-gray-50 p-2">
-                          <div className="aspect-square overflow-hidden rounded-lg bg-white">
-                            <img src={img.url} alt={img.name || t("Gallery")} className="h-full w-full object-cover" />
+                        <div
+                          key={`gallery-image-${img.id || img.media_id || "draft"}-${index}`}
+                          className="group relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
+                        >
+                          {/* Thumbnail */}
+                          <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
+                            {img.url ? (
+                              <img src={img.url} alt={img.name || t("Gallery")} className="h-full w-full object-cover transition group-hover:scale-105" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-gray-300">
+                                <ImagePlus className="size-6" />
+                              </div>
+                            )}
+
+                            {/* Overlay actions */}
+                            <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 opacity-0 transition group-hover:bg-black/30 group-hover:opacity-100">
+                              <button
+                                type="button"
+                                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-700 shadow transition hover:bg-gray-100"
+                                onClick={() => openMediaManager(index)}
+                                title={t("Medias Manager")}
+                              >
+                                <Search className="size-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-red-500 shadow transition hover:bg-red-50"
+                                onClick={() => handleRemoveGalleryImage(index)}
+                                title={t("Remove")}
+                              >
+                                <Trash2 className="size-3.5" />
+                              </button>
+                            </div>
+
+                            {/* Primary badge */}
+                            {img.featured ? (
+                              <span className="absolute left-2 top-2 rounded-full bg-black px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                                {t("Primary")}
+                              </span>
+                            ) : null}
                           </div>
-                          <div className="mt-2 space-y-2">
-                            <UniFieldSelect
-                              label={t("Is Primary")}
-                              value={img.featured ? "1" : "0"}
-                              onValueChange={(value) => handleSetGalleryPrimary(index, value === "1")}
-                            >
-                              <SelectItem value="0">{t("No")}</SelectItem>
-                              <SelectItem value="1">{t("Yes")}</SelectItem>
-                            </UniFieldSelect>
-                            <Button
+
+                          {/* Footer */}
+                          <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-3 py-2">
+                            <span className="truncate text-xs text-gray-500">
+                              {img.name || img.url || t("No URL")}
+                            </span>
+                            <button
                               type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="w-full text-red-500 hover:bg-red-50 hover:text-red-600"
-                              onClick={() => handleRemoveGalleryImage(index)}
+                              onClick={() => handleSetGalleryPrimary(index, !img.featured)}
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${img.featured
+                                ? "bg-gray-900 text-white"
+                                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                }`}
                             >
-                              <Trash2 className="size-3.5" />
-                              {t("Delete")}
-                            </Button>
+                              {img.featured ? t("Primary") : t("Set Primary")}
+                            </button>
                           </div>
                         </div>
                       ))}
-                      {!gallery.length ? (
-                        <div className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-sm font-medium text-gray-500 md:col-span-4">
-                          {t("No image has been added.")}
-                        </div>
-                      ) : null}
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 
@@ -1319,11 +1651,114 @@ export default function ProductFormPage() {
           onClose={() => setAddFormOpen(null)}
           onSuccess={() => handleAddFormSuccess("unit")}
         />
+        <UnitGroupForm
+          isOpen={addFormOpen === "unitGroup"}
+          onClose={() => setAddFormOpen(null)}
+          onSuccess={() => handleAddFormSuccess("unitGroup")}
+        />
         <TaxGroupForm
           isOpen={addFormOpen === "taxGroup"}
           onClose={() => setAddFormOpen(null)}
           onSuccess={() => handleAddFormSuccess("taxGroup")}
         />
+        <Dialog open={mediaManagerOpen} onOpenChange={setMediaManagerOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>{t("Medias Manager")}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={mediaTab === "upload" ? "default" : "outline"}
+                  onClick={() => setMediaTab("upload")}
+                >
+                  <Upload className="size-4" />
+                  {t("Upload")}
+                </Button>
+                <Button
+                  type="button"
+                  variant={mediaTab === "gallery" ? "default" : "outline"}
+                  onClick={() => {
+                    setMediaTab("gallery")
+                    loadMediaRecords(mediaSearch)
+                  }}
+                >
+                  <ImagePlus className="size-4" />
+                  {t("Gallery")}
+                </Button>
+              </div>
+
+              {mediaTab === "upload" ? (
+                <div
+                  className="flex min-h-[320px] cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed bg-gray-50 p-6 text-center"
+                  onClick={() => mediaFileInputRef.current?.click()}
+                >
+                  <Upload className="mb-3 size-10 text-muted-foreground" />
+                  <h3 className="text-base font-bold text-gray-900">
+                    {t("Click here or drop your files to upload.")}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {t("Your uploaded files will displays here.")}
+                  </p>
+                  <input
+                    ref={mediaFileInputRef}
+                    className="hidden"
+                    type="file"
+                    multiple
+                    onChange={handleMediaUpload}
+                  />
+                  {isUploadingMedia ? (
+                    <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <Spinner />
+                      {t("Uploading...")}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <>
+                  <UniFieldInput
+                    label={t("Search")}
+                    placeholder={t("Search Medias")}
+                    value={mediaSearch}
+                    onChange={(event) => setMediaSearch(event.target.value)}
+                  />
+                  <div className="grid max-h-[420px] grid-cols-2 gap-3 overflow-y-auto pr-1 md:grid-cols-4">
+                    {mediaRecords.map((record: any, index: number) => {
+                      const imageUrl = mediaImageUrl(record)
+                      return (
+                        <button
+                          key={`media-${record.id}-${index}`}
+                          type="button"
+                          className="rounded-lg border bg-white p-2 text-left hover:border-gray-900"
+                          onClick={() => handleSelectMedia(record)}
+                        >
+                          <div className="aspect-square overflow-hidden rounded-md bg-gray-100">
+                            {imageUrl ? (
+                              <img src={imageUrl} alt={record.name || record.file_name || t("Image")} className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-muted-foreground">
+                                <ImagePlus className="size-6" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="mt-2 truncate text-xs font-semibold text-gray-700">
+                            {record.name || record.file_name || record.url || t("Image")}
+                          </div>
+                        </button>
+                      )
+                    })}
+                    {!mediaRecords.length ? (
+                      <div className="col-span-full rounded-lg border border-dashed p-8 text-center text-sm font-medium text-muted-foreground">
+                        {t("No record found")}
+                      </div>
+                    ) : null}
+                  </div>
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardPage>
   )

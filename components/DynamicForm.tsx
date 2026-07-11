@@ -112,7 +112,10 @@ const DynamicForm = <T extends Record<string, any>>({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const drawerContentRef = useRef<HTMLDivElement>(null)
+  const previousInitialValuesSignature = useRef("")
+  const previousIsOpen = useRef(isOpen)
   const emptySelectValue = "__empty__"
+  const initialValuesSignature = JSON.stringify(initialValues)
 
   // Reset isSubmitting when drawer closes
   useEffect(() => {
@@ -134,11 +137,22 @@ const DynamicForm = <T extends Record<string, any>>({
     }
   }, [isOpen])
 
-  // Update form data when initialValues changes
+  // Reset only on a new drawer open or when the actual initial values changed.
+  // Some side forms rebuild initialValues on every render, and resetting on
+  // object identity wipes user input after API errors or nested drawer opens.
   useEffect(() => {
-    setFormData(initialValues)
-    setErrors({})
-  }, [initialValues])
+    const hasOpened = isOpen && !previousIsOpen.current
+    const hasInitialValuesChanged =
+      initialValuesSignature !== previousInitialValuesSignature.current
+
+    if (hasOpened || hasInitialValuesChanged) {
+      setFormData(initialValues)
+      setErrors({})
+      previousInitialValuesSignature.current = initialValuesSignature
+    }
+
+    previousIsOpen.current = isOpen
+  }, [initialValues, initialValuesSignature, isOpen])
 
   const validateField = (name: string, value: any) => {
     // If external validation schema is provided, don't use built-in validation
