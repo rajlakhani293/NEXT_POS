@@ -130,13 +130,6 @@ export default function CustomersPage() {
             onClick: () => router.push(`/customers/${record.id}/orders`),
           },
           {
-            key: "credit",
-            label: t("Wallet History"),
-            labelText: t("Wallet History"),
-            icon: <Wallet className="size-4" />,
-            onClick: () => router.push(`/customers/${record.id}/account-history`),
-          },
-          {
             key: "rewards",
             label: t("Rewards"),
             labelText: t("Rewards"),
@@ -149,6 +142,13 @@ export default function CustomersPage() {
             labelText: t("Coupons"),
             icon: <TicketPercent className="size-4" />,
             onClick: () => router.push(`/customers/${record.id}/coupons`),
+          },
+          {
+            key: "credit",
+            label: t("Wallet History"),
+            labelText: t("Wallet History"),
+            icon: <Wallet className="size-4" />,
+            onClick: () => router.push(`/customers/${record.id}/account-history`),
           },
         ].filter(Boolean) as any}
       />
