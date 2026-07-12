@@ -537,5 +537,17 @@
   "Stock adjustment completed successfully.": "Ajustement du stock termine avec succes.",
   "This product doesn't have any stock to adjust.": "Ce produit n'a aucun stock a ajuster.",
   "Value": "Valeur",
-  "N/A": "N/A"
+  "N/A": "N/A",
+  "Unit Conversion : {product}": "Conversion d'unite : {product}",
+  "Assigned Unit": "Unite assignee",
+  "The quantity should be greater than 0": "La quantite doit etre superieure a 0",
+  "The quantity has been set to the maximum available": "La quantite a ete definie au maximum disponible",
+  "Convert {quantity} available": "Convertir {quantity} disponible",
+  "Confirm Conversion": "Confirmer la conversion",
+  "Conversion Warning": "Avertissement de conversion",
+  "The provided quantity can't result in any convertion for unit \"{destination}\"": "La quantite fournie ne peut aboutir a aucune conversion pour l'unite \"{destination}\"",
+  "Only {quantity}({source}) can be converted to {destinationCount}({destination}). Would you like to proceed ?": "Seule {quantity}({source}) peut etre convertie en {destinationCount}({destination}). Voulez-vous continuer ?",
+  "You're about to convert {quantity}({source}) to {destinationCount}({destination}). Would you like to proceed?": "Vous etes sur le point de convertir {quantity}({source}) en {destinationCount}({destination}). Voulez-vous continuer?",
+  "The product {product} has been converted successfully.": "Le produit {product} a ete converti avec succes.",
+  "Confirm": "Confirmer"
 }

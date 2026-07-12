@@ -82,6 +82,7 @@ const endpointsConfig = {
   getProductById: { query: ({ id }: { id: number }) => getMutation(`products/${id}`) },
   getProductUnitQuantities: { query: ({ productId }: { productId: any }) => getMutation(`products/${productId}/units/quantities`) },
   adjustProductStock: { query: ({ payLoad }: { payLoad: any }) => postMutation("products/adjustments")(payLoad) },
+  convertProductUnits: { query: ({ productId, payLoad }: { productId: any; payLoad: any }) => postMutation(`products/${productId}/units/conversion`)(payLoad) },
   createProductUnitQuantity: { query: ({ productId, payLoad }: { productId: any; payLoad: any }) => createMutation(`products/${productId}/units/quantities`)(payLoad) },
   editProductUnitQuantity: { query: ({ productId, id, payLoad }: { productId: any; id: any; payLoad: any }) => putMutation(`products/${productId}/units/quantities/${id}`, payLoad) },
   deleteProductUnitQuantity: { query: ({ productId, id }: { productId: any; id: any }) => deleteMutation(`products/${productId}/units/quantities/${id}`)({}) },

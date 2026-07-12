@@ -737,5 +737,17 @@
   "Stock adjustment completed successfully.": "Stock adjustment completed successfully.",
   "This product doesn't have any stock to adjust.": "This product doesn't have any stock to adjust.",
   "Value": "Value",
-  "N/A": "N/A"
+  "N/A": "N/A",
+  "Unit Conversion : {product}": "Unit Conversion : {product}",
+  "Assigned Unit": "Assigned Unit",
+  "The quantity should be greater than 0": "The quantity should be greater than 0",
+  "The quantity has been set to the maximum available": "The quantity has been set to the maximum available",
+  "Convert {quantity} available": "Convert {quantity} available",
+  "Confirm Conversion": "Confirm Conversion",
+  "Conversion Warning": "Conversion Warning",
+  "The provided quantity can't result in any convertion for unit \"{destination}\"": "The provided quantity can't result in any convertion for unit \"{destination}\"",
+  "Only {quantity}({source}) can be converted to {destinationCount}({destination}). Would you like to proceed ?": "Only {quantity}({source}) can be converted to {destinationCount}({destination}). Would you like to proceed ?",
+  "You're about to convert {quantity}({source}) to {destinationCount}({destination}). Would you like to proceed?": "You're about to convert {quantity}({source}) to {destinationCount}({destination}). Would you like to proceed?",
+  "The product {product} has been converted successfully.": "The product {product} has been converted successfully.",
+  "Confirm": "Confirm"
 }

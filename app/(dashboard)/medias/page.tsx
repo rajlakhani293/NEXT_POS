@@ -31,6 +31,11 @@ type MediaRecord = {
   fileEdit?: boolean
 }
 
+type GalleryQuery = {
+  page: number
+  search: string
+}
+
 type GalleryResponse = {
   items?: MediaRecord[]
   data?: MediaRecord[]
@@ -74,14 +79,26 @@ const supportedMimeTypes = new Set([
 
 const responseData = (response: any): GalleryResponse => response?.data || response || {}
 
+const resolveAssetUrl = (value?: string | null) => {
+  if (!value) return ""
+  if (/^(https?:|data:|blob:)/.test(value)) return value
+  const base = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/api\/?$/, "").replace(/\/$/, "")
+  const path = value.startsWith("/") ? value : `/${value}`
+  return `${base}${path}`
+}
+
+const mediaImageUrl = (resource?: MediaRecord | null) =>
+  resolveAssetUrl(resource?.sizes?.thumb || resource?.sizes?.original || "")
+
 export default function MediasPage() {
   const { t } = useTranslation()
   const { hasPermission } = usePermissions()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastGalleryRequestRef = useRef("")
   const [activeTab, setActiveTab] = useState<"upload" | "gallery">("gallery")
   const [searchField, setSearchField] = useState("")
-  const [queryPage, setQueryPage] = useState(1)
+  const [galleryQuery, setGalleryQuery] = useState<GalleryQuery>({ page: 1, search: "" })
   const [bulkSelect, setBulkSelect] = useState(false)
   const [resources, setResources] = useState<MediaRecord[]>([])
   const [galleryMeta, setGalleryMeta] = useState<GalleryResponse>({})
@@ -101,11 +118,14 @@ export default function MediasPage() {
   const hasOneSelected = selectedResources.length > 0
   const selectedResource = selectedResources[0]
   const panelOpened = !bulkSelect && Boolean(selectedResource)
-  const currentPage = Number(galleryMeta.current_page || galleryMeta.page || queryPage || 1)
+  const currentPage = Number(galleryMeta.current_page || galleryMeta.page || galleryQuery.page || 1)
   const lastPage = Number(galleryMeta.last_page || galleryMeta.total_pages || 1)
 
   const loadGallery = useCallback(
-    async (page = queryPage, search = searchField) => {
+    async (page = galleryQuery.page, search = galleryQuery.search, force = false) => {
+      const requestKey = `${page}:${search}`
+      if (!force && lastGalleryRequestRef.current === requestKey) return
+      lastGalleryRequestRef.current = requestKey
       const response = await getMediaData({ page, per_page: 20, search }).unwrap()
       const data = responseData(response)
       const items = (data.items || data.data || []).map((resource) => ({
@@ -115,30 +135,31 @@ export default function MediasPage() {
       }))
       setResources(items)
       setGalleryMeta(data)
-      setQueryPage(Number(data.current_page || data.page || page || 1))
       setBulkSelect(false)
     },
-    [getMediaData, queryPage, searchField]
+    [galleryQuery.page, galleryQuery.search, getMediaData]
   )
 
   useEffect(() => {
-    loadGallery(1, "").catch((error: any) => {
+    if (activeTab !== "gallery") return
+    loadGallery(galleryQuery.page, galleryQuery.search).catch((error: any) => {
       showToast.error(error?.data?.message || t("An error occurred while loading the media gallery."))
     })
-  }, [])
+  }, [activeTab, galleryQuery, loadGallery, t])
 
   useEffect(() => {
-    if (activeTab !== "gallery") return
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
     searchTimerRef.current = setTimeout(() => {
-      loadGallery(1, searchField).catch((error: any) => {
-        showToast.error(error?.data?.message || t("An error occurred while loading the media gallery."))
-      })
+      setGalleryQuery((current) =>
+        current.page === 1 && current.search === searchField
+          ? current
+          : { page: 1, search: searchField }
+      )
     }, 500)
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
     }
-  }, [searchField, activeTab])
+  }, [searchField])
 
   useEffect(() => {
     const handlePasteUpload = (event: ClipboardEvent) => {
@@ -161,7 +182,8 @@ export default function MediasPage() {
     return () => window.removeEventListener("paste", handlePasteUpload)
   }, [activeTab, canUpload])
 
-  const isImage = (resource: MediaRecord) => Boolean(resource.extension && imageExtensions.has(resource.extension))
+  const isImage = (resource: MediaRecord) =>
+    Boolean(resource.extension && imageExtensions.has(resource.extension.toLowerCase()))
 
   const uploadQueue = async (queue: UploadQueueItem[]) => {
     for (const queuedFile of queue) {
@@ -179,7 +201,7 @@ export default function MediasPage() {
           )
         )
         showToast.success(response?.message || t("File uploaded successfully."))
-        await loadGallery(1, searchField)
+        await loadGallery(1, searchField, true)
       } catch (error: any) {
         setFiles((current) =>
           current.map((item) =>
@@ -258,7 +280,7 @@ export default function MediasPage() {
     if (!confirmed) return
     const response = await deleteMedia({ ids: selectedResources.map((resource) => resource.id) }).unwrap()
     showToast.success(response?.message || t("The operation was successful."))
-    await loadGallery(currentPage, searchField)
+    await loadGallery(currentPage, searchField, true)
   }
 
   const submitChange = async (event: FocusEvent<HTMLSpanElement>, resource: MediaRecord) => {
@@ -400,7 +422,9 @@ export default function MediasPage() {
                     </div>
                   ) : resources.length > 0 ? (
                     <div className="grid grid-cols-2 gap-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-                      {resources.map((resource) => (
+                      {resources.map((resource) => {
+                        const imageUrl = mediaImageUrl(resource)
+                        return (
                         <button
                           key={resource.id}
                           type="button"
@@ -410,9 +434,9 @@ export default function MediasPage() {
                           )}
                           onClick={() => selectResource(resource)}
                         >
-                          {isImage(resource) && (resource.sizes?.thumb || resource.sizes?.original) ? (
+                          {isImage(resource) && imageUrl ? (
                             <img
-                              src={resource.sizes.thumb || resource.sizes.original}
+                              src={imageUrl}
                               alt={resource.name}
                               className="h-full w-full object-cover"
                             />
@@ -420,7 +444,8 @@ export default function MediasPage() {
                             <FileIcon className="size-14 text-slate-500" />
                           )}
                         </button>
-                      ))}
+                        )
+                      })}
                     </div>
                   ) : (
                     <div className="flex h-full items-center justify-center">
@@ -434,9 +459,9 @@ export default function MediasPage() {
                 {panelOpened && selectedResource ? (
                   <>
                     <div className="flex h-64 items-center justify-center bg-slate-800">
-                      {isImage(selectedResource) && (selectedResource.sizes?.thumb || selectedResource.sizes?.original) ? (
+                      {isImage(selectedResource) && mediaImageUrl(selectedResource) ? (
                         <img
-                          src={selectedResource.sizes.thumb || selectedResource.sizes.original}
+                          src={mediaImageUrl(selectedResource)}
                           alt={selectedResource.name}
                           className="h-full w-full object-cover"
                         />
@@ -505,7 +530,7 @@ export default function MediasPage() {
                   type="button"
                   variant="outline"
                   disabled={currentPage <= 1 || galleryState.isLoading}
-                  onClick={() => loadGallery(currentPage - 1, searchField)}
+                  onClick={() => setGalleryQuery({ page: currentPage - 1, search: searchField })}
                 >
                   {t("Previous")}
                 </Button>
@@ -513,7 +538,7 @@ export default function MediasPage() {
                   type="button"
                   variant="outline"
                   disabled={currentPage >= lastPage || galleryState.isLoading}
-                  onClick={() => loadGallery(currentPage + 1, searchField)}
+                  onClick={() => setGalleryQuery({ page: currentPage + 1, search: searchField })}
                 >
                   {t("Next")}
                 </Button>

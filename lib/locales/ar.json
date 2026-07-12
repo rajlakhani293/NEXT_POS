@@ -537,5 +537,17 @@
   "Stock adjustment completed successfully.": "تم إكمال تعديل المخزون بنجاح.",
   "This product doesn't have any stock to adjust.": "هذا المنتج لا يحتوي على مخزون لتعديله.",
   "Value": "القيمة",
-  "N/A": "غير متوفر"
+  "N/A": "غير متوفر",
+  "Unit Conversion : {product}": "تحويل الوحدة : {product}",
+  "Assigned Unit": "الوحدة المعينة",
+  "The quantity should be greater than 0": "يجب أن تكون الكمية أكبر من 0",
+  "The quantity has been set to the maximum available": "تم تعيين الكمية إلى الحد الأقصى المتاح",
+  "Convert {quantity} available": "تحويل {quantity} المتاحة",
+  "Confirm Conversion": "تأكيد التحويل",
+  "Conversion Warning": "تحذير التحويل",
+  "The provided quantity can't result in any convertion for unit \"{destination}\"": "الكمية المقدمة لا يمكن أن تنتج أي تحويل للوحدة \"{destination}\"",
+  "Only {quantity}({source}) can be converted to {destinationCount}({destination}). Would you like to proceed ?": "يمكن تحويل {quantity}({source}) فقط إلى {destinationCount}({destination}). هل تريد المتابعة؟",
+  "You're about to convert {quantity}({source}) to {destinationCount}({destination}). Would you like to proceed?": "أنت على وشك تحويل {quantity}({source}) إلى {destinationCount}({destination}). هل تريد المتابعة؟",
+  "The product {product} has been converted successfully.": "تم تحويل المنتج {product} بنجاح.",
+  "Confirm": "تأكيد"
 }
