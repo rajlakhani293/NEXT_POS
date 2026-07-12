@@ -717,5 +717,12 @@
   "Set Primary": "Set Primary",
   "Primary": "Primary",
   "No URL": "No URL",
-  "Manage product images shown to customers.": "Manage product images shown to customers."
+  "Manage product images shown to customers.": "Manage product images shown to customers.",
+  "Enter category name": "Enter category name",
+  "Parent Category": "Parent Category",
+  "Select parent category": "Select parent category",
+  "PLU Range": "PLU Range",
+  "Select PLU Range": "Select PLU Range",
+  "Select a PLU range to automatically assign PLU codes to weighable products in this category.": "Select a PLU range to automatically assign PLU codes to weighable products in this category.",
+  "Provide a preview url to the category.": "Provide a preview url to the category."
 }

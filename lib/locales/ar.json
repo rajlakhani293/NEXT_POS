@@ -517,5 +517,12 @@
   "Set Primary": "تعيين كصورة رئيسية",
   "Primary": "رئيسية",
   "No URL": "لا يوجد رابط",
-  "Manage product images shown to customers.": "إدارة صور المنتج المعروضة للعملاء."
+  "Manage product images shown to customers.": "إدارة صور المنتج المعروضة للعملاء.",
+  "Enter category name": "أدخل اسم الفئة",
+  "Parent Category": "الفئة الأصلية",
+  "Select parent category": "اختر الفئة الأصلية",
+  "PLU Range": "نطاق PLU",
+  "Select PLU Range": "اختر نطاق PLU",
+  "Select a PLU range to automatically assign PLU codes to weighable products in this category.": "اختر نطاق PLU لتعيين رموز PLU تلقائيا للمنتجات الموزونة في هذه الفئة.",
+  "Provide a preview url to the category.": "وفر رابط معاينة للفئة."
 }

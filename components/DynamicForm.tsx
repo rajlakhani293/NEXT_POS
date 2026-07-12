@@ -318,7 +318,13 @@ const DynamicForm = <T extends Record<string, any>>({
                       ? field.disabled(formData)
                       : Boolean(field.disabled)
 
-                  return field.type === "hidden" ? (
+                  return field.custom ? (
+                    typeof field.custom === "function" ? (
+                      field.custom({ formData, handleChange, errors })
+                    ) : (
+                      field.custom
+                    )
+                  ) : field.type === "hidden" ? (
                     <input
                       type="hidden"
                       name={field.name}

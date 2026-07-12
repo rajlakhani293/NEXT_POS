@@ -517,5 +517,12 @@
   "Set Primary": "Establecer principal",
   "Primary": "Principal",
   "No URL": "Sin URL",
-  "Manage product images shown to customers.": "Gestionar las imagenes del producto mostradas a los clientes."
+  "Manage product images shown to customers.": "Gestionar las imagenes del producto mostradas a los clientes.",
+  "Enter category name": "Ingrese el nombre de la categoria",
+  "Parent Category": "Categoria principal",
+  "Select parent category": "Seleccionar categoria principal",
+  "PLU Range": "Rango PLU",
+  "Select PLU Range": "Seleccionar rango PLU",
+  "Select a PLU range to automatically assign PLU codes to weighable products in this category.": "Seleccione un rango PLU para asignar automaticamente codigos PLU a productos pesables en esta categoria.",
+  "Provide a preview url to the category.": "Proporcione una URL de vista previa para la categoria."
 }
