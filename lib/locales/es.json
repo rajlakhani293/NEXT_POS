@@ -564,5 +564,8 @@
   "Loading coupon history...": "Cargando historial del cupon...",
   "Percentage": "Porcentaje",
   "Flat": "Fijo",
+  "Select Gender": "Seleccionar genero",
+  "Pick a date": "Seleccionar fecha",
+  "Something went wrong.": "Algo salio mal.",
   "Confirm": "Confirmar"
 }

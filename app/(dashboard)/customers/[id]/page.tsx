@@ -10,6 +10,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { SelectItem } from "@/components/ui/select"
+import { DatePicker } from "@/components/date-picker"
 import { customers } from "@/lib/api/customers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { usePosOptions } from "@/lib/options"
@@ -80,6 +81,19 @@ const initialValues: CustomerFormValues = {
 }
 
 const sanitizePhone = (value: string) => value.replace(/\D/g, "").slice(0, 10)
+const parseDateValue = (value: string) => {
+  if (!value) return undefined
+  const [year, month, day] = value.split("-").map(Number)
+  if (!year || !month || !day) return undefined
+  return new Date(year, month - 1, day)
+}
+const formatDateValue = (date?: Date) => {
+  if (!date) return ""
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
 
 type CustomerTab = "general" | "billing" | "shipping"
 
@@ -153,7 +167,7 @@ export default function CustomerFormPage() {
           group_id: record.group_id ? String(record.group_id) : "",
           birth_date: record.birth_date ? String(record.birth_date).split(" ")[0] : "",
           pobox: record.pobox || "",
-          gender: record.gender || "not_defined",
+          gender: record.gender || "",
 
           // Billing address
           billing_first_name: billingAddress.first_name || "",
@@ -220,7 +234,7 @@ export default function CustomerFormPage() {
       ...values,
       group_id: values.group_id ? Number(values.group_id) : null,
       credit_limit_amount: values.credit_limit_amount || "0",
-      gender: values.gender === "not_defined" ? "" : values.gender,
+      gender: values.gender,
       billing_company: values.billing_company_name,
       shipping_company: values.shipping_company_name,
     }
@@ -237,7 +251,10 @@ export default function CustomerFormPage() {
       goBack()
     } catch (err) {
       console.error(err)
-      showToast.error(t("Something went wrong."))
+      const message = (err as any)?.data?.message || (err as any)?.message
+      if (!message) {
+        showToast.error(t("Something went wrong."))
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -387,20 +404,19 @@ export default function CustomerFormPage() {
                     />
                     <UniFieldSelect
                       label={t("Gender")}
-                      value={values.gender || "not_defined"}
-                      onValueChange={(val) => updateField("gender", val === "not_defined" ? "" : val)}
-                      placeholder={t("Not Defined")}
+                      value={values.gender}
+                      onValueChange={(val) => updateField("gender", val)}
+                      placeholder={t("Select Gender")}
                       allowClear
                     >
-                      <SelectItem value="not_defined">{t("Not Defined")}</SelectItem>
                       <SelectItem value="male">{t("Male")}</SelectItem>
                       <SelectItem value="female">{t("Female")}</SelectItem>
                     </UniFieldSelect>
-                    <UniFieldInput
+                    <DatePicker
                       label={t("Birth Date")}
-                      type="date"
-                      value={values.birth_date ? values.birth_date.split(" ")[0] : ""}
-                      onChange={(event) => updateField("birth_date", event.target.value)}
+                      placeholder={t("Pick a date")}
+                      value={parseDateValue(values.birth_date)}
+                      onChange={(date) => updateField("birth_date", formatDateValue(date))}
                     />
                     <UniFieldInput
                       label={t("PO Box")}
