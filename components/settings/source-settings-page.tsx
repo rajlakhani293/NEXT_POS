@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 
 import { ImageUpload } from "@/components/imageUpload"
 import { TransactionAccountForm } from "@/app/(dashboard)/accounting/accounts/createUpdate"
+import { useConfirmDialog } from "@/components/confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { SelectItem } from "@/components/ui/select"
@@ -266,6 +267,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
   const sourceIdentifier = normalizeIdentifier(identifier)
   const dispatch = useAppDispatch()
   const { t } = useTranslation()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const hasLoadedRef = useRef("")
   const [activeTab, setActiveTab] = useState("")
   const [accountFormCategory, setAccountFormCategory] = useState<string | null>(null)
@@ -567,9 +569,11 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
 
   const save = async () => {
     if (sourceIdentifier === "reset") {
-      const confirmed = window.confirm(
-        t("The database will be cleared and all data erased. Only users and roles are kept. Would you like to proceed ?")
-      )
+      const confirmed = await confirm({
+        title: t("Confirm"),
+        description: t("The database will be cleared and all data erased. Only users and roles are kept. Would you like to proceed ?"),
+        variant: "destructive",
+      })
       if (!confirmed) return
       const response = await resetTenantData({ payLoad: values }).unwrap()
       showToast.success(response?.message || t("The database has been successfully seeded."))
@@ -588,9 +592,11 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
   }
 
   const resetAccountingDefaults = async () => {
-    const confirmed = window.confirm(
-      t("This will clear all records and accounts. It's ideal if you want to start from scratch. Are you sure you want to reset default settings for accounting?")
-    )
+    const confirmed = await confirm({
+      title: t("Confirm"),
+      description: t("This will clear all records and accounts. It's ideal if you want to start from scratch. Are you sure you want to reset default settings for accounting?"),
+      variant: "destructive",
+    })
     if (!confirmed) return
     const response = await resetDefaultTransactionAccounts().unwrap()
     showToast.success(response?.message || t("The default accounting accounts has been created."))
@@ -718,6 +724,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
         onSuccess={() => getSettingsForm({ identifier: sourceIdentifier })}
         defaultCategory={accountFormCategory || "assets"}
       />
+      {confirmDialog}
     </div>
   )
 }

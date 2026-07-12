@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 
+import { useConfirmDialog } from "@/components/confirm-dialog"
 import DynamicTable from "@/components/DynamicTable"
 import { settings } from "@/lib/api/settings"
 import { PERMISSIONS } from "@/lib/permissions"
@@ -15,6 +16,7 @@ export default function RolesPage() {
   const router = useRouter()
   const { hasPermission } = usePermissions()
   const { t } = useTranslation()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const hasLoadedRolesRef = useRef(false)
   const [getRoles, roles] = (settings as any).useGetRolesMutation()
   const [deleteRole] = (settings as any).useDeleteRoleMutation()
@@ -40,7 +42,10 @@ export default function RolesPage() {
     },
   ]
   const handleClone = async (id: string) => {
-    const confirmed = window.confirm(t("Would you like to clone this role ?"))
+    const confirmed = await confirm({
+      title: t("Confirm"),
+      description: t("Would you like to clone this role ?"),
+    })
     if (!confirmed) return
     const response = await cloneRole({ id }).unwrap()
     showToast.success(response?.message || t("Role cloned successfully."))
@@ -81,6 +86,7 @@ export default function RolesPage() {
         itemsPerPage={10}
         totalItems={roleRows.length}
       />
+      {confirmDialog}
     </div>
   )
 }

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Copy, KeyRound, RefreshCw, Save, Trash2 } from "lucide-react"
 
+import { useConfirmDialog } from "@/components/confirm-dialog"
 import { PermissionGuard } from "@/components/permission-guard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -108,6 +109,7 @@ function dateLabel(value?: string | null) {
 export default function UserProfilePage() {
   const { t } = useTranslation()
   const dispatch = useAppDispatch()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const user = useAppSelector((state) => state.session.user)
   const [values, setValues] = useState<ProfileValues>(emptyProfile)
   const [billing, setBilling] = useState<AddressValues>(emptyAddress)
@@ -245,9 +247,13 @@ export default function UserProfilePage() {
   }
 
   const handleDeleteToken = async (token: AccessTokenRecord) => {
-    if (!window.confirm(t("You're about to delete a token that might be in use by an external app. Would you like to proceed?"))) {
-      return
-    }
+    const confirmed = await confirm({
+      title: t("Delete"),
+      description: t("You're about to delete a token that might be in use by an external app. Would you like to proceed?"),
+      confirmLabel: t("Delete"),
+      variant: "destructive",
+    })
+    if (!confirmed) return
 
     try {
       const response = await deleteToken(token.id).unwrap()
@@ -470,6 +476,7 @@ export default function UserProfilePage() {
           </TabsContent>
         </Tabs>
       </div>
+      {confirmDialog}
     </PermissionGuard>
   )
 }

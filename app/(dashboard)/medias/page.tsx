@@ -3,6 +3,7 @@
 import { ChangeEvent, DragEvent, FocusEvent, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { CheckCircleIcon, FileIcon, ImageIcon, SearchIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react"
 
+import { useConfirmDialog } from "@/components/confirm-dialog"
 import { PermissionGuard } from "@/components/permission-guard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -92,6 +93,7 @@ const mediaImageUrl = (resource?: MediaRecord | null) =>
 
 export default function MediasPage() {
   const { t } = useTranslation()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const { hasPermission } = usePermissions()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -276,7 +278,12 @@ export default function MediasPage() {
 
   const deleteSelected = async () => {
     if (!canDelete || selectedResources.length === 0) return
-    const confirmed = window.confirm(t("You're about to delete selected resources. Would you like to proceed?"))
+    const confirmed = await confirm({
+      title: t("Delete"),
+      description: t("You're about to delete selected resources. Would you like to proceed?"),
+      confirmLabel: t("Delete"),
+      variant: "destructive",
+    })
     if (!confirmed) return
     const response = await deleteMedia({ ids: selectedResources.map((resource) => resource.id) }).unwrap()
     showToast.success(response?.message || t("The operation was successful."))
@@ -547,6 +554,7 @@ export default function MediasPage() {
           </TabsContent>
         </Tabs>
       </div>
+      {confirmDialog}
     </PermissionGuard>
   )
 }

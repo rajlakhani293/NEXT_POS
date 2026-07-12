@@ -29,6 +29,7 @@ import {
   WalletCards,
 } from "lucide-react"
 
+import { useConfirmDialog } from "@/components/confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import {
@@ -174,6 +175,7 @@ const getCartItemDiscount = (item: CartItem) => {
 export default function SalesPage() {
   const router = useRouter()
   const { t } = useTranslation()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const loadedRef = useRef(false)
   const loadedShiftRef = useRef("")
   const loadedRewardCustomerRef = useRef("")
@@ -1118,7 +1120,10 @@ export default function SalesPage() {
 
   const handleResumeHeldSale = async (heldSaleId: number | string) => {
     if (cartItems.length) {
-      const proceed = window.confirm(t("The cart is not empty. Opening an order will clear your cart would you proceed ?"))
+      const proceed = await confirm({
+        title: t("Confirm"),
+        description: t("The cart is not empty. Opening an order will clear your cart would you proceed ?"),
+      })
       if (!proceed) return
     }
     const response = await getHeldSaleById({ id: heldSaleId }).unwrap()
@@ -1169,7 +1174,10 @@ export default function SalesPage() {
       return
     }
     if (cartItems.length) {
-      const proceed = window.confirm(t("The cart is not empty. Opening an order will clear your cart would you proceed ?"))
+      const proceed = await confirm({
+        title: t("Confirm"),
+        description: t("The cart is not empty. Opening an order will clear your cart would you proceed ?"),
+      })
       if (!proceed) return
     }
     setIsHeldCartDialogOpen(false)
@@ -1370,8 +1378,11 @@ export default function SalesPage() {
     }
   }
 
-  const handleSaveAsUnpaid = () => {
-    const proceed = window.confirm(t("Are you sure you want to save this order as unpaid?"))
+  const handleSaveAsUnpaid = async () => {
+    const proceed = await confirm({
+      title: t("Confirm"),
+      description: t("Are you sure you want to save this order as unpaid?"),
+    })
     if (!proceed) return
     handleCompleteSale({ paymentStatus: "unpaid" })
   }
@@ -3427,6 +3438,7 @@ export default function SalesPage() {
         </DialogContent>
       </Dialog>
 
+      {confirmDialog}
       </div>
     </DashboardPage>
   )

@@ -5,6 +5,7 @@ import Link from "next/link"
 import Cookies from "js-cookie"
 import { ArchiveIcon, RefreshCwIcon, SearchIcon, Trash2Icon, UploadIcon } from "lucide-react"
 
+import { useConfirmDialog } from "@/components/confirm-dialog"
 import { PermissionGuard } from "@/components/permission-guard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -43,6 +44,7 @@ const truncateWords = (value: string, maxWords = 20) => {
 
 export default function ModulesPage() {
   const { t, language } = useTranslation()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const [segment, setSegment] = useState<ModuleSegment>("")
   const [searchText, setSearchText] = useState("")
   const [expandedModule, setExpandedModule] = useState<ModuleRecord | null>(null)
@@ -129,9 +131,12 @@ export default function ModulesPage() {
 
   const runOperation = async (operation: "enable" | "disable" | "delete", module: ModuleRecord) => {
     if (operation === "delete") {
-      const confirmed = window.confirm(
-        t('Would you like to delete "{module}"? All data created by the module might also be deleted.').replace("{module}", module.name)
-      )
+      const confirmed = await confirm({
+        title: t("Delete"),
+        description: t('Would you like to delete "{module}"? All data created by the module might also be deleted.').replace("{module}", module.name),
+        confirmLabel: t("Delete"),
+        variant: "destructive",
+      })
       if (!confirmed) return
     }
 
@@ -296,6 +301,7 @@ export default function ModulesPage() {
             </div>
           </div>
         ) : null}
+        {confirmDialog}
       </div>
     </PermissionGuard>
   )
