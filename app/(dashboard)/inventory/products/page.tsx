@@ -1,16 +1,19 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ClipboardListIcon, SlidersHorizontalIcon } from "lucide-react"
+import { ClipboardListIcon, ScaleIcon, SlidersHorizontalIcon } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { StockAdjustmentForm } from "@/app/(dashboard)/inventory/adjustments/createUpdate"
+import { Button } from "@/components/ui/button"
+import CustomModal from "@/components/ui/customModal"
+import { Spinner } from "@/components/ui/spinner"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { catalog } from "@/lib/api/catalog"
 import { PERMISSIONS } from "@/lib/permissions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
-import { useState } from "react"
 
 const columns = [
   { key: "name", title: "Name" },
@@ -30,12 +33,25 @@ export default function ProductsPage() {
   const router = useRouter()
   const { t } = useTranslation()
   const [adjustmentProduct, setAdjustmentProduct] = useState<any>(null)
+  const [quantitiesProduct, setQuantitiesProduct] = useState<any>(null)
   const [deleteProduct] = (catalog as any).useDeleteProductMutation()
   const [updateProductStatus] = (catalog as any).useUpdateProductStatusMutation()
+  const [getProductUnitQuantities, productUnitQuantities] = (catalog as any).useGetProductUnitQuantitiesMutation()
   const { hasPermission } = usePermissions()
   const canCreate = hasPermission(PERMISSIONS.products.create)
   const canUpdate = hasPermission(PERMISSIONS.products.update)
   const canDelete = hasPermission(PERMISSIONS.products.delete)
+  const canViewQuantities = hasPermission(PERMISSIONS.productUnits.view)
+  const quantityRows = productUnitQuantities.data?.data || []
+
+  const openQuantitiesList = async (record: any) => {
+    setQuantitiesProduct(record)
+    await getProductUnitQuantities({ productId: record.id })
+  }
+
+  const closeQuantitiesList = () => {
+    setQuantitiesProduct(null)
+  }
 
   const {
     orders,
@@ -95,12 +111,25 @@ export default function ProductsPage() {
         showEdit={canUpdate}
         onEdit={(record: any) => router.push(`/inventory/products/${record.id}`)}
         rowActions={(_, record) => [
+          ...(canViewQuantities
+            ? [
+              {
+                key: "units",
+                label: t("See Quantities"),
+                labelText: t("See Quantities"),
+                icon: <ScaleIcon className="size-4" />,
+                onClick: () => openQuantitiesList(record),
+                priority: 3,
+              },
+            ]
+            : []),
           {
             key: "stock_adjustment",
             label: t("Stock Adjustment"),
             labelText: t("Stock Adjustment"),
             icon: <SlidersHorizontalIcon className="size-4" />,
             onClick: () => setAdjustmentProduct(record),
+            priority: 4,
           },
           {
             key: "stock_ledger",
@@ -111,6 +140,7 @@ export default function ProductsPage() {
               router.push(
                 `/inventory/ledger?product_id=${record.id}&product_name=${encodeURIComponent(record.name || "Product")}`
               ),
+            priority: 5,
           },
         ]}
         showDelete={canDelete}
@@ -130,6 +160,79 @@ export default function ProductsPage() {
         onSuccess={triggerRefresh}
         product={adjustmentProduct}
       />
+
+      <CustomModal
+        open={Boolean(quantitiesProduct)}
+        onOpenChange={(open) => {
+          if (!open) closeQuantitiesList()
+        }}
+        title={t("Product Unit Quantities List")}
+        description={t("Display all product unit quantities.")}
+        showFooter
+        className="sm:max-w-3xl"
+        bodyClassName="p-0"
+        footer={
+          <Button type="button" variant="outline" onClick={closeQuantitiesList}>
+            {t("Close")}
+          </Button>
+        }
+      >
+        <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-900">
+          {quantitiesProduct?.name || t("Product")}
+        </div>
+        <div className="max-h-[50vh] overflow-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-gray-50 text-left text-xs font-bold uppercase text-gray-500">
+              <tr>
+                <th className="px-4 py-3">{t("Product")}</th>
+                <th className="px-4 py-3">{t("Unit")}</th>
+                <th className="px-4 py-3 text-right">{t("Quantity")}</th>
+                <th className="px-4 py-3">{t("Updated At")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {productUnitQuantities.isLoading ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-10 text-center">
+                    <div className="inline-flex items-center gap-2 text-sm font-medium text-gray-600">
+                      <Spinner />
+                      {t("Loading...")}
+                    </div>
+                  </td>
+                </tr>
+              ) : quantityRows.length ? (
+                quantityRows.map((quantity: any) => (
+                  <tr key={quantity.id} className="border-t border-gray-100">
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      {quantitiesProduct?.name || quantity.product_name || "-"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {quantity.unit_name ||
+                        quantity.unit_short_name ||
+                        quantity.unit_identifier ||
+                        quantity.unit?.name ||
+                        quantity.unit?.identifier ||
+                        "-"}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {Number(quantity.quantity || 0).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3">
+                      {quantity.updated_at ? new Date(quantity.updated_at).toLocaleString() : "-"}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="px-4 py-10 text-center text-sm font-medium text-gray-500">
+                    {t("No product unit quantities has been registered")}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </CustomModal>
     </div>
   )
 }

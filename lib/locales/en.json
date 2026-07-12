@@ -703,5 +703,10 @@
   "New Group": "New Group",
   "Remove": "Remove",
   "Remove Selling Unit": "Remove Selling Unit",
-  "Are you sure you want to remove this selling unit?": "Are you sure you want to remove this selling unit?"
+  "Are you sure you want to remove this selling unit?": "Are you sure you want to remove this selling unit?",
+  "Product Unit Quantities List": "Product Unit Quantities List",
+  "Display all product unit quantities.": "Display all product unit quantities.",
+  "No product unit quantities has been registered": "No product unit quantities has been registered",
+  "See Quantities": "See Quantities",
+  "Updated At": "Updated At"
 }

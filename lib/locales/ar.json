@@ -503,5 +503,10 @@
   "New Group": "مجموعة جديدة",
   "Remove": "إزالة",
   "Remove Selling Unit": "إزالة وحدة البيع",
-  "Are you sure you want to remove this selling unit?": "هل أنت متأكد من إزالة وحدة البيع هذه؟"
+  "Are you sure you want to remove this selling unit?": "هل أنت متأكد من إزالة وحدة البيع هذه؟",
+  "Product Unit Quantities List": "قائمة كميات وحدات المنتج",
+  "Display all product unit quantities.": "عرض جميع كميات وحدات المنتج.",
+  "No product unit quantities has been registered": "لم يتم تسجيل أي كميات وحدات للمنتج",
+  "See Quantities": "عرض الكميات",
+  "Updated At": "تم التحديث في"
 }
