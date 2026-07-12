@@ -88,55 +88,6 @@ const mainNavSections: DashboardNavSection[] = [
     ],
   },
   {
-    title: "Inventory",
-    url: "/inventory/products",
-    icon: <BoxesIcon />,
-    permission: PERMISSIONS.products.view,
-    items: [
-      {
-        title: "Products",
-        url: "/inventory/products",
-        permission: PERMISSIONS.products.view,
-      },
-      {
-        title: "Print Labels",
-        url: "/inventory/labels",
-        permission: PERMISSIONS.products.labels,
-      },
-      {
-        title: "Categories",
-        url: "/inventory/categories",
-        permission: PERMISSIONS.categories.view,
-      },
-      {
-        title: "Units",
-        url: "/inventory/units",
-        permission: PERMISSIONS.productUnits.view,
-      },
-      {
-        title: "Unit Groups",
-        url: "/inventory/unit-groups",
-        permission: PERMISSIONS.productUnits.view,
-      },
-      {
-        title: "Scale Range",
-        url: "/inventory/scale-range",
-        permission: PERMISSIONS.inventory.adjust,
-      },
-      {
-        title: "Stock Flow Records",
-        url: "/inventory/ledger",
-        permission: PERMISSIONS.products.view,
-      },
-    ],
-  },
-  {
-    title: "Modules",
-    url: "/modules",
-    icon: <PlugIcon />,
-    permission: PERMISSIONS.special.manageModules,
-  },
-  {
     title: "Medias",
     url: "/medias",
     icon: <ImageIcon />,
@@ -211,6 +162,55 @@ const mainNavSections: DashboardNavSection[] = [
         permission: PERMISSIONS.transactionAccounts.view,
       },
     ],
+  },
+  {
+    title: "Inventory",
+    url: "/inventory/products",
+    icon: <BoxesIcon />,
+    permission: PERMISSIONS.products.view,
+    items: [
+      {
+        title: "Products",
+        url: "/inventory/products",
+        permission: PERMISSIONS.products.view,
+      },
+      {
+        title: "Print Labels",
+        url: "/inventory/labels",
+        permission: PERMISSIONS.products.labels,
+      },
+      {
+        title: "Categories",
+        url: "/inventory/categories",
+        permission: PERMISSIONS.categories.view,
+      },
+      {
+        title: "Units",
+        url: "/inventory/units",
+        permission: PERMISSIONS.productUnits.view,
+      },
+      {
+        title: "Unit Groups",
+        url: "/inventory/unit-groups",
+        permission: PERMISSIONS.productUnits.view,
+      },
+      {
+        title: "Scale Range",
+        url: "/inventory/scale-range",
+        permission: PERMISSIONS.inventory.adjust,
+      },
+      {
+        title: "Stock Flow Records",
+        url: "/inventory/ledger",
+        permission: PERMISSIONS.products.view,
+      },
+    ],
+  },
+  {
+    title: "Modules",
+    url: "/modules",
+    icon: <PlugIcon />,
+    permission: PERMISSIONS.special.manageModules,
   },
   {
     title: "Registers",
@@ -295,28 +295,6 @@ const settingsNavSections: DashboardNavSection[] = [
     permission: PERMISSIONS.settings.view,
   },
   {
-    title: "Taxes",
-    url: "/settings/tax-groups",
-    icon: <HiReceiptTax />,
-    permission: [
-      PERMISSIONS.taxes.view,
-      PERMISSIONS.taxes.create,
-    ],
-    permissionMatch: "any",
-    items: [
-      {
-        title: "Taxes Groups",
-        url: "/settings/tax-groups",
-        permission: PERMISSIONS.taxes.view,
-      },
-      {
-        title: "Taxes",
-        url: "/settings/taxes",
-        permission: PERMISSIONS.taxes.view,
-      },
-    ],
-  },
-  {
     title: "Users",
     url: "/settings/users",
     icon: <UsersIcon />,
@@ -351,6 +329,28 @@ const settingsNavSections: DashboardNavSection[] = [
     permissionMatch: "any",
   },
   {
+    title: "Taxes",
+    url: "/settings/tax-groups",
+    icon: <HiReceiptTax />,
+    permission: [
+      PERMISSIONS.taxes.view,
+      PERMISSIONS.taxes.create,
+    ],
+    permissionMatch: "any",
+    items: [
+      {
+        title: "Taxes Groups",
+        url: "/settings/tax-groups",
+        permission: PERMISSIONS.taxes.view,
+      },
+      {
+        title: "Taxes",
+        url: "/settings/taxes",
+        permission: PERMISSIONS.taxes.view,
+      },
+    ],
+  },
+  {
     title: "Reports",
     url: "/settings/reports",
     icon: <FileBarChart2Icon />,
@@ -360,12 +360,6 @@ const settingsNavSections: DashboardNavSection[] = [
     title: "Invoices",
     url: "/settings/invoices",
     icon: <ImageIcon />,
-    permission: PERMISSIONS.settings.view,
-  },
-  {
-    title: "Workers",
-    url: "/settings/workers",
-    icon: <Server />,
     permission: PERMISSIONS.settings.view,
   },
   {
@@ -488,15 +482,13 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       }
     })
   const translateNavItem = (item: any) => {
-    const key = item.title.toLowerCase().replace(/\s+/g, "_")
     return {
       ...item,
-      title: t(key),
+      title: t(item.title),
       items: item.items?.map((subItem: any) => {
-        const subKey = subItem.title.toLowerCase().replace(/\s+/g, "_")
         return {
           ...subItem,
-          title: t(subKey),
+          title: t(subItem.title),
         }
       }),
     }
