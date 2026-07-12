@@ -191,6 +191,25 @@ const mediaImageUrl = (record?: MediaRecord | null) =>
     ""
   )
 
+const productUnitQuantityToForm = (record: any): ProductUnitQuantityFormValues => ({
+  id: record.id,
+  unit_id: record.unit_id ? String(record.unit_id) : "",
+  convert_unit_id: record.convert_unit_id
+    ? String(record.convert_unit_id)
+    : "",
+  barcode: record.barcode || "",
+  quantity: record.quantity ? String(record.quantity) : "1",
+  sale_price: record.sale_price ? String(record.sale_price) : "",
+  wholesale_price: record.wholesale_price ? String(record.wholesale_price) : "",
+  purchase_price: record.cogs ? String(record.cogs) : "",
+  is_weighable: Boolean(record.is_weighable),
+  stock_alert_enabled: Boolean(record.stock_alert_enabled),
+  low_quantity: record.low_quantity ? String(record.low_quantity) : "",
+  visible: record.visible !== false,
+  preview_url: record.preview_url || "",
+  scale_plu: record.scale_plu || "",
+})
+
 function YesNoToggle({
   label,
   value,
@@ -529,6 +548,13 @@ export default function ProductFormPage() {
         url: resolveAssetUrl(image.url || image.preview_url || ""),
         featured: Boolean(image.featured),
       })))
+      if (primaryUnitQuantity) {
+        setUnitQuantityForm(productUnitQuantityToForm(primaryUnitQuantity))
+        setUnitQuantityErrors({})
+        setShowSellingForm(true)
+      } else {
+        resetUnitQuantityForm()
+      }
     }
 
     load()
@@ -827,24 +853,7 @@ export default function ProductFormPage() {
   }
 
   const handleEditUnitQuantity = (record: any) => {
-    setUnitQuantityForm({
-      id: record.id,
-      unit_id: record.unit_id ? String(record.unit_id) : "",
-      convert_unit_id: record.convert_unit_id
-        ? String(record.convert_unit_id)
-        : "",
-      barcode: record.barcode || "",
-      quantity: record.quantity ? String(record.quantity) : "",
-      sale_price: record.sale_price ? String(record.sale_price) : "",
-      wholesale_price: record.wholesale_price ? String(record.wholesale_price) : "",
-      purchase_price: record.cogs ? String(record.cogs) : "",
-      is_weighable: Boolean(record.is_weighable),
-      stock_alert_enabled: Boolean(record.stock_alert_enabled),
-      low_quantity: record.low_quantity ? String(record.low_quantity) : "",
-      visible: record.visible !== false,
-      preview_url: record.preview_url || "",
-      scale_plu: record.scale_plu || "",
-    })
+    setUnitQuantityForm(productUnitQuantityToForm(record))
     setUnitQuantityErrors({})
     setShowSellingForm(true)
   }
@@ -1352,24 +1361,6 @@ export default function ProductFormPage() {
                       </div>
                     ) : null}
 
-                    {/* {!sellingUnitRows.length && !showSellingForm ? (
-                      <div className="mt-4 rounded-lg border border-dashed border-gray-200 bg-white p-4 text-sm font-medium text-gray-500">
-                        {t("No selling unit has been added.")}
-                      </div>
-                    ) : null} */}
-
-                    {unitQuantityForm.preview_url ? (
-                      <div className="mt-4 flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3">
-                        <div className="h-16 w-16 overflow-hidden rounded-md border bg-gray-50">
-                          <img src={resolveAssetUrl(unitQuantityForm.preview_url)} alt={t("Preview")} className="h-full w-full object-cover" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold uppercase tracking-wide text-gray-500">{t("Preview Url")}</div>
-                          <div className="truncate text-sm font-semibold text-gray-800">{unitQuantityForm.preview_url}</div>
-                        </div>
-                      </div>
-                    ) : null}
-
                     {showSellingForm ? (
                       <>
                         <div className="mb-4 border-t pt-4">
@@ -1421,18 +1412,6 @@ export default function ProductFormPage() {
                             value={unitQuantityForm.sale_price}
                             onChange={(e) => updateUnitQuantityField("sale_price", e.target.value)}
                             error={unitQuantityErrors.sale_price}
-                          />
-
-                          <UniFieldInput
-                            label={t("Wholesale Price")}
-                            required
-                            placeholder={t("Enter Wholesale Price")}
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            prefix={currencyIndicator}
-                            value={unitQuantityForm.wholesale_price}
-                            onChange={(e) => updateUnitQuantityField("wholesale_price", e.target.value)}
                           />
 
                           <UniFieldInput

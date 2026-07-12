@@ -84,6 +84,11 @@ type POSCategory = {
 type POSUnitQuantity = {
   id: number
   unit_id: number
+  unit?: {
+    id?: number
+    name?: string
+    identifier?: string
+  }
   unit_name?: string
   unit_short_name?: string
   unit_identifier?: string
@@ -386,6 +391,13 @@ export default function SalesPage() {
     }
     return Number(unitQuantity.sale_price_net ?? unitQuantity.sale_price ?? 0)
   }
+  const getUnitQuantityLabel = (unitQuantity?: POSUnitQuantity | any) =>
+    unitQuantity?.unit_name ||
+    unitQuantity?.unit_short_name ||
+    unitQuantity?.unit_identifier ||
+    unitQuantity?.unit?.name ||
+    unitQuantity?.unit?.identifier ||
+    (unitQuantity?.id ? `${t("Unit")} ${unitQuantity.id}` : "")
 
   const itemsSubtotal = useMemo(
     () =>
@@ -693,9 +705,7 @@ export default function SalesPage() {
     const availableStock = Number(unitQuantity?.quantity || 0)
     const unitQuantityId = unitQuantity?.id ? String(unitQuantity.id) : ""
     const unitLabel =
-      unitQuantity?.unit_identifier ||
-      unitQuantity?.unit_name ||
-      unitQuantity?.unit_short_name ||
+      getUnitQuantityLabel(unitQuantity) ||
       product.unit_name ||
       ""
 
@@ -2924,7 +2934,7 @@ export default function SalesPage() {
                 }}
                 className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold hover:border-blue-400 hover:bg-blue-50 transition"
               >
-                <span>{uq.unit_name || uq.unit_short_name || uq.unit_identifier || `${t("Unit")} ${uq.id}`}</span>
+                <span>{getUnitQuantityLabel(uq)}</span>
                 <span className="text-blue-600">{formatMoney(getDisplayPrice(uq))}</span>
               </button>
             ))}
@@ -2965,10 +2975,7 @@ export default function SalesPage() {
                 <div className="flex justify-between">
                   <span>{t("Unit")}</span>
                   <span>
-                    {pendingCartProduct.unitQuantity.unit_name ||
-                      pendingCartProduct.unitQuantity.unit_short_name ||
-                      pendingCartProduct.unitQuantity.unit_identifier ||
-                      `${t("Unit")} ${pendingCartProduct.unitQuantity.id}`}
+                    {getUnitQuantityLabel(pendingCartProduct.unitQuantity)}
                   </span>
                 </div>
                 <div className="mt-2 flex justify-between">

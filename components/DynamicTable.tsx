@@ -667,7 +667,7 @@ const DynamicTable = ({
 
         <div className="w-full overflow-hidden rounded-xl border border-gray-200">
           <div
-            className={`${data?.length > 0 ? "no-scrollbar max-h-[calc(100vh-300px)] overflow-y-auto" : "no-scrollbar h-[calc(100vh-300px)]"}`}
+            className={`${data?.length > 0 ? "max-h-[calc(100vh-300px)] overflow-y-auto" : "no-scrollbar h-[calc(100vh-300px)]"}`}
           >
             <table
               className={cn(
