@@ -3,11 +3,11 @@
 import { useRouter } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
+import { usePermissions } from "@/hooks/use-permissions"
+import { useTableData } from "@/hooks/useTableData"
 import { promotions } from "@/lib/api/promotions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
-import { usePermissions } from "@/hooks/use-permissions"
-import { useTableData } from "@/hooks/useTableData"
 
 const buildColumns = (t: (key: string) => string) => [
   { key: "name", title: t("Name") },
@@ -17,7 +17,11 @@ const buildColumns = (t: (key: string) => string) => [
   { key: "usage", title: t("Usage") },
   { key: "limit_usage", title: t("Limit") },
   { key: "user_username", title: t("User") },
-  { key: "created_at", title: t("Created On"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+  {
+    key: "created_at",
+    title: t("Created On"),
+    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+  },
 ]
 
 export default function GeneratedCustomerCouponsPage() {
@@ -62,7 +66,7 @@ export default function GeneratedCustomerCouponsPage() {
         sortableFields={sortableFields}
         isLoading={isLoading}
         showEdit={canUpdate}
-        onEdit={(record: any) => router.push(`/customers/coupons-generated/${record.id}`)}
+        onEdit={(record: any) => router.push(`/coupons-generated/${record.id}`)}
         hideActions={!canUpdate}
       />
     </div>

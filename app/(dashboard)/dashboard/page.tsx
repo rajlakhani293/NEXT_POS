@@ -269,20 +269,6 @@ export default function DashboardPage() {
               </div>
             </Link>
             <Link
-              href="/customers/credit"
-              className="rounded-2xl border border-gray-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-slate-950">Customer Credit</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Monitor due balances and ledger changes.
-                  </p>
-                </div>
-                <ArrowRight className="size-4 text-slate-500" />
-              </div>
-            </Link>
-            <Link
               href="/reports"
               className="rounded-2xl border border-gray-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
             >

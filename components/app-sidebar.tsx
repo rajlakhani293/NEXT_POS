@@ -173,6 +173,12 @@ const mainNavSections: DashboardNavSection[] = [
     permission: PERMISSIONS.promotions.view,
   },
   {
+    title: "Generated Coupons",
+    url: "/coupons-generated",
+    icon: <Ticket />,
+    permission: PERMISSIONS.promotions.view,
+  },
+  {
     title: "Providers",
     url: "/providers",
     icon: <UsersIcon />,

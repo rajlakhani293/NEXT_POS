@@ -165,7 +165,7 @@ export default function CustomerFormPage() {
           billing_country: billingAddress.country || "",
           billing_city: billingAddress.city || "",
           billing_pobox: billingAddress.pobox || "",
-          billing_company_name: billingAddress.company_name || "",
+          billing_company_name: billingAddress.company_name || billingAddress.company || "",
 
           // Shipping address
           shipping_first_name: shippingAddress.first_name || "",
@@ -177,7 +177,7 @@ export default function CustomerFormPage() {
           shipping_country: shippingAddress.country || "",
           shipping_city: shippingAddress.city || "",
           shipping_pobox: shippingAddress.pobox || "",
-          shipping_company_name: shippingAddress.company_name || "",
+          shipping_company_name: shippingAddress.company_name || shippingAddress.company || "",
         })
         setErrors({})
       } catch (err) {
@@ -221,6 +221,8 @@ export default function CustomerFormPage() {
       group_id: values.group_id ? Number(values.group_id) : null,
       credit_limit_amount: values.credit_limit_amount || "0",
       gender: values.gender === "not_defined" ? "" : values.gender,
+      billing_company: values.billing_company_name,
+      shipping_company: values.shipping_company_name,
     }
 
     setIsSubmitting(true)
