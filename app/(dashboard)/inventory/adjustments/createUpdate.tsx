@@ -1,10 +1,9 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useMemo } from "react"
 
 import DynamicForm from "@/components/DynamicForm"
 import { catalog } from "@/lib/api/catalog"
-import { inventory } from "@/lib/api/inventory"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
@@ -17,12 +16,10 @@ type StockAdjustmentFormProps = {
 }
 
 const initialValues = {
-  product_id: "",
-  adjustment_type: "",
+  adjust_unit_id: "",
+  adjust_action: "set",
   quantity: "",
-  unit_cost: "",
   reason: "",
-  note: "",
 }
 
 export function StockAdjustmentForm({
@@ -37,41 +34,87 @@ export function StockAdjustmentForm({
     posOptions.currency_preferred === "iso"
       ? posOptions.currency_iso
       : posOptions.currency_symbol
-  const loadedRef = useRef(false)
-  const [createStockAdjustment] = (
-    inventory as any
-  ).useCreateStockAdjustmentMutation()
-  const [getProductsDropdown, products] = (
+  const [adjustProductStock] = (catalog as any).useAdjustProductStockMutation()
+  const [getProductUnitQuantities, productUnitQuantities] = (
     catalog as any
-  ).useGetProductsDropdownMutation()
+  ).useGetProductUnitQuantitiesMutation()
 
   useEffect(() => {
-    if (!isOpen || loadedRef.current) return
-    loadedRef.current = true
-    getProductsDropdown()
-  }, [getProductsDropdown, isOpen])
+    if (!isOpen || !product?.id) return
+    getProductUnitQuantities({ productId: product.id })
+  }, [getProductUnitQuantities, isOpen, product?.id])
 
-  const productOptions = (products.data?.data || []).map((product: any) => ({
-    label: `${product.name}${product.sku ? ` (${product.sku})` : ""} - ${t("Stock")}: ${product.current_stock || 0}`,
-    value: product.id,
-  }))
-  const productFieldOptions = product
-    ? [
-        {
-          label: `${product.name}${product.sku ? ` (${product.sku})` : ""} - ${t("Stock")}: ${product.current_stock || 0}`,
-          value: product.id,
-        },
-      ]
-    : productOptions
+  const unitQuantities = useMemo(
+    () => productUnitQuantities.data?.data || [],
+    [productUnitQuantities.data?.data]
+  )
+  const defaultUnit = useMemo(
+    () =>
+      unitQuantities.find((quantity: any) => quantity.unit?.base_unit || quantity.base_unit) ||
+      unitQuantities[0],
+    [unitQuantities]
+  )
+  const unitOptions = unitQuantities.map((quantity: any) => {
+    const unitName =
+      quantity.unit_name ||
+      quantity.unit_short_name ||
+      quantity.unit_identifier ||
+      quantity.unit?.name ||
+      quantity.unit?.identifier ||
+      t("N/A")
+    return {
+      label: `${unitName} (${Number(quantity.quantity || 0).toLocaleString()})`,
+      value: quantity.unit_id || quantity.unit?.id,
+    }
+  })
+  const findSelectedUnit = (unitId: any) =>
+    unitQuantities.find(
+      (quantity: any) => String(quantity.unit_id || quantity.unit?.id) === String(unitId)
+    )
+  const formatMoney = (value: any) => {
+    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
+    return posOptions.currency_position === "after"
+      ? `${amount}${currencyIndicator}`
+      : `${currencyIndicator}${amount}`
+  }
 
   const handleSubmit = async (values: typeof initialValues) => {
-    const response = await createStockAdjustment({
-      ...values,
-      product_id: Number(values.product_id),
-      quantity: values.quantity || "0",
-      unit_cost: values.unit_cost || "0",
+    const selectedUnit = findSelectedUnit(values.adjust_unit_id)
+    if (!selectedUnit) {
+      showToast.error(t("The unit is not set for the product."))
+      return
+    }
+
+    const quantity = Number(values.quantity || 0)
+    if (quantity < 0) {
+      showToast.error(t("The adjustment quantity can't be negative."))
+      return
+    }
+
+    if (!["added", "set"].includes(values.adjust_action) && quantity > Number(selectedUnit.quantity || 0)) {
+      showToast.error(t("The specified quantity exceed the available quantity."))
+      return
+    }
+
+    const response = await adjustProductStock({
+      payLoad: {
+        products: [
+          {
+            id: Number(product.id),
+            name: product.name,
+            adjust_action: values.adjust_action,
+            adjust_quantity: quantity,
+            adjust_reason: values.reason || "",
+            adjust_unit: {
+              unit_id: Number(selectedUnit.unit_id || selectedUnit.unit?.id),
+              sale_price: Number(selectedUnit.sale_price || 0),
+            },
+            procurement_product_id: 0,
+          },
+        ],
+      },
     }).unwrap()
-    showToast.success(response?.message || t("Stock adjustment created successfully."))
+    showToast.success(response?.message || t("Stock adjustment completed successfully."))
     onSuccess()
     onClose()
   }
@@ -80,16 +123,22 @@ export function StockAdjustmentForm({
     <DynamicForm
       fields={[
         {
-          name: "product_id",
+          name: "product_name",
           label: t("Product"),
-          placeholder: t("Select product"),
-          type: "select",
-          required: true,
-          options: productFieldOptions,
-          disabled: Boolean(product),
+          type: "readonly",
+          defaultValue: product?.name || "",
         },
         {
-          name: "adjustment_type",
+          name: "adjust_unit_id",
+          label: t("Select Unit"),
+          placeholder: t("Select unit"),
+          type: "select",
+          required: true,
+          options: unitOptions,
+          note: t("Select the unit that you want to adjust the stock with."),
+        },
+        {
+          name: "adjust_action",
           label: t("Select Action"),
           placeholder: t("Select action"),
           type: "select",
@@ -105,41 +154,42 @@ export function StockAdjustmentForm({
         {
           name: "quantity",
           label: t("Quantity"),
-          placeholder: t("Enter quantity. For Set, enter final stock."),
+          placeholder: t("Enter quantity"),
           type: "number",
           required: true,
-        },
-        {
-          name: "unit_cost",
-          label: t("Unit Cost"),
-          placeholder: t("Optional cost"),
-          type: "number",
-          prefix: currencyIndicator,
+          validate: (value, values) => {
+            const quantity = Number(value || 0)
+            const selectedUnit = findSelectedUnit(values.adjust_unit_id)
+            if (!selectedUnit || ["added", "set"].includes(values.adjust_action)) return ""
+            return quantity > Number(selectedUnit.quantity || 0)
+              ? t("The specified quantity exceed the available quantity.")
+              : ""
+          },
         },
         {
           name: "reason",
-          label: t("Reason"),
-          placeholder: t("Useful to describe why this adjustment is needed"),
+          label: t("More Details"),
+          placeholder: t("Useful to describe better what are the reasons that leaded to this adjustment."),
           type: "text",
-          required: true,
-        },
-        {
-          name: "note",
-          label: t("Note"),
-          placeholder: t("Optional note"),
-          type: "textarea",
-          rows: 3,
         },
       ]}
       initialValues={{
         ...initialValues,
-        product_id: product?.id ? String(product.id) : "",
+        product_name: product?.name || "",
+        adjust_unit_id: defaultUnit ? String(defaultUnit.unit_id || defaultUnit.unit?.id) : "",
+        quantity: "1",
       }}
       onSubmit={handleSubmit}
       onClose={onClose}
       title={t("Stock Adjustment")}
+      note={
+        defaultUnit
+          ? `${t("Quantity")}: ${Number(defaultUnit.quantity || 0).toLocaleString()} | ${t("Value")}: ${formatMoney(defaultUnit.sale_price || 0)}`
+          : t("This product doesn't have any stock to adjust.")
+      }
       isOpen={isOpen}
       formWidth="w-[560px]"
+      isLoading={productUnitQuantities.isLoading}
     />
   )
 }

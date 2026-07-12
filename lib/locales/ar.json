@@ -524,5 +524,18 @@
   "PLU Range": "نطاق PLU",
   "Select PLU Range": "اختر نطاق PLU",
   "Select a PLU range to automatically assign PLU codes to weighable products in this category.": "اختر نطاق PLU لتعيين رموز PLU تلقائيا للمنتجات الموزونة في هذه الفئة.",
-  "Provide a preview url to the category.": "وفر رابط معاينة للفئة."
+  "Provide a preview url to the category.": "وفر رابط معاينة للفئة.",
+  "Select Unit": "اختر الوحدة",
+  "Select unit": "اختر الوحدة",
+  "Select the unit that you want to adjust the stock with.": "اختر الوحدة التي تريد تعديل المخزون بها.",
+  "Enter quantity": "أدخل الكمية",
+  "More Details": "تفاصيل أكثر",
+  "Useful to describe better what are the reasons that leaded to this adjustment.": "مفيد لوصف الأسباب التي أدت إلى هذا التعديل بشكل أفضل.",
+  "The unit is not set for the product.": "لم يتم تعيين الوحدة للمنتج.",
+  "The adjustment quantity can't be negative.": "لا يمكن أن تكون كمية التعديل سالبة.",
+  "The specified quantity exceed the available quantity.": "الكمية المحددة تتجاوز الكمية المتاحة.",
+  "Stock adjustment completed successfully.": "تم إكمال تعديل المخزون بنجاح.",
+  "This product doesn't have any stock to adjust.": "هذا المنتج لا يحتوي على مخزون لتعديله.",
+  "Value": "القيمة",
+  "N/A": "غير متوفر"
 }

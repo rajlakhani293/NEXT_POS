@@ -45,6 +45,7 @@ export default function ProductsPage() {
   const canUpdate = hasPermission(PERMISSIONS.products.update)
   const canDelete = hasPermission(PERMISSIONS.products.delete)
   const canViewQuantities = hasPermission(PERMISSIONS.productUnits.view)
+  const canAdjustStock = hasPermission(PERMISSIONS.inventory.adjust)
   const quantityRows = productUnitQuantities.data?.data || []
   const currencyIndicator =
     posOptions.currency_preferred === "iso"
@@ -145,14 +146,18 @@ export default function ProductsPage() {
               },
             ]
             : []),
-          {
-            key: "stock_adjustment",
-            label: t("Stock Adjustment"),
-            labelText: t("Stock Adjustment"),
-            icon: <SlidersHorizontalIcon className="size-4" />,
-            onClick: () => setAdjustmentProduct(record),
-            priority: 4,
-          },
+          ...(canAdjustStock
+            ? [
+              {
+                key: "stock_adjustment",
+                label: t("Stock Adjustment"),
+                labelText: t("Stock Adjustment"),
+                icon: <SlidersHorizontalIcon className="size-4" />,
+                onClick: () => setAdjustmentProduct(record),
+                priority: 4,
+              },
+            ]
+            : []),
           {
             key: "stock_ledger",
             label: t("See History"),

@@ -524,5 +524,18 @@
   "PLU Range": "Rango PLU",
   "Select PLU Range": "Seleccionar rango PLU",
   "Select a PLU range to automatically assign PLU codes to weighable products in this category.": "Seleccione un rango PLU para asignar automaticamente codigos PLU a productos pesables en esta categoria.",
-  "Provide a preview url to the category.": "Proporcione una URL de vista previa para la categoria."
+  "Provide a preview url to the category.": "Proporcione una URL de vista previa para la categoria.",
+  "Select Unit": "Seleccionar unidad",
+  "Select unit": "Seleccionar unidad",
+  "Select the unit that you want to adjust the stock with.": "Seleccione la unidad con la que desea ajustar el stock.",
+  "Enter quantity": "Ingrese cantidad",
+  "More Details": "Mas detalles",
+  "Useful to describe better what are the reasons that leaded to this adjustment.": "Util para describir mejor las razones que llevaron a este ajuste.",
+  "The unit is not set for the product.": "La unidad no esta configurada para el producto.",
+  "The adjustment quantity can't be negative.": "La cantidad de ajuste no puede ser negativa.",
+  "The specified quantity exceed the available quantity.": "La cantidad especificada excede la cantidad disponible.",
+  "Stock adjustment completed successfully.": "Ajuste de stock completado correctamente.",
+  "This product doesn't have any stock to adjust.": "Este producto no tiene stock para ajustar.",
+  "Value": "Valor",
+  "N/A": "N/D"
 }

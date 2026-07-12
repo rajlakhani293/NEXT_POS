@@ -119,11 +119,6 @@ const mainNavSections: DashboardNavSection[] = [
         permission: PERMISSIONS.productUnits.view,
       },
       {
-        title: "Stock Adjustment",
-        url: "/inventory/adjustments",
-        permission: PERMISSIONS.inventory.adjust,
-      },
-      {
         title: "Scale Range",
         url: "/inventory/scale-range",
         permission: PERMISSIONS.inventory.adjust,

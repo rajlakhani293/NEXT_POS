@@ -724,5 +724,18 @@
   "PLU Range": "PLU Range",
   "Select PLU Range": "Select PLU Range",
   "Select a PLU range to automatically assign PLU codes to weighable products in this category.": "Select a PLU range to automatically assign PLU codes to weighable products in this category.",
-  "Provide a preview url to the category.": "Provide a preview url to the category."
+  "Provide a preview url to the category.": "Provide a preview url to the category.",
+  "Select Unit": "Select Unit",
+  "Select unit": "Select unit",
+  "Select the unit that you want to adjust the stock with.": "Select the unit that you want to adjust the stock with.",
+  "Enter quantity": "Enter quantity",
+  "More Details": "More Details",
+  "Useful to describe better what are the reasons that leaded to this adjustment.": "Useful to describe better what are the reasons that leaded to this adjustment.",
+  "The unit is not set for the product.": "The unit is not set for the product.",
+  "The adjustment quantity can't be negative.": "The adjustment quantity can't be negative.",
+  "The specified quantity exceed the available quantity.": "The specified quantity exceed the available quantity.",
+  "Stock adjustment completed successfully.": "Stock adjustment completed successfully.",
+  "This product doesn't have any stock to adjust.": "This product doesn't have any stock to adjust.",
+  "Value": "Value",
+  "N/A": "N/A"
 }
