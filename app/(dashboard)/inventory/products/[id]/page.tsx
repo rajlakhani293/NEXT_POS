@@ -923,6 +923,21 @@ export default function ProductFormPage() {
     ])
   }
 
+  const handleChooseGalleryImage = () => {
+    const nextIndex = gallery.length
+    setGallery((current) => [
+      ...current,
+      {
+        url: "",
+        featured: false,
+      },
+    ])
+    setActiveGalleryIndex(nextIndex)
+    setMediaPickerTarget("gallery")
+    setMediaTab("gallery")
+    setMediaManagerOpen(true)
+  }
+
   const updateGalleryImage = (
     index: number,
     values: Partial<ProductGalleryFormValues>
@@ -1571,24 +1586,30 @@ export default function ProductFormPage() {
                       <h3 className="text-sm font-bold text-gray-900">{t("Product Gallery")}</h3>
                       <p className="text-xs text-gray-500 mt-0.5">{t("Manage product images shown to customers.")}</p>
                     </div>
-                    <Button type="button" size="sm" onClick={handleAddGalleryImage}>
-                      <Plus className="size-4" />
-                      {t("Add Image")}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" size="sm" variant="outline" onClick={handleChooseGalleryImage}>
+                        <Search className="size-4" />
+                        {t("Medias Manager")}
+                      </Button>
+                      <Button type="button" size="sm" onClick={handleAddGalleryImage}>
+                        <Plus className="size-4" />
+                        {t("Add Image")}
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Empty state */}
                   {!gallery.length ? (
                     <button
                       type="button"
-                      onClick={handleAddGalleryImage}
+                      onClick={handleChooseGalleryImage}
                       className="flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-8 text-center transition hover:border-gray-400 hover:bg-gray-100"
                     >
                       <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-gray-500">
                         <ImagePlus className="size-4" />
                       </span>
                       <span className="text-xs font-semibold text-gray-600">{t("No image has been added.")}</span>
-                      <span className="text-[11px] text-gray-400">{t("Click to add your first image")}</span>
+                      <span className="text-[11px] text-gray-400">{t("Choose an image from Medias Manager")}</span>
                     </button>
                   ) : (
                     /* Image grid */
@@ -1641,16 +1662,25 @@ export default function ProductFormPage() {
                             <span className="truncate text-xs text-gray-500">
                               {img.name || img.url || t("No URL")}
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => handleSetGalleryPrimary(index, !img.featured)}
-                              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${img.featured
-                                ? "bg-gray-900 text-white"
-                                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                                }`}
-                            >
-                              {img.featured ? t("Primary") : t("Set Primary")}
-                            </button>
+                            <div className="flex shrink-0 items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => openMediaManager(index)}
+                                className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600 transition hover:bg-gray-200"
+                              >
+                                {t("Choose")}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSetGalleryPrimary(index, !img.featured)}
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${img.featured
+                                  ? "bg-gray-900 text-white"
+                                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                  }`}
+                              >
+                                {img.featured ? t("Primary") : t("Set Primary")}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}

@@ -508,5 +508,14 @@
   "Display all product unit quantities.": "عرض جميع كميات وحدات المنتج.",
   "No product unit quantities has been registered": "لم يتم تسجيل أي كميات وحدات للمنتج",
   "See Quantities": "عرض الكميات",
-  "Updated At": "تم التحديث في"
+  "Updated At": "تم التحديث في",
+  "Preview": "معاينة",
+  "Previewing :": "معاينة :",
+  "Units & Quantities": "الوحدات والكميات",
+  "Choose": "اختيار",
+  "Choose an image from Medias Manager": "اختر صورة من مدير الوسائط",
+  "Set Primary": "تعيين كصورة رئيسية",
+  "Primary": "رئيسية",
+  "No URL": "لا يوجد رابط",
+  "Manage product images shown to customers.": "إدارة صور المنتج المعروضة للعملاء."
 }

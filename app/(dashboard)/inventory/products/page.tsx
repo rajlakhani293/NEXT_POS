@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ClipboardListIcon, ScaleIcon, SlidersHorizontalIcon } from "lucide-react"
+import { ClipboardListIcon, EyeIcon, ScaleIcon, SlidersHorizontalIcon } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { StockAdjustmentForm } from "@/app/(dashboard)/inventory/adjustments/createUpdate"
@@ -14,6 +14,7 @@ import { useTableData } from "@/hooks/useTableData"
 import { catalog } from "@/lib/api/catalog"
 import { PERMISSIONS } from "@/lib/permissions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { usePosOptions } from "@/lib/options"
 
 const columns = [
   { key: "name", title: "Name" },
@@ -32,8 +33,10 @@ const columns = [
 export default function ProductsPage() {
   const router = useRouter()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
   const [adjustmentProduct, setAdjustmentProduct] = useState<any>(null)
   const [quantitiesProduct, setQuantitiesProduct] = useState<any>(null)
+  const [quantitiesMode, setQuantitiesMode] = useState<"list" | "preview">("list")
   const [deleteProduct] = (catalog as any).useDeleteProductMutation()
   const [updateProductStatus] = (catalog as any).useUpdateProductStatusMutation()
   const [getProductUnitQuantities, productUnitQuantities] = (catalog as any).useGetProductUnitQuantitiesMutation()
@@ -43,8 +46,19 @@ export default function ProductsPage() {
   const canDelete = hasPermission(PERMISSIONS.products.delete)
   const canViewQuantities = hasPermission(PERMISSIONS.productUnits.view)
   const quantityRows = productUnitQuantities.data?.data || []
+  const currencyIndicator =
+    posOptions.currency_preferred === "iso"
+      ? posOptions.currency_iso
+      : posOptions.currency_symbol
+  const formatMoney = (value: any) => {
+    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
+    return posOptions.currency_position === "after"
+      ? `${amount}${currencyIndicator}`
+      : `${currencyIndicator}${amount}`
+  }
 
-  const openQuantitiesList = async (record: any) => {
+  const openQuantitiesList = async (record: any, mode: "list" | "preview" = "list") => {
+    setQuantitiesMode(mode)
     setQuantitiesProduct(record)
     await getProductUnitQuantities({ productId: record.id })
   }
@@ -114,11 +128,19 @@ export default function ProductsPage() {
           ...(canViewQuantities
             ? [
               {
+                key: "preview",
+                label: t("Preview"),
+                labelText: t("Preview"),
+                icon: <EyeIcon className="size-4" />,
+                onClick: () => openQuantitiesList(record, "preview"),
+                priority: 2,
+              },
+              {
                 key: "units",
                 label: t("See Quantities"),
                 labelText: t("See Quantities"),
                 icon: <ScaleIcon className="size-4" />,
-                onClick: () => openQuantitiesList(record),
+                onClick: () => openQuantitiesList(record, "list"),
                 priority: 3,
               },
             ]
@@ -166,8 +188,16 @@ export default function ProductsPage() {
         onOpenChange={(open) => {
           if (!open) closeQuantitiesList()
         }}
-        title={t("Product Unit Quantities List")}
-        description={t("Display all product unit quantities.")}
+        title={
+          quantitiesMode === "preview"
+            ? `${t("Previewing :")} ${quantitiesProduct?.name || ""}`
+            : t("Product Unit Quantities List")
+        }
+        description={
+          quantitiesMode === "preview"
+            ? t("Units & Quantities")
+            : t("Display all product unit quantities.")
+        }
         showFooter
         className="sm:max-w-3xl"
         bodyClassName="p-0"
@@ -183,12 +213,21 @@ export default function ProductsPage() {
         <div className="max-h-[50vh] overflow-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-gray-50 text-left text-xs font-bold uppercase text-gray-500">
-              <tr>
-                <th className="px-4 py-3">{t("Product")}</th>
-                <th className="px-4 py-3">{t("Unit")}</th>
-                <th className="px-4 py-3 text-right">{t("Quantity")}</th>
-                <th className="px-4 py-3">{t("Updated At")}</th>
-              </tr>
+              {quantitiesMode === "preview" ? (
+                <tr>
+                  <th className="px-4 py-3">{t("Unit")}</th>
+                  <th className="px-4 py-3 text-right">{t("Sale Price")}</th>
+                  <th className="px-4 py-3 text-right">{t("Wholesale Price")}</th>
+                  <th className="px-4 py-3 text-right">{t("Quantity")}</th>
+                </tr>
+              ) : (
+                <tr>
+                  <th className="px-4 py-3">{t("Product")}</th>
+                  <th className="px-4 py-3">{t("Unit")}</th>
+                  <th className="px-4 py-3 text-right">{t("Quantity")}</th>
+                  <th className="px-4 py-3">{t("Updated At")}</th>
+                </tr>
+              )}
             </thead>
             <tbody>
               {productUnitQuantities.isLoading ? (
@@ -201,27 +240,50 @@ export default function ProductsPage() {
                   </td>
                 </tr>
               ) : quantityRows.length ? (
-                quantityRows.map((quantity: any) => (
-                  <tr key={quantity.id} className="border-t border-gray-100">
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      {quantitiesProduct?.name || quantity.product_name || "-"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {quantity.unit_name ||
+                quantityRows.map((quantity: any) => {
+                  const unitName =
+                    quantity.unit_name ||
                         quantity.unit_short_name ||
                         quantity.unit_identifier ||
                         quantity.unit?.name ||
                         quantity.unit?.identifier ||
-                        "-"}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {Number(quantity.quantity || 0).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3">
-                      {quantity.updated_at ? new Date(quantity.updated_at).toLocaleString() : "-"}
-                    </td>
-                  </tr>
-                ))
+                        "-"
+                  return quantitiesMode === "preview" ? (
+                    <tr key={quantity.id} className="border-t border-gray-100">
+                      <td className="px-4 py-3">
+                        <span className="font-medium text-gray-900">{unitName}</span>
+                        {(quantitiesProduct?.type === "materialized" || quantitiesProduct?.type === "product") &&
+                          (quantitiesProduct?.stock_management === "enabled" || quantitiesProduct?.track_stock) ? (
+                          <button
+                            type="button"
+                            className="ml-2 text-xs font-semibold text-blue-600 hover:underline"
+                            onClick={() => router.push(`/inventory/products/${quantitiesProduct.id}`)}
+                          >
+                            {t("Convert")}
+                          </button>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">{formatMoney(quantity.sale_price)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{formatMoney(quantity.wholesale_price)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {Number(quantity.quantity || 0).toLocaleString()}
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={quantity.id} className="border-t border-gray-100">
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        {quantitiesProduct?.name || quantity.product_name || "-"}
+                      </td>
+                      <td className="px-4 py-3">{unitName}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {Number(quantity.quantity || 0).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        {quantity.updated_at ? new Date(quantity.updated_at).toLocaleString() : "-"}
+                      </td>
+                    </tr>
+                  )
+                })
               ) : (
                 <tr>
                   <td colSpan={4} className="px-4 py-10 text-center text-sm font-medium text-gray-500">

@@ -508,5 +508,14 @@
   "Display all product unit quantities.": "Afficher toutes les quantites d'unites de produit.",
   "No product unit quantities has been registered": "Aucune quantite d'unite de produit n'a ete enregistree",
   "See Quantities": "Voir les quantites",
-  "Updated At": "Mis a jour le"
+  "Updated At": "Mis a jour le",
+  "Preview": "Apercu",
+  "Previewing :": "Apercu :",
+  "Units & Quantities": "Unites et quantites",
+  "Choose": "Choisir",
+  "Choose an image from Medias Manager": "Choisir une image depuis le gestionnaire de medias",
+  "Set Primary": "Definir comme principale",
+  "Primary": "Principale",
+  "No URL": "Aucune URL",
+  "Manage product images shown to customers.": "Gerer les images du produit affichees aux clients."
 }

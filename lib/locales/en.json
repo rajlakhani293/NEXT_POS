@@ -708,5 +708,14 @@
   "Display all product unit quantities.": "Display all product unit quantities.",
   "No product unit quantities has been registered": "No product unit quantities has been registered",
   "See Quantities": "See Quantities",
-  "Updated At": "Updated At"
+  "Updated At": "Updated At",
+  "Preview": "Preview",
+  "Previewing :": "Previewing :",
+  "Units & Quantities": "Units & Quantities",
+  "Choose": "Choose",
+  "Choose an image from Medias Manager": "Choose an image from Medias Manager",
+  "Set Primary": "Set Primary",
+  "Primary": "Primary",
+  "No URL": "No URL",
+  "Manage product images shown to customers.": "Manage product images shown to customers."
 }
