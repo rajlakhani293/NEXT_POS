@@ -92,89 +92,86 @@ export default function CustomerAccountHistoryPage() {
   return (
     <DashboardPage padding="none">
       <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
-      <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-9 w-9"
-            onClick={() => router.push("/customers")}
-          >
-            <ArrowLeft className="size-4" />
-          </Button>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">
-              {t("Customer Account History")}
-            </h1>
-            <p className="text-xs font-medium text-gray-500">
-              {t("Display all customer accounts.")}
-            </p>
+        <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => router.push("/customers")}
+            >
+              <ArrowLeft className="size-4" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">
+                {t("Customer Account History")}
+              </h1>
+              <p className="text-xs font-medium text-gray-500">
+                {t("Display all customer accounts.")}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50/50 p-6">
-        <DynamicTable
-          data={rows}
-          columns={columns}
-          tableTitle={t("Customer Accounts List")}
-          showSearch
-          searchTerm={searchTerm}
-          onFilterChange={handleFilterChange}
-          currentPage={page}
-          itemsPerPage={10}
-          totalItems={totalItems}
-          onPageChange={setPage}
-          isLoading={ledgerState.isLoading}
-          secondaryActionButton={
-            <Button disabled={!customerId} onClick={() => setIsFormOpen(true)}>
-              {t("Add a new customer account")}
-            </Button>
-          }
-          hideActions
+        <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50/50 p-6">
+          <DynamicTable
+            data={rows}
+            columns={columns}
+            tableTitle={t("Customer Accounts List")}
+            showSearch
+            searchTerm={searchTerm}
+            onFilterChange={handleFilterChange}
+            currentPage={page}
+            itemsPerPage={10}
+            totalItems={totalItems}
+            onPageChange={setPage}
+            isLoading={ledgerState.isLoading}
+            secondaryActionButton={
+              <Button disabled={!customerId} onClick={() => setIsFormOpen(true)}>
+                {t("Add a new customer account")}
+              </Button>
+            }
+            hideActions
+          />
+        </div>
+
+        <DynamicForm
+          isOpen={isFormOpen}
+          onClose={() => setIsFormOpen(false)}
+          title={t("Create a new customer account")}
+          initialValues={{
+            amount: "",
+            operation: "add",
+            description: "",
+          }}
+          fields={[
+            {
+              name: "amount",
+              label: t("Amount"),
+              type: "number",
+              placeholder: t("Amount"),
+              required: true,
+              prefix: posOptions.currency_symbol,
+            },
+            {
+              name: "operation",
+              label: t("Operation"),
+              type: "radio",
+              required: true,
+              options: [
+                { label: t("Add"), value: "add" },
+                { label: t("Deduct"), value: "deduct" },
+              ],
+            },
+            {
+              name: "description",
+              label: t("Description"),
+              placeholder: t("Description"),
+            },
+          ]}
+          onSubmit={submitAdjustment}
         />
-      </div>
-
-      <DynamicForm
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        title={t("Create a new customer account")}
-        initialValues={{
-          amount: "",
-          operation: "add",
-          description: "",
-        }}
-        fields={[
-          {
-            name: "amount",
-            label: t("Amount"),
-            type: "number",
-            placeholder: t("Amount"),
-            required: true,
-            prefix: posOptions.currency_symbol,
-          },
-          {
-            name: "operation",
-            label: t("Operation"),
-            type: "radio",
-            required: true,
-            options: [
-              { label: t("Add"), value: "add" },
-              { label: t("Deduct"), value: "deduct" },
-              { label: t("Refund"), value: "refund" },
-              { label: t("Payment"), value: "payment" },
-            ],
-          },
-          {
-            name: "description",
-            label: t("Description"),
-            placeholder: t("Description"),
-            required: true,
-          },
-        ]}
-        onSubmit={submitAdjustment}
-      />
       </div>
     </DashboardPage>
   )
