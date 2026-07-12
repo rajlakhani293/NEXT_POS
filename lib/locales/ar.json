@@ -619,5 +619,10 @@
   "Invoices": "الفواتير",
   "Reset": "إعادة ضبط",
   "About": "حول",
-  "Confirm": "تأكيد"
+  "Confirm": "تأكيد",
+  "Logout": "تسجيل الخروج",
+  "General Info": "المعلومات العامة",
+  "Billing Address": "عنوان الفوترة",
+  "Shipping Address": "عنوان الشحن",
+  "Manage your profile, addresses, security, and API tokens.": "إدارة ملفك الشخصي والعناوين والأمان ورموز API."
 }

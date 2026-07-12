@@ -305,23 +305,10 @@ const settingsNavSections: DashboardNavSection[] = [
     url: "/settings/users",
     icon: <UsersIcon />,
     permission: [
-      PERMISSIONS.special.manageProfile,
       PERMISSIONS.users.view,
       PERMISSIONS.users.create,
     ],
-    permissionMatch: "any",
-    items: [
-      {
-        title: "My Profile",
-        url: "/settings/users/profile",
-        permission: PERMISSIONS.special.manageProfile,
-      },
-      {
-        title: "Users List",
-        url: "/settings/users",
-        permission: PERMISSIONS.users.view,
-      },
-    ],
+    permissionMatch: "any"
   },
   {
     title: "Roles",

@@ -4,12 +4,12 @@ import { useEffect, useMemo, useState } from "react"
 import { Copy, KeyRound, RefreshCw, Save, Trash2 } from "lucide-react"
 
 import { useConfirmDialog } from "@/components/confirm-dialog"
+import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { PermissionGuard } from "@/components/permission-guard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { auth, type AccessTokenRecord } from "@/lib/api/auth"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
@@ -42,6 +42,8 @@ type AddressValues = {
   pobox: string
   company: string
 }
+
+type ProfileTab = "general" | "billing" | "shipping" | "security" | "token"
 
 const emptyProfile: ProfileValues = {
   username: "",
@@ -116,6 +118,7 @@ export default function UserProfilePage() {
   const [shipping, setShipping] = useState<AddressValues>(emptyAddress)
   const [tokenName, setTokenName] = useState("")
   const [generatedToken, setGeneratedToken] = useState("")
+  const [activeTab, setActiveTab] = useState<ProfileTab>("general")
   const [updateProfile, updateState] = auth.useUpdateProfileMutation()
   const [createToken, createTokenState] = auth.useCreateTokenMutation()
   const [deleteToken, deleteTokenState] = auth.useDeleteTokenMutation()
@@ -273,7 +276,7 @@ export default function UserProfilePage() {
   const renderAddressForm = (addressType: "billing" | "shipping") => {
     const addressValues = addressType === "billing" ? billing : shipping
     return (
-      <div className="rounded-md border bg-white p-5 shadow-sm">
+      <div className="space-y-5">
         <div className="grid gap-4 md:grid-cols-2">
           {addressFields.map((field) => (
             <div key={`${addressType}-${field.name}`} className="space-y-2">
@@ -298,28 +301,51 @@ export default function UserProfilePage() {
   }
 
   return (
-    <PermissionGuard permission={PERMISSIONS.special.manageProfile}>
-      <div className="max-w-5xl space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-semibold text-slate-950">
-              {user?.full_name || user?.username || t("My Profile")}
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">{user?.email || "-"}</p>
+    <DashboardPage padding="none">
+      <PermissionGuard permission={PERMISSIONS.special.manageProfile}>
+        <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
+          <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">
+                  {user?.full_name || user?.username || t("My Profile")}
+                </h1>
+                <p className="text-xs font-medium text-gray-500">
+                  {user?.email || t("Manage your profile, addresses, security, and API tokens.")}
+                </p>
+              </div>
+              <Badge>{user?.status === 1 ? t("Deactive") : t("Active")}</Badge>
+            </div>
           </div>
-          <Badge>{user?.status === 1 ? t("Deactive") : t("Active")}</Badge>
-        </div>
 
-        <Tabs defaultValue="general" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="general">{t("General")}</TabsTrigger>
-            <TabsTrigger value="shipping">{t("Shipping")}</TabsTrigger>
-            <TabsTrigger value="billing">{t("Billing")}</TabsTrigger>
-            <TabsTrigger value="security">{t("Security")}</TabsTrigger>
-            <TabsTrigger value="token">{t("API Token")}</TabsTrigger>
-          </TabsList>
+          <div className="flex-none border-b border-gray-200">
+            <nav className="-mb-px flex overflow-x-auto">
+              {([
+                ["general", "General Info"],
+                ["billing", "Billing Address"],
+                ["shipping", "Shipping Address"],
+                ["security", "Security"],
+                ["token", "API Token"],
+              ] as [ProfileTab, string][]).map(([tab, label]) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`shrink-0 border-b-2 px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${activeTab === tab
+                    ? "border-gray-900 text-gray-900"
+                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                    }`}
+                >
+                  {t(label)}
+                </button>
+              ))}
+            </nav>
+          </div>
 
-          <TabsContent value="general" className="rounded-md border bg-white p-5 shadow-sm">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50/50 p-6">
+            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+              {activeTab === "general" && (
+                <>
             <div className="grid gap-4 md:grid-cols-2">
               {profileFields.map((field) => (
                 <div key={field.name} className="space-y-2">
@@ -355,17 +381,15 @@ export default function UserProfilePage() {
                 {t("Save")}
               </Button>
             </div>
-          </TabsContent>
+                </>
+              )}
 
-          <TabsContent value="shipping">
-            {renderAddressForm("shipping")}
-          </TabsContent>
+              {activeTab === "billing" && renderAddressForm("billing")}
 
-          <TabsContent value="billing">
-            {renderAddressForm("billing")}
-          </TabsContent>
+              {activeTab === "shipping" && renderAddressForm("shipping")}
 
-          <TabsContent value="security" className="rounded-md border bg-white p-5 shadow-sm">
+              {activeTab === "security" && (
+                <>
             <div className="grid gap-4 md:grid-cols-3">
               {securityFields.map((field) => (
                 <div key={field.name} className="space-y-2">
@@ -386,9 +410,10 @@ export default function UserProfilePage() {
                 {t("Save")}
               </Button>
             </div>
-          </TabsContent>
+                </>
+              )}
 
-          <TabsContent value="token" className="rounded-md border bg-white p-5 shadow-sm">
+              {activeTab === "token" && (
             <div className="max-w-2xl space-y-5">
               <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
@@ -473,10 +498,12 @@ export default function UserProfilePage() {
                 )}
               </div>
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-      {confirmDialog}
-    </PermissionGuard>
+              )}
+            </div>
+          </div>
+        </div>
+        {confirmDialog}
+      </PermissionGuard>
+    </DashboardPage>
   )
 }

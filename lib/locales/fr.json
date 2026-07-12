@@ -619,5 +619,10 @@
   "Invoices": "Factures",
   "Reset": "Reinitialiser",
   "About": "A propos",
-  "Confirm": "Confirmer"
+  "Confirm": "Confirmer",
+  "Logout": "Deconnexion",
+  "General Info": "Informations generales",
+  "Billing Address": "Adresse de facturation",
+  "Shipping Address": "Adresse de livraison",
+  "Manage your profile, addresses, security, and API tokens.": "Gerez votre profil, vos adresses, la securite et les jetons API."
 }

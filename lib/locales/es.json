@@ -619,5 +619,10 @@
   "Invoices": "Facturas",
   "Reset": "Restablecer",
   "About": "Acerca de",
-  "Confirm": "Confirmar"
+  "Confirm": "Confirmar",
+  "Logout": "Cerrar sesion",
+  "General Info": "Informacion general",
+  "Billing Address": "Direccion de facturacion",
+  "Shipping Address": "Direccion de envio",
+  "Manage your profile, addresses, security, and API tokens.": "Administre su perfil, direcciones, seguridad y tokens API."
 }

@@ -1,5 +1,7 @@
 "use client"
 
+import Link from "next/link"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -18,11 +20,10 @@ import {
 } from "@/components/ui/sidebar"
 import {
   BadgeCheckIcon,
-  BellIcon,
   ChevronsUpDownIcon,
-  CreditCardIcon,
   LogOutIcon,
 } from "lucide-react"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 function getInitials(name?: string) {
   if (!name) return "SA"
@@ -53,6 +54,7 @@ export function NavUser({
   iconOnly?: boolean
 }) {
   const { isMobile } = useSidebar()
+  const { t } = useTranslation()
 
   const resolvedSide = dropdownSide ?? (isMobile ? "bottom" : "right")
   const resolvedAlign = dropdownAlign ?? "end"
@@ -111,23 +113,17 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheckIcon />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon />
-                Notifications
+              <DropdownMenuItem asChild>
+                <Link href="/settings/users/profile">
+                  <BadgeCheckIcon />
+                  {t("My Profile")}
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onLogout}>
               <LogOutIcon />
-              Log out
+              {t("Logout")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

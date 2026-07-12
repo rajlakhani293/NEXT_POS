@@ -819,5 +819,10 @@
   "Invoices": "Invoices",
   "Reset": "Reset",
   "About": "About",
-  "Confirm": "Confirm"
+  "Confirm": "Confirm",
+  "Logout": "Logout",
+  "General Info": "General Info",
+  "Billing Address": "Billing Address",
+  "Shipping Address": "Shipping Address",
+  "Manage your profile, addresses, security, and API tokens.": "Manage your profile, addresses, security, and API tokens."
 }
