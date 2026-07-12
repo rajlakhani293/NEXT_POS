@@ -65,7 +65,13 @@ const mainNavSections: DashboardNavSection[] = [
     permission: PERMISSIONS.dashboard.view,
   },
   {
-    title: "Sales",
+    title: "POS",
+    url: "/sales/create",
+    icon: <StoreIcon />,
+    permission: PERMISSIONS.sales.create,
+  },
+  {
+    title: "Orders",
     url: "/sales",
     icon: <ReceiptTextIcon />,
     permission: PERMISSIONS.sales.view,
@@ -128,12 +134,6 @@ const mainNavSections: DashboardNavSection[] = [
     url: "/providers",
     icon: <UsersIcon />,
     permission: PERMISSIONS.providers.view,
-  },
-  {
-    title: "Procurements",
-    url: "/purchases",
-    icon: <ShoppingCartIcon />,
-    permission: PERMISSIONS.purchases.view,
   },
   {
     title: "Accounting",
@@ -211,6 +211,12 @@ const mainNavSections: DashboardNavSection[] = [
     url: "/modules",
     icon: <PlugIcon />,
     permission: PERMISSIONS.special.manageModules,
+  },
+  {
+    title: "Procurements",
+    url: "/purchases",
+    icon: <ShoppingCartIcon />,
+    permission: PERMISSIONS.purchases.view,
   },
   {
     title: "Registers",
