@@ -6,6 +6,7 @@ import { ArrowLeftRightIcon, ClipboardListIcon, EyeIcon, ScaleIcon, SlidersHoriz
 
 import DynamicTable from "@/components/DynamicTable"
 import { StockAdjustmentForm } from "@/app/(dashboard)/inventory/adjustments/createUpdate"
+import { useConfirmDialog } from "@/components/confirm-dialog"
 import { Button } from "@/components/ui/button"
 import CustomModal from "@/components/ui/customModal"
 import { SelectItem } from "@/components/ui/select"
@@ -48,6 +49,7 @@ export default function ProductsPage() {
   const [conversionConfirmMessage, setConversionConfirmMessage] = useState("")
   const [deleteProduct] = (catalog as any).useDeleteProductMutation()
   const [updateProductStatus] = (catalog as any).useUpdateProductStatusMutation()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const [getProductUnitQuantities, productUnitQuantities] = (catalog as any).useGetProductUnitQuantitiesMutation()
   const [convertProductUnits, convertProductUnitsState] = (catalog as any).useConvertProductUnitsMutation()
   const { hasPermission } = usePermissions()
@@ -227,6 +229,32 @@ export default function ProductsPage() {
     getMaster: (catalog as any).useGetProductsDataMutation,
     itemsPerPage: 10,
   })
+  const handleToggleStatus = async (record: any) => {
+    const currentStatus = Number(record?.status || 0)
+    const nextStatus = currentStatus === 0 ? 1 : 0
+    const confirmed = await confirm({
+      title: t("Confirm"),
+      description:
+        nextStatus === 1
+          ? t("Do you want to make this product inactive?")
+          : t("Do you want to make this product active?"),
+      confirmLabel: nextStatus === 1 ? t("Make Inactive") : t("Make Active"),
+      variant: nextStatus === 1 ? "destructive" : "default",
+    })
+
+    if (!confirmed) return
+
+    try {
+      const response = await updateProductStatus({
+        payLoad: { ids: [record.id], status: nextStatus },
+      }).unwrap()
+      showToast.success(response?.message || t("Product status updated successfully."))
+      triggerRefresh()
+    } catch (error: any) {
+      showToast.error(error?.data?.message || t("Something went wrong"))
+    }
+  }
+
   const translatedColumns = columns.map((column) => ({
     ...column,
     title: t(column.title),
@@ -236,10 +264,30 @@ export default function ProductsPage() {
         : column.key === "category_name"
           ? (val: any) => val || t("Unassigned")
           : column.key === "status"
-            ? (val: any) =>
-              val === 0 || val === "0" || val === "available"
-                ? t("Available")
-                : t("Hidden")
+            ? (val: any, record: any) => {
+              const row = record?.row || record
+              const active = Number(val) === 0 || val === "available"
+              const className = `inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${
+                active
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-gray-100 text-gray-600"
+              }`
+              if (!canUpdate) {
+                return <span className={className}>{active ? t("Active") : t("Inactive")}</span>
+              }
+              return (
+                <button
+                  type="button"
+                  className={`${className} cursor-pointer`}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    handleToggleStatus(row)
+                  }}
+                >
+                  {active ? t("Active") : t("Inactive")}
+                </button>
+              )
+            }
             : column.render,
   }))
 
@@ -314,14 +362,11 @@ export default function ProductsPage() {
         ]}
         showDelete={canDelete}
         deleteMutation={deleteProduct}
-        showStatus={canUpdate}
-        statusChangeMutation={({ ids, status }: any) =>
-          updateProductStatus({ payLoad: { ids, status } })
-        }
         triggerRefresh={triggerRefresh}
         deleteModalTitle={t("Delete Product")}
         deleteModalDescription={t("Would you like to delete this ?")}
       />
+      {confirmDialog}
 
       <StockAdjustmentForm
         isOpen={Boolean(adjustmentProduct)}

@@ -62,7 +62,6 @@ type ProductFormValues = {
   auto_cogs: boolean
   expires: boolean
   on_expiration: string
-  status: string
 }
 
 type ProductUnitQuantityFormValues = {
@@ -111,7 +110,6 @@ const initialValues: ProductFormValues = {
   auto_cogs: true,
   expires: false,
   on_expiration: "prevent_sales",
-  status: "0",
 }
 
 const initialUnitQuantityValues: ProductUnitQuantityFormValues = {
@@ -347,8 +345,6 @@ function buildProductFormData(
   formData.append("pinned", String(Boolean(values.pinned)))
   formData.append("accurate_tracking", String(Boolean(values.accurate_tracking)))
   formData.append("auto_cogs", String(Boolean(values.auto_cogs)))
-  formData.append("status", String(values.status))
-
   formData.append("units_json", JSON.stringify({
     unit_group: values.unit_group_id || selectedUnit?.group_id || null,
     selling_group: sellingUnits.map((unit) => ({
@@ -535,7 +531,6 @@ export default function ProductFormPage() {
         auto_cogs: record.auto_cogs !== false,
         expires: Boolean(record.expires),
         on_expiration: record.on_expiration || "prevent_sales",
-        status: record.status !== undefined ? String(record.status) : "0",
       })
       setGallery((record.gallery || []).map((image: any) => ({
         id: image.id,
@@ -1033,31 +1028,31 @@ export default function ProductFormPage() {
         <div className="flex-none">
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ProductTab)}>
             <TabsList variant="line" className="-mb-px w-full justify-start overflow-x-auto">
-            {(["identification", "units", "expiry", "taxes", "images"] as const).map((tab) => (
-              <TabsTrigger
-                key={tab}
-                value={tab}
-                data-invalid={productTabHasErrors(tab) ? true : undefined}
-                aria-invalid={productTabHasErrors(tab) ? true : undefined}
-              >
-                {t(
-                  tab === "identification"
-                    ? "Identification"
-                    : tab === "units"
-                      ? "Units"
-                      : tab === "expiry"
-                        ? "Expiry"
-                        : tab === "taxes"
-                          ? "Taxes"
-                          : "Images"
-                )}
-                {productTabHasErrors(tab) ? (
-                  <span className="ml-1 inline-flex size-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">
-                    !
-                  </span>
-                ) : null}
-              </TabsTrigger>
-            ))}
+              {(["identification", "units", "expiry", "taxes", "images"] as const).map((tab) => (
+                <TabsTrigger
+                  key={tab}
+                  value={tab}
+                  data-invalid={productTabHasErrors(tab) ? true : undefined}
+                  aria-invalid={productTabHasErrors(tab) ? true : undefined}
+                >
+                  {t(
+                    tab === "identification"
+                      ? "Identification"
+                      : tab === "units"
+                        ? "Units"
+                        : tab === "expiry"
+                          ? "Expiry"
+                          : tab === "taxes"
+                            ? "Taxes"
+                            : "Images"
+                  )}
+                  {productTabHasErrors(tab) ? (
+                    <span className="ml-1 inline-flex size-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">
+                      !
+                    </span>
+                  ) : null}
+                </TabsTrigger>
+              ))}
             </TabsList>
           </Tabs>
         </div>
@@ -1153,14 +1148,6 @@ export default function ProductFormPage() {
                       <SelectItem value="grouped">{t("Grouped Product")}</SelectItem>
                     </UniFieldSelect>
 
-                    <UniFieldSelect
-                      label={t("Status")}
-                      value={formData.status}
-                      onValueChange={(value) => updateField("status", value)}
-                    >
-                      <SelectItem value="0">{t("On Sale")}</SelectItem>
-                      <SelectItem value="1">{t("Hidden")}</SelectItem>
-                    </UniFieldSelect>
                   </div>
 
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 border-t border-gray-100 pt-6">
