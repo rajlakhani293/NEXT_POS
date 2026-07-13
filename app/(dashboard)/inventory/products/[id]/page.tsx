@@ -491,9 +491,7 @@ export default function ProductFormPage() {
         const defaultUnit = (unitsResponse?.data?.data || []).find(
           (unit: any) => String(unit.id) === defaultUnitId
         )
-        const defaultGroupId =
-          (defaultUnit?.group_id ? String(defaultUnit.group_id) : "") ||
-          (unitGroupsResponse?.data?.data?.[0]?.id ? String(unitGroupsResponse.data.data[0].id) : "")
+        const defaultGroupId = defaultUnit?.group_id ? String(defaultUnit.group_id) : ""
         setFormData({
           ...initialValues,
           unit_id: defaultUnit?.id ? String(defaultUnit.id) : "",
@@ -711,14 +709,26 @@ export default function ProductFormPage() {
         scale_plu: record.scale_plu || "",
       }))
       : draftUnitQuantities
-    if (!sellingUnits.length) nextErrors.unit_id = t("Selling Unit is required")
+    if (!sellingUnits.length) {
+      nextErrors.unit_id = t("Selling Unit is required")
+    } else {
+      const hasInvalidSellingUnit = sellingUnits.some((u: any) => !u.unit_id || !u.quantity || !u.sale_price)
+      if (hasInvalidSellingUnit) {
+        nextErrors.unit_id = t("Please ensure all selling units have a valid unit, quantity, and sale price.")
+      }
+    }
+    if (showSellingForm && !validateUnitQuantity()) {
+      nextErrors.unit_id = t("Please fix the errors in the selling unit form.")
+    }
+    if (!formData.unit_group_id) nextErrors.unit_group_id = t("Unit Group is required")
+    if (!formData.category_id) nextErrors.category_id = t("Category is required")
     if (formData.is_tax_inclusive && !formData.tax_group_id) {
       nextErrors.tax_group_id = t("Tax is required when inclusive of tax")
     }
     setErrors(nextErrors)
     if (nextErrors.name || nextErrors.category_id || nextErrors.barcode) {
       setActiveTab("identification")
-    } else if (nextErrors.unit_id) {
+    } else if (nextErrors.unit_id || nextErrors.unit_group_id) {
       setActiveTab("units")
     } else if (nextErrors.tax_group_id) {
       setActiveTab("taxes")
@@ -730,7 +740,7 @@ export default function ProductFormPage() {
     if (tab === "identification") {
       return Boolean(errors.name || errors.category_id || errors.barcode)
     }
-    if (tab === "units") return Boolean(errors.unit_id)
+    if (tab === "units") return Boolean(errors.unit_id || errors.unit_group_id)
     if (tab === "taxes") return Boolean(errors.tax_group_id)
     return false
   }
@@ -772,6 +782,15 @@ export default function ProductFormPage() {
   }
 
   const openNewUnitQuantityForm = () => {
+    if (!formData.unit_group_id) {
+      setErrors((current) => ({ ...current, unit_group_id: t("Unit Group is required") }))
+      showToast.error(t("Please select a unit group first."))
+      return
+    }
+    if (showSellingForm && !validateUnitQuantity()) {
+      showToast.error(t("Please fix the errors in the current selling unit first."))
+      return
+    }
     const assignedUnitIds = new Set(
       (isEdit ? (unitQuantities.data?.data || []) : draftUnitQuantities)
         .map((record: any) => String(record.unit_id || ""))
@@ -800,6 +819,8 @@ export default function ProductFormPage() {
     if (!unitQuantityForm.unit_id) nextErrors.unit_id = t("Unit is required")
     if (!unitQuantityForm.quantity)
       nextErrors.quantity = t("Quantity is required")
+    if (!unitQuantityForm.sale_price)
+      nextErrors.sale_price = t("Sale Price is required")
     setUnitQuantityErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
@@ -871,6 +892,10 @@ export default function ProductFormPage() {
   }
 
   const handleEditUnitQuantity = (record: any) => {
+    if (showSellingForm && !validateUnitQuantity()) {
+      showToast.error(t("Please fix the errors in the current selling unit first."))
+      return
+    }
     setUnitQuantityForm(productUnitQuantityToForm(record))
     setUnitQuantityErrors({})
     setShowSellingForm(true)
@@ -895,6 +920,10 @@ export default function ProductFormPage() {
   }
 
   const handleEditDraftUnitQuantity = (record: ProductUnitQuantityFormValues) => {
+    if (showSellingForm && !validateUnitQuantity()) {
+      showToast.error(t("Please fix the errors in the current selling unit first."))
+      return
+    }
     setUnitQuantityForm(record)
     setUnitQuantityErrors({})
     setShowSellingForm(true)
@@ -1310,7 +1339,7 @@ export default function ProductFormPage() {
                         value={formData.unit_group_id}
                         onValueChange={(value) => updateField("unit_group_id", value)}
                         placeholder={t("Select Unit Group")}
-                        error={errors.unit_id}
+                        error={errors.unit_group_id}
                         onAddNew={() => setAddFormOpen("unitGroup")}
                         addNewLabel={t("Add New Unit Group")}
                         hasOptions={Boolean(unitGroupOptions.length)}

@@ -829,5 +829,12 @@
   "Enter unit name": "Enter unit name",
   "Order Instalments": "Order Instalments",
   "This field is required.": "This field is required.",
-  "Please check the highlighted settings tab.": "Please check the highlighted settings tab."
+  "Please check the highlighted settings tab.": "Please check the highlighted settings tab.",
+  "Unit Group is required": "Unit Group is required",
+  "Please select a unit group first.": "Please select a unit group first.",
+  "Sale Price is required": "Sale Price is required",
+  "Category is required": "Category is required",
+  "Please fix the errors in the selling unit form.": "Please fix the errors in the selling unit form.",
+  "Please ensure all selling units have a valid unit, quantity, and sale price.": "Please ensure all selling units have a valid unit, quantity, and sale price.",
+  "Please fix the errors in the current selling unit first.": "Please fix the errors in the current selling unit first."
 }

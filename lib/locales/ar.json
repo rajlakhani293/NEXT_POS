@@ -629,5 +629,12 @@
   "Enter unit name": "أدخل اسم الوحدة",
   "Order Instalments": "أقساط الطلب",
   "This field is required.": "هذا الحقل مطلوب.",
-  "Please check the highlighted settings tab.": "يرجى التحقق من تبويب الإعدادات المميز."
+  "Please check the highlighted settings tab.": "يرجى التحقق من تبويب الإعدادات المميز.",
+  "Unit Group is required": "مجموعة الوحدات مطلوبة",
+  "Please select a unit group first.": "يرجى تحديد مجموعة الوحدات أولاً.",
+  "Sale Price is required": "سعر البيع مطلوب",
+  "Category is required": "الفئة مطلوبة",
+  "Please fix the errors in the selling unit form.": "يرجى تصحيح الأخطاء في نموذج وحدة البيع.",
+  "Please ensure all selling units have a valid unit, quantity, and sale price.": "يرجى التأكد من أن جميع وحدات البيع تحتوي على وحدة وكمية وسعر بيع صالحين.",
+  "Please fix the errors in the current selling unit first.": "يرجى تصحيح الأخطاء في وحدة البيع الحالية أولاً."
 }

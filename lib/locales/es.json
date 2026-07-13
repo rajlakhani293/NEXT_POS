@@ -629,5 +629,12 @@
   "Enter unit name": "Ingrese el nombre de la unidad",
   "Order Instalments": "Cuotas del pedido",
   "This field is required.": "Este campo es obligatorio.",
-  "Please check the highlighted settings tab.": "Revise la pestana de configuracion resaltada."
+  "Please check the highlighted settings tab.": "Revise la pestana de configuracion resaltada.",
+  "Unit Group is required": "El grupo de unidades es obligatorio",
+  "Please select a unit group first.": "Seleccione un grupo de unidades primero.",
+  "Sale Price is required": "El precio de venta es obligatorio",
+  "Category is required": "La categoría es obligatoria",
+  "Please fix the errors in the selling unit form.": "Corrija los errores en el formulario de la unidad de venta.",
+  "Please ensure all selling units have a valid unit, quantity, and sale price.": "Asegúrese de que todas las unidades de venta tengan una unidad, cantidad y precio de venta válidos.",
+  "Please fix the errors in the current selling unit first.": "Corrija primero los errores en la unidad de venta actual."
 }

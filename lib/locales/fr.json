@@ -629,5 +629,12 @@
   "Enter unit name": "Saisir le nom de l'unité",
   "Order Instalments": "Versements de commande",
   "This field is required.": "Ce champ est obligatoire.",
-  "Please check the highlighted settings tab.": "Verifiez l'onglet de parametres mis en evidence."
+  "Please check the highlighted settings tab.": "Verifiez l'onglet de parametres mis en evidence.",
+  "Unit Group is required": "Le groupe d'unités est obligatoire",
+  "Please select a unit group first.": "Veuillez d'abord sélectionner un groupe d'unités.",
+  "Sale Price is required": "Le prix de vente est obligatoire",
+  "Category is required": "La catégorie est obligatoire",
+  "Please fix the errors in the selling unit form.": "Veuillez corriger les erreurs dans le formulaire de l'unité de vente.",
+  "Please ensure all selling units have a valid unit, quantity, and sale price.": "Veuillez vous assurer que toutes les unités de vente ont une unité, une quantité et un prix de vente valides.",
+  "Please fix the errors in the current selling unit first.": "Veuillez d'abord corriger les erreurs dans l'unité de vente actuelle."
 }
