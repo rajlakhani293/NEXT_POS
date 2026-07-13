@@ -624,5 +624,7 @@
   "General Info": "المعلومات العامة",
   "Billing Address": "عنوان الفوترة",
   "Shipping Address": "عنوان الشحن",
-  "Manage your profile, addresses, security, and API tokens.": "إدارة ملفك الشخصي والعناوين والأمان ورموز API."
+  "Manage your profile, addresses, security, and API tokens.": "إدارة ملفك الشخصي والعناوين والأمان ورموز API.",
+  "Enter value": "أدخل القيمة",
+  "Enter unit name": "أدخل اسم الوحدة"
 }

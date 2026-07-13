@@ -624,5 +624,7 @@
   "General Info": "Informacion general",
   "Billing Address": "Direccion de facturacion",
   "Shipping Address": "Direccion de envio",
-  "Manage your profile, addresses, security, and API tokens.": "Administre su perfil, direcciones, seguridad y tokens API."
+  "Manage your profile, addresses, security, and API tokens.": "Administre su perfil, direcciones, seguridad y tokens API.",
+  "Enter value": "Ingrese el valor",
+  "Enter unit name": "Ingrese el nombre de la unidad"
 }
