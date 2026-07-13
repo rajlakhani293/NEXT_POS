@@ -29,7 +29,7 @@ type SourceSettingField = {
   placeholder?: string
   validation?: string
   value: any
-  options?: { value: string; label: string }[] | null
+  options?: { value: any; label: string }[] | null
 }
 
 type SourceSettingTab = {
@@ -247,20 +247,52 @@ function nextSourceSwitchValue(checked: boolean) {
   return checked ? "yes" : "no"
 }
 
+function normalizeSettingOptionValue(value: any) {
+  if (value === null || value === undefined) return ""
+  if (typeof value === "boolean") return value ? "yes" : "no"
+  return String(value)
+}
+
+function parseSettingListValue(value: any) {
+  if (Array.isArray(value)) {
+    return value.map(normalizeSettingOptionValue).filter(Boolean)
+  }
+  if (value === null || value === undefined || value === "") return []
+  if (typeof value === "string") {
+    const trimmed = value.trim()
+    if (!trimmed) return []
+    try {
+      const parsed = JSON.parse(trimmed)
+      if (Array.isArray(parsed)) {
+        return parsed.map(normalizeSettingOptionValue).filter(Boolean)
+      }
+    } catch {
+      // Not JSON, fall back to comma-delimited values below.
+    }
+    return trimmed
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+  return [normalizeSettingOptionValue(value)].filter(Boolean)
+}
+
 function sourceFieldValue(field: SourceSettingField) {
   if (field.value === null || field.value === undefined) {
     if (field.type === "switch") return "no"
     if (field.type === "checkbox") return false
     if (field.type === "multiselect") return []
+    if (field.type === "inline-multiselect") return []
     return ""
+  }
+  if (field.type === "multiselect" || field.type === "inline-multiselect") {
+    return parseSettingListValue(field.value)
   }
   return field.value
 }
 
 function selectValue(fieldName: string, value: any) {
-  if (typeof value === "boolean") return value ? "yes" : "no"
-  if (value === null || value === undefined) return ""
-  return String(value)
+  return normalizeSettingOptionValue(value)
 }
 
 export function SourceSettingsPage({ identifier }: { identifier: string }) {
@@ -348,10 +380,10 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
     const value = values[field.name]
     const required = String(field.validation || "").includes("required")
     const fieldOptions = (field.options || []).map((option) => ({
-      value: String(option.value),
+      value: normalizeSettingOptionValue(option.value),
       label: option.label,
     }))
-    const options = fieldOptions.length ? fieldOptions : selectOptions[field.name] || yesNoOptions
+    const options = fieldOptions.length ? fieldOptions : selectOptions[field.name] || []
     const isAccountingAccountField =
       sourceIdentifier === "accounting" &&
       [
@@ -422,12 +454,22 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
       field.type === "search-select" ||
       (sourceIdentifier === "accounting" && field.name === "accounting_expenses_accounts")
     ) {
-      const emptyOption = options.find((option) => option.value === "")
-      const visibleOptions = options.filter((option) => option.value !== "")
       const selectedValue =
         field.name === "accounting_expenses_accounts" && Array.isArray(value)
           ? String(value[0] || "")
           : selectValue(field.name, value)
+      const optionsWithSelected =
+        selectedValue && !options.some((option) => option.value === selectedValue)
+          ? [
+            ...options,
+            {
+              value: selectedValue,
+              label: selectedValue,
+            },
+          ]
+          : options
+      const emptyOption = optionsWithSelected.find((option) => option.value === "")
+      const visibleOptions = optionsWithSelected.filter((option) => option.value !== "")
       const selectPlaceholder = required
         ? t("Select an option")
         : emptyOption?.label
@@ -474,7 +516,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
     }
 
     if (field.type === "multiselect" || field.type === "inline-multiselect") {
-      const selected = Array.isArray(value) ? value.map(String) : []
+      const selected = parseSettingListValue(value)
       const optionsList = shortcutFieldNames.has(field.name)
         ? shortcutOptions
         : fieldOptions.length
@@ -527,9 +569,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
   }
 
   const renderShortcutField = (field: SourceSettingField) => {
-    const selected = Array.isArray(values[field.name])
-      ? values[field.name].map(String)
-      : []
+    const selected = parseSettingListValue(values[field.name])
     return (
       <div
         key={field.name}
