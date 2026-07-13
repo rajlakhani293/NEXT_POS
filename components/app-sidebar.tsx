@@ -259,12 +259,6 @@ const mainNavSections: DashboardNavSection[] = [
 
 const settingsNavSections: DashboardNavSection[] = [
   {
-    title: "General",
-    url: "/settings/general",
-    icon: <LandmarkIcon />,
-    permission: PERMISSIONS.settings.view,
-  },
-  {
     title: "Company",
     url: "/settings/company",
     icon: <StoreIcon />,
@@ -275,6 +269,22 @@ const settingsNavSections: DashboardNavSection[] = [
     url: "/settings/branches",
     icon: <StoreIcon />,
     permission: PERMISSIONS.branches.view,
+  },
+  {
+    title: "Users",
+    url: "/settings/users",
+    icon: <UsersIcon />,
+    permission: [
+      PERMISSIONS.users.view,
+      PERMISSIONS.users.create,
+    ],
+    permissionMatch: "any"
+  },
+  {
+    title: "General",
+    url: "/settings/general",
+    icon: <LandmarkIcon />,
+    permission: PERMISSIONS.settings.view,
   },
   {
     title: "POS",
@@ -311,16 +321,6 @@ const settingsNavSections: DashboardNavSection[] = [
     url: "/settings/reports",
     icon: <FileBarChart2Icon />,
     permission: PERMISSIONS.settings.view,
-  },
-  {
-    title: "Users",
-    url: "/settings/users",
-    icon: <UsersIcon />,
-    permission: [
-      PERMISSIONS.users.view,
-      PERMISSIONS.users.create,
-    ],
-    permissionMatch: "any"
   },
   {
     title: "Roles",
