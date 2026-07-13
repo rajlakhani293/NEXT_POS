@@ -626,5 +626,6 @@
   "Shipping Address": "عنوان الشحن",
   "Manage your profile, addresses, security, and API tokens.": "إدارة ملفك الشخصي والعناوين والأمان ورموز API.",
   "Enter value": "أدخل القيمة",
-  "Enter unit name": "أدخل اسم الوحدة"
+  "Enter unit name": "أدخل اسم الوحدة",
+  "Order Instalments": "أقساط الطلب"
 }

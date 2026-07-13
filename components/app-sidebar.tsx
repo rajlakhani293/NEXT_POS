@@ -93,9 +93,9 @@ const mainNavSections: DashboardNavSection[] = [
         permission: PERMISSIONS.payments.view,
       },
       {
-        title: "Assigned Orders",
-        url: "/sales/assigned",
-        permission: PERMISSIONS.sales.deliver,
+        title: "Order Instalments",
+        url: "/sales/instalments",
+        permission: PERMISSIONS.payments.collectDue,
       },
     ],
   },
@@ -407,33 +407,18 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
         return visibleItems
       }
 
-      const itemWithOptionChildren =
-        item.url === "/sales" && posOptions.orders_allow_unpaid
-          ? {
-            ...item,
-            items: [
-              ...(item.items || []),
-              {
-                title: "Instalments",
-                url: "/sales/instalments",
-                permission: PERMISSIONS.payments.collectDue,
-              },
-            ],
-          }
-          : item
-
-      const visibleSubItems = itemWithOptionChildren.items?.filter((subItem) =>
+      const visibleSubItems = item.items?.filter((subItem) =>
         hasPermission(subItem.permission, subItem.permissionMatch)
       )
 
       const canViewItem = hasPermission(
-        itemWithOptionChildren.permission,
-        itemWithOptionChildren.permissionMatch
+        item.permission,
+        item.permissionMatch
       )
       if (!canViewItem && !visibleSubItems?.length) return visibleItems
 
       visibleItems.push({
-        ...itemWithOptionChildren,
+        ...item,
         items: visibleSubItems,
       })
 

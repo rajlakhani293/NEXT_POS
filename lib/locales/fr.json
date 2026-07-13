@@ -626,5 +626,6 @@
   "Shipping Address": "Adresse de livraison",
   "Manage your profile, addresses, security, and API tokens.": "Gerez votre profil, vos adresses, la securite et les jetons API.",
   "Enter value": "Saisir la valeur",
-  "Enter unit name": "Saisir le nom de l'unité"
+  "Enter unit name": "Saisir le nom de l'unité",
+  "Order Instalments": "Versements de commande"
 }
