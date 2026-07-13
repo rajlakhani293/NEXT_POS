@@ -425,15 +425,11 @@ export default function ProductFormPage() {
     useState<ProductUnitQuantityFormValues>(initialUnitQuantityValues)
   const [draftUnitQuantities, setDraftUnitQuantities] = useState<ProductUnitQuantityFormValues[]>([])
   const [showSellingForm, setShowSellingForm] = useState(false)
-  const [unitDeleteTarget, setUnitDeleteTarget] = useState<{
-    mode: "draft" | "saved"
-    record: any
-  } | null>(null)
+  const [unitDeleteTarget, setUnitDeleteTarget] = useState<any | null>(null)
 
   const [unitQuantityErrors, setUnitQuantityErrors] = useState<
     Record<string, string>
   >({})
-  const [isSavingUnitQuantity, setIsSavingUnitQuantity] = useState(false)
   const [addFormOpen, setAddFormOpen] = useState<
     "category" | "unit" | "unitGroup" | "taxGroup" | null
   >(null)
@@ -548,6 +544,8 @@ export default function ProductFormPage() {
         url: resolveAssetUrl(image.url || image.preview_url || ""),
         featured: Boolean(image.featured),
       })))
+      const initialUnits = (unitQuantitiesResponse?.data || []).map(productUnitQuantityToForm)
+      setDraftUnitQuantities(initialUnits)
       if (primaryUnitQuantity) {
         setUnitQuantityForm(productUnitQuantityToForm(primaryUnitQuantity))
         setUnitQuantityErrors({})
@@ -592,7 +590,7 @@ export default function ProductFormPage() {
   const selectedUnitGroupName =
     unitGroupOptions.find((option) => option.value === String(formData.unit_group_id))?.label ||
     t("New Group")
-  const sellingUnitRows = isEdit ? (unitQuantities.data?.data || []) : draftUnitQuantities
+  const sellingUnitRows = draftUnitQuantities
   const getSellingUnitLabel = (record: any) =>
     record.unit_short_name ||
     record.unit_name ||
@@ -653,10 +651,8 @@ export default function ProductFormPage() {
       if (name === "unit_group_id") {
         next.unit_id = ""
         setUnitQuantityForm((unitForm) => ({ ...unitForm, unit_id: "", convert_unit_id: "" }))
-        if (!isEdit) {
-          setDraftUnitQuantities([])
-          setShowSellingForm(false)
-        }
+        setDraftUnitQuantities([])
+        setShowSellingForm(false)
       }
       return next
     })
@@ -691,24 +687,7 @@ export default function ProductFormPage() {
     if (!formData.name.trim()) nextErrors.name = t("Name is required")
     const barcodeError = validateBarcodeByType(formData.barcode, formData.barcode_type)
     if (barcodeError) nextErrors.barcode = barcodeError
-    const sellingUnits = isEdit
-      ? (unitQuantities.data?.data || []).map((record: any) => ({
-        id: record.id,
-        unit_id: record.unit_id ? String(record.unit_id) : "",
-        convert_unit_id: record.convert_unit_id ? String(record.convert_unit_id) : "",
-        barcode: record.barcode || "",
-        quantity: record.quantity ? String(record.quantity) : "",
-        sale_price: record.sale_price ? String(record.sale_price) : "",
-        wholesale_price: record.wholesale_price ? String(record.wholesale_price) : "",
-        purchase_price: record.cogs ? String(record.cogs) : "",
-        is_weighable: Boolean(record.is_weighable),
-        stock_alert_enabled: Boolean(record.stock_alert_enabled),
-        low_quantity: record.low_quantity ? String(record.low_quantity) : "",
-        visible: record.visible !== false,
-        preview_url: record.preview_url || "",
-        scale_plu: record.scale_plu || "",
-      }))
-      : draftUnitQuantities
+    const sellingUnits = draftUnitQuantities
     if (!sellingUnits.length) {
       nextErrors.unit_id = t("Selling Unit is required")
     } else {
@@ -763,7 +742,7 @@ export default function ProductFormPage() {
   ) => {
     setUnitQuantityForm((current) => {
       const next = { ...current, [name]: value }
-      if (!isEdit && next.id) {
+      if (next.id) {
         setDraftUnitQuantities((rows) =>
           rows.map((row) => (row.id === next.id ? next : row))
         )
@@ -792,7 +771,7 @@ export default function ProductFormPage() {
       return
     }
     const assignedUnitIds = new Set(
-      (isEdit ? (unitQuantities.data?.data || []) : draftUnitQuantities)
+      draftUnitQuantities
         .map((record: any) => String(record.unit_id || ""))
         .filter(Boolean)
     )
@@ -803,12 +782,10 @@ export default function ProductFormPage() {
     }
     const nextForm: ProductUnitQuantityFormValues = {
       ...initialUnitQuantityValues,
-      id: isEdit ? undefined : getNextDraftUnitId(),
+      id: getNextDraftUnitId(),
       unit_id: String(nextUnit.value),
     }
-    if (!isEdit) {
-      setDraftUnitQuantities((current) => [...current, nextForm])
-    }
+    setDraftUnitQuantities((current) => [...current, nextForm])
     setUnitQuantityForm(nextForm)
     setUnitQuantityErrors({})
     setShowSellingForm(true)
@@ -823,82 +800,6 @@ export default function ProductFormPage() {
       nextErrors.sale_price = t("Sale Price is required")
     setUnitQuantityErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
-  }
-
-  const handleSaveUnitQuantity = async () => {
-    if (!validateUnitQuantity()) return
-
-    if (!isEdit) {
-      const nextUnit = {
-        ...unitQuantityForm,
-        id: unitQuantityForm.id || getNextDraftUnitId(),
-      }
-      setDraftUnitQuantities((current) => {
-        const nextUnitKey = getUnitRowKey(nextUnit)
-        const withoutCurrent = current.filter((item) => getUnitRowKey(item) !== nextUnitKey)
-        return [...withoutCurrent, nextUnit]
-      })
-      setUnitQuantityForm(nextUnit)
-      setUnitQuantityErrors({})
-      return
-    }
-
-    setIsSavingUnitQuantity(true)
-    try {
-      const payLoad = {
-        unit_id: Number(unitQuantityForm.unit_id),
-        convert_unit_id: unitQuantityForm.convert_unit_id
-          ? Number(unitQuantityForm.convert_unit_id)
-          : null,
-        barcode: unitQuantityForm.barcode,
-        quantity: unitQuantityForm.quantity || "1",
-        sale_price: unitQuantityForm.sale_price || "0",
-        sale_price_edit: unitQuantityForm.sale_price || "0",
-        wholesale_price: unitQuantityForm.wholesale_price || "0",
-        wholesale_price_edit: unitQuantityForm.wholesale_price || "0",
-        cogs: unitQuantityForm.purchase_price || "0",
-        stock_alert_enabled: unitQuantityForm.stock_alert_enabled,
-        low_quantity: unitQuantityForm.low_quantity || "0",
-        visible: unitQuantityForm.visible,
-        is_weighable: unitQuantityForm.is_weighable,
-        scale_plu: unitQuantityForm.scale_plu,
-        preview_url: unitQuantityForm.preview_url || null,
-      }
-
-      if (unitQuantityForm.id) {
-        const response = await editProductUnitQuantity({
-          productId: id,
-          id: unitQuantityForm.id,
-          payLoad,
-        }).unwrap()
-        showToast.success(
-          response?.message || t("Product unit quantity updated successfully.")
-        )
-      } else {
-        const response = await createProductUnitQuantity({
-          productId: id,
-          payLoad,
-        }).unwrap()
-        showToast.success(
-          response?.message || t("Product unit quantity created successfully.")
-        )
-      }
-
-      resetUnitQuantityForm()
-      await getProductUnitQuantities({ productId: id })
-    } finally {
-      setIsSavingUnitQuantity(false)
-    }
-  }
-
-  const handleEditUnitQuantity = (record: any) => {
-    if (showSellingForm && !validateUnitQuantity()) {
-      showToast.error(t("Please fix the errors in the current selling unit first."))
-      return
-    }
-    setUnitQuantityForm(productUnitQuantityToForm(record))
-    setUnitQuantityErrors({})
-    setShowSellingForm(true)
   }
 
   const handleDeleteDraftUnitQuantity = (record: ProductUnitQuantityFormValues) => {
@@ -929,34 +830,13 @@ export default function ProductFormPage() {
     setShowSellingForm(true)
   }
 
-  const handleDeleteUnitQuantity = async (record: any) => {
-    const response = await deleteProductUnitQuantity({
-      productId: id,
-      id: record.id,
-    }).unwrap()
-    showToast.success(
-      response?.message || t("Product unit quantity deleted successfully.")
-    )
-    await getProductUnitQuantities({ productId: id })
-    if (unitQuantityForm.id === record.id) {
-      resetUnitQuantityForm()
-    }
-  }
-
   const requestDeleteUnitQuantity = (record: any) => {
-    setUnitDeleteTarget({
-      mode: isEdit ? "saved" : "draft",
-      record,
-    })
+    setUnitDeleteTarget(record)
   }
 
   const confirmDeleteUnitQuantity = async () => {
     if (!unitDeleteTarget) return
-    if (unitDeleteTarget.mode === "saved") {
-      await handleDeleteUnitQuantity(unitDeleteTarget.record)
-    } else {
-      handleDeleteDraftUnitQuantity(unitDeleteTarget.record)
-    }
+    handleDeleteDraftUnitQuantity(unitDeleteTarget)
     setUnitDeleteTarget(null)
   }
 
@@ -1080,24 +960,7 @@ export default function ProductFormPage() {
 
     setIsSubmitting(true)
     try {
-      const savedSellingUnits = (unitQuantities.data?.data || []).map((record: any) => ({
-        id: record.id,
-        unit_id: record.unit_id ? String(record.unit_id) : "",
-        convert_unit_id: record.convert_unit_id ? String(record.convert_unit_id) : "",
-        barcode: record.barcode || "",
-        quantity: record.quantity ? String(record.quantity) : "1",
-        sale_price: record.sale_price ? String(record.sale_price) : "0",
-        wholesale_price: record.wholesale_price ? String(record.wholesale_price) : "0",
-        purchase_price: record.cogs ? String(record.cogs) : "0",
-        is_weighable: Boolean(record.is_weighable),
-        stock_alert_enabled: Boolean(record.stock_alert_enabled),
-        low_quantity: record.low_quantity ? String(record.low_quantity) : "0",
-        visible: record.visible !== false,
-        preview_url: record.preview_url || "",
-        scale_plu: record.scale_plu || "",
-      }))
-      const sellingUnits = isEdit ? savedSellingUnits : draftUnitQuantities
-      const payLoad = buildProductFormData(formData, isEdit, units.data?.data || [], sellingUnits, gallery)
+      const payLoad = buildProductFormData(formData, isEdit, units.data?.data || [], draftUnitQuantities, gallery)
       if (isEdit) {
         const response = await editProduct({ id, payLoad }).unwrap()
         showToast.success(response?.message || t("Product updated successfully."))
@@ -1389,7 +1252,7 @@ export default function ProductFormPage() {
                       <div className="mt-4 flex flex-wrap items-end border-b border-gray-200">
                         {sellingUnitRows.map((record: any, index: number) => {
                           const isActive = String(unitQuantityForm.id || "") === String(record.id || "")
-                          const openRecord = () => isEdit ? handleEditUnitQuantity(record) : handleEditDraftUnitQuantity(record)
+                          const openRecord = () => handleEditDraftUnitQuantity(record)
                           return (
                             <button
                               key={`selling-unit-tab-${record.id || record.unit_id || "draft"}-${index}`}
@@ -1542,18 +1405,7 @@ export default function ProductFormPage() {
                             containerClassName="md:col-span-2"
                           />
                         </div>
-                        {isEdit ? (
-                          <div className="mt-4 flex justify-end gap-2 border-t pt-4">
-                            {unitQuantityForm.id ? (
-                              <Button type="button" variant="outline" onClick={resetUnitQuantityForm}>
-                                {t("Cancel")}
-                              </Button>
-                            ) : null}
-                            <Button type="button" onClick={handleSaveUnitQuantity} disabled={isSavingUnitQuantity}>
-                              {isSavingUnitQuantity ? <Spinner /> : unitQuantityForm.id ? t("Update Selling Unit") : t("Add Selling Unit")}
-                            </Button>
-                          </div>
-                        ) : null}
+                        {null}
                       </>
                     ) : null}
                   </div>
