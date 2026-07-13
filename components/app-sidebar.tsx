@@ -71,6 +71,12 @@ const mainNavSections: DashboardNavSection[] = [
     permission: PERMISSIONS.sales.create,
   },
   {
+    title: "Registers",
+    url: "/registers",
+    icon: <StoreIcon />,
+    permission: PERMISSIONS.cashRegister.view,
+  },
+  {
     title: "Orders",
     url: "/sales",
     icon: <ReceiptTextIcon />,
@@ -94,10 +100,10 @@ const mainNavSections: DashboardNavSection[] = [
     ],
   },
   {
-    title: "Medias",
-    url: "/medias",
-    icon: <ImageIcon />,
-    permission: PERMISSIONS.media.view,
+    title: "Procurements",
+    url: "/purchases",
+    icon: <ShoppingCartIcon />,
+    permission: PERMISSIONS.purchases.view,
   },
   {
     title: "Customers",
@@ -114,7 +120,7 @@ const mainNavSections: DashboardNavSection[] = [
         title: "Customers Groups",
         url: "/customers/groups",
         permission: PERMISSIONS.customers.view,
-      }
+      },
     ],
   },
   {
@@ -128,40 +134,6 @@ const mainNavSections: DashboardNavSection[] = [
     url: "/coupons",
     icon: <Ticket />,
     permission: PERMISSIONS.promotions.view,
-  },
-  {
-    title: "Providers",
-    url: "/providers",
-    icon: <UsersIcon />,
-    permission: PERMISSIONS.providers.view,
-  },
-  {
-    title: "Accounting",
-    url: "/accounting/transactions",
-    icon: <WalletCardsIcon />,
-    permission: PERMISSIONS.expenses.view,
-    items: [
-      {
-        title: "Expenses",
-        url: "/accounting/transactions",
-        permission: PERMISSIONS.expenses.view,
-      },
-      {
-        title: "Transaction History",
-        url: "/accounting/transactions/history",
-        permission: PERMISSIONS.transactionHistory.view,
-      },
-      {
-        title: "Rules",
-        url: "/accounting/rules",
-        permission: PERMISSIONS.expenses.update,
-      },
-      {
-        title: "Accounts",
-        url: "/accounting/accounts",
-        permission: PERMISSIONS.transactionAccounts.view,
-      },
-    ],
   },
   {
     title: "Inventory",
@@ -207,22 +179,44 @@ const mainNavSections: DashboardNavSection[] = [
     ],
   },
   {
-    title: "Modules",
-    url: "/modules",
-    icon: <PlugIcon />,
-    permission: PERMISSIONS.special.manageModules,
+    title: "Providers",
+    url: "/providers",
+    icon: <UsersIcon />,
+    permission: PERMISSIONS.providers.view,
   },
   {
-    title: "Procurements",
-    url: "/purchases",
-    icon: <ShoppingCartIcon />,
-    permission: PERMISSIONS.purchases.view,
+    title: "Medias",
+    url: "/medias",
+    icon: <ImageIcon />,
+    permission: PERMISSIONS.media.view,
   },
   {
-    title: "Registers",
-    url: "/registers",
-    icon: <StoreIcon />,
-    permission: PERMISSIONS.cashRegister.view,
+    title: "Accounting",
+    url: "/accounting/transactions",
+    icon: <WalletCardsIcon />,
+    permission: PERMISSIONS.expenses.view,
+    items: [
+      {
+        title: "Expenses",
+        url: "/accounting/transactions",
+        permission: PERMISSIONS.expenses.view,
+      },
+      {
+        title: "Transaction History",
+        url: "/accounting/transactions/history",
+        permission: PERMISSIONS.transactionHistory.view,
+      },
+      {
+        title: "Rules",
+        url: "/accounting/rules",
+        permission: PERMISSIONS.expenses.update,
+      },
+      {
+        title: "Accounts",
+        url: "/accounting/accounts",
+        permission: PERMISSIONS.transactionAccounts.view,
+      },
+    ],
   },
   {
     title: "Reports",
@@ -240,6 +234,12 @@ const mainNavSections: DashboardNavSection[] = [
       PERMISSIONS.reports.paymentTypes,
     ],
     permissionMatch: "any",
+  },
+  {
+    title: "Modules",
+    url: "/modules",
+    icon: <PlugIcon />,
+    permission: PERMISSIONS.special.manageModules,
   },
   {
     title: "Settings",
@@ -283,21 +283,33 @@ const settingsNavSections: DashboardNavSection[] = [
     permission: PERMISSIONS.settings.view,
   },
   {
-    title: "Customers",
-    url: "/settings/customers",
-    icon: <UsersIcon />,
-    permission: PERMISSIONS.settings.view,
-  },
-  {
     title: "Orders",
     url: "/settings/orders",
     icon: <ReceiptTextIcon />,
     permission: PERMISSIONS.settings.view,
   },
   {
+    title: "Customers",
+    url: "/settings/customers",
+    icon: <UsersIcon />,
+    permission: PERMISSIONS.settings.view,
+  },
+  {
     title: "Accounting",
     url: "/settings/accounting",
     icon: <WalletCardsIcon />,
+    permission: PERMISSIONS.settings.view,
+  },
+  {
+    title: "Invoices",
+    url: "/settings/invoices",
+    icon: <ImageIcon />,
+    permission: PERMISSIONS.settings.view,
+  },
+  {
+    title: "Reports",
+    url: "/settings/reports",
+    icon: <FileBarChart2Icon />,
     permission: PERMISSIONS.settings.view,
   },
   {
@@ -342,18 +354,6 @@ const settingsNavSections: DashboardNavSection[] = [
         permission: PERMISSIONS.taxes.view,
       },
     ],
-  },
-  {
-    title: "Reports",
-    url: "/settings/reports",
-    icon: <FileBarChart2Icon />,
-    permission: PERMISSIONS.settings.view,
-  },
-  {
-    title: "Invoices",
-    url: "/settings/invoices",
-    icon: <ImageIcon />,
-    permission: PERMISSIONS.settings.view,
   },
   {
     title: "Reset",
