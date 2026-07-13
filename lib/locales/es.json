@@ -627,5 +627,7 @@
   "Manage your profile, addresses, security, and API tokens.": "Administre su perfil, direcciones, seguridad y tokens API.",
   "Enter value": "Ingrese el valor",
   "Enter unit name": "Ingrese el nombre de la unidad",
-  "Order Instalments": "Cuotas del pedido"
+  "Order Instalments": "Cuotas del pedido",
+  "This field is required.": "Este campo es obligatorio.",
+  "Please check the highlighted settings tab.": "Revise la pestana de configuracion resaltada."
 }

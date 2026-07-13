@@ -8,6 +8,7 @@ import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Button } from "@/components/ui/button"
 import { SelectItem } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { catalog } from "@/lib/api/catalog"
@@ -387,6 +388,22 @@ export default function PurchaseOrderFormPage() {
     return Object.keys(nextErrors).length === 0
   }
 
+  const procurementTabHasErrors = (tab: "details" | "products") => {
+    const errorKeys = Object.keys(errors)
+    if (tab === "products") {
+      return errorKeys.some((key) =>
+        key === "products" ||
+        key.startsWith("product_") ||
+        key.startsWith("unit_") ||
+        key.startsWith("quantity_") ||
+        key.startsWith("price_")
+      )
+    }
+    return errorKeys.some((key) =>
+      ["provider_id", "invoice_date", "delivery_status", "payment_status"].includes(key)
+    )
+  }
+
   const goBack = () => router.push("/purchases")
 
   const buildProductPayload = (item: PurchaseItemForm) => {
@@ -536,19 +553,15 @@ export default function PurchaseOrderFormPage() {
                 </p>
               </div>
 
-              <div className="flex-none border-b border-gray-200">
-                <nav className="-mb-px flex overflow-x-auto">
+              <div className="flex-none">
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList variant="line" className="-mb-px w-full justify-start overflow-x-auto">
                   {(["details", "products"] as const).map((tab) => (
-                    <button
+                    <TabsTrigger
                       key={tab}
-                      type="button"
-                      onClick={() => setActiveTab(tab)}
-                      className={cn(
-                        "flex shrink-0 items-center gap-2 border-b-2 px-5 py-3 text-sm font-medium whitespace-nowrap capitalize transition-colors",
-                        activeTab === tab
-                          ? "border-gray-900 text-gray-900"
-                          : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                      )}
+                      value={tab}
+                      data-invalid={procurementTabHasErrors(tab) ? true : undefined}
+                      aria-invalid={procurementTabHasErrors(tab) ? true : undefined}
                     >
                       {t(tab === "details" ? "Details" : "Products")}
                       {tab === "products" ? (
@@ -556,9 +569,15 @@ export default function PurchaseOrderFormPage() {
                           {items.length}
                         </span>
                       ) : null}
-                    </button>
+                      {procurementTabHasErrors(tab) ? (
+                        <span className="ml-1 inline-flex size-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">
+                          !
+                        </span>
+                      ) : null}
+                    </TabsTrigger>
                   ))}
-                </nav>
+                  </TabsList>
+                </Tabs>
               </div>
 
               <div className="bg-gray-50/50 p-4">

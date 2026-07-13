@@ -24,6 +24,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { SelectItem, SelectItemText } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { catalog } from "@/lib/api/catalog"
@@ -407,7 +408,8 @@ export default function ProductFormPage() {
   }
 
   const [formData, setFormData] = useState<ProductFormValues>(initialValues)
-  const [activeTab, setActiveTab] = useState<"identification" | "units" | "expiry" | "taxes" | "images">("identification")
+  type ProductTab = "identification" | "units" | "expiry" | "taxes" | "images"
+  const [activeTab, setActiveTab] = useState<ProductTab>("identification")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isFooterStuck, setIsFooterStuck] = useState(false)
@@ -714,7 +716,23 @@ export default function ProductFormPage() {
       nextErrors.tax_group_id = t("Tax is required when inclusive of tax")
     }
     setErrors(nextErrors)
+    if (nextErrors.name || nextErrors.category_id || nextErrors.barcode) {
+      setActiveTab("identification")
+    } else if (nextErrors.unit_id) {
+      setActiveTab("units")
+    } else if (nextErrors.tax_group_id) {
+      setActiveTab("taxes")
+    }
     return Object.keys(nextErrors).length === 0
+  }
+
+  const productTabHasErrors = (tab: ProductTab) => {
+    if (tab === "identification") {
+      return Boolean(errors.name || errors.category_id || errors.barcode)
+    }
+    if (tab === "units") return Boolean(errors.unit_id)
+    if (tab === "taxes") return Boolean(errors.tax_group_id)
+    return false
   }
 
   const goBack = () => router.push("/inventory/products")
@@ -1120,17 +1138,15 @@ export default function ProductFormPage() {
         </div>
 
         {/* Tab Selector Header */}
-        <div className="flex-none border-b border-gray-200">
-          <nav className="-mb-px flex overflow-x-auto">
+        <div className="flex-none">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ProductTab)}>
+            <TabsList variant="line" className="-mb-px w-full justify-start overflow-x-auto">
             {(["identification", "units", "expiry", "taxes", "images"] as const).map((tab) => (
-              <button
+              <TabsTrigger
                 key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`shrink-0 border-b-2 px-5 py-3 text-sm font-medium whitespace-nowrap capitalize transition-colors ${activeTab === tab
-                  ? "border-gray-900 text-gray-900"
-                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                  }`}
+                value={tab}
+                data-invalid={productTabHasErrors(tab) ? true : undefined}
+                aria-invalid={productTabHasErrors(tab) ? true : undefined}
               >
                 {t(
                   tab === "identification"
@@ -1143,9 +1159,15 @@ export default function ProductFormPage() {
                           ? "Taxes"
                           : "Images"
                 )}
-              </button>
+                {productTabHasErrors(tab) ? (
+                  <span className="ml-1 inline-flex size-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">
+                    !
+                  </span>
+                ) : null}
+              </TabsTrigger>
             ))}
-          </nav>
+            </TabsList>
+          </Tabs>
         </div>
 
         <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto bg-gray-50/50 p-6">

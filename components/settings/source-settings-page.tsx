@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { SelectItem } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { accounting } from "@/lib/api/accounting"
@@ -304,6 +305,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
   const [activeTab, setActiveTab] = useState("")
   const [accountFormCategory, setAccountFormCategory] = useState<string | null>(null)
   const [values, setValues] = useState<Record<string, any>>({})
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [mediaPreviewUrls, setMediaPreviewUrls] = useState<Record<string, string>>({})
   const [mediaErrors, setMediaErrors] = useState<Record<string, string>>({})
   const [getSettingsForm, formState] = (settings as any).useGetSettingsFormMutation()
@@ -339,6 +341,9 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
 
   const updateValue = (name: string, value: any) => {
     setValues((current) => ({ ...current, [name]: value }))
+    if (fieldErrors[name]) {
+      setFieldErrors((current) => ({ ...current, [name]: "" }))
+    }
   }
 
   const uploadMediaField = async (field: SourceSettingField, file: File | null) => {
@@ -379,6 +384,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
     const placeholder = t(placeholderKey)
     const value = values[field.name]
     const required = String(field.validation || "").includes("required")
+    const error = fieldErrors[field.name]
     const fieldOptions = (field.options || []).map((option) => ({
       value: normalizeSettingOptionValue(option.value),
       label: option.label,
@@ -480,6 +486,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
           <UniFieldSelect
             label={label}
             required={required}
+            error={error}
             value={selectedValue}
             onValueChange={(nextValue) =>
               updateValue(
@@ -555,6 +562,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
         <UniFieldInput
           label={label}
           required={required}
+          error={error}
           as={field.type === "textarea" ? "textarea" : "input"}
           type={field.type === "number" ? "number" : "text"}
           value={value ?? ""}
@@ -620,6 +628,26 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
       return
     }
 
+    const nextErrors: Record<string, string> = {}
+    tabs.forEach((tab) => {
+      tab.fields.forEach((field) => {
+        const required = String(field.validation || "").includes("required")
+        const value = values[field.name]
+        if (required && (value === null || value === undefined || value === "" || (Array.isArray(value) && !value.length))) {
+          nextErrors[field.name] = t("This field is required.")
+        }
+      })
+    })
+    setFieldErrors(nextErrors)
+    if (Object.keys(nextErrors).length) {
+      const firstInvalidTab = tabs.find((tab) =>
+        tab.fields.some((field) => nextErrors[field.name])
+      )
+      if (firstInvalidTab) setActiveTab(firstInvalidTab.identifier)
+      showToast.error(t("Please check the highlighted settings tab."))
+      return
+    }
+
     const response = await saveSettingsForm({
       identifier: sourceIdentifier,
       payLoad: values,
@@ -653,6 +681,8 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
   }
 
   const activeFields = tabs.find((tab) => tab.identifier === activeTab)?.fields || []
+  const tabHasErrors = (tab: SourceSettingTab) =>
+    tab.fields.some((field) => Boolean(fieldErrors[field.name]))
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -690,25 +720,29 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
       {tabs.length ? (
         <div className="flex min-h-0 flex-1 flex-col">
           {/* Underline tab bar */}
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex overflow-x-auto">
-              {tabs.map((tab) => {
-                const isActive = activeTab === tab.identifier
-                return (
-                  <button
-                    key={tab.identifier}
-                    type="button"
-                    onClick={() => setActiveTab(tab.identifier)}
-                    className={`shrink-0 border-b-2 px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${isActive
-                      ? "border-gray-900 text-gray-900"
-                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                      }`}
-                  >
-                    {t(tab.label)}
-                  </button>
-                )
-              })}
-            </nav>
+          <div>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList variant="line" className="">
+                {tabs.map((tab) => {
+                  const hasError = tabHasErrors(tab)
+                  return (
+                    <TabsTrigger
+                      key={tab.identifier}
+                      value={tab.identifier}
+                      data-invalid={hasError ? true : undefined}
+                      aria-invalid={hasError ? true : undefined}
+                    >
+                      {t(tab.label)}
+                      {hasError ? (
+                        <span className="ml-1 inline-flex size-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">
+                          !
+                        </span>
+                      ) : null}
+                    </TabsTrigger>
+                  )
+                })}
+              </TabsList>
+            </Tabs>
           </div>
 
           {/* Fields area */}

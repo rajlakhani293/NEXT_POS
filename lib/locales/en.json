@@ -827,5 +827,7 @@
   "Manage your profile, addresses, security, and API tokens.": "Manage your profile, addresses, security, and API tokens.",
   "Enter value": "Enter value",
   "Enter unit name": "Enter unit name",
-  "Order Instalments": "Order Instalments"
+  "Order Instalments": "Order Instalments",
+  "This field is required.": "This field is required.",
+  "Please check the highlighted settings tab.": "Please check the highlighted settings tab."
 }

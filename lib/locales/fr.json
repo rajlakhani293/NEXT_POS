@@ -627,5 +627,7 @@
   "Manage your profile, addresses, security, and API tokens.": "Gerez votre profil, vos adresses, la securite et les jetons API.",
   "Enter value": "Saisir la valeur",
   "Enter unit name": "Saisir le nom de l'unité",
-  "Order Instalments": "Versements de commande"
+  "Order Instalments": "Versements de commande",
+  "This field is required.": "Ce champ est obligatoire.",
+  "Please check the highlighted settings tab.": "Verifiez l'onglet de parametres mis en evidence."
 }

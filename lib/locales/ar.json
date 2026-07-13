@@ -627,5 +627,7 @@
   "Manage your profile, addresses, security, and API tokens.": "إدارة ملفك الشخصي والعناوين والأمان ورموز API.",
   "Enter value": "أدخل القيمة",
   "Enter unit name": "أدخل اسم الوحدة",
-  "Order Instalments": "أقساط الطلب"
+  "Order Instalments": "أقساط الطلب",
+  "This field is required.": "هذا الحقل مطلوب.",
+  "Please check the highlighted settings tab.": "يرجى التحقق من تبويب الإعدادات المميز."
 }

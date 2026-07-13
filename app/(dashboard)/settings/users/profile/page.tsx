@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { auth, type AccessTokenRecord } from "@/lib/api/auth"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
@@ -318,8 +319,9 @@ export default function UserProfilePage() {
             </div>
           </div>
 
-          <div className="flex-none border-b border-gray-200">
-            <nav className="-mb-px flex overflow-x-auto">
+          <div className="flex-none">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ProfileTab)}>
+              <TabsList variant="line" className="-mb-px w-full justify-start overflow-x-auto">
               {([
                 ["general", "General Info"],
                 ["billing", "Billing Address"],
@@ -327,19 +329,15 @@ export default function UserProfilePage() {
                 ["security", "Security"],
                 ["token", "API Token"],
               ] as [ProfileTab, string][]).map(([tab, label]) => (
-                <button
+                <TabsTrigger
                   key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={`shrink-0 border-b-2 px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${activeTab === tab
-                    ? "border-gray-900 text-gray-900"
-                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                    }`}
+                  value={tab}
                 >
                   {t(label)}
-                </button>
+                </TabsTrigger>
               ))}
-            </nav>
+              </TabsList>
+            </Tabs>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50/50 p-6">

@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Spinner } from "@/components/ui/spinner"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { SelectItem } from "@/components/ui/select"
@@ -261,6 +262,14 @@ export default function CustomerFormPage() {
   }
 
   const tabsToRender: CustomerTab[] = ["general", "billing", "shipping"]
+  const tabHasErrors = (tab: CustomerTab) => {
+    const tabFields: Record<CustomerTab, string[]> = {
+      general: ["first_name", "last_name", "group_id", "phone", "email", "credit_limit_amount", "birth_date", "gender", "pobox"],
+      billing: Object.keys(initialValues).filter((key) => key.startsWith("billing_")),
+      shipping: Object.keys(initialValues).filter((key) => key.startsWith("shipping_")),
+    }
+    return tabFields[tab].some((field) => Boolean(errors[field]))
+  }
 
   return (
     <DashboardPage padding="none">
@@ -308,17 +317,15 @@ export default function CustomerFormPage() {
       </div>
 
       {/* Tab Selector Header */}
-      <div className="flex-none border-b border-gray-200">
-        <nav className="-mb-px flex overflow-x-auto">
+      <div className="flex-none">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as CustomerTab)}>
+          <TabsList variant="line" className="-mb-px w-full justify-start overflow-x-auto">
           {tabsToRender.map((tab) => (
-            <button
+            <TabsTrigger
               key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`shrink-0 border-b-2 px-5 py-3 text-sm font-medium whitespace-nowrap capitalize transition-colors ${activeTab === tab
-                ? "border-gray-900 text-gray-900"
-                : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                }`}
+              value={tab}
+              data-invalid={tabHasErrors(tab) ? true : undefined}
+              aria-invalid={tabHasErrors(tab) ? true : undefined}
             >
               {t(
                 tab === "general"
@@ -327,9 +334,15 @@ export default function CustomerFormPage() {
                     ? "Billing Address"
                     : "Shipping Address"
               )}
-            </button>
+              {tabHasErrors(tab) ? (
+                <span className="ml-1 inline-flex size-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">
+                  !
+                </span>
+              ) : null}
+            </TabsTrigger>
           ))}
-        </nav>
+          </TabsList>
+        </Tabs>
       </div>
 
       <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto bg-gray-50/50 p-6">

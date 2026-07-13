@@ -26,7 +26,7 @@ function Tabs({
 }
 
 const tabsListVariants = cva(
-  "group/tabs-list inline-flex w-fit items-center justify-center rounded-lg p-[3px] text-muted-foreground group-data-horizontal/tabs:h-8 group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col data-[variant=line]:rounded-none",
+  "group/tabs-list inline-flex w-fit items-center justify-center rounded-lg p-[3px] text-muted-foreground group-data-horizontal/tabs:h-8 group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col data-[variant=line]:h-auto data-[variant=line]:rounded-none data-[variant=line]:border-b data-[variant=line]:border-gray-200 data-[variant=line]:p-0",
   {
     variants: {
       variant: {
@@ -68,6 +68,7 @@ function TabsTrigger({
       className={cn(
         "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap text-muted-foreground transition-all hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4",
         "cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
+        "group-data-[variant=line]/tabs-list:h-auto group-data-[variant=line]/tabs-list:flex-none group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:border-b-2 group-data-[variant=line]/tabs-list:px-5 group-data-[variant=line]/tabs-list:py-3 group-data-[variant=line]/tabs-list:shadow-none group-data-[variant=line]/tabs-list:hover:border-gray-300 group-data-[variant=line]/tabs-list:hover:text-gray-700 group-data-[variant=line]/tabs-list:data-[state=active]:border-gray-900 group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:text-gray-900 group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none group-data-[variant=line]/tabs-list:data-[invalid=true]:border-red-500 group-data-[variant=line]/tabs-list:data-[invalid=true]:text-red-600 group-data-[variant=line]/tabs-list:data-[invalid=true]:data-[state=active]:border-red-600 group-data-[variant=line]/tabs-list:data-[invalid=true]:data-[state=active]:text-red-700",
         className
       )}
       {...props}
