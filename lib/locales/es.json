@@ -662,5 +662,15 @@
   "Password Recovery": "Recuperacion de contrasena",
   "This define how the date should be defined. The default format is \"Y-m-d\".": "Define como debe mostrarse la fecha. El formato predeterminado es \"Y-m-d\".",
   "This define how the date and times should be formated. The default format is \"Y-m-d H:i\".": "Define como deben mostrarse la fecha y hora. El formato predeterminado es \"Y-m-d H:i\".",
-  "Determine the default timezone of the store.": "Determina la zona horaria predeterminada de la tienda."
+  "Determine the default timezone of the store.": "Determina la zona horaria predeterminada de la tienda.",
+  "Order Code Type": "Tipo de codigo de pedido",
+  "Allow Unpaid Orders": "Permitir pedidos sin pagar",
+  "Allow Partial Orders": "Permitir pedidos parciales",
+  "Strict Instalments": "Cuotas estrictas",
+  "Quotation Expiration": "Vencimiento de cotizacion",
+  "Determine how the system will generate code for each orders.": "Determina como el sistema generara el codigo para cada pedido.",
+  "Will prevent incomplete orders to be placed. If credit is allowed, this option should be set to \"yes\".": "Evitara que se realicen pedidos incompletos. Si se permite credito, esta opcion debe estar en \"yes\".",
+  "Will prevent partially paid orders to be placed.": "Evitara que se realicen pedidos parcialmente pagados.",
+  "Will enforce instalment to be paid on specific date.": "Obligara a pagar la cuota en una fecha especifica.",
+  "Quotations will get deleted after they defined they has reached.": "Las cotizaciones se eliminaran despues de alcanzar el plazo definido."
 }

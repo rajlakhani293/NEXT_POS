@@ -662,5 +662,15 @@
   "Password Recovery": "Recuperation du mot de passe",
   "This define how the date should be defined. The default format is \"Y-m-d\".": "Definit comment la date doit etre affichee. Le format par defaut est \"Y-m-d\".",
   "This define how the date and times should be formated. The default format is \"Y-m-d H:i\".": "Definit comment la date et l'heure doivent etre affichees. Le format par defaut est \"Y-m-d H:i\".",
-  "Determine the default timezone of the store.": "Determine le fuseau horaire par defaut de la boutique."
+  "Determine the default timezone of the store.": "Determine le fuseau horaire par defaut de la boutique.",
+  "Order Code Type": "Type de code de commande",
+  "Allow Unpaid Orders": "Autoriser les commandes impayees",
+  "Allow Partial Orders": "Autoriser les commandes partielles",
+  "Strict Instalments": "Versements stricts",
+  "Quotation Expiration": "Expiration du devis",
+  "Determine how the system will generate code for each orders.": "Determine comment le systeme generera le code de chaque commande.",
+  "Will prevent incomplete orders to be placed. If credit is allowed, this option should be set to \"yes\".": "Empechera les commandes incompletes. Si le credit est autorise, cette option doit etre definie sur \"yes\".",
+  "Will prevent partially paid orders to be placed.": "Empechera les commandes partiellement payees.",
+  "Will enforce instalment to be paid on specific date.": "Imposera le paiement du versement a une date specifique.",
+  "Quotations will get deleted after they defined they has reached.": "Les devis seront supprimes apres avoir atteint le delai defini."
 }

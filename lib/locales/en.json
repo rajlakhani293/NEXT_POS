@@ -862,5 +862,15 @@
   "Password Recovery": "Password Recovery",
   "This define how the date should be defined. The default format is \"Y-m-d\".": "This define how the date should be defined. The default format is \"Y-m-d\".",
   "This define how the date and times should be formated. The default format is \"Y-m-d H:i\".": "This define how the date and times should be formated. The default format is \"Y-m-d H:i\".",
-  "Determine the default timezone of the store.": "Determine the default timezone of the store."
+  "Determine the default timezone of the store.": "Determine the default timezone of the store.",
+  "Order Code Type": "Order Code Type",
+  "Allow Unpaid Orders": "Allow Unpaid Orders",
+  "Allow Partial Orders": "Allow Partial Orders",
+  "Strict Instalments": "Strict Instalments",
+  "Quotation Expiration": "Quotation Expiration",
+  "Determine how the system will generate code for each orders.": "Determine how the system will generate code for each orders.",
+  "Will prevent incomplete orders to be placed. If credit is allowed, this option should be set to \"yes\".": "Will prevent incomplete orders to be placed. If credit is allowed, this option should be set to \"yes\".",
+  "Will prevent partially paid orders to be placed.": "Will prevent partially paid orders to be placed.",
+  "Will enforce instalment to be paid on specific date.": "Will enforce instalment to be paid on specific date.",
+  "Quotations will get deleted after they defined they has reached.": "Quotations will get deleted after they defined they has reached."
 }
