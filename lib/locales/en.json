@@ -668,6 +668,8 @@
   "Unable to add product which doesn't unit quantities defined.": "Unable to add product which doesn't unit quantities defined.",
   "Unable to load product.": "Unable to load product.",
   "Provider is required": "Provider is required",
+  "Procurement name is required": "Procurement name is required",
+  "Add Provider": "Add Provider",
   "Invoice date is required": "Invoice date is required",
   "Delivery status is required": "Delivery status is required",
   "Payment status is required": "Payment status is required",

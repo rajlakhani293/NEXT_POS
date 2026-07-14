@@ -468,6 +468,8 @@
   "Unable to add product which doesn't unit quantities defined.": "لا يمكن إضافة منتج لا يحتوي على كميات وحدات محددة.",
   "Unable to load product.": "تعذر تحميل المنتج.",
   "Provider is required": "المورد مطلوب",
+  "Procurement name is required": "اسم المشتريات مطلوب",
+  "Add Provider": "إضافة مورد",
   "Invoice date is required": "تاريخ الفاتورة مطلوب",
   "Delivery status is required": "حالة التسليم مطلوبة",
   "Payment status is required": "حالة الدفع مطلوبة",

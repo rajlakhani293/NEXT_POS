@@ -4,6 +4,7 @@ import { useEffect } from "react"
 
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { catalog } from "@/lib/api/catalog"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 const initialValues = {
   name: "",
@@ -13,6 +14,7 @@ const initialValues = {
 }
 
 export function TaxForm(props: any) {
+  const { t } = useTranslation()
   const [getTaxGroupsDropdown, taxGroups] = (
     catalog as any
   ).useGetTaxGroupsDropdownMutation()
@@ -30,31 +32,31 @@ export function TaxForm(props: any) {
   const fields = [
     {
       name: "name",
-      label: "Name",
+      label: t("Name"),
       type: "text",
-      placeholder: "Provide a name to the tax.",
+      placeholder: t("Provide a name to the tax."),
       required: true,
     },
     {
       name: "tax_group_id",
-      label: "Parent",
+      label: t("Parent"),
       type: "select",
-      placeholder: "Assign the tax to a tax group.",
+      placeholder: t("Assign the tax to a tax group."),
       required: true,
       options: taxGroupOptions,
     },
     {
       name: "rate",
-      label: "Rate",
+      label: t("Rate"),
       type: "number",
-      placeholder: "Define the rate value for the tax.",
+      placeholder: t("Define the rate value for the tax."),
       required: true,
     },
     {
       name: "description",
-      label: "Description",
+      label: t("Description"),
       type: "textarea",
-      placeholder: "Provide a description to the tax.",
+      placeholder: t("Provide a description to the tax."),
       rows: 3,
     },
   ]
@@ -62,7 +64,7 @@ export function TaxForm(props: any) {
   return (
     <CatalogMasterForm
       {...props}
-      entityName="Tax"
+      entityName={t("Tax")}
       fields={fields}
       initialValues={initialValues}
       createHook={(catalog as any).useCreateTaxMutation}

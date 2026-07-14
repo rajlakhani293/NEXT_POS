@@ -468,6 +468,8 @@
   "Unable to add product which doesn't unit quantities defined.": "No se puede agregar un producto sin cantidades de unidad definidas.",
   "Unable to load product.": "No se pudo cargar el producto.",
   "Provider is required": "El proveedor es obligatorio",
+  "Procurement name is required": "El nombre del abastecimiento es obligatorio",
+  "Add Provider": "Agregar proveedor",
   "Invoice date is required": "La fecha de factura es obligatoria",
   "Delivery status is required": "El estado de entrega es obligatorio",
   "Payment status is required": "El estado de pago es obligatorio",

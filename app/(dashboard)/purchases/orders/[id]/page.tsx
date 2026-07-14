@@ -101,6 +101,7 @@ export default function PurchaseOrderFormPage() {
   const [isFooterStuck, setIsFooterStuck] = useState(false)
   const [unitSiblingOptions, setUnitSiblingOptions] = useState<Record<string, any[]>>({})
   const [productDetailsById, setProductDetailsById] = useState<Record<string, any>>({})
+  const [providerFormOpen, setProviderFormOpen] = useState(false)
 
   const [getSuppliersDropdown, suppliers] = (purchases as any).useGetSuppliersDropdownMutation()
   const [getProductsDropdown, products] = (catalog as any).useGetProductsDropdownMutation()
@@ -366,6 +367,7 @@ export default function PurchaseOrderFormPage() {
 
   const validate = () => {
     const nextErrors: Record<string, string> = {}
+    if (!formData.name?.trim()) nextErrors.name = t("Procurement name is required")
     if (!formData.provider_id) nextErrors.provider_id = t("Provider is required")
     if (!formData.invoice_date) nextErrors.invoice_date = t("Invoice date is required")
     if (!formData.delivery_status) nextErrors.delivery_status = t("Delivery status is required")
@@ -400,7 +402,7 @@ export default function PurchaseOrderFormPage() {
       )
     }
     return errorKeys.some((key) =>
-      ["provider_id", "invoice_date", "delivery_status", "payment_status"].includes(key)
+      ["name", "provider_id", "invoice_date", "delivery_status", "payment_status"].includes(key)
     )
   }
 
@@ -544,11 +546,13 @@ export default function PurchaseOrderFormPage() {
               <div className="mb-4">
                 <UniFieldInput
                   label={t("Procurement Name")}
+                  required
                   value={formData.name}
                   onChange={(event) => updateField("name", event.target.value)}
                   placeholder={t("Enter procurement name")}
+                  error={errors.name}
                 />
-                <p className="text-xs font-medium text-gray-500">
+                <p className="text-xs font-medium text-gray-500 mt-1">
                   {t("Provide a name that will help to identify the procurement.")}
                 </p>
               </div>
@@ -556,26 +560,26 @@ export default function PurchaseOrderFormPage() {
               <div className="flex-none">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList variant="line" className="-mb-px w-full justify-start overflow-x-auto">
-                  {(["details", "products"] as const).map((tab) => (
-                    <TabsTrigger
-                      key={tab}
-                      value={tab}
-                      data-invalid={procurementTabHasErrors(tab) ? true : undefined}
-                      aria-invalid={procurementTabHasErrors(tab) ? true : undefined}
-                    >
-                      {t(tab === "details" ? "Details" : "Products")}
-                      {tab === "products" ? (
-                        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-200 px-1 text-xs font-bold text-gray-700">
-                          {items.length}
-                        </span>
-                      ) : null}
-                      {procurementTabHasErrors(tab) ? (
-                        <span className="ml-1 inline-flex size-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">
-                          !
-                        </span>
-                      ) : null}
-                    </TabsTrigger>
-                  ))}
+                    {(["details", "products"] as const).map((tab) => (
+                      <TabsTrigger
+                        key={tab}
+                        value={tab}
+                        data-invalid={procurementTabHasErrors(tab) ? true : undefined}
+                        aria-invalid={procurementTabHasErrors(tab) ? true : undefined}
+                      >
+                        {t(tab === "details" ? "Details" : "Products")}
+                        {tab === "products" ? (
+                          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-200 px-1 text-xs font-bold text-gray-700">
+                            {items.length}
+                          </span>
+                        ) : null}
+                        {procurementTabHasErrors(tab) ? (
+                          <span className="ml-1 inline-flex size-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">
+                            !
+                          </span>
+                        ) : null}
+                      </TabsTrigger>
+                    ))}
                   </TabsList>
                 </Tabs>
               </div>
@@ -583,260 +587,260 @@ export default function PurchaseOrderFormPage() {
               <div className="bg-gray-50/50 p-4">
                 {activeTab === "details" && (
                   <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <UniFieldInput
-                      label={t("Invoice Number")}
-                      placeholder={t("If the procurement has been issued outside of the POS, please provide a unique reference.")}
-                      value={formData.invoice_reference}
-                      onChange={(event) => updateField("invoice_reference", event.target.value)}
-                    />
-                    <UniFieldInput
-                      label={t("Delivery Time")}
-                      type="date"
-                      value={formData.delivery_time}
-                      onChange={(event) => updateField("delivery_time", event.target.value)}
-                    />
-                    <UniFieldInput
-                      label={t("Invoice Date")}
-                      required
-                      type="date"
-                      value={formData.invoice_date}
-                      onChange={(event) => updateField("invoice_date", event.target.value)}
-                      error={errors.invoice_date}
-                    />
-                    <UniFieldSelect
-                      label={t("Automatic Approval")}
-                      value={formData.automatic_approval ? "1" : "0"}
-                      onValueChange={(value) => updateField("automatic_approval", value === "1")}
-                    >
-                      <SelectItem value="0">{t("No")}</SelectItem>
-                      <SelectItem value="1">{t("Yes")}</SelectItem>
-                    </UniFieldSelect>
-                    <UniFieldSelect
-                      label={t("Delivery Status")}
-                      required
-                      value={formData.delivery_status}
-                      onValueChange={(value) => updateField("delivery_status", value)}
-                      error={errors.delivery_status}
-                    >
-                      <SelectItem value="pending">{t("Pending")}</SelectItem>
-                      <SelectItem value="delivered">{t("Delivered")}</SelectItem>
-                    </UniFieldSelect>
-                    <UniFieldSelect
-                      label={t("Payment Status")}
-                      required
-                      value={formData.payment_status}
-                      onValueChange={(value) => updateField("payment_status", value)}
-                      error={errors.payment_status}
-                    >
-                      <SelectItem value="unpaid">{t("Unpaid")}</SelectItem>
-                      <SelectItem value="paid">{t("Paid")}</SelectItem>
-                    </UniFieldSelect>
-                    <UniFieldSelect
-                      label={t("Provider")}
-                      required
-                      value={formData.provider_id}
-                      onValueChange={(value) => updateField("provider_id", value)}
-                      placeholder={t("Select Provider")}
-                      error={errors.provider_id}
-                      hasOptions={Boolean(supplierOptions.length)}
-                    >
-                      {supplierOptions.map((supplier: any) => (
-                        <SelectItem key={supplier.id} value={String(supplier.id)}>
-                          {supplier.name}
-                        </SelectItem>
-                      ))}
-                    </UniFieldSelect>
-                    <div className="md:col-span-3">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                       <UniFieldInput
-                        as="textarea"
-                        label={t("Description")}
-                        placeholder={t("Enter description note")}
-                        value={formData.description}
-                        onChange={(event) => updateField("description", event.target.value)}
+                        label={t("Invoice Number")}
+                        placeholder={t("If the procurement has been issued outside of the POS, please provide a unique reference.")}
+                        value={formData.invoice_reference}
+                        onChange={(event) => updateField("invoice_reference", event.target.value)}
                       />
+                      <UniFieldInput
+                        label={t("Delivery Time")}
+                        type="date"
+                        value={formData.delivery_time}
+                        onChange={(event) => updateField("delivery_time", event.target.value)}
+                      />
+                      <UniFieldInput
+                        label={t("Invoice Date")}
+                        required
+                        type="date"
+                        value={formData.invoice_date}
+                        onChange={(event) => updateField("invoice_date", event.target.value)}
+                        error={errors.invoice_date}
+                      />
+                      <UniFieldSelect
+                        label={t("Automatic Approval")}
+                        value={formData.automatic_approval ? "1" : "0"}
+                        onValueChange={(value) => updateField("automatic_approval", value === "1")}
+                      >
+                        <SelectItem value="0">{t("No")}</SelectItem>
+                        <SelectItem value="1">{t("Yes")}</SelectItem>
+                      </UniFieldSelect>
+                      <UniFieldSelect
+                        label={t("Delivery Status")}
+                        required
+                        value={formData.delivery_status}
+                        onValueChange={(value) => updateField("delivery_status", value)}
+                        error={errors.delivery_status}
+                      >
+                        <SelectItem value="pending">{t("Pending")}</SelectItem>
+                        <SelectItem value="delivered">{t("Delivered")}</SelectItem>
+                      </UniFieldSelect>
+                      <UniFieldSelect
+                        label={t("Payment Status")}
+                        required
+                        value={formData.payment_status}
+                        onValueChange={(value) => updateField("payment_status", value)}
+                        error={errors.payment_status}
+                      >
+                        <SelectItem value="unpaid">{t("Unpaid")}</SelectItem>
+                        <SelectItem value="paid">{t("Paid")}</SelectItem>
+                      </UniFieldSelect>
+                      <UniFieldSelect
+                        label={t("Provider")}
+                        required
+                        value={formData.provider_id}
+                        onValueChange={(value) => updateField("provider_id", value)}
+                        placeholder={t("Select Provider")}
+                        error={errors.provider_id}
+                        hasOptions={Boolean(supplierOptions.length)}
+                      >
+                        {supplierOptions.map((supplier: any) => (
+                          <SelectItem key={supplier.id} value={String(supplier.id)}>
+                            {supplier.name}
+                          </SelectItem>
+                        ))}
+                      </UniFieldSelect>
+                      <div className="md:col-span-3">
+                        <UniFieldInput
+                          as="textarea"
+                          label={t("Description")}
+                          placeholder={t("Enter description note")}
+                          value={formData.description}
+                          onChange={(event) => updateField("description", event.target.value)}
+                        />
+                      </div>
                     </div>
-                  </div>
                   </div>
                 )}
 
                 {activeTab === "products" && (
                   <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div className="text-sm font-semibold text-gray-700">
-                      {errors.products || t("SKU, Barcode, Name")}
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-gray-700">
+                        {errors.products || t("SKU, Barcode, Name")}
+                      </div>
+                      <Button type="button" onClick={addItem}>
+                        <PlusIcon className="size-4" />
+                        {t("Add Item")}
+                      </Button>
                     </div>
-                    <Button type="button" onClick={addItem}>
-                      <PlusIcon className="size-4" />
-                      {t("Add Item")}
-                    </Button>
-                  </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[980px] border-collapse text-sm">
-                      <thead>
-                        <tr className="bg-gray-50 text-left font-semibold text-gray-700">
-                          <th className="border border-gray-200 p-2">{t("Name")}</th>
-                          <th className="w-40 border border-gray-200 p-2">{t("Unit Price")}</th>
-                          <th className="w-36 border border-gray-200 p-2">{t("Tax Value")}</th>
-                          <th className="w-36 border border-gray-200 p-2">{t("Quantity")}</th>
-                          <th className="w-36 border border-gray-200 p-2">{t("Total Price")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {items.map((item, index) => {
-                          const unitOptions = getItemUnitOptions(item)
-                          const convertOptions = unitSiblingOptions[item.id] || []
-                          const line = computeLine(item)
-                          return (
-                            <tr
-                              key={item.id}
-                              className={cn(
-                                "align-top",
-                                (errors[`product_${index}`] || errors[`unit_${index}`] || errors[`quantity_${index}`] || errors[`price_${index}`]) &&
-                                "outline outline-2 outline-red-300"
-                              )}
-                            >
-                              <td className="border border-gray-200 p-2">
-                                <UniFieldSelect
-                                  value={item.product_id}
-                                  onValueChange={(value) => updateProductItemSelection(item.id, value)}
-                                  placeholder={t("Select product")}
-                                  error={errors[`product_${index}`]}
-                                  hasOptions={Boolean(productOptions.length)}
-                                >
-                                  {productOptions.map((product: any) => (
-                                    <SelectItem key={product.id} value={String(product.id)}>
-                                      {product.name}
-                                    </SelectItem>
-                                  ))}
-                                </UniFieldSelect>
-                                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
-                                  <button
-                                    type="button"
-                                    className="font-medium text-red-600 underline disabled:opacity-50"
-                                    disabled={isStocked}
-                                    onClick={() => handleRemoveItem(item)}
-                                  >
-                                    {t("Delete")}
-                                  </button>
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[980px] border-collapse text-sm">
+                        <thead>
+                          <tr className="bg-gray-50 text-left font-semibold text-gray-700">
+                            <th className="border border-gray-200 p-2">{t("Name")}</th>
+                            <th className="w-40 border border-gray-200 p-2">{t("Unit Price")}</th>
+                            <th className="w-36 border border-gray-200 p-2">{t("Tax Value")}</th>
+                            <th className="w-36 border border-gray-200 p-2">{t("Quantity")}</th>
+                            <th className="w-36 border border-gray-200 p-2">{t("Total Price")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {items.map((item, index) => {
+                            const unitOptions = getItemUnitOptions(item)
+                            const convertOptions = unitSiblingOptions[item.id] || []
+                            const line = computeLine(item)
+                            return (
+                              <tr
+                                key={item.id}
+                                className={cn(
+                                  "align-top",
+                                  (errors[`product_${index}`] || errors[`unit_${index}`] || errors[`quantity_${index}`] || errors[`price_${index}`]) &&
+                                  "outline outline-2 outline-red-300"
+                                )}
+                              >
+                                <td className="border border-gray-200 p-2">
                                   <UniFieldSelect
-                                    containerClassName="w-40"
-                                    value={item.unit_id}
-                                    onValueChange={(value) => {
-                                      updateItem(item.id, "unit_id", value)
-                                      updateItem(item.id, "convert_unit_id", "")
-                                      setUnitSiblingOptions((current) => ({ ...current, [item.id]: [] }))
-                                    }}
-                                    placeholder={t("Unit")}
-                                    error={errors[`unit_${index}`]}
-                                    hasOptions={Boolean(unitOptions.length)}
+                                    value={item.product_id}
+                                    onValueChange={(value) => updateProductItemSelection(item.id, value)}
+                                    placeholder={t("Select product")}
+                                    error={errors[`product_${index}`]}
+                                    hasOptions={Boolean(productOptions.length)}
                                   >
-                                    {unitOptions.map((unitQuantity: any) => {
-                                      const unit = unitQuantity.unit || unitQuantity
-                                      const value = unitQuantity.unit_id || unit.id
-                                      return (
-                                        <SelectItem key={unitQuantity.id || value} value={String(value)}>
+                                    {productOptions.map((product: any) => (
+                                      <SelectItem key={product.id} value={String(product.id)}>
+                                        {product.name}
+                                      </SelectItem>
+                                    ))}
+                                  </UniFieldSelect>
+                                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
+                                    <button
+                                      type="button"
+                                      className="font-medium text-red-600 underline disabled:opacity-50"
+                                      disabled={isStocked}
+                                      onClick={() => handleRemoveItem(item)}
+                                    >
+                                      {t("Delete")}
+                                    </button>
+                                    <UniFieldSelect
+                                      containerClassName="w-40"
+                                      value={item.unit_id}
+                                      onValueChange={(value) => {
+                                        updateItem(item.id, "unit_id", value)
+                                        updateItem(item.id, "convert_unit_id", "")
+                                        setUnitSiblingOptions((current) => ({ ...current, [item.id]: [] }))
+                                      }}
+                                      placeholder={t("Unit")}
+                                      error={errors[`unit_${index}`]}
+                                      hasOptions={Boolean(unitOptions.length)}
+                                    >
+                                      {unitOptions.map((unitQuantity: any) => {
+                                        const unit = unitQuantity.unit || unitQuantity
+                                        const value = unitQuantity.unit_id || unit.id
+                                        return (
+                                          <SelectItem key={unitQuantity.id || value} value={String(value)}>
+                                            {unit.name}
+                                          </SelectItem>
+                                        )
+                                      })}
+                                    </UniFieldSelect>
+                                    <UniFieldSelect
+                                      containerClassName="w-40"
+                                      value={item.tax_group_id}
+                                      onValueChange={(value) => updateItem(item.id, "tax_group_id", value)}
+                                      placeholder={t("Tax")}
+                                      hasOptions={Boolean(taxGroupOptions.length)}
+                                    >
+                                      {taxGroupOptions.map((tax: any) => (
+                                        <SelectItem key={tax.id} value={String(tax.id)}>
+                                          {tax.name}
+                                        </SelectItem>
+                                      ))}
+                                    </UniFieldSelect>
+                                    <UniFieldSelect
+                                      containerClassName="w-36"
+                                      value={item.tax_type}
+                                      onValueChange={(value) => updateItem(item.id, "tax_type", value)}
+                                      placeholder={t("Tax Type")}
+                                    >
+                                      <SelectItem value="inclusive">{t("Inclusive")}</SelectItem>
+                                      <SelectItem value="exclusive">{t("Exclusive")}</SelectItem>
+                                    </UniFieldSelect>
+                                    <UniFieldSelect
+                                      containerClassName="w-40"
+                                      value={item.convert_unit_id}
+                                      onValueChange={(value) => {
+                                        const unit = convertOptions.find((option: any) => String(option.id) === value)
+                                        updateItem(item.id, "convert_unit_id", value)
+                                        updateItem(item.id, "convert_unit_label", unit?.name || "")
+                                      }}
+                                      placeholder={t("Convert")}
+                                      hasOptions={Boolean(convertOptions.length)}
+                                    >
+                                      {convertOptions.map((unit: any) => (
+                                        <SelectItem key={unit.id} value={String(unit.id)}>
                                           {unit.name}
                                         </SelectItem>
-                                      )
-                                    })}
-                                  </UniFieldSelect>
-                                  <UniFieldSelect
-                                    containerClassName="w-40"
-                                    value={item.tax_group_id}
-                                    onValueChange={(value) => updateItem(item.id, "tax_group_id", value)}
-                                    placeholder={t("Tax")}
-                                    hasOptions={Boolean(taxGroupOptions.length)}
-                                  >
-                                    {taxGroupOptions.map((tax: any) => (
-                                      <SelectItem key={tax.id} value={String(tax.id)}>
-                                        {tax.name}
-                                      </SelectItem>
-                                    ))}
-                                  </UniFieldSelect>
-                                  <UniFieldSelect
-                                    containerClassName="w-36"
-                                    value={item.tax_type}
-                                    onValueChange={(value) => updateItem(item.id, "tax_type", value)}
-                                    placeholder={t("Tax Type")}
-                                  >
-                                    <SelectItem value="inclusive">{t("Inclusive")}</SelectItem>
-                                    <SelectItem value="exclusive">{t("Exclusive")}</SelectItem>
-                                  </UniFieldSelect>
-                                  <UniFieldSelect
-                                    containerClassName="w-40"
-                                    value={item.convert_unit_id}
-                                    onValueChange={(value) => {
-                                      const unit = convertOptions.find((option: any) => String(option.id) === value)
-                                      updateItem(item.id, "convert_unit_id", value)
-                                      updateItem(item.id, "convert_unit_label", unit?.name || "")
-                                    }}
-                                    placeholder={t("Convert")}
-                                    hasOptions={Boolean(convertOptions.length)}
-                                  >
-                                    {convertOptions.map((unit: any) => (
-                                      <SelectItem key={unit.id} value={String(unit.id)}>
-                                        {unit.name}
-                                      </SelectItem>
-                                    ))}
-                                  </UniFieldSelect>
+                                      ))}
+                                    </UniFieldSelect>
+                                    <UniFieldInput
+                                      containerClassName="w-40"
+                                      type="date"
+                                      value={item.expiration_date}
+                                      onChange={(event) => updateItem(item.id, "expiration_date", event.target.value)}
+                                    />
+                                  </div>
+                                </td>
+                                <td className="border border-gray-200 p-2">
                                   <UniFieldInput
-                                    containerClassName="w-40"
-                                    type="date"
-                                    value={item.expiration_date}
-                                    onChange={(event) => updateItem(item.id, "expiration_date", event.target.value)}
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    prefix={posOptions.currency_symbol}
+                                    value={item.purchase_price}
+                                    onChange={(event) => updateItem(item.id, "purchase_price", event.target.value)}
+                                    error={errors[`price_${index}`]}
                                   />
-                                </div>
-                              </td>
-                              <td className="border border-gray-200 p-2">
-                                <UniFieldInput
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  prefix={posOptions.currency_symbol}
-                                  value={item.purchase_price}
-                                  onChange={(event) => updateItem(item.id, "purchase_price", event.target.value)}
-                                  error={errors[`price_${index}`]}
-                                />
-                              </td>
-                              <td className="border border-gray-200 p-2 font-medium text-gray-700">
-                                {formatMoney(line.taxValue)}
-                              </td>
-                              <td className="border border-gray-200 p-2">
-                                <UniFieldInput
-                                  type="number"
-                                  min="1"
-                                  step="0.001"
-                                  value={item.quantity}
-                                  onChange={(event) => updateItem(item.id, "quantity", event.target.value)}
-                                  error={errors[`quantity_${index}`]}
-                                />
-                              </td>
-                              <td className="border border-gray-200 p-2 font-semibold text-gray-900">
-                                {formatMoney(line.total)}
+                                </td>
+                                <td className="border border-gray-200 p-2 font-medium text-gray-700">
+                                  {formatMoney(line.taxValue)}
+                                </td>
+                                <td className="border border-gray-200 p-2">
+                                  <UniFieldInput
+                                    type="number"
+                                    min="1"
+                                    step="0.001"
+                                    value={item.quantity}
+                                    onChange={(event) => updateItem(item.id, "quantity", event.target.value)}
+                                    error={errors[`quantity_${index}`]}
+                                  />
+                                </td>
+                                <td className="border border-gray-200 p-2 font-semibold text-gray-900">
+                                  {formatMoney(line.total)}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                          {items.length === 0 ? (
+                            <tr>
+                              <td className="border border-gray-200 p-6 text-center text-sm font-medium text-gray-500" colSpan={5}>
+                                {t("No product were provided.")}
                               </td>
                             </tr>
-                          )
-                        })}
-                        {items.length === 0 ? (
-                          <tr>
-                            <td className="border border-gray-200 p-6 text-center text-sm font-medium text-gray-500" colSpan={5}>
-                              {t("No product were provided.")}
-                            </td>
-                          </tr>
-                        ) : (
-                          <tr className="font-semibold text-gray-900">
-                            <td className="border border-gray-200 p-2" />
-                            <td className="border border-gray-200 p-2" />
-                            <td className="border border-gray-200 p-2">{formatMoney(totals.tax)}</td>
-                            <td className="border border-gray-200 p-2" />
-                            <td className="border border-gray-200 p-2">{formatMoney(totals.total)}</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                          ) : (
+                            <tr className="font-semibold text-gray-900">
+                              <td className="border border-gray-200 p-2" />
+                              <td className="border border-gray-200 p-2" />
+                              <td className="border border-gray-200 p-2">{formatMoney(totals.tax)}</td>
+                              <td className="border border-gray-200 p-2" />
+                              <td className="border border-gray-200 p-2">{formatMoney(totals.total)}</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
               </div>
