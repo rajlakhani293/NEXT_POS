@@ -96,11 +96,33 @@ interface BusinessSettings {
     enable_pinned_products?: boolean
     show_preview_pinned_products?: boolean
     hide_exhausted_products?: boolean
+    allow_wholesale_price?: boolean
+    pos_numpad?: string
+    pos_idle_counter?: string
+    pos_disbursement?: boolean
+    pos_action_permission_enabled?: boolean
+    pos_action_permission_duration?: string
+    pos_action_permission_restricted_features?: string[]
+    pos_action_permission_cooldown_features?: string
+    pos_keyboard_cancel_order?: string[]
+    pos_keyboard_hold_order?: string[]
+    pos_keyboard_create_customer?: string[]
+    pos_keyboard_payment?: string[]
+    pos_keyboard_shipping?: string[]
+    pos_keyboard_note?: string[]
+    pos_keyboard_order_type?: string[]
+    pos_keyboard_fullscreen?: string[]
+    pos_keyboard_quick_search?: string[]
+    pos_keyboard_toggle_merge?: string[]
+    pos_amount_shortcut?: string
     preferred_price?: string
+    pos_preferred_price?: string
     currency_symbol?: string
     currency_iso?: string
     currency_position?: string
     currency_preferred?: string
+    currency_thousand_separator?: string
+    currency_decimal_separator?: string
     currency_precision: number
     hide_empty_categories: boolean
     unit_price_editable: boolean
@@ -111,6 +133,8 @@ interface BusinessSettings {
     scale_barcode_enabled?: boolean
     scale_barcode_prefix?: string
     scale_barcode_product_length?: number
+    scale_barcode_value_length?: number
+    scale_barcode_type?: string
     orders_code_type?: string
     orders_allow_unpaid?: boolean
     orders_allow_partial?: boolean
@@ -122,6 +146,7 @@ interface BusinessSettings {
     pos_tax_group?: string
     pos_tax_type?: string
     pos_vat?: string
+    reports_email?: boolean
   }
   order_types: {
     value: string

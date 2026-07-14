@@ -154,11 +154,6 @@ const selectOptions: Record<string, { value: string; label: string }[]> = {
     { value: "default", label: "Default" },
   ],
   reports_email: yesNoOptions,
-  workers_enabled: [
-    { value: "no", label: "No" },
-    { value: "await_confirm", label: "Test" },
-    { value: "yes", label: "Yes" },
-  ],
   mode: [
     { value: "wipe_all", label: "Wipe All" },
     { value: "wipe_plus_grocery", label: "Wipe Plus Grocery" },
