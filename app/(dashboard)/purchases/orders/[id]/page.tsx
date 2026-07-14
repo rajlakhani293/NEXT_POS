@@ -11,6 +11,15 @@ import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { ProviderForm } from "@/app/(dashboard)/providers/createUpdate"
 import { catalog } from "@/lib/api/catalog"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
@@ -644,6 +653,8 @@ export default function PurchaseOrderFormPage() {
                         placeholder={t("Select Provider")}
                         error={errors.provider_id}
                         hasOptions={Boolean(supplierOptions.length)}
+                        onAddNew={() => setProviderFormOpen(true)}
+                        addNewLabel={t("Add Provider")}
                       >
                         {supplierOptions.map((supplier: any) => (
                           <SelectItem key={supplier.id} value={String(supplier.id)}>
@@ -676,24 +687,24 @@ export default function PurchaseOrderFormPage() {
                       </Button>
                     </div>
 
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[980px] border-collapse text-sm">
-                        <thead>
-                          <tr className="bg-gray-50 text-left font-semibold text-gray-700">
-                            <th className="border border-gray-200 p-2">{t("Name")}</th>
-                            <th className="w-40 border border-gray-200 p-2">{t("Unit Price")}</th>
-                            <th className="w-36 border border-gray-200 p-2">{t("Tax Value")}</th>
-                            <th className="w-36 border border-gray-200 p-2">{t("Quantity")}</th>
-                            <th className="w-36 border border-gray-200 p-2">{t("Total Price")}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                    <div className="">
+                      <Table className="w-full">
+                        <TableHeader className="">
+                          <TableRow className="bg-gray-50 text-left font-semibold text-gray-700">
+                            <TableHead className="p-2">{t("Name")}</TableHead>
+                            <TableHead className="w-40 p-2">{t("Unit Price")}</TableHead>
+                            <TableHead className="w-36 p-2">{t("Tax Value")}</TableHead>
+                            <TableHead className="w-36 p-2">{t("Quantity")}</TableHead>
+                            <TableHead className="w-36 p-2">{t("Total Price")}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
                           {items.map((item, index) => {
                             const unitOptions = getItemUnitOptions(item)
                             const convertOptions = unitSiblingOptions[item.id] || []
                             const line = computeLine(item)
                             return (
-                              <tr
+                              <TableRow
                                 key={item.id}
                                 className={cn(
                                   "align-top",
@@ -701,7 +712,7 @@ export default function PurchaseOrderFormPage() {
                                   "outline outline-2 outline-red-300"
                                 )}
                               >
-                                <td className="border border-gray-200 p-2">
+                                <TableCell className="p-2">
                                   <UniFieldSelect
                                     value={item.product_id}
                                     onValueChange={(value) => updateProductItemSelection(item.id, value)}
@@ -792,8 +803,8 @@ export default function PurchaseOrderFormPage() {
                                       onChange={(event) => updateItem(item.id, "expiration_date", event.target.value)}
                                     />
                                   </div>
-                                </td>
-                                <td className="border border-gray-200 p-2">
+                                </TableCell>
+                                <TableCell className="p-2">
                                   <UniFieldInput
                                     type="number"
                                     min="0"
@@ -803,11 +814,11 @@ export default function PurchaseOrderFormPage() {
                                     onChange={(event) => updateItem(item.id, "purchase_price", event.target.value)}
                                     error={errors[`price_${index}`]}
                                   />
-                                </td>
-                                <td className="border border-gray-200 p-2 font-medium text-gray-700">
+                                </TableCell>
+                                <TableCell className="p-2 font-medium text-gray-700">
                                   {formatMoney(line.taxValue)}
-                                </td>
-                                <td className="border border-gray-200 p-2">
+                                </TableCell>
+                                <TableCell className="p-2">
                                   <UniFieldInput
                                     type="number"
                                     min="1"
@@ -816,30 +827,30 @@ export default function PurchaseOrderFormPage() {
                                     onChange={(event) => updateItem(item.id, "quantity", event.target.value)}
                                     error={errors[`quantity_${index}`]}
                                   />
-                                </td>
-                                <td className="border border-gray-200 p-2 font-semibold text-gray-900">
+                                </TableCell>
+                                <TableCell className="p-2 font-semibold text-gray-900">
                                   {formatMoney(line.total)}
-                                </td>
-                              </tr>
+                                </TableCell>
+                              </TableRow>
                             )
                           })}
                           {items.length === 0 ? (
-                            <tr>
-                              <td className="border border-gray-200 p-6 text-center text-sm font-medium text-gray-500" colSpan={5}>
+                            <TableRow>
+                              <TableCell className="p-6 text-center text-sm font-medium text-gray-500" colSpan={5}>
                                 {t("No product were provided.")}
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           ) : (
-                            <tr className="font-semibold text-gray-900">
-                              <td className="border border-gray-200 p-2" />
-                              <td className="border border-gray-200 p-2" />
-                              <td className="border border-gray-200 p-2">{formatMoney(totals.tax)}</td>
-                              <td className="border border-gray-200 p-2" />
-                              <td className="border border-gray-200 p-2">{formatMoney(totals.total)}</td>
-                            </tr>
+                            <TableRow className="font-semibold text-gray-900">
+                              <TableCell className="p-2" />
+                              <TableCell className="p-2" />
+                              <TableCell className="p-2">{formatMoney(totals.tax)}</TableCell>
+                              <TableCell className="p-2" />
+                              <TableCell className="p-2">{formatMoney(totals.total)}</TableCell>
+                            </TableRow>
                           )}
-                        </tbody>
-                      </table>
+                        </TableBody>
+                      </Table>
                     </div>
                   </div>
                 )}
@@ -878,6 +889,16 @@ export default function PurchaseOrderFormPage() {
           </form>
         </div>
       </div>
+      <ProviderForm
+        isOpen={providerFormOpen}
+        onClose={() => setProviderFormOpen(false)}
+        onSuccess={async (newProvider: any) => {
+          setProviderFormOpen(false)
+          await getSuppliersDropdown()
+          const newId = newProvider?.data?.id
+          if (newId) updateField("provider_id", String(newId))
+        }}
+      />
     </DashboardPage>
   )
 }
