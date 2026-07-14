@@ -446,6 +446,7 @@
   "Provider": "Proveedor",
   "Select Provider": "Seleccionar proveedor",
   "Description": "Descripcion",
+  "Provide a brief description for this payment type.": "Proporcione una breve descripción para este tipo de pago.",
   "Enter description note": "Ingrese una nota de descripcion",
   "SKU, Barcode, Name": "SKU, codigo de barras, nombre",
   "Add Item": "Agregar articulo",

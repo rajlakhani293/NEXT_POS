@@ -446,6 +446,7 @@
   "Provider": "المورد",
   "Select Provider": "اختر المورد",
   "Description": "الوصف",
+  "Provide a brief description for this payment type.": "قدم وصفاً موجزاً لنوع الدفع هذا.",
   "Enter description note": "أدخل ملاحظة الوصف",
   "SKU, Barcode, Name": "SKU، الباركود، الاسم",
   "Add Item": "إضافة عنصر",

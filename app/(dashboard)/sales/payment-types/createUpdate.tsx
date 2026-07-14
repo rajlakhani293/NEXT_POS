@@ -46,6 +46,7 @@ export function PaymentTypeForm(props: any) {
       name: "description",
       label: t("Description"),
       type: "textarea",
+      placeholder: t("Provide a brief description for this payment type."),
       rows: 3,
     },
   ]

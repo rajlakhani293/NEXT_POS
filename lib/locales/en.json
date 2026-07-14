@@ -646,6 +646,7 @@
   "Provider": "Provider",
   "Select Provider": "Select Provider",
   "Description": "Description",
+  "Provide a brief description for this payment type.": "Provide a brief description for this payment type.",
   "Enter description note": "Enter description note",
   "SKU, Barcode, Name": "SKU, Barcode, Name",
   "Add Item": "Add Item",
