@@ -852,5 +852,15 @@
   "Would you like to refresh this ?": "Would you like to refresh this ?",
   "The procurement has been deleted.": "The procurement has been deleted.",
   "The procurement has been marked as paid.": "The procurement has been marked as paid.",
-  "The refresh process has started. You'll get informed once it's complete.": "The refresh process has started. You'll get informed once it's complete."
+  "The refresh process has started. You'll get informed once it's complete.": "The refresh process has started. You'll get informed once it's complete.",
+  "Date": "Date",
+  "Date Format": "Date Format",
+  "Date Time Format": "Date Time Format",
+  "Timezone": "Timezone",
+  "Default Role": "Default Role",
+  "Validate Registration": "Validate Registration",
+  "Password Recovery": "Password Recovery",
+  "This define how the date should be defined. The default format is \"Y-m-d\".": "This define how the date should be defined. The default format is \"Y-m-d\".",
+  "This define how the date and times should be formated. The default format is \"Y-m-d H:i\".": "This define how the date and times should be formated. The default format is \"Y-m-d H:i\".",
+  "Determine the default timezone of the store.": "Determine the default timezone of the store."
 }

@@ -652,5 +652,15 @@
   "Would you like to refresh this ?": "هل تريد تحديث هذا؟",
   "The procurement has been deleted.": "تم حذف التوريد.",
   "The procurement has been marked as paid.": "تم تعيين التوريد كمدفوع.",
-  "The refresh process has started. You'll get informed once it's complete.": "بدأت عملية التحديث. سيتم إعلامك عند اكتمالها."
+  "The refresh process has started. You'll get informed once it's complete.": "بدأت عملية التحديث. سيتم إعلامك عند اكتمالها.",
+  "Date": "التاريخ",
+  "Date Format": "تنسيق التاريخ",
+  "Date Time Format": "تنسيق التاريخ والوقت",
+  "Timezone": "المنطقة الزمنية",
+  "Default Role": "الدور الافتراضي",
+  "Validate Registration": "التحقق من التسجيل",
+  "Password Recovery": "استعادة كلمة المرور",
+  "This define how the date should be defined. The default format is \"Y-m-d\".": "يحدد طريقة عرض التاريخ. التنسيق الافتراضي هو \"Y-m-d\".",
+  "This define how the date and times should be formated. The default format is \"Y-m-d H:i\".": "يحدد طريقة عرض التاريخ والوقت. التنسيق الافتراضي هو \"Y-m-d H:i\".",
+  "Determine the default timezone of the store.": "يحدد المنطقة الزمنية الافتراضية للمتجر."
 }

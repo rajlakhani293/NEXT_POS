@@ -652,5 +652,15 @@
   "Would you like to refresh this ?": "Desea actualizar esto?",
   "The procurement has been deleted.": "El aprovisionamiento ha sido eliminado.",
   "The procurement has been marked as paid.": "El aprovisionamiento ha sido marcado como pagado.",
-  "The refresh process has started. You'll get informed once it's complete.": "El proceso de actualizacion ha comenzado. Se le informara cuando termine."
+  "The refresh process has started. You'll get informed once it's complete.": "El proceso de actualizacion ha comenzado. Se le informara cuando termine.",
+  "Date": "Fecha",
+  "Date Format": "Formato de fecha",
+  "Date Time Format": "Formato de fecha y hora",
+  "Timezone": "Zona horaria",
+  "Default Role": "Rol predeterminado",
+  "Validate Registration": "Validar registro",
+  "Password Recovery": "Recuperacion de contrasena",
+  "This define how the date should be defined. The default format is \"Y-m-d\".": "Define como debe mostrarse la fecha. El formato predeterminado es \"Y-m-d\".",
+  "This define how the date and times should be formated. The default format is \"Y-m-d H:i\".": "Define como deben mostrarse la fecha y hora. El formato predeterminado es \"Y-m-d H:i\".",
+  "Determine the default timezone of the store.": "Determina la zona horaria predeterminada de la tienda."
 }

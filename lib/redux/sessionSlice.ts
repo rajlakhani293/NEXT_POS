@@ -129,7 +129,13 @@ interface BusinessSettings {
     default_change_payment_type: string
     order_types: string[]
     store_language?: string
-    registration_enabled?: string
+    registration_enabled?: boolean | string
+    registration_role?: string
+    registration_validated?: boolean | string
+    recovery_enabled?: boolean | string
+    date_format?: string
+    datetime_format?: string
+    datetime_timezone?: string
     scale_barcode_enabled?: boolean
     scale_barcode_prefix?: string
     scale_barcode_product_length?: number
