@@ -18,6 +18,32 @@ interface BackendError {
   data?: any
 }
 
+const firstValidationMessage = (errors: unknown): string | null => {
+  if (!errors) return null
+
+  if (Array.isArray(errors)) {
+    const value = errors.find((item) => typeof item === "string")
+    return value || null
+  }
+
+  if (typeof errors === "object") {
+    for (const value of Object.values(errors as Record<string, unknown>)) {
+      if (Array.isArray(value)) {
+        const message = value.find((item) => typeof item === "string")
+        if (message) return message
+      }
+
+      if (typeof value === "string") return value
+    }
+  }
+
+  return null
+}
+
+const getBackendErrorMessage = (data?: BackendError): string | undefined => {
+  return firstValidationMessage(data?.data?.errors) || data?.message
+}
+
 const actualBaseQuery = fetchBaseQuery({
   baseUrl: process.env.NEXT_PUBLIC_API_URL,
   prepareHeaders: prepareHeadersWithToken,
@@ -48,7 +74,7 @@ export const createBaseQueryWithInterceptor = (
       const errorData = result.error || { status: 400, data }
       const status =
         typeof errorData.status === "number" ? errorData.status : 400
-      const message = data?.message
+      const message = getBackendErrorMessage(data)
       const url =
         typeof modifiedArgs === "string"
           ? modifiedArgs

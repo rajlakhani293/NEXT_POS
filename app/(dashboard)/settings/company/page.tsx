@@ -36,6 +36,31 @@ const initialValues: CompanyFormValues = {
   logo: "",
 }
 
+/** Horizontal form row: label on left, content on right */
+function FormRow({
+  label,
+  required,
+  children,
+}: {
+  label: string
+  required?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 py-2 first:pt-0 last:pb-0">
+      {/* Left: label */}
+      <div className="sm:w-56 sm:shrink-0">
+        <p className="text-sm font-medium text-slate-800 leading-tight">
+          {label}
+          {required && <span className="ml-0.5 text-rose-500">*</span>}
+        </p>
+      </div>
+      {/* Right: input */}
+      <div className="flex-1 min-w-0">{children}</div>
+    </div>
+  )
+}
+
 export default function CompanySettingsPage() {
   const { t } = useTranslation()
   const dispatch = useAppDispatch()
@@ -106,83 +131,102 @@ export default function CompanySettingsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="mb-2 flex items-start justify-between gap-4">
+      {/* Page header */}
+      <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">{t("Company Settings")}</h1>
           <p className="mt-1 text-sm text-gray-500">{t("Configure company profile information.")}</p>
         </div>
-        <Button type="button" onClick={save} disabled={updateState.isLoading}>
+        <Button type="button" onClick={save} disabled={updateState.isLoading} className="shrink-0">
           {updateState.isLoading ? <Spinner /> : null}
           {t("Save Settings")}
         </Button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto py-6 px-1">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Form body */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+
+        {/* Identity */}
+        <FormRow label={t("Company Name")} required>
           <UniFieldInput
-            label={t("Company Name")}
             placeholder={t("Company Name")}
-            required
             value={values.name}
-            onChange={(event) => updateValue("name", event.target.value)}
+            onChange={(e) => updateValue("name", e.target.value)}
           />
+        </FormRow>
+
+        <FormRow label={t("Legal Name")}>
           <UniFieldInput
-            label={t("Legal Name")}
             placeholder={t("Legal Name")}
             value={values.legal_name}
-            onChange={(event) => updateValue("legal_name", event.target.value)}
+            onChange={(e) => updateValue("legal_name", e.target.value)}
           />
+        </FormRow>
+
+        <FormRow label={t("Tax Number")}>
           <UniFieldInput
-            label={t("Company Email")}
-            placeholder={t("Company Email")}
-            value={values.email}
-            onChange={(event) => updateValue("email", event.target.value)}
-          />
-          <UniFieldInput
-            label={t("Company Phone")}
-            placeholder={t("Company Phone")}
-            value={values.phone}
-            onChange={(event) => updateValue("phone", event.target.value)}
-          />
-          <UniFieldInput
-            label={t("Tax Number")}
-            placeholder={t("Tax Number")}
+            placeholder={t("e.g. 29ABCDE1234F1Z5")}
             value={values.gst_number}
-            onChange={(event) => updateValue("gst_number", event.target.value)}
+            onChange={(e) => updateValue("gst_number", e.target.value)}
           />
+        </FormRow>
+
+        {/* Contact */}
+        <FormRow label={t("Company Email")}>
           <UniFieldInput
-            label={t("Company City")}
-            placeholder={t("Company City")}
+            placeholder={t("hello@company.com")}
+            value={values.email}
+            onChange={(e) => updateValue("email", e.target.value)}
+          />
+        </FormRow>
+
+        <FormRow label={t("Company Phone")}>
+          <UniFieldInput
+            placeholder={t("+91 98765 43210")}
+            value={values.phone}
+            onChange={(e) => updateValue("phone", e.target.value)}
+          />
+        </FormRow>
+
+        {/* Location */}
+        <FormRow label={t("City")}>
+          <UniFieldInput
+            placeholder={t("City")}
             value={values.city_name}
-            onChange={(event) => updateValue("city_name", event.target.value)}
+            onChange={(e) => updateValue("city_name", e.target.value)}
           />
+        </FormRow>
+
+        <FormRow label={t("State")}>
           <UniFieldInput
-            label={t("State")}
             placeholder={t("State")}
             value={values.state}
-            onChange={(event) => updateValue("state", event.target.value)}
+            onChange={(e) => updateValue("state", e.target.value)}
           />
-          <div className="md:col-span-2">
-            <UniFieldInput
-              label={t("Company Address")}
-              placeholder={t("Company Address")}
-              as="textarea"
-              rows={3}
-              value={values.address}
-              onChange={(event) => updateValue("address", event.target.value)}
-            />
-          </div>
-          <div className="rounded-md border bg-white px-4 py-3">
-            <ImageUpload
-              label={t("Company Logo")}
-              value={logoFile}
-              initialUrl={values.logo}
-              onChange={setLogoFile}
-              onError={setLogoError}
-              error={logoError}
-            />
-          </div>
-        </div>
+        </FormRow>
+
+        <FormRow label={t("Address")}>
+          <UniFieldInput
+            placeholder={t("Street, area, pincode…")}
+            as="textarea"
+            rows={3}
+            value={values.address}
+            onChange={(e) => updateValue("address", e.target.value)}
+          />
+        </FormRow>
+
+        {/* Branding */}
+        <FormRow label={t("Company Logo")}>
+          <ImageUpload
+            label={t("Company Logo")}
+            value={logoFile}
+            initialUrl={values.logo}
+            onChange={setLogoFile}
+            onError={setLogoError}
+            error={logoError}
+          />
+        </FormRow>
+
       </div>
     </div>
   )
