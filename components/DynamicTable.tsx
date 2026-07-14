@@ -256,19 +256,11 @@ const DynamicTable = ({
         })
 
         if ("data" in result && result.data.success === true) {
-          showToast.success(result?.message || "Deleted Successfully")
+          showToast.success(result.data?.message || "Deleted Successfully")
           triggerRefresh?.()
-        } else if ("error" in result) {
-          const error = result.error as any
-          showToast.error(
-            `Delete Failed: ${error.data?.message || error.message}`
-          )
         }
       } catch (error) {
-        const err = error as any
-        showToast.error(
-          `Delete Failed: ${err.data?.message || "Network Error"}`
-        )
+        console.error("Delete failed", error)
       } finally {
         setDeleteModalOpen(false)
         setItemToDelete(null)
@@ -317,16 +309,12 @@ const DynamicTable = ({
             })
 
             if ("data" in result && result.data.success === true) {
-              showToast.success(result?.message || "Status Updated")
+              showToast.success(result.data?.message || "Status Updated")
               triggerRefresh?.()
               return true
             }
           } catch (error) {
-            const err = error as any
-            showToast.error(
-              `Status Update Failed: ${err.status} - ${err.data?.message || err.message
-              }`
-            )
+            console.error("Status update failed", error)
           }
         }
         return false
