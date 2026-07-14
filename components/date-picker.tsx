@@ -9,7 +9,7 @@ import {
 } from "lucide-react"
 import { type DateRange } from "react-day-picker"
 import { cn } from "@/lib/utils"
-import { FieldLabel } from "./ui/field"
+import { FieldLabel, FieldError } from "./ui/field"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Button } from "./ui/button"
 import { Calendar } from "./ui/calendar"
@@ -21,6 +21,7 @@ interface DatePickerProps {
   className?: string
   label?: string
   required?: boolean
+  error?: string
 }
 
 export function DatePicker({
@@ -30,13 +31,20 @@ export function DatePicker({
   className,
   label,
   required,
+  error,
 }: DatePickerProps) {
   const inputId = label?.toLowerCase().replace(/\s+/g, "-")
 
   return (
     <div className="space-y-1">
       {label && (
-        <FieldLabel htmlFor={inputId} className="font-semibold text-gray-700">
+        <FieldLabel
+          htmlFor={inputId}
+          className={cn(
+            "font-semibold text-gray-700",
+            error && "text-destructive"
+          )}
+        >
           {label}
           {required && <span className="text-red-500">*</span>}
         </FieldLabel>
@@ -49,6 +57,7 @@ export function DatePicker({
             id={inputId}
             className={cn(
               "h-10 w-full justify-start text-left border-2 bg-white text-sm font-semibold text-gray-500",
+              error && "border-red-500 focus:border-red-500 focus:ring-red-500",
               className
             )}
           >
@@ -66,6 +75,7 @@ export function DatePicker({
           />
         </PopoverContent>
       </Popover>
+      {error && <FieldError>{error}</FieldError>}
     </div>
   )
 }

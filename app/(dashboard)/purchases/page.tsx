@@ -1,8 +1,9 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { CheckCircle2Icon, FileTextIcon, RefreshCwIcon } from "lucide-react"
+import { CheckCircle2Icon, EditIcon, FileTextIcon, RefreshCwIcon, Trash2Icon } from "lucide-react"
 
+import { useConfirmDialog } from "@/components/confirm-dialog"
 import DynamicTable from "@/components/DynamicTable"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
@@ -92,6 +93,7 @@ const buildColumns = (
 export default function PurchaseOrdersPage() {
   const router = useRouter()
   const { t } = useTranslation()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const posOptions = usePosOptions()
   const formatMoney = (value: any) =>
     `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
@@ -107,6 +109,8 @@ export default function PurchaseOrdersPage() {
   const canRefresh = hasPermission(PERMISSIONS.purchases.view)
   const [refreshPurchaseOrder] = (purchases as any).useRefreshPurchaseOrderMutation()
   const [setPurchaseOrderAsPaid] = (purchases as any).useSetPurchaseOrderAsPaidMutation()
+  const isStocked = (record: any) =>
+    record?.delivery_status === "stocked" || record?.workflow_status === "stocked"
 
   const {
     orders,
@@ -148,14 +152,33 @@ export default function PurchaseOrdersPage() {
         setAddEntityOpen={
           canCreate ? () => router.push("/purchases/orders/create") : undefined
         }
-        showEdit={canUpdate}
-        onEdit={(record: any) => router.push(`/purchases/orders/${record.id}`)}
-        showDelete={canDelete}
+        showEdit={false}
+        showDelete={false}
         deleteMutation={deletePurchaseOrder}
         triggerRefresh={triggerRefresh}
         deleteModalTitle={t("Delete Procurement")}
         deleteModalDescription={t("Would you like to delete this ?")}
         rowActions={(_, record) => [
+          ...(canUpdate && !isStocked(record)
+            ? [
+              {
+                key: "edit",
+                label: t("Edit"),
+                labelText: t("Edit"),
+                icon: <EditIcon className="size-4" />,
+                priority: 1,
+                onClick: () => router.push(`/purchases/orders/${record.id}`),
+              },
+            ]
+            : []),
+          {
+            key: "invoice",
+            label: t("Invoice"),
+            labelText: t("Invoice"),
+            icon: <FileTextIcon className="size-4" />,
+            priority: 2,
+            onClick: () => router.push(`/purchases/orders/${record.id}/invoice`),
+          },
           ...(canMarkPaid && record.payment_status !== "paid"
             ? [
               {
@@ -163,7 +186,12 @@ export default function PurchaseOrdersPage() {
                 label: t("Set Paid"),
                 labelText: t("Set Paid"),
                 icon: <CheckCircle2Icon className="size-4" />,
+                priority: 3,
                 onClick: async () => {
+                  const ok = await confirm({
+                    description: t("Would you like to mark this procurement as paid?"),
+                  })
+                  if (!ok) return
                   const response = await setPurchaseOrderAsPaid({ id: record.id }).unwrap()
                   showToast.success(response?.message || t("The procurement has been marked as paid."))
                   triggerRefresh()
@@ -178,7 +206,12 @@ export default function PurchaseOrdersPage() {
                 label: t("Refresh"),
                 labelText: t("Refresh"),
                 icon: <RefreshCwIcon className="size-4" />,
+                priority: 4,
                 onClick: async () => {
+                  const ok = await confirm({
+                    description: t("Would you like to refresh this ?"),
+                  })
+                  if (!ok) return
                   const response = await refreshPurchaseOrder({ id: record.id }).unwrap()
                   showToast.success(response?.message || t("The refresh process has started. You'll get informed once it's complete."))
                   triggerRefresh()
@@ -186,15 +219,30 @@ export default function PurchaseOrdersPage() {
               },
             ]
             : []),
-          {
-            key: "invoice",
-            label: t("Invoice"),
-            labelText: t("Invoice"),
-            icon: <FileTextIcon className="size-4" />,
-            onClick: () => router.push(`/purchases/orders/${record.id}/invoice`),
-          },
+          ...(canDelete
+            ? [
+              {
+                key: "delete",
+                label: t("Delete"),
+                labelText: t("Delete"),
+                icon: <Trash2Icon className="size-4 text-red-500" />,
+                priority: 5,
+                onClick: async () => {
+                  const ok = await confirm({
+                    description: t("Would you like to delete this ?"),
+                    variant: "destructive",
+                  })
+                  if (!ok) return
+                  const response = await deletePurchaseOrder({ ids: [record.id] }).unwrap()
+                  showToast.success(response?.message || t("The procurement has been deleted."))
+                  triggerRefresh()
+                },
+              },
+            ]
+            : []),
         ]}
       />
+      {confirmDialog}
     </div>
   )
 }

@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, FileTextIcon, PlusIcon, RefreshCwIcon, Trash2Icon } from "lucide-react"
+import { ArrowLeft, Settings2Icon, Trash2Icon } from "lucide-react"
 
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,8 @@ import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
+import CustomModal from "@/components/ui/customModal"
+import { DatePicker } from "@/components/date-picker"
 import {
   Table,
   TableBody,
@@ -41,7 +43,6 @@ type PurchaseItemForm = {
   convert_unit_id: string
   convert_unit_label: string
   expiration_date: string
-  barcode: string
 }
 
 type PurchaseFormValues = {
@@ -74,7 +75,6 @@ const emptyItem = (): PurchaseItemForm => ({
   convert_unit_id: "",
   convert_unit_label: "",
   expiration_date: "",
-  barcode: "",
 })
 
 const initialValues: PurchaseFormValues = {
@@ -111,9 +111,18 @@ export default function PurchaseOrderFormPage() {
   const [unitSiblingOptions, setUnitSiblingOptions] = useState<Record<string, any[]>>({})
   const [productDetailsById, setProductDetailsById] = useState<Record<string, any>>({})
   const [providerFormOpen, setProviderFormOpen] = useState(false)
+  const [productSearchId, setProductSearchId] = useState("")
+  const [choiceModal, setChoiceModal] = useState<{
+    type: "unit" | "convert" | "tax" | "options"
+    itemId: string
+  } | null>(null)
+  const [optionDraft, setOptionDraft] = useState({
+    expiration_date: "",
+    tax_type: "inclusive" as "inclusive" | "exclusive",
+  })
 
   const [getSuppliersDropdown, suppliers] = (purchases as any).useGetSuppliersDropdownMutation()
-  const [getProductsDropdown, products] = (catalog as any).useGetProductsDropdownMutation()
+  const [searchProductForProcurement, products] = (purchases as any).useSearchProductForProcurementMutation()
   const [getProductById] = (catalog as any).useGetProductByIdMutation()
   const [getTaxGroupsSource, taxGroups] = (catalog as any).useGetTaxGroupsSourceMutation()
   const [getUnitSiblings] = (catalog as any).useGetUnitSiblingsMutation()
@@ -141,7 +150,53 @@ export default function PurchaseOrderFormPage() {
 
   const getItemUnitOptions = (item: PurchaseItemForm) => {
     const product = selectedProductById.get(item.product_id)
-    return product?.unit_quantities || []
+    return normalizeProductUnitQuantities(product)
+  }
+
+  const getUnitName = (item: PurchaseItemForm) => {
+    const unitQuantity = getItemUnitOptions(item).find((option: any) => String(option.unit_id || option.unit?.id || option.id) === item.unit_id)
+    return unitQuantity?.unit?.name || unitQuantity?.name || item.convert_unit_label || t("N/A")
+  }
+
+  const getTaxName = (item: PurchaseItemForm) => {
+    const tax = taxGroupOptions.find((option: any) => String(option.id) === item.tax_group_id)
+    return tax?.name || t("N/A")
+  }
+
+  const getConvertUnitOptions = (item: PurchaseItemForm) => {
+    const productUnits = getItemUnitOptions(item)
+      .map((unitQuantity: any) => unitQuantity.unit || unitQuantity)
+      .filter((unit: any) => unit?.id && String(unit.id) !== item.unit_id)
+
+    if (productUnits.length) return productUnits
+    return unitSiblingOptions[item.id] || []
+  }
+
+  const getConvertUnitName = (item: PurchaseItemForm) => {
+    if (!item.convert_unit_id) return t("N/A")
+    const unit = getConvertUnitOptions(item).find((option: any) => String(option.id) === item.convert_unit_id)
+    return unit?.name || item.convert_unit_label || t("N/A")
+  }
+
+  const normalizeProductUnitQuantities = (product: any) => {
+    const unitQuantities = product?.unit_quantities
+    if (Array.isArray(unitQuantities) && unitQuantities.length) {
+      return unitQuantities
+    }
+
+    const purchaseUnits = product?.purchase_units
+    if (Array.isArray(purchaseUnits) && purchaseUnits.length) {
+      return purchaseUnits.map((unit: any) => ({
+        id: unit.id,
+        unit_id: unit.id,
+        convert_unit_id: unit.convert_unit_id,
+        cogs: product.purchase_price || 0,
+        last_purchase_price: product.purchase_price || 0,
+        unit,
+      }))
+    }
+
+    return []
   }
 
   const getTaxRate = (taxGroupId: string) => {
@@ -208,7 +263,6 @@ export default function PurchaseOrderFormPage() {
         convert_unit_id: item.convert_unit_id ? String(item.convert_unit_id) : "",
         convert_unit_label: item.convert_unit__name || item.convert_unit_name || "",
         expiration_date: item.expiration_date ? String(item.expiration_date).slice(0, 10) : "",
-        barcode: item.barcode || "",
       }))
     )
   }
@@ -229,7 +283,7 @@ export default function PurchaseOrderFormPage() {
     const load = async () => {
       await Promise.all([
         getSuppliersDropdown(),
-        getProductsDropdown(),
+        searchProductForProcurement({ search: "", limit: 50 }),
         getTaxGroupsSource(),
       ])
       if (!isEdit) {
@@ -241,7 +295,7 @@ export default function PurchaseOrderFormPage() {
     }
 
     load()
-  }, [getProductsDropdown, getSuppliersDropdown, getTaxGroupsSource, id, isEdit])
+  }, [getSuppliersDropdown, getTaxGroupsSource, id, isEdit, searchProductForProcurement])
 
   useEffect(() => {
     const content = contentRef.current
@@ -320,9 +374,17 @@ export default function PurchaseOrderFormPage() {
     }
 
     try {
-      const response = await getProductById({ id: Number(productId) }).unwrap()
-      const product = response?.data
-      if (!product?.unit_quantities?.length) {
+      const loadedProduct = selectedProductById.get(productId)
+      let product = loadedProduct
+      let unitQuantities = normalizeProductUnitQuantities(product)
+
+      if (!unitQuantities.length) {
+        const response = await getProductById({ id: Number(productId) }).unwrap()
+        product = response?.data
+        unitQuantities = normalizeProductUnitQuantities(product)
+      }
+
+      if (!unitQuantities.length) {
         showToast.error(t("Unable to add product which doesn't unit quantities defined."))
         return
       }
@@ -332,7 +394,7 @@ export default function PurchaseOrderFormPage() {
         [String(product.id)]: product,
       }))
 
-      const primaryUnit = product.unit_quantities[0]
+      const primaryUnit = unitQuantities[0]
       const unitId = primaryUnit.unit_id || primaryUnit.unit?.id
       const convertUnitId = primaryUnit.convert_unit_id
 
@@ -344,7 +406,7 @@ export default function PurchaseOrderFormPage() {
             product_id: String(product.id),
             product_name: product.name || "",
             unit_id: unitId ? String(unitId) : "",
-            purchase_price: String(primaryUnit.last_purchase_price || primaryUnit.cogs || item.purchase_price || 0),
+            purchase_price: String(primaryUnit.last_purchase_price || primaryUnit.cogs || product.purchase_price || item.purchase_price || 0),
             tax_group_id: product.tax_group_id ? String(product.tax_group_id) : "",
             tax_type: product.tax_type === "exclusive" ? "exclusive" : "inclusive",
             convert_unit_id: convertUnitId ? String(convertUnitId) : "",
@@ -360,9 +422,13 @@ export default function PurchaseOrderFormPage() {
     }
   }
 
-  const addItem = () => {
-    setItems((current) => [...current, emptyItem()])
+  const addSelectedProduct = async (productId: string) => {
+    if (!productId) return
+    const row = emptyItem()
+    setItems((current) => [...current, row])
+    setProductSearchId("")
     setActiveTab("products")
+    await updateProductItemSelection(row.id, productId)
   }
 
   const loadConvertUnits = async (item: PurchaseItemForm) => {
@@ -374,9 +440,37 @@ export default function PurchaseOrderFormPage() {
     }))
   }
 
+  const selectUnitForItem = (item: PurchaseItemForm, value: string) => {
+    const unitQuantity = getItemUnitOptions(item).find((option: any) => String(option.unit_id || option.unit?.id || option.id) === value)
+    const convertUnitId = unitQuantity?.convert_unit_id ? String(unitQuantity.convert_unit_id) : ""
+
+    updateItem(item.id, "unit_id", value)
+    updateItem(item.id, "convert_unit_id", convertUnitId)
+    updateItem(item.id, "convert_unit_label", "")
+    setUnitSiblingOptions((current) => {
+      const next = { ...current }
+      delete next[item.id]
+      return next
+    })
+  }
+
+  const openOptionsModal = (item: PurchaseItemForm) => {
+    setOptionDraft({
+      expiration_date: item.expiration_date || "",
+      tax_type: item.tax_type,
+    })
+    setChoiceModal({ type: "options", itemId: item.id })
+  }
+
+  const saveOptionsModal = () => {
+    if (!choiceModal) return
+    updateItem(choiceModal.itemId, "expiration_date", optionDraft.expiration_date)
+    updateItem(choiceModal.itemId, "tax_type", optionDraft.tax_type)
+    setChoiceModal(null)
+  }
+
   const validate = () => {
     const nextErrors: Record<string, string> = {}
-    if (!formData.name?.trim()) nextErrors.name = t("Procurement name is required")
     if (!formData.provider_id) nextErrors.provider_id = t("Provider is required")
     if (!formData.invoice_date) nextErrors.invoice_date = t("Invoice date is required")
     if (!formData.delivery_status) nextErrors.delivery_status = t("Delivery status is required")
@@ -431,7 +525,6 @@ export default function PurchaseOrderFormPage() {
       total_purchase_price: String(line.total || 0),
       convert_unit_id: item.convert_unit_id ? Number(item.convert_unit_id) : undefined,
       expiration_date: item.expiration_date || undefined,
-      barcode: item.barcode || undefined,
     }
   }
 
@@ -469,12 +562,6 @@ export default function PurchaseOrderFormPage() {
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  const handleRefreshOrder = async () => {
-    await refreshPurchaseOrder({ id }).unwrap()
-    await reloadOrder()
-    showToast.success(t("Procurement refreshed successfully."))
   }
 
   const handleRemoveItem = async (item: PurchaseItemForm) => {
@@ -528,24 +615,6 @@ export default function PurchaseOrderFormPage() {
                 {t("Make a new procurement.")}
               </p>
             </div>
-            <div className="ml-auto flex items-center gap-2">
-              {isEdit ? (
-                <>
-                  <Button type="button" variant="outline" onClick={handleRefreshOrder}>
-                    <RefreshCwIcon className="size-4" />
-                    {t("Refresh")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.push(`/purchases/orders/${id}/invoice`)}
-                  >
-                    <FileTextIcon className="size-4" />
-                    {t("Invoice")}
-                  </Button>
-                </>
-              ) : null}
-            </div>
           </div>
         </div>
 
@@ -555,11 +624,9 @@ export default function PurchaseOrderFormPage() {
               <div className="mb-4">
                 <UniFieldInput
                   label={t("Procurement Name")}
-                  required
                   value={formData.name}
                   onChange={(event) => updateField("name", event.target.value)}
                   placeholder={t("Enter procurement name")}
-                  error={errors.name}
                 />
                 <p className="text-xs font-medium text-gray-500 mt-1">
                   {t("Provide a name that will help to identify the procurement.")}
@@ -603,18 +670,16 @@ export default function PurchaseOrderFormPage() {
                         value={formData.invoice_reference}
                         onChange={(event) => updateField("invoice_reference", event.target.value)}
                       />
-                      <UniFieldInput
+                      <DatePicker
                         label={t("Delivery Time")}
-                        type="date"
-                        value={formData.delivery_time}
-                        onChange={(event) => updateField("delivery_time", event.target.value)}
+                        value={formData.delivery_time ? new Date(formData.delivery_time + "T00:00:00") : undefined}
+                        onChange={(date) => updateField("delivery_time", date ? date.toISOString().slice(0, 10) : "")}
                       />
-                      <UniFieldInput
+                      <DatePicker
                         label={t("Invoice Date")}
                         required
-                        type="date"
-                        value={formData.invoice_date}
-                        onChange={(event) => updateField("invoice_date", event.target.value)}
+                        value={formData.invoice_date ? new Date(formData.invoice_date + "T00:00:00") : undefined}
+                        onChange={(date) => updateField("invoice_date", date ? date.toISOString().slice(0, 10) : "")}
                         error={errors.invoice_date}
                       />
                       <UniFieldSelect
@@ -677,134 +742,98 @@ export default function PurchaseOrderFormPage() {
 
                 {activeTab === "products" && (
                   <div className="rounded-lg border border-gray-200 bg-white p-4">
-                    <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                       <div className="text-sm font-semibold text-gray-700">
-                        {errors.products || t("SKU, Barcode, Name")}
+                        {errors.products ? (
+                          <span className="text-red-600">{errors.products}</span>
+                        ) : t("Products")}
                       </div>
-                      <Button type="button" onClick={addItem}>
-                        <PlusIcon className="size-4" />
-                        {t("Add Item")}
-                      </Button>
+                      <div className="flex w-full gap-2 lg:w-[480px]">
+                        <UniFieldSelect
+                          containerClassName="flex-1"
+                          value={productSearchId}
+                          onValueChange={(value) => {
+                            setProductSearchId(value)
+                            addSelectedProduct(value)
+                          }}
+                          placeholder={t("Search Product")}
+                          hasOptions={Boolean(productOptions.length)}
+                        >
+                          {productOptions.map((product: any) => (
+                            <SelectItem key={product.id} value={String(product.id)}>
+                              {product.name}
+                            </SelectItem>
+                          ))}
+                        </UniFieldSelect>
+                      </div>
                     </div>
 
                     <div className="">
                       <Table className="w-full">
                         <TableHeader className="">
                           <TableRow className="bg-gray-50 text-left font-semibold text-gray-700">
-                            <TableHead className="p-2">{t("Name")}</TableHead>
-                            <TableHead className="w-40 p-2">{t("Unit Price")}</TableHead>
-                            <TableHead className="w-36 p-2">{t("Tax Value")}</TableHead>
-                            <TableHead className="w-36 p-2">{t("Quantity")}</TableHead>
-                            <TableHead className="w-36 p-2">{t("Total Price")}</TableHead>
+                            <TableHead className="p-3">{t("Product")}</TableHead>
+                            <TableHead className="w-44 p-3">{t("Unit Price")}</TableHead>
+                            <TableHead className="w-36 p-3">{t("Tax Value")}</TableHead>
+                            <TableHead className="w-36 p-3">{t("Quantity")}</TableHead>
+                            <TableHead className="w-36 p-3">{t("Total Price")}</TableHead>
+                            <TableHead className="w-24 p-3 text-right">{t("Options")}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {items.map((item, index) => {
-                            const unitOptions = getItemUnitOptions(item)
-                            const convertOptions = unitSiblingOptions[item.id] || []
                             const line = computeLine(item)
+                            const hasRowError = errors[`product_${index}`] || errors[`unit_${index}`] || errors[`quantity_${index}`] || errors[`price_${index}`]
                             return (
                               <TableRow
                                 key={item.id}
                                 className={cn(
                                   "align-top",
-                                  (errors[`product_${index}`] || errors[`unit_${index}`] || errors[`quantity_${index}`] || errors[`price_${index}`]) &&
-                                  "outline outline-2 outline-red-300"
+                                  hasRowError && "bg-red-50"
                                 )}
                               >
-                                <TableCell className="p-2">
-                                  <UniFieldSelect
-                                    value={item.product_id}
-                                    onValueChange={(value) => updateProductItemSelection(item.id, value)}
-                                    placeholder={t("Select product")}
-                                    error={errors[`product_${index}`]}
-                                    hasOptions={Boolean(productOptions.length)}
-                                  >
-                                    {productOptions.map((product: any) => (
-                                      <SelectItem key={product.id} value={String(product.id)}>
-                                        {product.name}
-                                      </SelectItem>
-                                    ))}
-                                  </UniFieldSelect>
-                                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
-                                    <button
-                                      type="button"
-                                      className="font-medium text-red-600 underline disabled:opacity-50"
-                                      disabled={isStocked}
-                                      onClick={() => handleRemoveItem(item)}
-                                    >
-                                      {t("Delete")}
-                                    </button>
-                                    <UniFieldSelect
-                                      containerClassName="w-40"
-                                      value={item.unit_id}
-                                      onValueChange={(value) => {
-                                        updateItem(item.id, "unit_id", value)
-                                        updateItem(item.id, "convert_unit_id", "")
-                                        setUnitSiblingOptions((current) => ({ ...current, [item.id]: [] }))
-                                      }}
-                                      placeholder={t("Unit")}
-                                      error={errors[`unit_${index}`]}
-                                      hasOptions={Boolean(unitOptions.length)}
-                                    >
-                                      {unitOptions.map((unitQuantity: any) => {
-                                        const unit = unitQuantity.unit || unitQuantity
-                                        const value = unitQuantity.unit_id || unit.id
-                                        return (
-                                          <SelectItem key={unitQuantity.id || value} value={String(value)}>
-                                            {unit.name}
-                                          </SelectItem>
-                                        )
-                                      })}
-                                    </UniFieldSelect>
-                                    <UniFieldSelect
-                                      containerClassName="w-40"
-                                      value={item.tax_group_id}
-                                      onValueChange={(value) => updateItem(item.id, "tax_group_id", value)}
-                                      placeholder={t("Tax")}
-                                      hasOptions={Boolean(taxGroupOptions.length)}
-                                    >
-                                      {taxGroupOptions.map((tax: any) => (
-                                        <SelectItem key={tax.id} value={String(tax.id)}>
-                                          {tax.name}
-                                        </SelectItem>
-                                      ))}
-                                    </UniFieldSelect>
-                                    <UniFieldSelect
-                                      containerClassName="w-36"
-                                      value={item.tax_type}
-                                      onValueChange={(value) => updateItem(item.id, "tax_type", value)}
-                                      placeholder={t("Tax Type")}
-                                    >
-                                      <SelectItem value="inclusive">{t("Inclusive")}</SelectItem>
-                                      <SelectItem value="exclusive">{t("Exclusive")}</SelectItem>
-                                    </UniFieldSelect>
-                                    <UniFieldSelect
-                                      containerClassName="w-40"
-                                      value={item.convert_unit_id}
-                                      onValueChange={(value) => {
-                                        const unit = convertOptions.find((option: any) => String(option.id) === value)
-                                        updateItem(item.id, "convert_unit_id", value)
-                                        updateItem(item.id, "convert_unit_label", unit?.name || "")
-                                      }}
-                                      placeholder={t("Convert")}
-                                      hasOptions={Boolean(convertOptions.length)}
-                                    >
-                                      {convertOptions.map((unit: any) => (
-                                        <SelectItem key={unit.id} value={String(unit.id)}>
-                                          {unit.name}
-                                        </SelectItem>
-                                      ))}
-                                    </UniFieldSelect>
-                                    <UniFieldInput
-                                      containerClassName="w-40"
-                                      type="date"
-                                      value={item.expiration_date}
-                                      onChange={(event) => updateItem(item.id, "expiration_date", event.target.value)}
-                                    />
+                                <TableCell className="p-3">
+                                  <div className="space-y-2">
+                                    <div>
+                                      <div className="font-semibold text-gray-900">
+                                        {item.product_name || t("Select product")}
+                                      </div>
+                                      {errors[`product_${index}`] ? (
+                                        <div className="text-xs font-medium text-red-600">{errors[`product_${index}`]}</div>
+                                      ) : null}
+                                      {errors[`unit_${index}`] ? (
+                                        <div className="text-xs font-medium text-red-600">{errors[`unit_${index}`]}</div>
+                                      ) : null}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setChoiceModal({ type: "unit", itemId: item.id })}
+                                      >
+                                        {t("Unit")}: {getUnitName(item)}
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setChoiceModal({ type: "convert", itemId: item.id })}
+                                      >
+                                        {t("Convert Unit")}: {getConvertUnitName(item)}
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setChoiceModal({ type: "tax", itemId: item.id })}
+                                      >
+                                        {t("Tax")}: {getTaxName(item)}
+                                      </Button>
+                                    </div>
                                   </div>
                                 </TableCell>
-                                <TableCell className="p-2">
+                                <TableCell className="p-3">
                                   <UniFieldInput
                                     type="number"
                                     min="0"
@@ -815,10 +844,10 @@ export default function PurchaseOrderFormPage() {
                                     error={errors[`price_${index}`]}
                                   />
                                 </TableCell>
-                                <TableCell className="p-2 font-medium text-gray-700">
+                                <TableCell className="p-3 font-medium text-gray-700">
                                   {formatMoney(line.taxValue)}
                                 </TableCell>
-                                <TableCell className="p-2">
+                                <TableCell className="p-3">
                                   <UniFieldInput
                                     type="number"
                                     min="1"
@@ -828,25 +857,48 @@ export default function PurchaseOrderFormPage() {
                                     error={errors[`quantity_${index}`]}
                                   />
                                 </TableCell>
-                                <TableCell className="p-2 font-semibold text-gray-900">
+                                <TableCell className="p-3 font-semibold text-gray-900">
                                   {formatMoney(line.total)}
+                                </TableCell>
+                                <TableCell className="p-3 text-right">
+                                  <div className="flex justify-end gap-2">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      className="size-9"
+                                      onClick={() => openOptionsModal(item)}
+                                    >
+                                      <Settings2Icon className="size-4" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      className="size-9 text-red-500 hover:text-red-700"
+                                      disabled={isStocked}
+                                      onClick={() => handleRemoveItem(item)}
+                                    >
+                                      <Trash2Icon className="size-4" />
+                                    </Button>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             )
                           })}
                           {items.length === 0 ? (
                             <TableRow>
-                              <TableCell className="p-6 text-center text-sm font-medium text-gray-500" colSpan={5}>
+                              <TableCell className="p-8 text-center text-sm font-medium text-gray-400" colSpan={6}>
                                 {t("No product were provided.")}
                               </TableCell>
                             </TableRow>
                           ) : (
-                            <TableRow className="font-semibold text-gray-900">
-                              <TableCell className="p-2" />
-                              <TableCell className="p-2" />
-                              <TableCell className="p-2">{formatMoney(totals.tax)}</TableCell>
-                              <TableCell className="p-2" />
-                              <TableCell className="p-2">{formatMoney(totals.total)}</TableCell>
+                            <TableRow className="bg-gray-50 font-semibold text-gray-900">
+                              <TableCell className="p-3" colSpan={2} />
+                              <TableCell className="p-3">{formatMoney(totals.tax)}</TableCell>
+                              <TableCell className="p-3" />
+                              <TableCell className="p-3">{formatMoney(totals.total)}</TableCell>
+                              <TableCell className="p-3" />
                             </TableRow>
                           )}
                         </TableBody>
@@ -854,6 +906,143 @@ export default function PurchaseOrderFormPage() {
                     </div>
                   </div>
                 )}
+
+                {choiceModal ? (() => {
+                  const item = items.find((entry) => entry.id === choiceModal.itemId)
+                  if (!item) return null
+                  const unitOptions = getItemUnitOptions(item)
+                  const convertOptions = getConvertUnitOptions(item)
+
+                  if (choiceModal.type === "unit") {
+                    return (
+                      <CustomModal
+                        open
+                        onOpenChange={(open) => !open && setChoiceModal(null)}
+                        title={t("{product}: Purchase Unit").replace("{product}", item.product_name || t("Product"))}
+                        description={t("The product will be procured on that unit.")}
+                        showFooter={false}
+                      >
+                        <div className="space-y-2">
+                          {unitOptions.map((unitQuantity: any) => {
+                            const unit = unitQuantity.unit || unitQuantity
+                            const value = String(unitQuantity.unit_id || unit.id)
+                            return (
+                              <Button
+                                key={unitQuantity.id || value}
+                                type="button"
+                                variant={item.unit_id === value ? "default" : "outline"}
+                                className="w-full justify-start"
+                                onClick={() => {
+                                  selectUnitForItem(item, value)
+                                  setChoiceModal(null)
+                                }}
+                              >
+                                {unit.name}
+                              </Button>
+                            )
+                          })}
+                        </div>
+                      </CustomModal>
+                    )
+                  }
+
+                  if (choiceModal.type === "convert") {
+                    return (
+                      <CustomModal
+                        open
+                        onOpenChange={(open) => !open && setChoiceModal(null)}
+                        title={t("Convert Unit")}
+                        description={t("The unit selected for conversion by default.")}
+                        showFooter={false}
+                      >
+                        <div className="space-y-2">
+                          <Button
+                            type="button"
+                            variant={!item.convert_unit_id ? "default" : "outline"}
+                            className="w-full justify-start"
+                            onClick={() => {
+                              updateItem(item.id, "convert_unit_id", "")
+                              updateItem(item.id, "convert_unit_label", "")
+                              setChoiceModal(null)
+                            }}
+                          >
+                            {t("N/A")}
+                          </Button>
+                          {convertOptions.map((unit: any) => (
+                            <Button
+                              key={unit.id}
+                              type="button"
+                              variant={item.convert_unit_id === String(unit.id) ? "default" : "outline"}
+                              className="w-full justify-start"
+                              onClick={() => {
+                                updateItem(item.id, "convert_unit_id", String(unit.id))
+                                updateItem(item.id, "convert_unit_label", unit.name || "")
+                                setChoiceModal(null)
+                              }}
+                            >
+                              {unit.name}
+                            </Button>
+                          ))}
+                        </div>
+                      </CustomModal>
+                    )
+                  }
+
+                  if (choiceModal.type === "tax") {
+                    return (
+                      <CustomModal
+                        open
+                        onOpenChange={(open) => !open && setChoiceModal(null)}
+                        title={t("Choose Tax")}
+                        description={t("The tax will be assigned to the procured product.")}
+                        showFooter={false}
+                      >
+                        <div className="space-y-2">
+                          {taxGroupOptions.map((tax: any) => (
+                            <Button
+                              key={tax.id}
+                              type="button"
+                              variant={item.tax_group_id === String(tax.id) ? "default" : "outline"}
+                              className="w-full justify-start"
+                              onClick={() => {
+                                updateItem(item.id, "tax_group_id", String(tax.id))
+                                setChoiceModal(null)
+                              }}
+                            >
+                              {tax.name}
+                            </Button>
+                          ))}
+                        </div>
+                      </CustomModal>
+                    )
+                  }
+
+                  return (
+                    <CustomModal
+                      open
+                      onOpenChange={(open) => !open && setChoiceModal(null)}
+                      title={t("Options")}
+                      onSave={saveOptionsModal}
+                    >
+                      <div className="space-y-4">
+                        <DatePicker
+                          label={t("Expiration Date")}
+                          value={optionDraft.expiration_date ? new Date(optionDraft.expiration_date + "T00:00:00") : undefined}
+                          onChange={(date) => setOptionDraft((current) => ({ ...current, expiration_date: date ? date.toISOString().slice(0, 10) : "" }))}
+                        />
+                        <UniFieldSelect
+                          label={t("Tax Type")}
+                          value={optionDraft.tax_type}
+                          onValueChange={(value) => setOptionDraft((current) => ({ ...current, tax_type: value === "exclusive" ? "exclusive" : "inclusive" }))}
+                        >
+                          <SelectItem value="inclusive">{t("Inclusive")}</SelectItem>
+                          <SelectItem value="exclusive">{t("Exclusive")}</SelectItem>
+                        </UniFieldSelect>
+                      </div>
+                    </CustomModal>
+                  )
+                })() : null}
+
               </div>
             </div>
 
