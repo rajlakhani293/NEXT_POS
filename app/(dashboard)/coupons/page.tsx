@@ -8,6 +8,7 @@ import { History } from "lucide-react"
 import DynamicTable from "@/components/DynamicTable"
 import { promotions } from "@/lib/api/promotions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
@@ -15,7 +16,8 @@ import { useTableData } from "@/hooks/useTableData"
 
 const buildColumns = (
   t: (key: string) => string,
-  formatMoney: (value: any) => string
+  formatMoney: (value: any) => string,
+  formatDate: (value: any) => string
 ) => [
   { key: "name", title: t("Name") },
   {
@@ -37,7 +39,7 @@ const buildColumns = (
   { key: "valid_hours_start", title: t("Valid From") },
   { key: "valid_hours_end", title: t("Valid Till") },
   { key: "user_username", title: t("User") },
-  { key: "created_at", title: t("Created On"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+  { key: "created_at", title: t("Created On"), render: (value: any) => formatDate(value) },
 ]
 
 export default function CouponsPage() {
@@ -47,7 +49,8 @@ export default function CouponsPage() {
   const posOptions = usePosOptions()
   const formatMoney = (value: any) =>
     `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
-  const columns = buildColumns(t, formatMoney)
+  const formatDate = (value: any) => formatBusinessDate(value, posOptions)
+  const columns = buildColumns(t, formatMoney, formatDate)
   const [deleteCoupon] = (promotions as any).useDeleteCouponMutation()
   const { hasPermission } = usePermissions()
   const canCreate = hasPermission(PERMISSIONS.promotions.create)

@@ -6,23 +6,26 @@ import { useRouter, useSearchParams } from "next/navigation"
 import DynamicTable from "@/components/DynamicTable"
 import { rewards } from "@/lib/api/rewards"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate } from "@/lib/format"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 
-const buildColumns = (t: (key: string) => string) => [
+const buildColumns = (t: (key: string) => string, formatDate: (value: any) => string) => [
   { key: "name", title: t("Name") },
   { key: "target", title: t("Target") },
   { key: "coupon_name", title: t("Coupon") },
   { key: "user_username", title: t("User") },
-  { key: "created_at", title: t("Created On"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+  { key: "created_at", title: t("Created On"), render: (value: any) => formatDate(value) },
 ]
 
 export default function RewardSystemsPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { t } = useTranslation()
-  const columns = buildColumns(t)
+  const posOptions = usePosOptions()
+  const columns = buildColumns(t, (value) => formatBusinessDate(value, posOptions))
   const [deleteRewardSystem] = (rewards as any).useDeleteRewardSystemMutation()
   const { hasPermission } = usePermissions()
   const canCreate = hasPermission(PERMISSIONS.rewards.create)

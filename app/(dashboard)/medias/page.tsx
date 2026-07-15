@@ -9,14 +9,11 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
-  Copy,
-  Edit3,
-  ExternalLink,
   FileIcon,
   FileTextIcon,
-  ImageIcon,
   Info,
   Loader2,
+  Search,
   SearchIcon,
   Trash2Icon,
   UploadCloud,
@@ -26,13 +23,14 @@ import {
 import { useConfirmDialog } from "@/components/confirm-dialog"
 import { PermissionGuard } from "@/components/permission-guard"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { usePermissions } from "@/hooks/use-permissions"
 import { media } from "@/lib/api/media"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate } from "@/lib/format"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
 import { showToast } from "@/lib/toast"
@@ -47,7 +45,9 @@ type MediaRecord = {
     original?: string
   }
   user?: {
+    id?: number
     username?: string
+    full_name?: string
   } | null
   created_at?: string
   selected?: boolean
@@ -116,6 +116,7 @@ const mediaImageUrl = (resource?: MediaRecord | null) =>
 
 export default function MediasPage() {
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
   const { confirm, confirmDialog } = useConfirmDialog()
   const { hasPermission } = usePermissions()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -133,8 +134,6 @@ export default function MediasPage() {
   const [uploadQueueCollapsed, setUploadQueueCollapsed] = useState(false)
   const [filter, setFilter] = useState<FilterType>("all")
 
-
-
   const [getMediaData, galleryState] = (media as any).useGetMediaDataMutation()
   const [uploadMedia] = (media as any).useUploadMediaMutation()
   const [editMedia] = (media as any).useEditMediaMutation()
@@ -146,7 +145,6 @@ export default function MediasPage() {
 
   const selectedResources = useMemo(() => resources.filter((resource) => resource.selected), [resources])
   const hasOneSelected = selectedResources.length > 0
-
 
   const currentPage = Number(galleryMeta.current_page || galleryMeta.page || galleryQuery.page || 1)
   const lastPage = Number(galleryMeta.last_page || galleryMeta.total_pages || 1)
@@ -188,8 +186,6 @@ export default function MediasPage() {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
     }
   }, [searchField])
-
-
 
   useEffect(() => {
     const handlePasteUpload = (event: ClipboardEvent) => {
@@ -444,7 +440,8 @@ export default function MediasPage() {
                   value={searchField}
                   onChange={(event) => setSearchField(event.target.value)}
                   placeholder={t("Search by filename...")}
-                  prefix={<SearchIcon className="size-4 text-slate-400" />}
+                  className="h-9 w-full pr-9 pl-9"
+                  prefix={<Search className="h-4 w-4" />}
                   allowClear
                   onClear={() => setSearchField("")}
                 />
@@ -558,8 +555,8 @@ export default function MediasPage() {
                             {resource.name}
                           </p>
                           <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400">
-                            <span>{resource.created_at ? resource.created_at.split(" ")[0] : "-"}</span>
-                            <span>{resource.user?.username || ""}</span>
+                            <span>{formatBusinessDate(resource.created_at, posOptions)}</span>
+                            <span>{resource.user?.full_name || resource.user?.username || ""}</span>
                           </div>
                         </div>
                       </div>
@@ -582,8 +579,6 @@ export default function MediasPage() {
                 </div>
               )}
             </main>
-
-            {/* Sidebar Detail Sheet Removed */}
           </div>
 
           {/* Footer Navigation & Actions Control */}

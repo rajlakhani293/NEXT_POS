@@ -10,12 +10,14 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { promotions } from "@/lib/api/promotions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { useDebounce } from "@/hooks/useDebounce"
 
 const buildColumns = (
   t: (key: string) => string,
-  formatMoney: (value: any) => string
+  formatMoney: (value: any) => string,
+  formatDate: (value: any) => string
 ) => [
     { key: "name", title: t("Name") },
     { key: "code", title: t("Code") },
@@ -41,7 +43,7 @@ const buildColumns = (
     {
       key: "created_at",
       title: t("Created At"),
-      render: (value: any) => value ? new Date(value).toLocaleDateString() : "-",
+      render: (value: any) => formatDate(value),
     },
   ]
 
@@ -53,7 +55,7 @@ export default function CouponOrderHistoryPage() {
   const couponId = params.id as string
   const formatMoney = (value: any) =>
     `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
-  const columns = buildColumns(t, formatMoney)
+  const columns = buildColumns(t, formatMoney, (value) => formatBusinessDate(value, posOptions))
   const [rows, setRows] = useState<any[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [page, setPage] = useState(1)

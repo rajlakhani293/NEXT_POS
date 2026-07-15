@@ -16,19 +16,20 @@ import { IoMdEye } from "react-icons/io"
 
 const buildColumns = (
   t: (key: string) => string,
-  formatMoney: (value: any) => string
+  formatMoney: (value: any) => string,
+  formatDateTimeValue: (value: string | null) => string
 ) => [
   { key: "cashier_name", title: t("Cashier") },
   { key: "shift_status", title: t("Status") },
   {
     key: "opened_at",
     title: t("Opened"),
-    render: (value: string | null) => formatDateTime(value),
+    render: formatDateTimeValue,
   },
   {
     key: "closed_at",
     title: t("Closed"),
-    render: (value: string | null) => formatDateTime(value),
+    render: formatDateTimeValue,
   },
   { key: "opening_cash", title: t("Opening"), render: formatMoney },
   { key: "expected_cash", title: t("Expected"), render: formatMoney },
@@ -43,6 +44,7 @@ export default function RegisterShiftHistoryPage() {
   const posOptions = usePosOptions()
   const formatMoney = (value: any) =>
     `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const formatDateTimeValue = (value: string | null) => formatDateTime(value, posOptions)
   const rawRegisterId = Array.isArray(params.id) ? params.id[0] : params.id
   const registerId = Number(rawRegisterId)
   const hasRegisterId = Number.isFinite(registerId) && registerId > 0
@@ -87,7 +89,7 @@ export default function RegisterShiftHistoryPage() {
       <div className="p-6">
         <DynamicTable
           data={table.orders}
-          columns={buildColumns(t, formatMoney)}
+          columns={buildColumns(t, formatMoney, formatDateTimeValue)}
           tableTitle={t("Register History List")}
           showSearch
           searchTerm={table.searchTerm}

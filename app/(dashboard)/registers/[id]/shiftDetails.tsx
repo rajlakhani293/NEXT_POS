@@ -12,7 +12,8 @@ import { usePosOptions } from "@/lib/options"
 
 const buildEntryColumns = (
   t: (key: string) => string,
-  formatMoney: (value: any) => string
+  formatMoney: (value: any) => string,
+  formatDateTimeValue: (value: string | null) => string
 ) => [
   { key: "entry_type", title: t("Entry Type") },
   { key: "payment_type", title: t("Payment Type") },
@@ -24,7 +25,7 @@ const buildEntryColumns = (
   {
     key: "created_at",
     title: t("Created At"),
-    render: (value: string | null) => formatDateTime(value),
+    render: formatDateTimeValue,
   },
 ]
 
@@ -38,6 +39,7 @@ export function ShiftDetails({ shiftId, onClose }: ShiftDetailsProps) {
   const posOptions = usePosOptions()
   const formatMoney = (value: any) =>
     `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const formatDateTimeValue = (value: string | null) => formatDateTime(value, posOptions)
   const [shift, setShift] = useState<any>(null)
   const requestedShiftRef = useRef<string | null>(null)
   const [getShiftById, shiftState] = (registers as any).useGetShiftByIdMutation()
@@ -116,8 +118,8 @@ export function ShiftDetails({ shiftId, onClose }: ShiftDetailsProps) {
               <h3 className="font-bold text-slate-950">{t("Register History")}</h3>
               <div className="mt-3 space-y-3 text-sm">
                 {[
-                  [t("Opened At"), formatDateTime(shift?.opened_at)],
-                  [t("Closed At"), formatDateTime(shift?.closed_at)],
+                  [t("Opened At"), formatDateTimeValue(shift?.opened_at)],
+                  [t("Closed At"), formatDateTimeValue(shift?.closed_at)],
                   [t("Register"), shift?.register_name],
                   [t("Cashier"), shift?.cashier_name],
                   [t("Entries"), shift?.entry_count],
@@ -159,7 +161,7 @@ export function ShiftDetails({ shiftId, onClose }: ShiftDetailsProps) {
 
           <DynamicTable
             data={entries}
-            columns={buildEntryColumns(t, formatMoney)}
+            columns={buildEntryColumns(t, formatMoney, formatDateTimeValue)}
             tableTitle={t("Register History List")}
             currentPage={1}
             itemsPerPage={Math.max(entries.length, 10)}
