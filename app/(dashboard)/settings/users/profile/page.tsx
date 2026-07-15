@@ -8,9 +8,11 @@ import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { PermissionGuard } from "@/components/permission-guard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { SelectItem } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { UniFieldInput } from "@/components/ui/unifield-input"
+import { UniFieldSelect } from "@/components/ui/unifield-select"
+import { supportedLanguages } from "@/lib/i18n/languages"
 import { auth, type AccessTokenRecord } from "@/lib/api/auth"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
@@ -77,12 +79,6 @@ const profileFields = [
   { name: "full_name", label: "Full Name", type: "text" },
   { name: "email", label: "Email", type: "email" },
   { name: "phone", label: "Phone", type: "text" },
-] as const
-
-const attributeFields = [
-  { name: "theme", label: "Theme", description: "Define what is the theme that applies to the dashboard." },
-  { name: "avatar_link", label: "Avatar", description: "Define the image that should be used as an avatar." },
-  { name: "language", label: "Language", description: "Choose the language for the current account." },
 ] as const
 
 const securityFields = [
@@ -281,9 +277,10 @@ export default function UserProfilePage() {
         <div className="grid gap-4 md:grid-cols-2">
           {addressFields.map((field) => (
             <div key={`${addressType}-${field.name}`} className="space-y-2">
-              <Label htmlFor={`${addressType}-${field.name}`}>{t(field.label)}</Label>
-              <Input
+              <UniFieldInput
                 id={`${addressType}-${field.name}`}
+                label={t(field.label)}
+                placeholder={`${t("Enter")} ${t(field.label)}`}
                 value={addressValues[field.name]}
                 onChange={(event) => setAddressField(addressType, field.name, event.target.value)}
               />
@@ -322,20 +319,20 @@ export default function UserProfilePage() {
           <div className="flex-none">
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ProfileTab)}>
               <TabsList variant="line" className="-mb-px w-full justify-start overflow-x-auto">
-              {([
-                ["general", "General Info"],
-                ["billing", "Billing Address"],
-                ["shipping", "Shipping Address"],
-                ["security", "Security"],
-                ["token", "API Token"],
-              ] as [ProfileTab, string][]).map(([tab, label]) => (
-                <TabsTrigger
-                  key={tab}
-                  value={tab}
-                >
-                  {t(label)}
-                </TabsTrigger>
-              ))}
+                {([
+                  ["general", "General Info"],
+                  ["billing", "Billing Address"],
+                  ["shipping", "Shipping Address"],
+                  ["security", "Security"],
+                  ["token", "API Token"],
+                ] as [ProfileTab, string][]).map(([tab, label]) => (
+                  <TabsTrigger
+                    key={tab}
+                    value={tab}
+                  >
+                    {t(label)}
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </Tabs>
           </div>
@@ -344,41 +341,77 @@ export default function UserProfilePage() {
             <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
               {activeTab === "general" && (
                 <>
-            <div className="grid gap-4 md:grid-cols-2">
-              {profileFields.map((field) => (
-                <div key={field.name} className="space-y-2">
-                  <Label htmlFor={field.name}>{t(field.label)}</Label>
-                  <Input
-                    id={field.name}
-                    type={field.type}
-                    value={values[field.name]}
-                    onChange={(event) => setField(field.name, event.target.value)}
-                    required={Boolean("required" in field && field.required)}
-                  />
-                </div>
-              ))}
-            </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {profileFields.map((field) => (
+                      <div key={field.name} className="space-y-2">
+                        <UniFieldInput
+                          id={field.name}
+                          label={t(field.label)}
+                          placeholder={`${t("Enter")} ${t(field.label)}`}
+                          type={field.type}
+                          value={values[field.name]}
+                          onChange={(event) => setField(field.name, event.target.value)}
+                          required={Boolean("required" in field && field.required)}
+                        />
+                      </div>
+                    ))}
+                  </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-              {attributeFields.map((field) => (
-                <div key={field.name} className="space-y-2">
-                  <Label htmlFor={field.name}>{t(field.label)}</Label>
-                  <Input
-                    id={field.name}
-                    value={values[field.name]}
-                    onChange={(event) => setField(field.name, event.target.value)}
-                  />
-                  <p className="text-xs text-slate-500">{t(field.description)}</p>
-                </div>
-              ))}
-            </div>
+                  <div className="mt-5 grid gap-4 md:grid-cols-3">
+                    {/* Theme Selection */}
+                    <div className="space-y-2">
+                      <UniFieldSelect
+                        label={t("Theme")}
+                        value={values.theme}
+                        onValueChange={(val) => setField("theme", val)}
+                      >
+                        <SelectItem value="light">{t("Light")}</SelectItem>
+                        <SelectItem value="dark">{t("Dark")}</SelectItem>
+                      </UniFieldSelect>
+                      <p className="text-xs text-slate-500">
+                        {t("Define what is the theme that applies to the dashboard.")}
+                      </p>
+                    </div>
 
-            <div className="mt-5 flex justify-end">
-              <Button onClick={saveProfile} disabled={updateState.isLoading}>
-                <Save className="mr-2 size-4" />
-                {t("Save")}
-              </Button>
-            </div>
+                    {/* Avatar Selection */}
+                    <div className="space-y-2">
+                      <UniFieldInput
+                        id="avatar_link"
+                        label={t("Avatar")}
+                        placeholder={`${t("Enter")} ${t("Avatar")}`}
+                        value={values.avatar_link}
+                        onChange={(event) => setField("avatar_link", event.target.value)}
+                      />
+                      <p className="text-xs text-slate-500">
+                        {t("Define the image that should be used as an avatar.")}
+                      </p>
+                    </div>
+
+                    {/* Language Selection */}
+                    <div className="space-y-2">
+                      <UniFieldSelect
+                        label={t("Language")}
+                        value={values.language}
+                        onValueChange={(val) => setField("language", val)}
+                      >
+                        {supportedLanguages.map((lang) => (
+                          <SelectItem key={lang.code} value={lang.code}>
+                            {t(lang.label)}
+                          </SelectItem>
+                        ))}
+                      </UniFieldSelect>
+                      <p className="text-xs text-slate-500">
+                        {t("Choose the language for the current account.")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex justify-end">
+                    <Button onClick={saveProfile} disabled={updateState.isLoading}>
+                      <Save className="mr-2 size-4" />
+                      {t("Save")}
+                    </Button>
+                  </div>
                 </>
               )}
 
@@ -388,114 +421,121 @@ export default function UserProfilePage() {
 
               {activeTab === "security" && (
                 <>
-            <div className="grid gap-4 md:grid-cols-3">
-              {securityFields.map((field) => (
-                <div key={field.name} className="space-y-2">
-                  <Label htmlFor={field.name}>{t(field.label)}</Label>
-                  <Input
-                    id={field.name}
-                    type="password"
-                    value={values[field.name]}
-                    onChange={(event) => setField(field.name, event.target.value)}
-                  />
-                  <p className="text-xs text-slate-500">{t(field.description)}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-5 flex justify-end">
-              <Button onClick={saveProfile} disabled={updateState.isLoading}>
-                <Save className="mr-2 size-4" />
-                {t("Save")}
-              </Button>
-            </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    {securityFields.map((field) => (
+                      <div key={field.name} className="space-y-2">
+                        <UniFieldInput
+                          id={field.name}
+                          label={t(field.label)}
+                          placeholder={`${t("Enter")} ${t(field.label)}`}
+                          type="password"
+                          value={values[field.name]}
+                          onChange={(event) => setField(field.name, event.target.value)}
+                        />
+                        <p className="text-xs text-slate-500">{t(field.description)}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-5 flex justify-end">
+                    <Button onClick={saveProfile} disabled={updateState.isLoading}>
+                      <Save className="mr-2 size-4" />
+                      {t("Save")}
+                    </Button>
+                  </div>
                 </>
               )}
 
               {activeTab === "token" && (
-            <div className="max-w-2xl space-y-5">
-              <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                  <KeyRound className="size-4" />
-                  {t("About Token")}
-                </div>
-                <p className="mt-1 text-sm text-slate-600">
-                  {t("Tokens provide secure API access without sharing your username and password.")}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="token_name">{t("Token Name")}</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="token_name"
-                    value={tokenName}
-                    onChange={(event) => setTokenName(event.target.value)}
-                    placeholder={t("Token Name")}
-                  />
-                  <Button onClick={handleCreateToken} disabled={createTokenState.isLoading}>
-                    <Save className="mr-2 size-4" />
-                    {t("Save Token")}
-                  </Button>
-                </div>
-                <p className="text-xs text-slate-500">{t("This will be used to identifier the token.")}</p>
-              </div>
-
-              {generatedToken ? (
-                <div className="space-y-2 rounded-md border border-emerald-200 bg-emerald-50 p-3">
-                  <Label htmlFor="generated_token">{t("Generated Token")}</Label>
-                  <div className="flex gap-2">
-                    <Input id="generated_token" value={generatedToken} readOnly />
-                    <Button type="button" variant="outline" onClick={copyGeneratedToken}>
-                      <Copy className="mr-2 size-4" />
-                      {t("Copy")}
-                    </Button>
+                <div className="max-w-2xl space-y-5">
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                      <KeyRound className="size-4" />
+                      {t("About Token")}
+                    </div>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {t("Tokens provide secure API access without sharing your username and password.")}
+                    </p>
                   </div>
-                </div>
-              ) : null}
 
-              <div>
-                <div className="mb-3 flex items-center justify-between gap-2 border-b pb-2">
-                  <h2 className="text-lg font-semibold">{t("Generated Tokens")}</h2>
-                  <Button type="button" variant="outline" size="sm" onClick={() => refetchTokens()}>
-                    <RefreshCw className="mr-2 size-4" />
-                    {t("Refresh")}
-                  </Button>
-                </div>
-
-                {isLoadingTokens ? (
-                  <div className="py-6 text-center text-sm text-slate-500">{t("Loading...")}</div>
-                ) : tokens.length === 0 ? (
-                  <div className="py-6 text-center text-sm text-slate-500">
-                    {t("You haven't yet generated any token for your account. Create one to get started.")}
+                  <div className="space-y-2">
+                    <div className="flex items-end gap-2">
+                      <UniFieldInput
+                        id="token_name"
+                        label={t("Token Name")}
+                        value={tokenName}
+                        onChange={(event) => setTokenName(event.target.value)}
+                        placeholder={`${t("Enter")} ${t("Token Name")}`}
+                        containerClassName="flex-1"
+                      />
+                      <Button onClick={handleCreateToken} disabled={createTokenState.isLoading} className="h-10">
+                        <Save className="mr-2 size-4" />
+                        {t("Save Token")}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-slate-500">{t("This will be used to identifier the token.")}</p>
                   </div>
-                ) : (
-                  <div className="divide-y rounded-md border">
-                    {tokens.map((token) => (
-                      <div key={token.id} className="flex items-center justify-between gap-4 p-3">
-                        <div className="min-w-0">
-                          <div className="truncate font-medium">{token.name || t("Untitled Token")}</div>
-                          <div className="mt-1 space-y-0.5 text-xs text-slate-500">
-                            <div>{t("Created")}: {dateLabel(token.created_at)}</div>
-                            <div>{t("Last Use")}: {t(dateLabel(token.last_used_at))}</div>
-                            <div>{t("Expires")}: {t(dateLabel(token.expires_at))}</div>
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          disabled={deleteTokenState.isLoading}
-                          onClick={() => handleDeleteToken(token)}
-                        >
-                          <Trash2 className="mr-2 size-4" />
-                          {t("Revoke")}
+
+                  {generatedToken ? (
+                    <div className="space-y-2 rounded-md border border-emerald-200 bg-emerald-50 p-3">
+                      <div className="flex items-end gap-2">
+                        <UniFieldInput
+                          id="generated_token"
+                          label={t("Generated Token")}
+                          value={generatedToken}
+                          readOnly
+                          containerClassName="flex-1"
+                        />
+                        <Button type="button" variant="outline" onClick={copyGeneratedToken} className="h-10">
+                          <Copy className="mr-2 size-4" />
+                          {t("Copy")}
                         </Button>
                       </div>
-                    ))}
+                    </div>
+                  ) : null}
+
+                  <div>
+                    <div className="mb-3 flex items-center justify-between gap-2 border-b pb-2">
+                      <h2 className="text-lg font-semibold">{t("Generated Tokens")}</h2>
+                      <Button type="button" variant="outline" size="sm" onClick={() => refetchTokens()}>
+                        <RefreshCw className="mr-2 size-4" />
+                        {t("Refresh")}
+                      </Button>
+                    </div>
+
+                    {isLoadingTokens ? (
+                      <div className="py-6 text-center text-sm text-slate-500">{t("Loading...")}</div>
+                    ) : tokens.length === 0 ? (
+                      <div className="py-6 text-center text-sm text-slate-500">
+                        {t("You haven't yet generated any token for your account. Create one to get started.")}
+                      </div>
+                    ) : (
+                      <div className="divide-y rounded-md border">
+                        {tokens.map((token) => (
+                          <div key={token.id} className="flex items-center justify-between gap-4 p-3">
+                            <div className="min-w-0">
+                              <div className="truncate font-medium">{token.name || t("Untitled Token")}</div>
+                              <div className="mt-1 space-y-0.5 text-xs text-slate-500">
+                                <div>{t("Created")}: {dateLabel(token.created_at)}</div>
+                                <div>{t("Last Use")}: {t(dateLabel(token.last_used_at))}</div>
+                                <div>{t("Expires")}: {t(dateLabel(token.expires_at))}</div>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              disabled={deleteTokenState.isLoading}
+                              onClick={() => handleDeleteToken(token)}
+                            >
+                              <Trash2 className="mr-2 size-4" />
+                              {t("Revoke")}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
+                </div>
               )}
             </div>
           </div>
