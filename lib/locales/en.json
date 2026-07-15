@@ -884,5 +884,22 @@
   "Time": "Time",
   "Clear": "Clear",
   "HH:MM e.g. 09:00": "HH:MM e.g. 09:00",
-  "HH:MM e.g. 21:00": "HH:MM e.g. 21:00"
+  "HH:MM e.g. 21:00": "HH:MM e.g. 21:00",
+  "Loading reward system...": "Loading reward system...",
+  "Create Reward System": "Create Reward System",
+  "Edit Reward System": "Edit Reward System",
+  "Modify Reward System.": "Modify Reward System.",
+  "Register a new reward system and save it.": "Register a new reward system and save it.",
+  "Coupon is required": "Coupon is required",
+  "Target is required": "Target is required",
+  "Select coupon": "Select coupon",
+  "Decide which coupon you would apply to the system.": "Decide which coupon you would apply to the system.",
+  "This is the objective that the user should reach to trigger the reward.": "This is the objective that the user should reach to trigger the reward.",
+  "A short description about this system": "A short description about this system",
+  "Add Rule": "Add Rule",
+  "The interval start here.": "The interval start here.",
+  "The interval ends here.": "The interval ends here.",
+  "Points earned.": "Points earned.",
+  "Reward system updated successfully.": "Reward system updated successfully.",
+  "Reward system created successfully.": "Reward system created successfully."
 }

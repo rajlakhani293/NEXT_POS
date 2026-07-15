@@ -47,7 +47,6 @@ export default function CouponsPage() {
     `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
   const columns = buildColumns(t, formatMoney)
   const [deleteCoupon] = (promotions as any).useDeleteCouponMutation()
-  const [updateCouponStatus] = (promotions as any).useUpdateCouponStatusMutation()
   const { hasPermission } = usePermissions()
   const canCreate = hasPermission(PERMISSIONS.promotions.create)
   const canUpdate = hasPermission(PERMISSIONS.promotions.update)
@@ -108,10 +107,6 @@ export default function CouponsPage() {
         onEdit={handleEdit}
         showDelete={canDelete}
         deleteMutation={deleteCoupon}
-        showStatus={canUpdate}
-        statusChangeMutation={({ ids, status }: any) =>
-          updateCouponStatus({ payLoad: { ids, status } })
-        }
         triggerRefresh={triggerRefresh}
         deleteModalTitle={t("Delete Coupon")}
         deleteModalDescription={t("Would you like to delete this ?")}

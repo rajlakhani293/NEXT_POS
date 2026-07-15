@@ -684,5 +684,22 @@
   "Time": "Hora",
   "Clear": "Limpiar",
   "HH:MM e.g. 09:00": "HH:MM ej. 09:00",
-  "HH:MM e.g. 21:00": "HH:MM ej. 21:00"
+  "HH:MM e.g. 21:00": "HH:MM ej. 21:00",
+  "Loading reward system...": "Cargando sistema de recompensas...",
+  "Create Reward System": "Crear sistema de recompensas",
+  "Edit Reward System": "Editar sistema de recompensas",
+  "Modify Reward System.": "Modificar sistema de recompensas.",
+  "Register a new reward system and save it.": "Registrar un nuevo sistema de recompensas y guardarlo.",
+  "Coupon is required": "El cupon es obligatorio",
+  "Target is required": "El objetivo es obligatorio",
+  "Select coupon": "Seleccionar cupon",
+  "Decide which coupon you would apply to the system.": "Decida que cupon aplicara al sistema.",
+  "This is the objective that the user should reach to trigger the reward.": "Este es el objetivo que el usuario debe alcanzar para activar la recompensa.",
+  "A short description about this system": "Una breve descripcion sobre este sistema",
+  "Add Rule": "Agregar regla",
+  "The interval start here.": "El intervalo comienza aqui.",
+  "The interval ends here.": "El intervalo termina aqui.",
+  "Points earned.": "Puntos ganados.",
+  "Reward system updated successfully.": "Sistema de recompensas actualizado correctamente.",
+  "Reward system created successfully.": "Sistema de recompensas creado correctamente."
 }

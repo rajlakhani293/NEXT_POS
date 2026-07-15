@@ -684,5 +684,22 @@
   "Time": "الوقت",
   "Clear": "مسح",
   "HH:MM e.g. 09:00": "HH:MM مثال 09:00",
-  "HH:MM e.g. 21:00": "HH:MM مثال 21:00"
+  "HH:MM e.g. 21:00": "HH:MM مثال 21:00",
+  "Loading reward system...": "جاري تحميل نظام المكافآت...",
+  "Create Reward System": "إنشاء نظام مكافآت",
+  "Edit Reward System": "تعديل نظام المكافآت",
+  "Modify Reward System.": "تعديل نظام المكافآت.",
+  "Register a new reward system and save it.": "سجل نظام مكافآت جديد واحفظه.",
+  "Coupon is required": "الكوبون مطلوب",
+  "Target is required": "الهدف مطلوب",
+  "Select coupon": "اختر كوبون",
+  "Decide which coupon you would apply to the system.": "حدد الكوبون الذي سيتم تطبيقه على النظام.",
+  "This is the objective that the user should reach to trigger the reward.": "هذا هو الهدف الذي يجب أن يصل إليه المستخدم لتفعيل المكافأة.",
+  "A short description about this system": "وصف قصير لهذا النظام",
+  "Add Rule": "إضافة قاعدة",
+  "The interval start here.": "يبدأ النطاق هنا.",
+  "The interval ends here.": "ينتهي النطاق هنا.",
+  "Points earned.": "النقاط المكتسبة.",
+  "Reward system updated successfully.": "تم تحديث نظام المكافآت بنجاح.",
+  "Reward system created successfully.": "تم إنشاء نظام المكافآت بنجاح."
 }

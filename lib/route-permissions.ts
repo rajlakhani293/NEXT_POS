@@ -17,6 +17,7 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/sales", permission: PERMISSIONS.sales.view },
   { path: "/customers/groups", permission: PERMISSIONS.customers.view },
   { path: "/customers", permission: PERMISSIONS.customers.view },
+  { path: "/rewards-system/create", permission: PERMISSIONS.rewards.create },
   { path: "/rewards-system", permission: PERMISSIONS.rewards.view },
   { path: "/coupons/create", permission: PERMISSIONS.promotions.create },
   { path: "/coupons", permission: PERMISSIONS.promotions.view },
@@ -101,6 +102,11 @@ export function resolveRoutePermission(
   const couponEditMatch = pathname.match(/^\/coupons\/([^/]+)$/)
   if (couponEditMatch && couponEditMatch[1] !== "create") {
     return { permission: PERMISSIONS.promotions.update }
+  }
+
+  const rewardSystemEditMatch = pathname.match(/^\/rewards-system\/([^/]+)$/)
+  if (rewardSystemEditMatch && rewardSystemEditMatch[1] !== "create") {
+    return { permission: PERMISSIONS.rewards.update }
   }
 
   const purchaseOrderEditMatch = pathname.match(/^\/purchases\/orders\/([^/]+)$/)

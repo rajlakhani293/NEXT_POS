@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
 import { rewards } from "@/lib/api/rewards"
@@ -9,7 +9,6 @@ import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
-import { RewardSystemForm } from "./createUpdate"
 
 const buildColumns = (t: (key: string) => string) => [
   { key: "name", title: t("Name") },
@@ -21,16 +20,10 @@ const buildColumns = (t: (key: string) => string) => [
 
 export default function RewardSystemsPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const { t } = useTranslation()
   const columns = buildColumns(t)
-  const [formState, setFormState] = useState<{
-    isOpen: boolean
-    editId?: number | string | null
-  }>({ isOpen: false, editId: null })
   const [deleteRewardSystem] = (rewards as any).useDeleteRewardSystemMutation()
-  const [updateRewardSystemStatus] = (
-    rewards as any
-  ).useUpdateRewardSystemStatusMutation()
   const { hasPermission } = usePermissions()
   const canCreate = hasPermission(PERMISSIONS.rewards.create)
   const canUpdate = hasPermission(PERMISSIONS.rewards.update)
@@ -55,22 +48,18 @@ export default function RewardSystemsPage() {
   })
 
   const handleAdd = (open: boolean) => {
-    if (open) setFormState({ isOpen: true, editId: null })
+    if (open) router.push("/rewards-system/create")
   }
 
   const handleEdit = (record: any) => {
-    setFormState({ isOpen: true, editId: record.id })
-  }
-
-  const closeForm = () => {
-    setFormState({ isOpen: false, editId: null })
+    router.push(`/rewards-system/${record.id}`)
   }
 
   useEffect(() => {
     if (searchParams.get("create") === "1" && canCreate) {
-      setFormState({ isOpen: true, editId: null })
+      router.replace("/rewards-system/create")
     }
-  }, [canCreate, searchParams])
+  }, [canCreate, router, searchParams])
 
   return (
     <div className="h-full space-y-4">
@@ -95,19 +84,9 @@ export default function RewardSystemsPage() {
         onEdit={handleEdit}
         showDelete={canDelete}
         deleteMutation={deleteRewardSystem}
-        showStatus={canUpdate}
-        statusChangeMutation={({ ids, status }: any) =>
-          updateRewardSystemStatus({ payLoad: { ids, status } })
-        }
         triggerRefresh={triggerRefresh}
         deleteModalTitle={t("Delete Reward System")}
         deleteModalDescription={t("Would you like to delete this ?")}
-      />
-      <RewardSystemForm
-        isOpen={formState.isOpen}
-        editId={formState.editId}
-        onClose={closeForm}
-        onSuccess={triggerRefresh}
       />
     </div>
   )
