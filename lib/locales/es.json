@@ -701,5 +701,9 @@
   "The interval ends here.": "El intervalo termina aqui.",
   "Points earned.": "Puntos ganados.",
   "Reward system updated successfully.": "Sistema de recompensas actualizado correctamente.",
-  "Reward system created successfully.": "Sistema de recompensas creado correctamente."
+  "Reward system created successfully.": "Sistema de recompensas creado correctamente.",
+  "Coupon Order Histories List": "Lista de historiales de pedidos de cupones",
+  "Display all coupon order histories.": "Mostrar todos los historiales de pedidos de cupones.",
+  "Created At": "Creado en",
+  "Discount": "Descuento"
 }

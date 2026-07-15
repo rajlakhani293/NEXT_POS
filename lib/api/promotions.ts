@@ -18,6 +18,10 @@ const endpointsConfig = {
   deleteCoupon: { query: deleteMutation("coupons/delete") },
   updateCouponStatus: { query: ({ payLoad }: { payLoad: any }) => patchMutation("coupons/status", payLoad) },
   getCouponById: { query: ({ id }: { id: number }) => getMutation(`coupons/${id}`) },
+  getCouponOrderHistoryData: {
+    query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
+      postMutation(`coupons/${id}/history/get-transactions`)(payLoad),
+  },
   getCustomerCouponsData: {
     query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
       postMutation(`customers/${id}/coupons/get-transactions`)(payLoad),

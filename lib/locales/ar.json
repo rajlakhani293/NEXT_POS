@@ -701,5 +701,9 @@
   "The interval ends here.": "ينتهي النطاق هنا.",
   "Points earned.": "النقاط المكتسبة.",
   "Reward system updated successfully.": "تم تحديث نظام المكافآت بنجاح.",
-  "Reward system created successfully.": "تم إنشاء نظام المكافآت بنجاح."
+  "Reward system created successfully.": "تم إنشاء نظام المكافآت بنجاح.",
+  "Coupon Order Histories List": "قائمة سجلات طلبات الكوبونات",
+  "Display all coupon order histories.": "عرض جميع سجلات طلبات الكوبونات.",
+  "Created At": "تم الإنشاء في",
+  "Discount": "الخصم"
 }

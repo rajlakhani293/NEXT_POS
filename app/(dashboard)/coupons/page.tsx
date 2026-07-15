@@ -1,7 +1,9 @@
 "use client"
 
 import { useEffect } from "react"
+import type React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { History } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { promotions } from "@/lib/api/promotions"
@@ -78,6 +80,20 @@ export default function CouponsPage() {
     router.push(`/coupons/${record.id}`)
   }
 
+  const rowActions = (_: string, record: any) => [
+    {
+      key: "history",
+      label: t("History"),
+      labelText: t("History"),
+      icon: <History className="size-4" />,
+      priority: 1.5,
+      onClick: (event?: React.MouseEvent<HTMLButtonElement>) => {
+        event?.stopPropagation()
+        router.push(`/coupons/${record.id}/history`)
+      },
+    },
+  ]
+
   useEffect(() => {
     if (searchParams.get("create") === "1" && canCreate) {
       router.replace("/coupons/create")
@@ -107,6 +123,7 @@ export default function CouponsPage() {
         onEdit={handleEdit}
         showDelete={canDelete}
         deleteMutation={deleteCoupon}
+        rowActions={rowActions}
         triggerRefresh={triggerRefresh}
         deleteModalTitle={t("Delete Coupon")}
         deleteModalDescription={t("Would you like to delete this ?")}

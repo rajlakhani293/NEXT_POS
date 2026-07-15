@@ -901,5 +901,9 @@
   "The interval ends here.": "The interval ends here.",
   "Points earned.": "Points earned.",
   "Reward system updated successfully.": "Reward system updated successfully.",
-  "Reward system created successfully.": "Reward system created successfully."
+  "Reward system created successfully.": "Reward system created successfully.",
+  "Coupon Order Histories List": "Coupon Order Histories List",
+  "Display all coupon order histories.": "Display all coupon order histories.",
+  "Created At": "Created At",
+  "Discount": "Discount"
 }

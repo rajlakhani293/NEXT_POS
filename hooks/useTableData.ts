@@ -81,7 +81,7 @@ export const useTableData = ({
   const [trigger, { data, isLoading, isFetching }] = getMaster()
 
   // Use the sorting hook internally
-  const { sortConfig, handleSort } = useTableSorting("createdAt")
+  const { sortConfig, handleSort } = useTableSorting("created_at", "descending")
 
   const prevQueryRef = useRef<any>(null)
   const prevRefreshVersionRef = useRef(refreshVersion)

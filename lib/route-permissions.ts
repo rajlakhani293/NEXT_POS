@@ -104,6 +104,11 @@ export function resolveRoutePermission(
     return { permission: PERMISSIONS.promotions.update }
   }
 
+  const couponHistoryMatch = pathname.match(/^\/coupons\/([^/]+)\/history$/)
+  if (couponHistoryMatch) {
+    return { permission: PERMISSIONS.promotions.view }
+  }
+
   const rewardSystemEditMatch = pathname.match(/^\/rewards-system\/([^/]+)$/)
   if (rewardSystemEditMatch && rewardSystemEditMatch[1] !== "create") {
     return { permission: PERMISSIONS.rewards.update }
