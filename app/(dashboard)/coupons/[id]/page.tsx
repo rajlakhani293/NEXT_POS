@@ -16,6 +16,13 @@ import { promotions } from "@/lib/api/promotions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
+import {
+  toIdArray,
+  idsToSelectValues,
+  toSelectOptions,
+  generateRandomCode,
+  MultiTargetSelect,
+} from "./utils"
 
 type CouponFormValues = {
   name: string
@@ -51,77 +58,7 @@ const initialValues: CouponFormValues = {
   customer_group_ids: [],
 }
 
-const toIdArray = (value: unknown) =>
-  Array.isArray(value)
-    ? value.map((item) => Number(item)).filter((item) => Number.isFinite(item) && item > 0)
-    : []
 
-const idsToSelectValues = (value: any) =>
-  Array.isArray(value) ? value.map((item) => String(item)) : []
-
-const toSelectOptions = (items: any[] = []) =>
-  items
-    .map((item) => ({
-      value: String(item.value ?? item.id ?? ""),
-      label: String(item.label ?? item.name ?? item.full_name ?? item.username ?? item.value ?? ""),
-    }))
-    .filter((item) => item.value && item.label)
-
-function MultiTargetSelect({
-  label,
-  description,
-  options,
-  value,
-  onChange,
-}: {
-  label: string
-  description: string
-  options: { label: string; value: string }[]
-  value: string[]
-  onChange: (value: string[]) => void
-}) {
-  const { t } = useTranslation()
-  const selected = new Set(value.map(String))
-
-  const toggle = (nextValue: string) => {
-    if (selected.has(nextValue)) {
-      onChange(value.filter((item) => String(item) !== nextValue))
-    } else {
-      onChange([...value, nextValue])
-    }
-  }
-
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <div className="mb-3">
-        <h2 className="text-sm font-semibold text-gray-900">{label}</h2>
-        <p className="mt-1 text-xs font-medium text-gray-500">{description}</p>
-      </div>
-      {options.length ? (
-        <div className="flex flex-wrap gap-2">
-          {options.map((option) => {
-            const isSelected = selected.has(option.value)
-            return (
-              <Button
-                key={option.value}
-                type="button"
-                variant={isSelected ? "blue" : "outline"}
-                size="sm"
-                onClick={() => toggle(option.value)}
-              >
-                {t(option.label)}
-              </Button>
-            )
-          })}
-        </div>
-      ) : (
-        <div className="rounded-md border border-dashed border-gray-200 px-4 py-8 text-center text-sm font-medium text-gray-500">
-          {t("No records found")}
-        </div>
-      )}
-    </div>
-  )
-}
 
 export default function CouponFormPage() {
   const params = useParams()
@@ -247,6 +184,7 @@ export default function CouponFormPage() {
   const targetSections: Record<CouponTargetTab, React.ReactNode> = {
     products: (
       <MultiTargetSelect
+        key="products-select"
         label={t("Select Products")}
         description={t("The following products will be required to be present on the cart, in order for this coupon to be valid.")}
         options={toSelectOptions(productsState.data?.data)}
@@ -256,6 +194,7 @@ export default function CouponFormPage() {
     ),
     categories: (
       <MultiTargetSelect
+        key="categories-select"
         label={t("Select Categories")}
         description={t("The products assigned to one of these categories should be on the cart, in order for this coupon to be valid.")}
         options={toSelectOptions(categoriesState.data?.data)}
@@ -265,6 +204,7 @@ export default function CouponFormPage() {
     ),
     groups: (
       <MultiTargetSelect
+        key="groups-select"
         label={t("Assigned To Customer Group")}
         description={t("Only the customers who belongs to the selected groups will be able to use the coupon.")}
         options={toSelectOptions(customerGroupsState.data?.data)}
@@ -329,6 +269,17 @@ export default function CouponFormPage() {
                   error={errors.code}
                   placeholder={t("Example: WELCOME10")}
                   onChange={(event) => updateField("code", event.target.value)}
+                  addonAfter={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      onClick={() => updateField("code", generateRandomCode())}
+                      className="border-2 border-l-0 rounded-l-none"
+                    >
+                      {t("Generate")}
+                    </Button>
+                  }
                 />
                 <div className="grid gap-2">
                   <label className="text-sm font-semibold text-gray-700">{t("Discount Type")}</label>
