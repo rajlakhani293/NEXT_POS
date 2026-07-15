@@ -17,31 +17,41 @@ import {
 } from "@/components/ui/sidebar"
 import {
   ArrowLeftIcon,
-  BoxesIcon,
+  BadgePercentIcon,
+  BanknoteIcon,
+  Building2Icon,
+  ChartNoAxesCombinedIcon,
+  ClipboardListIcon,
+  FactoryIcon,
   FileBarChart2Icon,
+  FileTextIcon,
+  GiftIcon,
+  GitBranchIcon,
+  ImagesIcon,
+  InfoIcon,
   LayoutGridIcon,
   LandmarkIcon,
-  ImageIcon,
+  MonitorCogIcon,
+  PackageSearchIcon,
   ReceiptTextIcon,
+  RefreshCcwIcon,
   ShieldCheckIcon,
   ShoppingCartIcon,
   SlidersHorizontalIcon,
-  StoreIcon,
+  TicketPercentIcon,
+  TruckIcon,
+  UserCogIcon,
+  UserRoundCogIcon,
   UsersIcon,
   WalletCardsIcon,
-  AlertTriangle,
   PlugIcon,
-  Server,
-  Star,
-  Ticket,
+  SettingsIcon,
 } from "lucide-react"
 
 import {
   MdOutlineArrowCircleLeft,
   MdOutlineArrowCircleRight,
 } from "react-icons/md"
-import { IoSettingsOutline } from "react-icons/io5"
-import { HiReceiptTax } from "react-icons/hi"
 
 type DashboardNavSection = {
   title: string
@@ -67,13 +77,13 @@ const mainNavSections: DashboardNavSection[] = [
   {
     title: "POS",
     url: "/sales/create",
-    icon: <StoreIcon />,
+    icon: <ShoppingCartIcon />,
     permission: PERMISSIONS.sales.create,
   },
   {
     title: "Registers",
     url: "/registers",
-    icon: <StoreIcon />,
+    icon: <BanknoteIcon />,
     permission: PERMISSIONS.cashRegister.view,
   },
   {
@@ -102,7 +112,7 @@ const mainNavSections: DashboardNavSection[] = [
   {
     title: "Procurements",
     url: "/purchases",
-    icon: <ShoppingCartIcon />,
+    icon: <TruckIcon />,
     permission: PERMISSIONS.purchases.view,
   },
   {
@@ -126,19 +136,19 @@ const mainNavSections: DashboardNavSection[] = [
   {
     title: "Reward Systems",
     url: "/rewards-system",
-    icon: <Star />,
+    icon: <GiftIcon />,
     permission: PERMISSIONS.rewards.view,
   },
   {
     title: "List Coupons",
     url: "/coupons",
-    icon: <Ticket />,
+    icon: <TicketPercentIcon />,
     permission: PERMISSIONS.promotions.view,
   },
   {
     title: "Inventory",
     url: "/inventory/products",
-    icon: <BoxesIcon />,
+    icon: <PackageSearchIcon />,
     permission: PERMISSIONS.products.view,
     items: [
       {
@@ -181,19 +191,19 @@ const mainNavSections: DashboardNavSection[] = [
   {
     title: "Providers",
     url: "/providers",
-    icon: <UsersIcon />,
+    icon: <FactoryIcon />,
     permission: PERMISSIONS.providers.view,
   },
   {
     title: "Medias",
     url: "/medias",
-    icon: <ImageIcon />,
+    icon: <ImagesIcon />,
     permission: PERMISSIONS.media.view,
   },
   {
     title: "Accounting",
     url: "/accounting/transactions",
-    icon: <WalletCardsIcon />,
+    icon: <LandmarkIcon />,
     permission: PERMISSIONS.expenses.view,
     items: [
       {
@@ -244,7 +254,7 @@ const mainNavSections: DashboardNavSection[] = [
   {
     title: "Settings",
     url: "/settings/company",
-    icon: <IoSettingsOutline />,
+    icon: <SettingsIcon />,
     permission: [
       PERMISSIONS.settings.view,
       PERMISSIONS.branches.view,
@@ -261,19 +271,19 @@ const settingsNavSections: DashboardNavSection[] = [
   {
     title: "Company",
     url: "/settings/company",
-    icon: <StoreIcon />,
+    icon: <Building2Icon />,
     permission: PERMISSIONS.settings.view,
   },
   {
     title: "Branches",
     url: "/settings/branches",
-    icon: <StoreIcon />,
+    icon: <GitBranchIcon />,
     permission: PERMISSIONS.branches.view,
   },
   {
     title: "Users",
     url: "/settings/users",
-    icon: <UsersIcon />,
+    icon: <UserCogIcon />,
     permission: [
       PERMISSIONS.users.view,
       PERMISSIONS.users.create,
@@ -283,25 +293,25 @@ const settingsNavSections: DashboardNavSection[] = [
   {
     title: "General",
     url: "/settings/general",
-    icon: <LandmarkIcon />,
+    icon: <SlidersHorizontalIcon />,
     permission: PERMISSIONS.settings.view,
   },
   {
     title: "POS",
     url: "/settings/pos",
-    icon: <SlidersHorizontalIcon />,
+    icon: <MonitorCogIcon />,
     permission: PERMISSIONS.settings.view,
   },
   {
     title: "Orders",
     url: "/settings/orders",
-    icon: <ReceiptTextIcon />,
+    icon: <ClipboardListIcon />,
     permission: PERMISSIONS.settings.view,
   },
   {
     title: "Customers",
     url: "/settings/customers",
-    icon: <UsersIcon />,
+    icon: <UserRoundCogIcon />,
     permission: PERMISSIONS.settings.view,
   },
   {
@@ -313,13 +323,13 @@ const settingsNavSections: DashboardNavSection[] = [
   {
     title: "Invoices",
     url: "/settings/invoices",
-    icon: <ImageIcon />,
+    icon: <FileTextIcon />,
     permission: PERMISSIONS.settings.view,
   },
   {
     title: "Reports",
     url: "/settings/reports",
-    icon: <FileBarChart2Icon />,
+    icon: <ChartNoAxesCombinedIcon />,
     permission: PERMISSIONS.settings.view,
   },
   {
@@ -336,7 +346,7 @@ const settingsNavSections: DashboardNavSection[] = [
   {
     title: "Taxes",
     url: "/settings/tax-groups",
-    icon: <HiReceiptTax />,
+    icon: <BadgePercentIcon />,
     permission: [
       PERMISSIONS.taxes.view,
       PERMISSIONS.taxes.create,
@@ -358,13 +368,13 @@ const settingsNavSections: DashboardNavSection[] = [
   {
     title: "Reset",
     url: "/settings/reset",
-    icon: <AlertTriangle />,
+    icon: <RefreshCcwIcon />,
     permission: PERMISSIONS.settings.view,
   },
   {
     title: "About",
     url: "/settings/about",
-    icon: <Server />,
+    icon: <InfoIcon />,
     permission: PERMISSIONS.settings.view,
   },
 ]
