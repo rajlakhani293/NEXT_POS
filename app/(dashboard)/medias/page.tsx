@@ -126,7 +126,6 @@ export default function MediasPage() {
 
   const [searchField, setSearchField] = useState("")
   const [galleryQuery, setGalleryQuery] = useState<GalleryQuery>({ page: 1, search: "" })
-  const [bulkSelect, setBulkSelect] = useState(false)
   const [resources, setResources] = useState<MediaRecord[]>([])
   const [galleryMeta, setGalleryMeta] = useState<GalleryResponse>({})
   const [isDragging, setIsDragging] = useState(false)
@@ -162,7 +161,6 @@ export default function MediasPage() {
       }))
       setResources(items)
       setGalleryMeta(data)
-      setBulkSelect(false)
     },
     [galleryQuery.page, galleryQuery.search, getMediaData]
   )
@@ -316,17 +314,13 @@ export default function MediasPage() {
 
   const selectResource = (resource: MediaRecord) => {
     setResources((current) =>
-      current.map((item) => {
-        const isTarget = item.id === resource.id
-        if (!bulkSelect && !isTarget) return { ...item, selected: false }
-        if (!isTarget) return item
-        return { ...item, selected: !item.selected }
-      })
+      current.map((item) =>
+        item.id === resource.id ? { ...item, selected: !item.selected } : item
+      )
     )
   }
 
-  const cancelBulkSelect = () => {
-    setBulkSelect(false)
+  const clearSelection = () => {
     setResources((current) => current.map((resource) => ({ ...resource, selected: false })))
   }
 
@@ -493,68 +487,50 @@ export default function MediasPage() {
                       <div
                         key={resource.id}
                         className={cn(
-                          "group relative aspect-square rounded-lg overflow-hidden border bg-white transition-all duration-300 select-none cursor-pointer flex flex-col",
+                          "group relative aspect-square rounded-xl overflow-hidden border bg-white transition-all duration-300 select-none cursor-pointer flex flex-col shadow-sm",
                           resource.selected
-                            ? "border-indigo-600 ring-2 ring-indigo-600/20"
-                            : "border-slate-200 hover:border-slate-350"
+                            ? "border-indigo-600 ring-2 ring-indigo-500/20 bg-indigo-50/5"
+                            : "border-slate-200 hover:border-slate-300 hover:shadow"
                         )}
                         onClick={() => selectResource(resource)}
                       >
-                        {/* Checkbox Trigger Overlay */}
-                        <div
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (!bulkSelect) {
-                              setBulkSelect(true)
-                              setResources((current) =>
-                                current.map((item) =>
-                                  item.id === resource.id ? { ...item, selected: true } : { ...item, selected: false }
-                                )
-                              )
-                            } else {
-                              selectResource(resource)
-                            }
-                          }}
-                          className={cn(
-                            "absolute top-3 left-3 z-30 size-5 rounded-lg border flex items-center justify-center transition-all duration-200 cursor-pointer shadow-sm",
-                            resource.selected
-                              ? "bg-indigo-600 border-indigo-600 text-white"
-                              : "bg-white/90 border-slate-300 text-transparent hover:bg-white hover:border-slate-400 opacity-0 group-hover:opacity-100"
-                          )}
-                        >
-                          <Check className="size-3 stroke-[3]" />
-                        </div>
+                        {/* Selected Indicator Check Badge */}
+                        {resource.selected && (
+                          <div className="absolute top-2 right-2 z-30 bg-indigo-600 text-white rounded-full p-0.5 shadow border-2 border-white flex items-center justify-center size-5 animate-in zoom-in-75 duration-200">
+                            <Check className="size-3 stroke-[3]" />
+                          </div>
+                        )}
 
-                        {/* Pill Extension Badge */}
+                        {/* File Extension Badge (Top Left) */}
                         {resource.extension && (
-                          <span className="absolute top-3 right-3 z-30 text-[9px] font-bold tracking-wider uppercase bg-white/90 text-slate-700 px-2 py-0.5 rounded-full shadow-sm border border-slate-100/50 backdrop-blur-sm">
+                          <span className="absolute top-2 left-2 z-20 text-[9px] font-bold tracking-wider uppercase bg-white/90 text-slate-600 px-1.5 py-0.5 rounded shadow-sm border border-slate-100/50 backdrop-blur-sm">
                             {resource.extension}
                           </span>
                         )}
 
                         {/* Display Area */}
-                        <div className="flex-1 min-h-0 bg-slate-100/50 flex items-center justify-center relative overflow-hidden p-2">
+                        <div className="flex-1 min-h-0 bg-slate-50 flex items-center justify-center relative overflow-hidden p-2">
                           {isImage(resource) && imageUrl ? (
                             <img
                               src={imageUrl}
                               alt={resource.name}
-                              className="max-h-full max-w-full object-contain rounded-lg transition-transform duration-500 group-hover:scale-105"
+                              className="max-h-full max-w-full object-contain rounded transition-transform duration-500 group-hover:scale-102"
                               loading="lazy"
                             />
                           ) : (
-                            <div className="transition-transform duration-300 group-hover:scale-105">
+                            <div className="transition-transform duration-300 group-hover:scale-102">
                               {getFileIcon(resource.extension)}
                             </div>
                           )}
-                          <div className="absolute inset-0 bg-slate-950/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                          <div className="absolute inset-0 bg-slate-950/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                         </div>
 
                         {/* Info Footer */}
-                        <div className="p-3 border-t border-slate-100 bg-white">
-                          <p className="text-xs font-semibold text-slate-700 truncate" title={resource.name}>
+                        <div className="p-2.5 border-t border-slate-100 bg-white">
+                          <p className="text-[11px] font-semibold text-slate-700 truncate" title={resource.name}>
                             {resource.name}
                           </p>
-                          <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400">
+                          <div className="flex items-center justify-between mt-0.5 text-[9px] text-slate-400">
                             <span>{formatBusinessDate(resource.created_at, posOptions)}</span>
                             <span>{resource.user?.full_name || resource.user?.username || ""}</span>
                           </div>
@@ -581,73 +557,84 @@ export default function MediasPage() {
             </main>
           </div>
 
-          {/* Footer Navigation & Actions Control */}
-          {(lastPage > 1 || bulkSelect || hasOneSelected) && (
-            <footer className="bg-white border-t border-slate-100 px-5 py-4 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
-              {/* Actions Area */}
-              <div className="flex items-center gap-2">
-                {bulkSelect ? (
-                  <Button type="button" variant="outline" size="sm" className="rounded-lg border-slate-200 text-xs flex items-center gap-1.5" onClick={cancelBulkSelect}>
-                    <XIcon className="size-3.5" />
-                    {t("Cancel Selection")}
-                  </Button>
-                ) : (
-                  <Button type="button" variant="outline" size="sm" className="rounded-lg border-slate-200 text-xs flex items-center gap-1.5" onClick={() => setBulkSelect(true)}>
-                    <CheckCircle2 className="size-3.5" />
-                    {t("Bulk Select")}
-                  </Button>
-                )}
+          {/* Floating Actions Selector Bar */}
+          <div
+            className={cn(
+              "fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-indigo-50 border border-indigo-150 shadow-[0_10px_30px_rgba(49,85,246,0.08)] rounded-xl px-4 py-2.5 flex items-center gap-4 transition-all duration-300 transform",
+              hasOneSelected
+                ? "translate-y-0 opacity-100 scale-100"
+                : "translate-y-10 opacity-0 scale-95 pointer-events-none"
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold bg-indigo-600 text-white h-5 px-1.5 rounded flex items-center justify-center font-mono">
+                {selectedResources.length}
+              </span>
+              <span className="text-xs font-semibold text-indigo-900">{t("Selected")}</span>
+            </div>
 
-                {hasOneSelected && canDelete && (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="rounded-lg text-xs flex items-center gap-1.5 animate-in fade-in duration-200"
-                    onClick={deleteSelected}
-                    disabled={deleteState.isLoading}
-                  >
-                    {deleteState.isLoading ? <Spinner className="size-3.5" /> : <Trash2Icon className="size-3.5" />}
-                    {t("Delete Selected")}
-                  </Button>
-                )}
+            <div className="h-4 w-px bg-indigo-200/60" />
+
+            <div className="flex items-center gap-1.5">
+              {canDelete && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 rounded-lg text-xs font-semibold flex items-center gap-1.5"
+                  onClick={deleteSelected}
+                  disabled={deleteState.isLoading}
+                >
+                  {deleteState.isLoading ? <Spinner className="size-3.5" /> : <Trash2Icon className="size-3.5" />}
+                  {t("Delete")}
+                </Button>
+              )}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={clearSelection}
+              >
+                {t("Clear")}
+              </Button>
+            </div>
+          </div>
+
+          {/* Footer Navigation */}
+          {lastPage > 1 && (
+            <footer className="bg-white border-t border-slate-100 px-5 py-4 shrink-0 flex items-center justify-between z-10">
+              {/* Page count */}
+              <div className="text-xs text-slate-400">
+                {t("Page")} <span className="font-semibold text-slate-700">{currentPage}</span> {t("of")}{" "}
+                <span className="font-semibold text-slate-700">{lastPage}</span>
               </div>
 
-              {/* Page count */}
-              {lastPage > 1 && (
-                <div className="text-xs text-slate-400">
-                  {t("Page")} <span className="font-semibold text-slate-700">{currentPage}</span> {t("of")}{" "}
-                  <span className="font-semibold text-slate-700">{lastPage}</span>
-                </div>
-              )}
-
               {/* Page buttons */}
-              {lastPage > 1 && (
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="rounded-lg border-slate-200 text-xs flex items-center gap-1"
-                    disabled={currentPage <= 1 || galleryState.isLoading}
-                    onClick={() => setGalleryQuery({ page: currentPage - 1, search: searchField })}
-                  >
-                    <ChevronLeft className="size-3.5" />
-                    {t("Previous")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="rounded-lg border-slate-200 text-xs flex items-center gap-1"
-                    disabled={currentPage >= lastPage || galleryState.isLoading}
-                    onClick={() => setGalleryQuery({ page: currentPage + 1, search: searchField })}
-                  >
-                    {t("Next")}
-                    <ChevronRight className="size-3.5" />
-                  </Button>
-                </div>
-              )}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg border-slate-200 text-xs flex items-center gap-1"
+                  disabled={currentPage <= 1 || galleryState.isLoading}
+                  onClick={() => setGalleryQuery({ page: currentPage - 1, search: searchField })}
+                >
+                  <ChevronLeft className="size-3.5" />
+                  {t("Previous")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg border-slate-200 text-xs flex items-center gap-1"
+                  disabled={currentPage >= lastPage || galleryState.isLoading}
+                  onClick={() => setGalleryQuery({ page: currentPage + 1, search: searchField })}
+                >
+                  {t("Next")}
+                  <ChevronRight className="size-3.5" />
+                </Button>
+              </div>
             </footer>
           )}
 
