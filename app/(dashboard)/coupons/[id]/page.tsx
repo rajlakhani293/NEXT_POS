@@ -30,11 +30,10 @@ type CouponFormValues = {
   limit_usage: string
   product_ids: string[]
   category_ids: string[]
-  customer_ids: string[]
   customer_group_ids: string[]
 }
 
-type CouponTargetTab = "products" | "categories" | "groups" | "customers"
+type CouponTargetTab = "products" | "categories" | "groups"
 
 const initialValues: CouponFormValues = {
   name: "",
@@ -49,7 +48,6 @@ const initialValues: CouponFormValues = {
   limit_usage: "",
   product_ids: [],
   category_ids: [],
-  customer_ids: [],
   customer_group_ids: [],
 }
 
@@ -107,7 +105,7 @@ function MultiTargetSelect({
               <Button
                 key={option.value}
                 type="button"
-                variant={isSelected ? "secondary" : "outline"}
+                variant={isSelected ? "blue" : "outline"}
                 size="sm"
                 onClick={() => toggle(option.value)}
               >
@@ -145,15 +143,13 @@ export default function CouponFormPage() {
   const [getCouponById, couponState] = (promotions as any).useGetCouponByIdMutation()
   const [getProductsDropdown, productsState] = (catalog as any).useGetProductsDropdownMutation()
   const [getCategoriesDropdown, categoriesState] = (catalog as any).useGetCategoriesDropdownMutation()
-  const [getCustomersDropdown, customersState] = (customers as any).useGetCustomersDropdownMutation()
   const [getCustomerGroupsDropdown, customerGroupsState] = (customers as any).useGetCustomerGroupsDropdownMutation()
 
   useEffect(() => {
     getProductsDropdown({})
     getCategoriesDropdown({})
-    getCustomersDropdown({})
     getCustomerGroupsDropdown({})
-  }, [getCategoriesDropdown, getCustomerGroupsDropdown, getCustomersDropdown, getProductsDropdown])
+  }, [getCategoriesDropdown, getCustomerGroupsDropdown, getProductsDropdown])
 
   useEffect(() => {
     const loadKey = `${couponId || "create"}`
@@ -183,7 +179,6 @@ export default function CouponFormPage() {
         limit_usage: record.limit_usage ? String(record.limit_usage) : "",
         product_ids: idsToSelectValues(record.product_ids),
         category_ids: idsToSelectValues(record.category_ids),
-        customer_ids: idsToSelectValues(record.customer_ids),
         customer_group_ids: idsToSelectValues(record.customer_group_ids),
       })
       setErrors({})
@@ -196,7 +191,6 @@ export default function CouponFormPage() {
     couponState.isLoading ||
     productsState.isLoading ||
     categoriesState.isLoading ||
-    customersState.isLoading ||
     customerGroupsState.isLoading
 
   const updateField = <K extends keyof CouponFormValues>(name: K, value: CouponFormValues[K]) => {
@@ -234,7 +228,6 @@ export default function CouponFormPage() {
         limit_usage: Number(values.limit_usage || 0),
         product_ids: toIdArray(values.product_ids),
         category_ids: toIdArray(values.category_ids),
-        customer_ids: toIdArray(values.customer_ids),
         customer_group_ids: toIdArray(values.customer_group_ids),
       }
 
@@ -277,15 +270,6 @@ export default function CouponFormPage() {
         options={toSelectOptions(customerGroupsState.data?.data)}
         value={values.customer_group_ids}
         onChange={(nextValue) => updateField("customer_group_ids", nextValue)}
-      />
-    ),
-    customers: (
-      <MultiTargetSelect
-        label={t("Select Customers")}
-        description={t("Only the selected customers will be able to use the coupon.")}
-        options={toSelectOptions(customersState.data?.data)}
-        value={values.customer_ids}
-        onChange={(nextValue) => updateField("customer_ids", nextValue)}
       />
     ),
   }
@@ -347,7 +331,7 @@ export default function CouponFormPage() {
                   onChange={(event) => updateField("code", event.target.value)}
                 />
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium text-gray-700">{t("Discount Type")}</label>
+                  <label className="text-sm font-semibold text-gray-700">{t("Discount Type")}</label>
                   <ButtonGroup>
                     {[
                       { label: t("Flat"), value: "flat_discount" },
@@ -356,7 +340,7 @@ export default function CouponFormPage() {
                       <Button
                         key={option.value}
                         type="button"
-                        variant={values.type === option.value ? "secondary" : "outline"}
+                        variant={values.type === option.value ? "blue" : "outline"}
                         onClick={() => updateField("type", option.value)}
                       >
                         {option.label}
@@ -423,22 +407,12 @@ export default function CouponFormPage() {
                   <TabsTrigger value="products">{t("Products")}</TabsTrigger>
                   <TabsTrigger value="categories">{t("Categories")}</TabsTrigger>
                   <TabsTrigger value="groups">{t("Customer Groups")}</TabsTrigger>
-                  <TabsTrigger value="customers">{t("Customers")}</TabsTrigger>
                 </TabsList>
               </Tabs>
               <div className="pt-4">{targetSections[activeTargetTab]}</div>
             </section>
           </div>
         </div>
-
-        <footer className="flex justify-end gap-2 border-t border-gray-200 bg-white p-3">
-          <Button type="button" variant="outline" onClick={goBack}>
-            {t("Cancel")}
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? t("Saving...") : t("Save")}
-          </Button>
-        </footer>
       </form>
     </DashboardPage>
   )
