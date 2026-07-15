@@ -70,24 +70,25 @@ export default function TransactionHistoryPage() {
         deleteModalDescription={t("Are you sure you want to delete this transaction history?")}
         rowActions={(_, record) =>
           !record.has_reflection &&
-          record.has_transaction &&
-          !record.is_reflection
+            record.has_transaction &&
+            !record.is_reflection
             ? [
-                {
-                  key: "create_reflection",
-                  label: t("Create Reflection"),
-                  labelText: t("Create Reflection"),
-                  icon: <Repeat2Icon className="size-4" />,
-                  onClick: async () => {
-                    const response = await createReflection({ id: record.id }).unwrap()
-                    showToast.success(response?.message || t("Accounting reflection created successfully."))
-                    table.triggerRefresh()
-                  },
+              {
+                key: "create_reflection",
+                label: t("Create Reflection"),
+                labelText: t("Create Reflection"),
+                icon: <Repeat2Icon className="size-4" />,
+                onClick: async () => {
+                  const response = await createReflection({ id: record.id }).unwrap()
+                  showToast.success(response?.message || t("Accounting reflection created successfully."))
+                  table.triggerRefresh()
                 },
-              ]
+              },
+            ]
             : []
         }
         showDateRange
+        showEdit={false}
       />
     </PermissionGuard>
   )

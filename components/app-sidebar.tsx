@@ -243,7 +243,7 @@ const mainNavSections: DashboardNavSection[] = [
   },
   {
     title: "Settings",
-    url: "/settings/general",
+    url: "/settings/company",
     icon: <IoSettingsOutline />,
     permission: [
       PERMISSIONS.settings.view,
