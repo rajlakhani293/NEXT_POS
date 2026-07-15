@@ -1,15 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { ImagePlus, Search } from "lucide-react"
+import { Search } from "lucide-react"
 
 import DynamicForm from "@/components/DynamicForm"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { UniFieldInput } from "@/components/ui/unifield-input"
+import { MediaManagerDialog, mediaImageUrl } from "@/components/media-manager"
 import { showToast } from "@/lib/toast"
 import { catalog } from "@/lib/api/catalog"
-import { media } from "@/lib/api/media"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 
 type CategoryFormProps = {
@@ -37,24 +35,7 @@ const initialValues: CategoryFormValues = {
   description: "",
 }
 
-const resolveAssetUrl = (value?: string | null) => {
-  if (!value) return ""
-  if (/^(https?:|data:|blob:)/.test(value)) return value
-  const base = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/api\/?$/, "").replace(/\/$/, "")
-  const path = value.startsWith("/") ? value : `/${value}`
-  return `${base}${path}`
-}
-
-const mediaImageUrl = (record?: any) =>
-  resolveAssetUrl(
-    record?.sizes?.original ||
-    record?.sizes?.thumb ||
-    record?.url ||
-    record?.full_url ||
-    record?.path ||
-    record?.preview_url ||
-    ""
-  )
+import { useEffect, useState } from "react"
 
 export function CategoryForm({
   isOpen,
@@ -207,17 +188,6 @@ function CategoryPreviewPicker({
 }) {
   const { t } = useTranslation()
   const [mediaManagerOpen, setMediaManagerOpen] = useState(false)
-  const [mediaSearch, setMediaSearch] = useState("")
-  const [getMediaData, mediaState] = (media as any).useGetMediaDataMutation()
-  const mediaRecords = mediaState.data?.data?.items || mediaState.data?.data?.data || mediaState.data?.data || []
-
-  useEffect(() => {
-    if (!mediaManagerOpen) return
-    const timeout = window.setTimeout(() => {
-      void getMediaData({ page: 1, per_page: 50, search: mediaSearch })
-    }, 250)
-    return () => window.clearTimeout(timeout)
-  }, [getMediaData, mediaManagerOpen, mediaSearch])
 
   return (
     <div className="space-y-2">
@@ -237,60 +207,18 @@ function CategoryPreviewPicker({
       />
       <p className="text-sm text-gray-500">{t("Provide a preview url to the category.")}</p>
 
-      <Dialog open={mediaManagerOpen} onOpenChange={setMediaManagerOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>{t("Medias Manager")}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <UniFieldInput
-              label={t("Search")}
-              placeholder={t("Search Medias")}
-              value={mediaSearch}
-              onChange={(event) => setMediaSearch(event.target.value)}
-            />
-            <div className="grid max-h-[420px] grid-cols-2 gap-3 overflow-y-auto pr-1 md:grid-cols-4">
-              {mediaRecords.map((record: any, index: number) => {
-                const imageUrl = mediaImageUrl(record)
-                return (
-                  <button
-                    key={`category-media-${record.id || imageUrl || index}`}
-                    type="button"
-                    className="rounded-lg border bg-white p-2 text-left hover:border-gray-900"
-                    onClick={() => {
-                      const selectedUrl = mediaImageUrl(record)
-                      if (!selectedUrl) {
-                        showToast.error(t("Selected media has no image URL."))
-                        return
-                      }
-                      handleChange("preview_url", selectedUrl)
-                      setMediaManagerOpen(false)
-                    }}
-                  >
-                    <div className="aspect-square overflow-hidden rounded-md bg-gray-100">
-                      {imageUrl ? (
-                        <img src={imageUrl} alt={record.name || record.file_name || t("Image")} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-muted-foreground">
-                          <ImagePlus className="size-6" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-2 truncate text-xs font-semibold text-gray-700">
-                      {record.name || record.file_name || record.url || t("Image")}
-                    </div>
-                  </button>
-                )
-              })}
-              {!mediaRecords.length ? (
-                <div className="col-span-full rounded-lg border border-dashed p-8 text-center text-sm font-medium text-muted-foreground">
-                  {t("No record found")}
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <MediaManagerDialog
+        open={mediaManagerOpen}
+        onOpenChange={setMediaManagerOpen}
+        onSelect={(record) => {
+          const selectedUrl = mediaImageUrl(record)
+          if (!selectedUrl) {
+            showToast.error(t("Selected media has no image URL."))
+            return
+          }
+          handleChange("preview_url", selectedUrl)
+        }}
+      />
     </div>
   )
 }

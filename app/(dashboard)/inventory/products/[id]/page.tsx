@@ -20,15 +20,14 @@ import { UnitGroupForm } from "@/app/(dashboard)/inventory/unit-groups/createUpd
 import { TaxGroupForm } from "@/app/(dashboard)/settings/tax-groups/createUpdate"
 import { Button } from "@/components/ui/button"
 import CustomModal from "@/components/ui/customModal"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SelectItem, SelectItemText } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
+import { MediaManagerDialog } from "@/components/media-manager"
 import { catalog } from "@/lib/api/catalog"
-import { media } from "@/lib/api/media"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
@@ -410,12 +409,9 @@ export default function ProductFormPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isFooterStuck, setIsFooterStuck] = useState(false)
   const [gallery, setGallery] = useState<ProductGalleryFormValues[]>([])
-  const [mediaSearch, setMediaSearch] = useState("")
-  const [mediaTab, setMediaTab] = useState<"upload" | "gallery">("gallery")
   const [mediaManagerOpen, setMediaManagerOpen] = useState(false)
   const [activeGalleryIndex, setActiveGalleryIndex] = useState<number | null>(null)
   const [mediaPickerTarget, setMediaPickerTarget] = useState<"gallery" | "unit-preview" | null>(null)
-  const [isUploadingMedia, setIsUploadingMedia] = useState(false)
 
   const [unitQuantityForm, setUnitQuantityForm] =
     useState<ProductUnitQuantityFormValues>(initialUnitQuantityValues)
@@ -433,8 +429,6 @@ export default function ProductFormPage() {
   const contentRef = useRef<HTMLDivElement>(null)
   const paginationSentinelRef = useRef<HTMLDivElement>(null)
   const loadKeyRef = useRef("")
-  const mediaRequestKeyRef = useRef("")
-  const mediaFileInputRef = useRef<HTMLInputElement | null>(null)
   const draftUnitCounterRef = useRef(0)
 
   const [createProduct] = (catalog as any).useCreateProductMutation()
@@ -462,8 +456,7 @@ export default function ProductFormPage() {
   const [getUnitGroupsDropdown, unitGroups] = (
     catalog as any
   ).useGetUnitGroupsDropdownMutation()
-  const [getMediaData, mediaState] = (media as any).useGetMediaDataMutation()
-  const [uploadMedia] = (media as any).useUploadMediaMutation()
+  // Media endpoints managed via @/components/media-manager
 
   useEffect(() => {
     const loadKey = `${id}:${isEdit ? "edit" : "create"}:${posOptions.quick_product_default_unit || ""}`
@@ -580,8 +573,7 @@ export default function ProductFormPage() {
     return String(record?.group_id || "") === String(formData.unit_group_id)
   })
   const taxGroupRecords = uniqueBy(taxGroups.data?.data || [], (group: any) => String(group?.id || ""))
-  const rawMediaRecords = mediaState.data?.data?.items || mediaState.data?.data?.data || mediaState.data?.data || []
-  const mediaRecords = uniqueBy(rawMediaRecords, (record: any) => String(record?.id || mediaImageUrl(record) || record?.name || ""))
+  // Media records retrieved inside MediaManagerDialog
   const selectedUnitGroupName =
     unitGroupOptions.find((option) => option.value === String(formData.unit_group_id))?.label ||
     t("New Group")
@@ -600,20 +592,7 @@ export default function ProductFormPage() {
     return Date.now() * 1000 + draftUnitCounterRef.current
   }
 
-  const loadMediaRecords = async (search = mediaSearch) => {
-    const requestKey = `1:50:${search}`
-    if (mediaRequestKeyRef.current === requestKey) return
-    mediaRequestKeyRef.current = requestKey
-    try {
-      await getMediaData({ page: 1, per_page: 50, search })
-    } finally {
-      window.setTimeout(() => {
-        if (mediaRequestKeyRef.current === requestKey) {
-          mediaRequestKeyRef.current = ""
-        }
-      }, 500)
-    }
-  }
+  // Media loading logic encapsulated in MediaManagerDialog
 
   useEffect(() => {
     const sentinel = paginationSentinelRef.current
@@ -632,13 +611,7 @@ export default function ProductFormPage() {
     return () => observer.disconnect()
   }, [isLoading])
 
-  useEffect(() => {
-    if (!mediaManagerOpen || mediaTab !== "gallery") return
-    const timer = window.setTimeout(() => {
-      loadMediaRecords(mediaSearch)
-    }, 300)
-    return () => window.clearTimeout(timer)
-  }, [mediaManagerOpen, mediaSearch, mediaTab])
+  // Media synchronization handled in MediaManagerDialog
 
   const updateField = (name: keyof ProductFormValues, value: any) => {
     setFormData((current) => {
@@ -856,7 +829,6 @@ export default function ProductFormPage() {
     ])
     setActiveGalleryIndex(nextIndex)
     setMediaPickerTarget("gallery")
-    setMediaTab("gallery")
     setMediaManagerOpen(true)
   }
 
@@ -881,14 +853,12 @@ export default function ProductFormPage() {
   const openMediaManager = (index: number) => {
     setActiveGalleryIndex(index)
     setMediaPickerTarget("gallery")
-    setMediaTab("gallery")
     setMediaManagerOpen(true)
   }
 
   const openUnitPreviewMediaManager = () => {
     setActiveGalleryIndex(null)
     setMediaPickerTarget("unit-preview")
-    setMediaTab("gallery")
     setMediaManagerOpen(true)
   }
 
@@ -928,26 +898,7 @@ export default function ProductFormPage() {
     )
   }
 
-  const handleMediaUpload = async (event: any) => {
-    const files = Array.from(event.target.files || []) as File[]
-    event.target.value = ""
-    if (!files.length) return
-
-    setIsUploadingMedia(true)
-    try {
-      for (const file of files) {
-        const formData = new FormData()
-        formData.append("file", file)
-        await uploadMedia(formData).unwrap()
-      }
-      showToast.success(t("File uploaded successfully."))
-      setMediaTab("gallery")
-      mediaRequestKeyRef.current = ""
-      await loadMediaRecords(mediaSearch)
-    } finally {
-      setIsUploadingMedia(false)
-    }
-  }
+  // Media uploads managed via MediaManagerDialog
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -1636,104 +1587,11 @@ export default function ProductFormPage() {
             {t("Are you sure you want to remove this selling unit?")}
           </p>
         </CustomModal>
-        <Dialog open={mediaManagerOpen} onOpenChange={setMediaManagerOpen}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>{t("Medias Manager")}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={mediaTab === "upload" ? "default" : "outline"}
-                  onClick={() => setMediaTab("upload")}
-                >
-                  <Upload className="size-4" />
-                  {t("Upload")}
-                </Button>
-                <Button
-                  type="button"
-                  variant={mediaTab === "gallery" ? "default" : "outline"}
-                  onClick={() => {
-                    setMediaTab("gallery")
-                    loadMediaRecords(mediaSearch)
-                  }}
-                >
-                  <ImagePlus className="size-4" />
-                  {t("Gallery")}
-                </Button>
-              </div>
-
-              {mediaTab === "upload" ? (
-                <div
-                  className="flex min-h-[320px] cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed bg-gray-50 p-6 text-center"
-                  onClick={() => mediaFileInputRef.current?.click()}
-                >
-                  <Upload className="mb-3 size-10 text-muted-foreground" />
-                  <h3 className="text-base font-bold text-gray-900">
-                    {t("Click here or drop your files to upload.")}
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {t("Your uploaded files will displays here.")}
-                  </p>
-                  <input
-                    ref={mediaFileInputRef}
-                    className="hidden"
-                    type="file"
-                    multiple
-                    onChange={handleMediaUpload}
-                  />
-                  {isUploadingMedia ? (
-                    <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                      <Spinner />
-                      {t("Uploading...")}
-                    </div>
-                  ) : null}
-                </div>
-              ) : (
-                <>
-                  <UniFieldInput
-                    label={t("Search")}
-                    placeholder={t("Search Medias")}
-                    value={mediaSearch}
-                    onChange={(event) => setMediaSearch(event.target.value)}
-                  />
-                  <div className="grid max-h-[420px] grid-cols-2 gap-3 overflow-y-auto pr-1 md:grid-cols-4">
-                    {mediaRecords.map((record: any, index: number) => {
-                      const imageUrl = mediaImageUrl(record)
-                      return (
-                        <button
-                          key={`media-${record.id}-${index}`}
-                          type="button"
-                          className="rounded-lg border bg-white p-2 text-left hover:border-gray-900"
-                          onClick={() => handleSelectMedia(record)}
-                        >
-                          <div className="aspect-square overflow-hidden rounded-md bg-gray-100">
-                            {imageUrl ? (
-                              <img src={imageUrl} alt={record.name || record.file_name || t("Image")} className="h-full w-full object-cover" />
-                            ) : (
-                              <div className="flex h-full items-center justify-center text-muted-foreground">
-                                <ImagePlus className="size-6" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="mt-2 truncate text-xs font-semibold text-gray-700">
-                            {record.name || record.file_name || record.url || t("Image")}
-                          </div>
-                        </button>
-                      )
-                    })}
-                    {!mediaRecords.length ? (
-                      <div className="col-span-full rounded-lg border border-dashed p-8 text-center text-sm font-medium text-muted-foreground">
-                        {t("No record found")}
-                      </div>
-                    ) : null}
-                  </div>
-                </>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+        <MediaManagerDialog
+          open={mediaManagerOpen}
+          onOpenChange={setMediaManagerOpen}
+          onSelect={handleSelectMedia}
+        />
       </div>
     </DashboardPage>
   )

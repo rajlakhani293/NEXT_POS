@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Copy, KeyRound, RefreshCw, Save, Trash2 } from "lucide-react"
+import { Copy, KeyRound, RefreshCw, Save, Search, Trash2 } from "lucide-react"
 
 import { useConfirmDialog } from "@/components/confirm-dialog"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
@@ -12,6 +12,7 @@ import { SelectItem } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
+import { MediaManagerDialog, mediaImageUrl } from "@/components/media-manager"
 import { supportedLanguages } from "@/lib/i18n/languages"
 import { auth, type AccessTokenRecord } from "@/lib/api/auth"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
@@ -129,6 +130,8 @@ export default function UserProfilePage() {
     () => tokenResponse?.data || [],
     [tokenResponse?.data]
   )
+
+  const [mediaManagerOpen, setMediaManagerOpen] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -381,6 +384,15 @@ export default function UserProfilePage() {
                         placeholder={`${t("Enter")} ${t("Avatar")}`}
                         value={values.avatar_link}
                         onChange={(event) => setField("avatar_link", event.target.value)}
+                        suffix={
+                          <button
+                            type="button"
+                            onClick={() => setMediaManagerOpen(true)}
+                            className="flex h-full items-center justify-center text-gray-500 hover:text-gray-900 focus:outline-none"
+                          >
+                            <Search className="size-4" />
+                          </button>
+                        }
                       />
                       <p className="text-xs text-slate-500">
                         {t("Define the image that should be used as an avatar.")}
@@ -541,6 +553,18 @@ export default function UserProfilePage() {
           </div>
         </div>
         {confirmDialog}
+        <MediaManagerDialog
+          open={mediaManagerOpen}
+          onOpenChange={setMediaManagerOpen}
+          onSelect={(record) => {
+            const selectedUrl = mediaImageUrl(record)
+            if (!selectedUrl) {
+              showToast.error(t("Selected media has no image URL."))
+              return
+            }
+            setField("avatar_link", selectedUrl)
+          }}
+        />
       </PermissionGuard>
     </DashboardPage>
   )
