@@ -705,5 +705,10 @@
   "Coupon Order Histories List": "Lista de historiales de pedidos de cupones",
   "Display all coupon order histories.": "Mostrar todos los historiales de pedidos de cupones.",
   "Created At": "Creado en",
-  "Discount": "Descuento"
+  "Discount": "Descuento",
+  "Rows per page": "Filas por página",
+  "20 / page": "20 / página",
+  "50 / page": "50 / página",
+  "100 / page": "100 / página",
+  "Sr No": "Nº"
 }

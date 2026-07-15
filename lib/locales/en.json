@@ -905,5 +905,10 @@
   "Coupon Order Histories List": "Coupon Order Histories List",
   "Display all coupon order histories.": "Display all coupon order histories.",
   "Created At": "Created At",
-  "Discount": "Discount"
+  "Discount": "Discount",
+  "Rows per page": "Rows per page",
+  "20 / page": "20 / page",
+  "50 / page": "50 / page",
+  "100 / page": "100 / page",
+  "Sr No": "Sr No"
 }

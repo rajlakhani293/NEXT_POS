@@ -13,6 +13,8 @@ import { SelectItem } from "./ui/select"
 import { Button } from "./ui/button"
 import { ChevronLeft, ChevronRight, Info } from "lucide-react"
 
+import { useTranslation } from "@/lib/contexts/TranslationContext"
+
 interface TableFooterProps {
   totalItems: number
   itemsPerPage: number
@@ -36,6 +38,8 @@ const TableFooter = ({
   totalPages,
   getPageNumbers,
 }: TableFooterProps) => {
+  const { t, language } = useTranslation()
+
   return (
     <>
       {/* Footer / Pagination */}
@@ -84,27 +88,30 @@ const TableFooter = ({
 
             <div className="ml-auto flex items-center gap-4">
               <UniFieldSelect
+                key={language}
                 value={String(itemsPerPage)}
                 onValueChange={(val) => onChange("itemsPerPage", Number(val))}
-                placeholder="Rows per page"
-                containerClassName="w-[130px]"
+                placeholder={t("Rows per page")}
+                containerClassName="w-[135px]"
                 size="sm"
               >
-                <SelectItem value="20">20 / page</SelectItem>
-                <SelectItem value="50">50 / page</SelectItem>
-                <SelectItem value="100">100 / page</SelectItem>
+                <SelectItem value="20">{t("20 / page")}</SelectItem>
+                <SelectItem value="50">{t("50 / page")}</SelectItem>
+                <SelectItem value="100">{t("100 / page")}</SelectItem>
               </UniFieldSelect>
 
               <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => onPageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
+                <span className={cn(currentPage === 1 && "cursor-not-allowed")}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => onPageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </span>
 
                 {getPageNumbers().map((page, i) =>
                   page === "..." ? (
@@ -124,15 +131,17 @@ const TableFooter = ({
                   )
                 )}
 
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => onPageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                <span className={cn(currentPage === totalPages && "cursor-not-allowed")}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => onPageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </span>
               </div>
             </div>
           </div>

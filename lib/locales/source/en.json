@@ -2954,5 +2954,10 @@
   "Product Taxes (Included)": "Product Taxes (Included)",
   "Unassigned Tax Group": "Unassigned Tax Group",
   "POS wasn't able to perform a database request. This error might be related to a misconfiguration on your .env file. The following guide might be useful to help you solving this issue.": "POS wasn't able to perform a database request. This error might be related to a misconfiguration on your .env file. The following guide might be useful to help you solving this issue.",
-  "We're unable to locate the page you're searching for. This page was moved, deleted or simply invalid. You can start by giving another shot clicking on \"Try Again\". If the issue persist, uses the bellow output to receive support.": "We're unable to locate the page you're searching for. This page was moved, deleted or simply invalid. You can start by giving another shot clicking on \"Try Again\". If the issue persist, uses the bellow output to receive support."
+  "We're unable to locate the page you're searching for. This page was moved, deleted or simply invalid. You can start by giving another shot clicking on \"Try Again\". If the issue persist, uses the bellow output to receive support.": "We're unable to locate the page you're searching for. This page was moved, deleted or simply invalid. You can start by giving another shot clicking on \"Try Again\". If the issue persist, uses the bellow output to receive support.",
+  "Rows per page": "Rows per page",
+  "20 / page": "20 / page",
+  "50 / page": "50 / page",
+  "100 / page": "100 / page",
+  "Sr No": "Sr No"
 }

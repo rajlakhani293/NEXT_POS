@@ -5,6 +5,7 @@ import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
 import { showToast } from "@/lib/toast"
 import TableFooter from "./TableFooter"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import {
   Tooltip,
   TooltipContent,
@@ -238,6 +239,7 @@ const DynamicTable = ({
   setAddEntityOpen,
   secondaryActionButton,
 }: DynamicTableProps) => {
+  const { t } = useTranslation()
   const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false)
   const [itemToDelete, setItemToDelete] = useState<string | number | null>(null)
   const paginationSentinelRef = useRef<HTMLDivElement | null>(null)
@@ -667,7 +669,7 @@ const DynamicTable = ({
                 <tr className="border-b hover:bg-muted/90">
                   <th className="h-10 w-16 px-2 text-center align-middle whitespace-nowrap">
                     <div className="flex flex-col py-2">
-                      <span className="font-semibold">Sr No</span>
+                      <span className="font-semibold">{t("Sr No")}</span>
                     </div>
                   </th>
                   {columns.map((col) => (
