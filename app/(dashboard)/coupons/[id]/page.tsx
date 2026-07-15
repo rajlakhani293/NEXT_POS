@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
+import { DateTimePicker, TimePicker } from "@/components/date-picker"
 
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Button } from "@/components/ui/button"
@@ -110,7 +111,7 @@ export default function CouponFormPage() {
         discount_value: record.discount_value ? String(record.discount_value) : "",
         minimum_cart_value: record.minimum_cart_value ? String(record.minimum_cart_value) : "",
         maximum_cart_value: record.maximum_cart_value ? String(record.maximum_cart_value) : "",
-        valid_until: record.valid_until ? String(record.valid_until).slice(0, 10) : "",
+        valid_until: record.valid_until ? String(record.valid_until) : "",
         valid_hours_start: record.valid_hours_start || "",
         valid_hours_end: record.valid_hours_end || "",
         limit_usage: record.limit_usage ? String(record.limit_usage) : "",
@@ -324,11 +325,12 @@ export default function CouponFormPage() {
                   placeholder={t("0 means no maximum")}
                   onChange={(event) => updateField("maximum_cart_value", event.target.value)}
                 />
-                <UniFieldInput
+                <DateTimePicker
                   label={t("Valid Until")}
-                  type="date"
-                  value={values.valid_until}
-                  onChange={(event) => updateField("valid_until", event.target.value)}
+                  value={values.valid_until ? new Date(values.valid_until) : undefined}
+                  onChange={(date) => updateField("valid_until", date ? date.toISOString() : "")}
+                  placeholder={t("Pick date and time")}
+                  timeLabel={t("Time")}
                 />
                 <UniFieldInput
                   label={t("Limit Usage")}
@@ -337,17 +339,19 @@ export default function CouponFormPage() {
                   placeholder={t("0 means unlimited")}
                   onChange={(event) => updateField("limit_usage", event.target.value)}
                 />
-                <UniFieldInput
+                <TimePicker
                   label={t("Valid Hours Start")}
                   value={values.valid_hours_start}
                   placeholder={t("HH:MM e.g. 09:00")}
-                  onChange={(event) => updateField("valid_hours_start", event.target.value)}
+                  clearLabel={t("Clear")}
+                  onChange={(time) => updateField("valid_hours_start", time)}
                 />
-                <UniFieldInput
+                <TimePicker
                   label={t("Valid Hours End")}
                   value={values.valid_hours_end}
                   placeholder={t("HH:MM e.g. 21:00")}
-                  onChange={(event) => updateField("valid_hours_end", event.target.value)}
+                  clearLabel={t("Clear")}
+                  onChange={(time) => updateField("valid_hours_end", time)}
                 />
               </div>
             </section>

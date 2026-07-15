@@ -879,5 +879,10 @@
   "The following products will be required to be present on the cart, in order for this coupon to be valid.": "The following products will be required to be present on the cart, in order for this coupon to be valid.",
   "The products assigned to one of these categories should be on the cart, in order for this coupon to be valid.": "The products assigned to one of these categories should be on the cart, in order for this coupon to be valid.",
   "Only the customers who belongs to the selected groups will be able to use the coupon.": "Only the customers who belongs to the selected groups will be able to use the coupon.",
-  "Select products, categories, or customer groups to restrict coupon usage. Leave empty to apply globally.": "Select products, categories, or customer groups to restrict coupon usage. Leave empty to apply globally."
+  "Select products, categories, or customer groups to restrict coupon usage. Leave empty to apply globally.": "Select products, categories, or customer groups to restrict coupon usage. Leave empty to apply globally.",
+  "Pick date and time": "Pick date and time",
+  "Time": "Time",
+  "Clear": "Clear",
+  "HH:MM e.g. 09:00": "HH:MM e.g. 09:00",
+  "HH:MM e.g. 21:00": "HH:MM e.g. 21:00"
 }

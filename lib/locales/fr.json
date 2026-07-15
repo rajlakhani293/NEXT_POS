@@ -679,5 +679,10 @@
   "The following products will be required to be present on the cart, in order for this coupon to be valid.": "Les produits suivants devront etre presents dans le panier pour que ce coupon soit valide.",
   "The products assigned to one of these categories should be on the cart, in order for this coupon to be valid.": "Les produits assignes a l'une de ces categories doivent etre dans le panier pour que ce coupon soit valide.",
   "Only the customers who belongs to the selected groups will be able to use the coupon.": "Seuls les clients appartenant aux groupes selectionnes pourront utiliser le coupon.",
-  "Select products, categories, or customer groups to restrict coupon usage. Leave empty to apply globally.": "Selectionnez des produits, categories ou groupes de clients pour restreindre l'utilisation du coupon. Laissez vide pour appliquer globalement."
+  "Select products, categories, or customer groups to restrict coupon usage. Leave empty to apply globally.": "Selectionnez des produits, categories ou groupes de clients pour restreindre l'utilisation du coupon. Laissez vide pour appliquer globalement.",
+  "Pick date and time": "Choisir la date et l'heure",
+  "Time": "Heure",
+  "Clear": "Effacer",
+  "HH:MM e.g. 09:00": "HH:MM ex. 09:00",
+  "HH:MM e.g. 21:00": "HH:MM ex. 21:00"
 }

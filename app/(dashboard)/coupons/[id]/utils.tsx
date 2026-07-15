@@ -60,7 +60,7 @@ export function MultiTargetSelect({
         <p className="mt-1 text-xs font-medium text-gray-500">{description}</p>
       </div>
       {options.length ? (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1">
           {options.map((option) => {
             const isSelected = selected.has(option.value)
             return (
