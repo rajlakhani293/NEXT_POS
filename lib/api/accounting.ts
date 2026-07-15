@@ -59,6 +59,10 @@ const endpointsConfig = {
       method: "DELETE",
     }),
   },
+  createTransactionReflection: {
+    query: ({ id }: { id: number | string }) =>
+      getMutation(`transactions/history/${id}/create-reflection`),
+  },
   triggerTransaction: {
     query: ({ id }: { id: number | string }) =>
       getMutation(`/transactions/trigger/${id}`),
