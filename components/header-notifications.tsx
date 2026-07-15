@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { BellIcon, CheckCheckIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -14,12 +14,20 @@ import {
 } from "@/components/ui/popover"
 import { Spinner } from "@/components/ui/spinner"
 import { notifications } from "@/lib/api/notifications"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
+let unreadCountCache = { value: 0, loadedAt: 0 }
+let unreadCountRequest: Promise<number> | null = null
+
 export function HeaderNotifications() {
+  const { t } = useTranslation()
   const [items, setItems] = useState<any[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [isOpen, setIsOpen] = useState(false)
+  const loadedCountRef = useRef(false)
+  const loadedListRef = useRef(false)
   const [getNotificationsData, notificationsState] = (
     notifications as any
   ).useGetNotificationsDataMutation()
@@ -28,32 +36,72 @@ export function HeaderNotifications() {
     notifications as any
   ).useMarkNotificationsReadMutation()
 
-  const refresh = async () => {
+  const refreshCount = async (force = false) => {
     try {
-      const [listResponse, countResponse] = await Promise.all([
-        getNotificationsData({ page: 1, limit: 6 }).unwrap(),
-        getUnreadCount().unwrap(),
-      ])
-      setItems(listResponse?.data?.items || [])
-      setUnreadCount(countResponse?.data?.count || 0)
+      const now = Date.now()
+      if (!force && unreadCountCache.loadedAt && now - unreadCountCache.loadedAt < 15000) {
+        setUnreadCount(unreadCountCache.value)
+        return
+      }
+
+      if (!force && unreadCountRequest) {
+        const cachedCount = await unreadCountRequest
+        setUnreadCount(cachedCount)
+        return
+      }
+
+      const request = getUnreadCount()
+        .unwrap()
+        .then((countResponse: any) => {
+          const count = countResponse?.data?.count || 0
+          unreadCountCache = { value: count, loadedAt: Date.now() }
+          return count
+        })
+        .finally(() => {
+          unreadCountRequest = null
+        })
+
+      unreadCountRequest = request
+      const count = await request
+      setUnreadCount(count)
     } catch {
-      setItems([])
       setUnreadCount(0)
     }
   }
 
+  const refreshList = async () => {
+    try {
+      const listResponse = await getNotificationsData({ page: 1, limit: 6 }).unwrap()
+      setItems(listResponse?.data?.items || [])
+      loadedListRef.current = true
+    } catch {
+      setItems([])
+    }
+  }
+
+  const refresh = async () => {
+    await Promise.all([refreshList(), refreshCount(true)])
+  }
+
   useEffect(() => {
-    refresh()
+    if (loadedCountRef.current) return
+    loadedCountRef.current = true
+    refreshCount()
   }, [])
+
+  useEffect(() => {
+    if (!isOpen || loadedListRef.current) return
+    refreshList()
+  }, [isOpen])
 
   const markRead = async (ids: number[]) => {
     if (!ids.length) return
     try {
       const response = await markNotificationsRead({ payLoad: { ids } }).unwrap()
-      showToast.success(response?.message || "Notification marked as read.")
+      showToast.success(response?.message || t("Notification marked as read."))
       await refresh()
     } catch {
-      showToast.error("Unable to update notifications.")
+      showToast.error(t("Unable to update notifications."))
     }
   }
 
@@ -62,7 +110,7 @@ export function HeaderNotifications() {
     .map((item) => Number(item.id))
 
   return (
-    <Popover>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -81,7 +129,7 @@ export function HeaderNotifications() {
       <PopoverContent align="end" sideOffset={10} className="w-96 p-0">
         <PopoverHeader className="border-b p-3">
           <div className="flex items-center justify-between gap-3">
-            <PopoverTitle>Notifications</PopoverTitle>
+            <PopoverTitle>{t("Notifications")}</PopoverTitle>
             <Button
               type="button"
               variant="ghost"
@@ -94,7 +142,7 @@ export function HeaderNotifications() {
               ) : (
                 <CheckCheckIcon className="size-4" />
               )}
-              Mark all
+              {t("Mark all")}
             </Button>
           </div>
         </PopoverHeader>
@@ -102,7 +150,7 @@ export function HeaderNotifications() {
           {notificationsState.isLoading ? (
             <div className="flex items-center justify-center gap-2 p-8 text-sm font-medium text-muted-foreground">
               <Spinner />
-              Loading notifications...
+              {t("Loading notifications...")}
             </div>
           ) : items.length ? (
             <div className="space-y-1">
@@ -134,7 +182,7 @@ export function HeaderNotifications() {
             </div>
           ) : (
             <div className="p-8 text-center text-sm font-medium text-muted-foreground">
-              No notifications yet.
+              {t("No notifications yet.")}
             </div>
           )}
         </div>

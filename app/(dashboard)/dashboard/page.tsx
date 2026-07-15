@@ -1,611 +1,457 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo } from "react"
 import Link from "next/link"
 import {
   ArrowRight,
   BadgeIndianRupee,
+  BarChart3,
   PackageCheck,
   ReceiptIndianRupee,
   ReceiptText,
   RefreshCw,
   RotateCcw,
+  ShoppingCart,
   Truck,
+  UserRound,
   Wallet,
-  AlertTriangle,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { DashboardPage as DashboardPageShell } from "@/components/dashboard/dashboard-page"
 import { Spinner } from "@/components/ui/spinner"
 import { reports } from "@/lib/api/reports"
+import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { showToast } from "@/lib/toast"
+import { cn } from "@/lib/utils"
 
-const formatMoney = (value: any) => `₹${Number(value || 0).toFixed(2)}`
+const money = (value: any) => `₹${Number(value || 0).toFixed(2)}`
+
+const apiDate = (date: Date) => {
+  const offset = date.getTimezoneOffset()
+  return new Date(date.getTime() - offset * 60 * 1000).toISOString().slice(0, 10)
+}
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
   const [refreshDashboardSnapshot, refreshState] = (reports as any).useRefreshDashboardSnapshotMutation()
-  const [getLowStockReport, lowStockState] = (reports as any).useGetLowStockReportMutation()
-  const [lowStockItems, setLowStockItems] = useState<any[]>([])
-
-  useEffect(() => {
-    const fetchLowStock = async () => {
-      try {
-        const res = await getLowStockReport({ page: 1, limit: 5 }).unwrap()
-        setLowStockItems(res?.data?.items || [])
-      } catch (err) {
-        console.error("Failed to load low stock report", err)
-      }
-    }
-    fetchLowStock()
-  }, [getLowStockReport])
-
 
   const queryArgs = useMemo(() => {
     const now = new Date()
-    const start = new Date(now)
-    start.setHours(0, 0, 0, 0)
-    const end = new Date(now)
-    end.setHours(23, 59, 59, 999)
     return {
-      startDate: start.toISOString(),
-      endDate: end.toISOString(),
+      startDate: apiDate(now),
+      endDate: apiDate(now),
     }
   }, [])
 
-  const { data: summaryResponse, refetch } = (reports as any).useGetDashboardSummaryQuery(queryArgs)
+  const { data: summaryResponse, refetch, isLoading } = (reports as any).useGetDashboardSummaryQuery(queryArgs)
   const summary = summaryResponse?.data || null
 
-  const cards = useMemo(
-    () => [
-      {
-        title: "Today Sales",
-        value: formatMoney(summary?.sales?.total_sales),
-        helper: `${summary?.sales?.order_count || 0} orders`,
-        icon: <ReceiptText className="size-5" />,
-      },
-      {
-        title: "Collected Today",
-        value: formatMoney(summary?.sales?.total_paid),
-        helper: `${summary?.sales?.paid_orders || 0} fully paid`,
-        icon: <BadgeIndianRupee className="size-5" />,
-      },
-      {
-        title: "Due Pending",
-        value: formatMoney(summary?.sales?.total_due),
-        helper: `${summary?.sales?.partially_paid_orders || 0} partial / ${summary?.sales?.unpaid_orders || 0} unpaid`,
-        icon: <Wallet className="size-5" />,
-      },
-      {
-        title: "Refunded",
-        value: formatMoney(summary?.sales?.refund_total),
-        helper: `${(summary?.sales?.refunded_orders || 0) + (summary?.sales?.partially_refunded_orders || 0)} orders`,
-        icon: <RotateCcw className="size-5" />,
-      },
-    ],
-    [summary]
-  )
-
-  const businessCards = useMemo(
-    () => [
-      {
-        title: "Purchases",
-        value: formatMoney(summary?.purchases?.total_purchase),
-        helper: `${summary?.purchases?.purchase_count || 0} purchase orders`,
-        icon: <PackageCheck className="size-5" />,
-      },
-      {
-        title: "Supplier Payable",
-        value: formatMoney(summary?.suppliers?.total_supplier_payable),
-        helper: `${summary?.suppliers?.supplier_count || 0} suppliers`,
-        icon: <Truck className="size-5" />,
-      },
-      {
-        title: "Customer Due",
-        value: formatMoney(summary?.customers?.total_customer_due),
-        helper: `${summary?.customers?.customer_count || 0} customers`,
-        icon: <Wallet className="size-5" />,
-      },
-      {
-        title: "Expenses",
-        value: formatMoney(summary?.expenses?.total_expense),
-        helper: `${summary?.expenses?.expense_count || 0} expense entries`,
-        icon: <ReceiptIndianRupee className="size-5" />,
-      },
-    ],
-    [summary]
-  )
-
+  const sales = summary?.sales || {}
+  const purchases = summary?.purchases || {}
+  const customers = summary?.customers || {}
+  const suppliers = summary?.suppliers || {}
+  const expenses = summary?.expenses || {}
   const shift = summary?.shift
+  const cashierStats = summary?.cashier_stats
   const bestCustomers = summary?.best_customers || []
   const bestCashiers = summary?.best_cashiers || []
   const recentOrders = summary?.recent_orders || []
   const weeklySales = summary?.weekly_sales || []
   const prevWeeklySales = summary?.prev_weekly_sales || []
 
-  const normalizedWeeklyData = useMemo(() => {
-    const data = []
+  const summaryCards = useMemo(
+    () => [
+      {
+        title: t("Paid Orders"),
+        value: money(sales.total_paid),
+        helper: `${sales.paid_orders || 0} ${t("orders")}`,
+        icon: BadgeIndianRupee,
+        tone: "text-emerald-600 bg-emerald-50",
+      },
+      {
+        title: t("Unpaid Orders"),
+        value: money(sales.total_due),
+        helper: `${sales.partially_paid_orders || 0} ${t("partial")} / ${sales.unpaid_orders || 0} ${t("unpaid")}`,
+        icon: Wallet,
+        tone: "text-amber-600 bg-amber-50",
+      },
+      {
+        title: t("Refunded Orders"),
+        value: money(sales.refund_total),
+        helper: `${(sales.refunded_orders || 0) + (sales.partially_refunded_orders || 0)} ${t("orders")}`,
+        icon: RotateCcw,
+        tone: "text-rose-600 bg-rose-50",
+      },
+      {
+        title: t("Total Orders"),
+        value: String(sales.order_count || 0),
+        helper: t("created today"),
+        icon: ReceiptText,
+        tone: "text-sky-600 bg-sky-50",
+      },
+    ],
+    [sales, t]
+  )
+
+  const businessCards = useMemo(
+    () => [
+      {
+        title: t("Purchases"),
+        value: money(purchases.total_purchase),
+        helper: `${purchases.purchase_count || 0} ${t("purchase orders")}`,
+        icon: PackageCheck,
+      },
+      {
+        title: t("Supplier Payable"),
+        value: money(suppliers.total_supplier_payable),
+        helper: `${suppliers.supplier_count || 0} ${t("suppliers")}`,
+        icon: Truck,
+      },
+      {
+        title: t("Customer Due"),
+        value: money(customers.total_customer_due),
+        helper: `${customers.customer_count || 0} ${t("customers")}`,
+        icon: UserRound,
+      },
+      {
+        title: t("Expenses"),
+        value: money(expenses.total_expense),
+        helper: `${expenses.expense_count || 0} ${t("entries")}`,
+        icon: ReceiptIndianRupee,
+      },
+    ],
+    [customers, expenses, purchases, suppliers, t]
+  )
+
+  const weeklyData = useMemo(() => {
     const today = new Date()
-    const formatDate = (date: Date) => {
-      const offset = date.getTimezoneOffset()
-      const localDate = new Date(date.getTime() - offset * 60 * 1000)
-      return localDate.toISOString().split("T")[0]
-    }
+    const rows = []
 
     for (let i = 6; i >= 0; i--) {
-      const currentDate = new Date(today)
-      currentDate.setDate(today.getDate() - i)
-      const currentDateStr = formatDate(currentDate)
+      const current = new Date(today)
+      current.setDate(today.getDate() - i)
+      const currentDate = apiDate(current)
 
-      const prevDate = new Date(currentDate)
-      prevDate.setDate(currentDate.getDate() - 7)
-      const prevDateStr = formatDate(prevDate)
+      const previous = new Date(current)
+      previous.setDate(current.getDate() - 7)
+      const previousDate = apiDate(previous)
 
-      const currentMatch = weeklySales.find((d: any) => String(d.day).startsWith(currentDateStr))
-      const prevMatch = prevWeeklySales.find((d: any) => String(d.day).startsWith(prevDateStr))
+      const currentMatch = weeklySales.find((day: any) => String(day.day).startsWith(currentDate))
+      const previousMatch = prevWeeklySales.find((day: any) => String(day.day).startsWith(previousDate))
 
-      data.push({
-        day: currentDate.toLocaleDateString("en-US", { weekday: "short" }),
-        date: currentDateStr,
+      rows.push({
+        label: current.toLocaleDateString("en-US", { weekday: "short" }),
+        date: currentDate,
         currentSales: Number(currentMatch?.total_sales || 0),
         currentOrders: Number(currentMatch?.order_count || 0),
-        prevSales: Number(prevMatch?.total_sales || 0),
-        prevOrders: Number(prevMatch?.order_count || 0),
+        previousSales: Number(previousMatch?.total_sales || 0),
+        previousOrders: Number(previousMatch?.order_count || 0),
       })
     }
-    return data
-  }, [weeklySales, prevWeeklySales])
+
+    return rows
+  }, [prevWeeklySales, weeklySales])
 
   const refreshSnapshot = async () => {
-    const response = await refreshDashboardSnapshot({}).unwrap()
-    showToast.success(response?.message || "Dashboard snapshot refreshed.")
-    refetch()
+    try {
+      const response = await refreshDashboardSnapshot({ date: queryArgs.startDate }).unwrap()
+      showToast.success(response?.message || t("Dashboard snapshot refreshed."))
+      refetch()
+    } catch (error: any) {
+      showToast.error(error?.data?.message || t("Unable to refresh dashboard."))
+    }
   }
+
+  const maxSales = Math.max(...weeklyData.map((item) => Math.max(item.currentSales, item.previousSales)), 1)
 
   return (
     <DashboardPageShell padding="default">
       <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-950">Dashboard</h1>
-          <p className="text-sm text-slate-500">
-            Sales snapshot, due summary and live shift overview.
-          </p>
-        </div>
-        <Button onClick={refreshSnapshot} disabled={refreshState.isLoading}>
-          {refreshState.isLoading ? <Spinner /> : <RefreshCw className="size-4" />}
-          Refresh
-        </Button>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <div
-            key={card.title}
-            className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-500">{card.title}</p>
-              <div className="rounded-full bg-slate-100 p-2 text-slate-700">
-                {card.icon}
-              </div>
-            </div>
-            <p className="mt-4 text-3xl font-bold text-slate-950">{card.value}</p>
-            <p className="mt-1 text-sm text-slate-500">{card.helper}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {businessCards.map((card) => (
-          <div
-            key={card.title}
-            className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-500">{card.title}</p>
-              <div className="rounded-full bg-slate-100 p-2 text-slate-700">
-                {card.icon}
-              </div>
-            </div>
-            <p className="mt-4 text-3xl font-bold text-slate-950">{card.value}</p>
-            <p className="mt-1 text-sm text-slate-500">{card.helper}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
+        <section className="overflow-hidden rounded-lg border border-gray-200 bg-white text-slate-900 shadow-sm">
+          <div className="flex flex-col gap-5 border-b border-gray-100 p-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="text-lg font-bold text-slate-950">Quick Access</h2>
-              <p className="text-sm text-slate-500">
-                Jump straight into common sales operations.
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-teal-600">{t("Today")}</p>
+              <h1 className="mt-1 text-3xl font-bold text-slate-900">{t("Dashboard")}</h1>
+              <p className="mt-1 text-sm text-slate-500">{t("Sales snapshot, due summary and register activity.")}</p>
             </div>
+            <Button
+              type="button"
+              onClick={refreshSnapshot}
+              disabled={refreshState.isLoading}
+              className="bg-teal-600 text-white hover:bg-teal-500"
+            >
+              {refreshState.isLoading ? <Spinner /> : <RefreshCw className="size-4" />}
+              {t("Refresh")}
+            </Button>
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            <Link
-              href="/sales/create"
-              className="rounded-2xl border border-gray-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-slate-950">Start Billing</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Open POS screen and create new sale.
-                  </p>
+          <div className="grid gap-px bg-gray-200 sm:grid-cols-2 xl:grid-cols-4">
+            {summaryCards.map((card) => {
+              const Icon = card.icon
+              return (
+                <div key={card.title} className="bg-white p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-500">{card.title}</p>
+                      <p className="mt-3 text-2xl font-bold text-slate-900">{card.value}</p>
+                      <p className="mt-1 text-xs font-medium text-slate-400">{card.helper}</p>
+                    </div>
+                    <div className={cn("rounded-md p-2", card.tone)}>
+                      <Icon className="size-5" />
+                    </div>
+                  </div>
                 </div>
-                <ArrowRight className="size-4 text-slate-500" />
-              </div>
-            </Link>
-            <Link
-              href="/sales"
-              className="rounded-2xl border border-gray-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-slate-950">Sales History</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Review billed orders, due and refunds.
-                  </p>
-                </div>
-                <ArrowRight className="size-4 text-slate-500" />
-              </div>
-            </Link>
-            <Link
-              href="/purchases"
-              className="rounded-2xl border border-gray-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-slate-950">Purchases</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Create purchase orders and receive stock.
-                  </p>
-                </div>
-                <ArrowRight className="size-4 text-slate-500" />
-              </div>
-            </Link>
-            <Link
-              href="/reports"
-              className="rounded-2xl border border-gray-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-slate-950">Reports</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Open due, ledger and accounting reports.
-                  </p>
-                </div>
-                <ArrowRight className="size-4 text-slate-500" />
-              </div>
-            </Link>
+              )
+            })}
           </div>
+        </section>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {businessCards.map((card) => {
+            const Icon = card.icon
+            return (
+              <div key={card.title} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-slate-500">{card.title}</p>
+                  <div className="rounded-md bg-slate-100 p-2 text-slate-700">
+                    <Icon className="size-4" />
+                  </div>
+                </div>
+                <p className="mt-3 text-xl font-bold text-slate-950">{card.value}</p>
+                <p className="mt-1 text-xs font-medium text-slate-500">{card.helper}</p>
+              </div>
+            )
+          })}
         </div>
 
-        <div className="space-y-4">
-          {/* Active Shift Widget */}
-          <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-950">Active Shift</h2>
-            <p className="text-sm text-slate-500">
-              Live cashier shift summary for this branch.
-            </p>
+        <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
+          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-950">{t("Weekly Sales")}</h2>
+                <p className="text-sm text-slate-500">{t("This week compared with the previous week.")}</p>
+              </div>
+              <div className="hidden items-center gap-4 text-xs font-semibold text-slate-500 sm:flex">
+                <span className="flex items-center gap-2"><span className="size-2 rounded-full bg-teal-500" />{t("This Week")}</span>
+                <span className="flex items-center gap-2"><span className="size-2 rounded-full bg-slate-300" />{t("Last Week")}</span>
+              </div>
+            </div>
 
-            {!summary ? (
-              <div className="mt-6 flex items-center gap-3 text-sm text-slate-500">
+            <div className="mt-5 flex h-64 items-end gap-3 border-b border-gray-200 px-1 pb-3">
+              {weeklyData.map((day) => {
+                const currentPct = Math.max((day.currentSales / maxSales) * 100, day.currentSales > 0 ? 4 : 1)
+                const previousPct = Math.max((day.previousSales / maxSales) * 100, day.previousSales > 0 ? 4 : 1)
+                return (
+                  <div key={day.date} className="group relative flex h-full min-w-0 flex-1 flex-col justify-end">
+                    <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 rounded-md bg-slate-950 px-3 py-2 text-xs text-white shadow-lg group-hover:block">
+                      <p className="whitespace-nowrap font-semibold">{day.date}</p>
+                      <p className="mt-1 whitespace-nowrap">{t("This Week")}: {money(day.currentSales)} ({day.currentOrders})</p>
+                      <p className="whitespace-nowrap">{t("Last Week")}: {money(day.previousSales)} ({day.previousOrders})</p>
+                    </div>
+                    <div className="flex h-[88%] items-end justify-center gap-1">
+                      <div className="w-full max-w-5 rounded-t bg-teal-500" style={{ height: `${currentPct}%` }} />
+                      <div className="w-full max-w-5 rounded-t bg-slate-300" style={{ height: `${previousPct}%` }} />
+                    </div>
+                    <p className="mt-2 truncate text-center text-xs font-semibold text-slate-500">{day.label}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-950">{t("Active Shift")}</h2>
+            <p className="text-sm text-slate-500">{t("Current register activity for this branch.")}</p>
+
+            {isLoading ? (
+              <div className="mt-6 flex items-center gap-2 text-sm font-medium text-slate-500">
                 <Spinner />
-                Loading shift summary...
+                {t("Loading shift summary...")}
               </div>
             ) : shift ? (
               <div className="mt-5 space-y-3">
-                <div className="rounded-2xl border border-gray-100 bg-slate-50 p-4">
-                  <p className="font-semibold text-slate-950">
-                    {shift.register__name || "Register"}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Cashier: {shift.cashier__full_name || "-"}
-                  </p>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="font-semibold text-slate-950">{shift.register__name || t("Register")}</p>
+                  <p className="mt-1 text-sm text-slate-500">{t("Cashier")}: {shift.cashier__full_name || "-"}</p>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-gray-100 p-4">
-                    <p className="text-sm text-slate-500">Opening Cash</p>
-                    <p className="mt-1 font-bold text-slate-950">
-                      {formatMoney(shift.opening_cash)}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-gray-100 p-4">
-                    <p className="text-sm text-slate-500">Expected Cash</p>
-                    <p className="mt-1 font-bold text-slate-950">
-                      {formatMoney(shift.expected_cash)}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-gray-100 p-4">
-                    <p className="text-sm text-slate-500">Sales Collected</p>
-                    <p className="mt-1 font-bold text-slate-950">
-                      {formatMoney(shift.total_sales_amount)}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-gray-100 p-4">
-                    <p className="text-sm text-slate-500">Refund Out</p>
-                    <p className="mt-1 font-bold text-slate-950">
-                      {formatMoney(shift.total_refund_amount)}
-                    </p>
-                  </div>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                  <ShiftMetric label={t("Opening Cash")} value={money(shift.opening_cash)} />
+                  <ShiftMetric label={t("Expected Cash")} value={money(shift.expected_cash)} />
+                  <ShiftMetric label={t("Sales Collected")} value={money(shift.total_sales_amount)} />
+                  <ShiftMetric label={t("Refund Out")} value={money(shift.total_refund_amount)} />
                 </div>
               </div>
             ) : (
-              <div className="mt-6 rounded-2xl border border-dashed border-gray-200 py-10 text-center text-sm text-slate-500">
-                No active cashier shift found.
+              <div className="mt-6 rounded-lg border border-dashed border-gray-200 py-8 text-center text-sm font-medium text-slate-500">
+                {t("No active cashier shift found.")}
               </div>
             )}
-          </div>
-
-          {/* Cashier Stats Widget */}
-          {summary?.cashier_stats && (
-            <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-950">My Stats Today</h2>
-              <p className="text-sm text-slate-500 mb-4">
-                Personal cashier statistics for today.
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
-                  <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold uppercase text-sm">
-                    {summary.cashier_stats.cashier_name?.[0] || "C"}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-slate-950">
-                      {summary.cashier_stats.cashier_name || "Cashier"}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Member since {summary.cashier_stats.member_since}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid gap-3 grid-cols-2">
-                  <div className="rounded-2xl border border-gray-100 p-3 bg-slate-50/50">
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase">Today's Orders</p>
-                    <p className="mt-1 font-bold text-slate-950">{summary.cashier_stats.today_orders}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{summary.cashier_stats.total_orders} total</p>
-                  </div>
-                  <div className="rounded-2xl border border-gray-100 p-3 bg-slate-50/50">
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase">Today's Sales</p>
-                    <p className="mt-1 font-bold text-slate-950">{formatMoney(summary.cashier_stats.today_sales)}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{formatMoney(summary.cashier_stats.total_sales)} total</p>
-                  </div>
-                  <div className="rounded-2xl border border-gray-100 p-3 bg-slate-50/50">
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase">Today's Refunds</p>
-                    <p className="mt-1 font-bold text-rose-600">{formatMoney(summary.cashier_stats.today_refunds)}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{formatMoney(summary.cashier_stats.total_refunds)} total</p>
-                  </div>
-                  <div className="rounded-2xl border border-gray-100 p-3 bg-slate-50/50">
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase">New Customers</p>
-                    <p className="mt-1 font-bold text-slate-950">{summary.cashier_stats.today_customers}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{summary.cashier_stats.total_customers} total</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-        <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-slate-950">Best Customers</h2>
-              <p className="text-sm text-slate-500">
-                Top customers by visible sales amount.
-              </p>
-            </div>
-          </div>
-          <div className="mt-5 space-y-3">
-            {bestCustomers.length ? (
-              bestCustomers.map((customer: any, index: number) => (
-                <div
-                  key={`${customer.customer_id}-${index}`}
-                  className="flex items-center justify-between rounded-2xl border border-gray-100 bg-slate-50 px-4 py-3"
-                >
-                  <div>
-                    <p className="font-semibold text-slate-950">
-                      {customer.customer__name || "Walk-in Customer"}
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      {customer.order_count || 0} orders
-                    </p>
-                  </div>
-                  <p className="font-bold text-slate-950">
-                    {formatMoney(customer.total_spent)}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-2xl border border-dashed border-gray-200 py-10 text-center text-sm text-slate-500">
-                No customer sales found for this period.
-              </div>
-            )}
-          </div>
+          </section>
         </div>
 
-        <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-slate-950">Best Cashiers</h2>
-              <p className="text-sm text-slate-500">
-                Top cashiers by billed sales amount.
-              </p>
+        <div className="grid gap-4 xl:grid-cols-[0.75fr_1.25fr]">
+          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-950">{t("Quick Access")}</h2>
+            <p className="text-sm text-slate-500">{t("Common operations used during the day.")}</p>
+            <div className="mt-4 grid gap-2">
+              <QuickLink href="/sales/create" icon={ShoppingCart} title={t("Start Billing")} helper={t("Open POS screen and create a new sale.")} />
+              <QuickLink href="/sales" icon={ReceiptText} title={t("Sales History")} helper={t("Review billed orders, dues and refunds.")} />
+              <QuickLink href="/purchases" icon={PackageCheck} title={t("Purchases")} helper={t("Create purchase orders and receive stock.")} />
+              <QuickLink href="/reports" icon={BarChart3} title={t("Reports")} helper={t("Open sales, stock and accounting reports.")} />
             </div>
-          </div>
-          <div className="mt-5 space-y-3">
-            {bestCashiers.length ? (
-              bestCashiers.map((cashier: any, index: number) => (
-                <div
-                  key={`${cashier.cashier_id}-${index}`}
-                  className="flex items-center justify-between rounded-2xl border border-gray-100 bg-slate-50 px-4 py-3"
-                >
-                  <div>
-                    <p className="font-semibold text-slate-950">
-                      {cashier.cashier__full_name || "Cashier"}
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      {cashier.order_count || 0} orders
-                    </p>
-                  </div>
-                  <p className="font-bold text-slate-950">
-                    {formatMoney(cashier.total_sales)}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-2xl border border-dashed border-gray-200 py-10 text-center text-sm text-slate-500">
-                No cashier sales found for this period.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+          </section>
 
-      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-950">Weekly Sales</h2>
-          <p className="text-sm text-slate-500 mb-4">
-            Last 7 days sales snapshot for this branch.
-          </p>
-          {weeklySales.length || prevWeeklySales.length ? (
-            <div className="mt-4 flex h-60 items-end justify-between gap-2 px-2 pb-2 border-b border-gray-100">
-              {(() => {
-                const maxVal = Math.max(
-                  ...normalizedWeeklyData.map((d) => Math.max(d.currentSales, d.prevSales)),
-                  1
-                );
-                return normalizedWeeklyData.map((day: any, index: number) => {
-                  const currentPct = (day.currentSales / maxVal) * 100;
-                  const prevPct = (day.prevSales / maxVal) * 100;
-                  return (
-                    <div key={`${day.date}-${index}`} className="group relative flex flex-1 flex-col items-center h-full justify-end">
-                      {/* Tooltip */}
-                      <div className="pointer-events-none absolute bottom-full mb-2 hidden flex-col items-center group-hover:flex z-30">
-                        <div className="rounded bg-slate-950 px-3 py-2 text-xs text-white shadow-md whitespace-nowrap">
-                          <p className="font-bold border-b border-slate-700 pb-1 mb-1 text-[10px]">{day.date} ({day.day})</p>
-                          <p className="text-[10px] flex items-center gap-1.5">
-                            <span className="inline-block size-2 rounded-full bg-blue-600"></span>
-                            This Week: <span className="font-semibold">{formatMoney(day.currentSales)}</span> ({day.currentOrders} orders)
-                          </p>
-                          <p className="text-[10px] flex items-center gap-1.5 mt-0.5">
-                            <span className="inline-block size-2 rounded-full bg-slate-400"></span>
-                            Last Week: <span className="font-semibold">{formatMoney(day.prevSales)}</span> ({day.prevOrders} orders)
-                          </p>
-                        </div>
-                        <div className="h-1.5 w-1.5 rotate-45 bg-slate-950"></div>
-                      </div>
-                      
-                      {/* Bars container */}
-                      <div className="flex w-full items-end gap-1 px-1 h-[85%]">
-                        {/* Current week bar */}
-                        <div 
-                          style={{ height: `${Math.max(currentPct, 2)}%` }} 
-                          className="flex-1 rounded-t bg-blue-600 transition group-hover:bg-blue-500"
-                        />
-                        {/* Previous week bar */}
-                        <div 
-                          style={{ height: `${Math.max(prevPct, 2)}%` }} 
-                          className="flex-1 rounded-t bg-slate-300 transition group-hover:bg-slate-400"
-                        />
-                      </div>
-                      
-                      {/* Label */}
-                      <span className="mt-2 text-[11px] font-semibold text-slate-500">{day.day}</span>
+          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-950">{t("Recent Orders")}</h2>
+                <p className="text-sm text-slate-500">{t("Latest billed orders for quick follow-up.")}</p>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/sales">{t("View All")}</Link>
+              </Button>
+            </div>
+            <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
+              {recentOrders.length ? (
+                recentOrders.map((order: any) => (
+                  <Link
+                    key={order.id}
+                    href={`/sales/${order.id}`}
+                    className="flex items-center justify-between gap-4 border-b border-gray-100 px-4 py-3 last:border-b-0 hover:bg-slate-50"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-slate-950">
+                        {order.code} · {order.customer__full_name || t("Walk-in Customer")}
+                      </p>
+                      <p className="mt-1 truncate text-xs font-medium text-slate-500">
+                        {order.user__full_name || "-"} · {order.payment_status || "-"}
+                      </p>
                     </div>
-                  );
-                });
-              })()}
+                    <p className="shrink-0 font-bold text-slate-950">{money(order.total)}</p>
+                  </Link>
+                ))
+              ) : (
+                <div className="py-10 text-center text-sm font-medium text-slate-500">
+                  {t("No recent orders found.")}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-gray-200 py-10 text-center text-sm text-slate-500">
-              No weekly sales found.
-            </div>
-          )}
+          </section>
         </div>
 
-        <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-950">Recent Orders</h2>
-          <p className="text-sm text-slate-500">
-            Latest billed orders for quick follow-up.
-          </p>
-          <div className="mt-5 space-y-3">
-            {recentOrders.length ? (
-              recentOrders.map((order: any) => (
-                <Link
-                  key={order.id}
-                  href={`/sales/${order.id}`}
-                  className="flex items-center justify-between rounded-2xl border border-gray-100 bg-slate-50 px-4 py-3 transition hover:border-slate-200 hover:bg-white"
-                >
-                  <div>
-                    <p className="font-semibold text-slate-950">
-                      {order.code} · {order.customer__name || "Walk-in Customer"}
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      {order.cashier__full_name || "-"} · {order.payment_status || "-"}
-                    </p>
-                  </div>
-                  <p className="font-bold text-slate-950">
-                    {formatMoney(order.total)}
-                  </p>
-                </Link>
-              ))
+        <div className="grid gap-4 xl:grid-cols-3">
+          <Leaderboard
+            title={t("Best Customers")}
+            description={t("Top customers by visible sales amount.")}
+            empty={t("No customer sales found for this period.")}
+            rows={bestCustomers.map((customer: any) => ({
+              id: customer.customer_id,
+              name: customer.customer__full_name || t("Walk-in Customer"),
+              helper: `${customer.order_count || 0} ${t("orders")}`,
+              value: money(customer.total_spent),
+            }))}
+          />
+          <Leaderboard
+            title={t("Best Cashiers")}
+            description={t("Top cashiers by billed sales amount.")}
+            empty={t("No cashier sales found for this period.")}
+            rows={bestCashiers.map((cashier: any) => ({
+              id: cashier.user_id,
+              name: cashier.user__full_name || t("Cashier"),
+              helper: `${cashier.order_count || 0} ${t("orders")}`,
+              value: money(cashier.total_sales),
+            }))}
+          />
+          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-950">{t("My Stats Today")}</h2>
+            <p className="text-sm text-slate-500">{t("Personal cashier statistics for today.")}</p>
+            {cashierStats ? (
+              <div className="mt-4 grid gap-3">
+                <ShiftMetric label={t("Today Orders")} value={cashierStats.today_orders || 0} helper={`${cashierStats.total_orders || 0} ${t("total")}`} />
+                <ShiftMetric label={t("Today Sales")} value={money(cashierStats.today_sales)} helper={`${money(cashierStats.total_sales)} ${t("total")}`} />
+                <ShiftMetric label={t("Today Refunds")} value={money(cashierStats.today_refunds)} helper={`${money(cashierStats.total_refunds)} ${t("total")}`} />
+                <ShiftMetric label={t("New Customers")} value={cashierStats.today_customers || 0} helper={`${cashierStats.total_customers || 0} ${t("total")}`} />
+              </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-gray-200 py-10 text-center text-sm text-slate-500">
-                No recent orders found.
+              <div className="mt-6 rounded-lg border border-dashed border-gray-200 py-8 text-center text-sm font-medium text-slate-500">
+                {t("No cashier stats found.")}
               </div>
             )}
-          </div>
+          </section>
         </div>
-      </div>
-
-      {/* Low Stock Alert Widget */}
-      <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="size-5 text-amber-500" />
-          <h2 className="text-lg font-bold text-slate-950">Low Stock Alerts</h2>
-        </div>
-        <p className="text-sm text-slate-500 mt-1">
-          Products that have fallen below their minimum stock threshold.
-        </p>
-        <div className="mt-5">
-          {lowStockState.isLoading ? (
-            <div className="flex items-center gap-3 text-sm text-slate-500">
-              <Spinner />
-              Loading low stock report...
-            </div>
-          ) : lowStockItems.length ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-              {lowStockItems.map((item: any, idx: number) => (
-                <div key={`${item.id}-${idx}`} className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
-                  <p className="font-semibold text-slate-950 truncate" title={item.name}>{item.name}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">SKU: {item.sku || "-"}</p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] uppercase font-bold text-slate-400">Current Stock</p>
-                      <p className="text-sm font-bold text-rose-600">{Number(item.current_stock).toFixed(0)} units</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase font-bold text-slate-400">Min Alert</p>
-                      <p className="text-sm font-bold text-slate-700">{Number(item.min_stock).toFixed(0)} units</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-gray-200 py-6 text-center text-sm text-slate-500">
-              All products are sufficiently stocked.
-            </div>
-          )}
-        </div>
-      </div>
       </div>
     </DashboardPageShell>
+  )
+}
+
+function ShiftMetric({ label, value, helper }: { label: string; value: any; helper?: string }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-3">
+      <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
+      <p className="mt-1 text-lg font-bold text-slate-950">{value}</p>
+      {helper ? <p className="mt-1 text-xs font-medium text-slate-500">{helper}</p> : null}
+    </div>
+  )
+}
+
+function QuickLink({
+  href,
+  icon: Icon,
+  title,
+  helper,
+}: {
+  href: string
+  icon: any
+  title: string
+  helper: string
+}) {
+  return (
+    <Link href={href} className="group flex items-center gap-3 rounded-lg border border-gray-200 bg-slate-50 p-3 hover:bg-white">
+      <div className="rounded-md bg-white p-2 text-slate-700 shadow-sm">
+        <Icon className="size-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-slate-950">{title}</p>
+        <p className="mt-0.5 truncate text-xs font-medium text-slate-500">{helper}</p>
+      </div>
+      <ArrowRight className="size-4 text-slate-400 group-hover:text-slate-700" />
+    </Link>
+  )
+}
+
+function Leaderboard({
+  title,
+  description,
+  empty,
+  rows,
+}: {
+  title: string
+  description: string
+  empty: string
+  rows: Array<{ id: any; name: string; helper: string; value: string }>
+}) {
+  return (
+    <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+      <h2 className="text-lg font-bold text-slate-950">{title}</h2>
+      <p className="text-sm text-slate-500">{description}</p>
+      <div className="mt-4 space-y-2">
+        {rows.length ? (
+          rows.map((row, index) => (
+            <div key={`${row.id || row.name}-${index}`} className="flex items-center justify-between gap-4 rounded-lg border border-gray-200 bg-slate-50 px-3 py-2">
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-slate-950">{row.name}</p>
+                <p className="mt-0.5 text-xs font-medium text-slate-500">{row.helper}</p>
+              </div>
+              <p className="shrink-0 font-bold text-slate-950">{row.value}</p>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-lg border border-dashed border-gray-200 py-8 text-center text-sm font-medium text-slate-500">
+            {empty}
+          </div>
+        )}
+      </div>
+    </section>
   )
 }
