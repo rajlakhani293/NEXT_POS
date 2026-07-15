@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import DynamicTable from "@/components/DynamicTable"
 import { promotions } from "@/lib/api/promotions"
@@ -10,7 +10,6 @@ import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
-import { CouponForm } from "./createUpdate"
 
 const buildColumns = (
   t: (key: string) => string,
@@ -41,15 +40,12 @@ const buildColumns = (
 
 export default function CouponsPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
   const formatMoney = (value: any) =>
     `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
   const columns = buildColumns(t, formatMoney)
-  const [formState, setFormState] = useState<{
-    isOpen: boolean
-    editId?: number | string | null
-  }>({ isOpen: false, editId: null })
   const [deleteCoupon] = (promotions as any).useDeleteCouponMutation()
   const [updateCouponStatus] = (promotions as any).useUpdateCouponStatusMutation()
   const { hasPermission } = usePermissions()
@@ -76,22 +72,18 @@ export default function CouponsPage() {
   })
 
   const handleAdd = (open: boolean) => {
-    if (open) setFormState({ isOpen: true, editId: null })
+    if (open) router.push("/coupons/create")
   }
 
   const handleEdit = (record: any) => {
-    setFormState({ isOpen: true, editId: record.id })
-  }
-
-  const closeForm = () => {
-    setFormState({ isOpen: false, editId: null })
+    router.push(`/coupons/${record.id}`)
   }
 
   useEffect(() => {
     if (searchParams.get("create") === "1" && canCreate) {
-      setFormState({ isOpen: true, editId: null })
+      router.replace("/coupons/create")
     }
-  }, [canCreate, searchParams])
+  }, [canCreate, router, searchParams])
 
   return (
     <div className="h-full space-y-4">
@@ -123,12 +115,6 @@ export default function CouponsPage() {
         triggerRefresh={triggerRefresh}
         deleteModalTitle={t("Delete Coupon")}
         deleteModalDescription={t("Would you like to delete this ?")}
-      />
-      <CouponForm
-        isOpen={formState.isOpen}
-        editId={formState.editId}
-        onClose={closeForm}
-        onSuccess={triggerRefresh}
       />
     </div>
   )

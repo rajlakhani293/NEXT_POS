@@ -672,5 +672,14 @@
   "Will prevent incomplete orders to be placed. If credit is allowed, this option should be set to \"yes\".": "Empechera les commandes incompletes. Si le credit est autorise, cette option doit etre definie sur \"yes\".",
   "Will prevent partially paid orders to be placed.": "Empechera les commandes partiellement payees.",
   "Will enforce instalment to be paid on specific date.": "Imposera le paiement du versement a une date specifique.",
-  "Quotations will get deleted after they defined they has reached.": "Les devis seront supprimes apres avoir atteint le delai defini."
+  "Quotations will get deleted after they defined they has reached.": "Les devis seront supprimes apres avoir atteint le delai defini.",
+  "Select Products": "Selectionner les produits",
+  "Select Categories": "Selectionner les categories",
+  "Select Customers": "Selectionner les clients",
+  "Assigned To Customer Group": "Assigne au groupe client",
+  "The following products will be required to be present on the cart, in order for this coupon to be valid.": "Les produits suivants devront etre presents dans le panier pour que ce coupon soit valide.",
+  "The products assigned to one of these categories should be on the cart, in order for this coupon to be valid.": "Les produits assignes a l'une de ces categories doivent etre dans le panier pour que ce coupon soit valide.",
+  "Only the customers who belongs to the selected groups will be able to use the coupon.": "Seuls les clients appartenant aux groupes selectionnes pourront utiliser le coupon.",
+  "Only the selected customers will be able to use the coupon.": "Seuls les clients selectionnes pourront utiliser le coupon.",
+  "Select products, categories, customers, or customer groups to restrict coupon usage. Leave empty to apply globally.": "Selectionnez des produits, categories, clients ou groupes de clients pour restreindre l'utilisation du coupon. Laissez vide pour appliquer globalement."
 }

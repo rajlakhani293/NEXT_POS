@@ -672,5 +672,14 @@
   "Will prevent incomplete orders to be placed. If credit is allowed, this option should be set to \"yes\".": "سيمنع إنشاء الطلبات غير المكتملة. إذا كان الائتمان مسموحاً، فيجب ضبط هذا الخيار على \"yes\".",
   "Will prevent partially paid orders to be placed.": "سيمنع إنشاء الطلبات المدفوعة جزئياً.",
   "Will enforce instalment to be paid on specific date.": "سيفرض دفع القسط في تاريخ محدد.",
-  "Quotations will get deleted after they defined they has reached.": "سيتم حذف عروض الأسعار بعد بلوغ المدة المحددة."
+  "Quotations will get deleted after they defined they has reached.": "سيتم حذف عروض الأسعار بعد بلوغ المدة المحددة.",
+  "Select Products": "اختر المنتجات",
+  "Select Categories": "اختر الفئات",
+  "Select Customers": "اختر العملاء",
+  "Assigned To Customer Group": "مخصص لمجموعة العملاء",
+  "The following products will be required to be present on the cart, in order for this coupon to be valid.": "يجب أن تكون المنتجات التالية موجودة في السلة حتى يكون هذا الكوبون صالحاً.",
+  "The products assigned to one of these categories should be on the cart, in order for this coupon to be valid.": "يجب أن تكون المنتجات التابعة لإحدى هذه الفئات في السلة حتى يكون هذا الكوبون صالحاً.",
+  "Only the customers who belongs to the selected groups will be able to use the coupon.": "سيتمكن فقط العملاء المنتمون إلى المجموعات المحددة من استخدام الكوبون.",
+  "Only the selected customers will be able to use the coupon.": "سيتمكن العملاء المحددون فقط من استخدام الكوبون.",
+  "Select products, categories, customers, or customer groups to restrict coupon usage. Leave empty to apply globally.": "اختر المنتجات أو الفئات أو العملاء أو مجموعات العملاء لتقييد استخدام الكوبون. اتركه فارغاً للتطبيق على الجميع."
 }

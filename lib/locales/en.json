@@ -872,5 +872,14 @@
   "Will prevent incomplete orders to be placed. If credit is allowed, this option should be set to \"yes\".": "Will prevent incomplete orders to be placed. If credit is allowed, this option should be set to \"yes\".",
   "Will prevent partially paid orders to be placed.": "Will prevent partially paid orders to be placed.",
   "Will enforce instalment to be paid on specific date.": "Will enforce instalment to be paid on specific date.",
-  "Quotations will get deleted after they defined they has reached.": "Quotations will get deleted after they defined they has reached."
+  "Quotations will get deleted after they defined they has reached.": "Quotations will get deleted after they defined they has reached.",
+  "Select Products": "Select Products",
+  "Select Categories": "Select Categories",
+  "Select Customers": "Select Customers",
+  "Assigned To Customer Group": "Assigned To Customer Group",
+  "The following products will be required to be present on the cart, in order for this coupon to be valid.": "The following products will be required to be present on the cart, in order for this coupon to be valid.",
+  "The products assigned to one of these categories should be on the cart, in order for this coupon to be valid.": "The products assigned to one of these categories should be on the cart, in order for this coupon to be valid.",
+  "Only the customers who belongs to the selected groups will be able to use the coupon.": "Only the customers who belongs to the selected groups will be able to use the coupon.",
+  "Only the selected customers will be able to use the coupon.": "Only the selected customers will be able to use the coupon.",
+  "Select products, categories, customers, or customer groups to restrict coupon usage. Leave empty to apply globally.": "Select products, categories, customers, or customer groups to restrict coupon usage. Leave empty to apply globally."
 }
