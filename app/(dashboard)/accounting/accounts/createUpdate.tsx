@@ -81,6 +81,7 @@ const buildFields = (
   {
     name: "description",
     label: t("Description"),
+    placeholder: t("Enter description"),
     type: "textarea",
     rows: 3,
   },

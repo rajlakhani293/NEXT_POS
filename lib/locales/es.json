@@ -646,7 +646,6 @@
   "Options": "Opciones",
   "Expiration Date": "Fecha de vencimiento",
   "Product": "Producto",
-  "N/A": "N/D",
   "Set Paid": "Marcar pagado",
   "Would you like to mark this procurement as paid?": "Desea marcar este aprovisionamiento como pagado?",
   "Would you like to refresh this ?": "Desea actualizar esto?",
@@ -710,5 +709,6 @@
   "20 / page": "20 / página",
   "50 / page": "50 / página",
   "100 / page": "100 / página",
-  "Sr No": "Nº"
+  "Sr No": "Nº",
+  "Enter description": "Ingrese descripción"
 }
