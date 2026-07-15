@@ -2,8 +2,6 @@
 
 import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { BadgePercent, Gift, ReceiptText, WalletCards } from "lucide-react"
-
 import { CatalogMasterForm } from "@/components/catalog/catalog-master-form"
 import { CatalogPageShell } from "@/components/catalog/catalog-page-shell"
 import { settings } from "@/lib/api/settings"
@@ -222,40 +220,6 @@ export default function UsersPage() {
         }
         openEditForm(record)
       }}
-      rowActions={(id, record) => [
-        {
-          key: "orders",
-          label: t("Orders"),
-          labelText: t("Orders"),
-          icon: <ReceiptText className="size-4" />,
-          onClick: () => router.push(`/customers/${record.id}/orders`),
-          priority: 10,
-        },
-        {
-          key: "wallet-history",
-          label: t("Wallet History"),
-          labelText: t("Wallet History"),
-          icon: <WalletCards className="size-4" />,
-          onClick: () => router.push(`/customers/${record.id}/account-history`),
-          priority: 11,
-        },
-        {
-          key: "rewards",
-          label: t("Rewards"),
-          labelText: t("Rewards"),
-          icon: <Gift className="size-4" />,
-          onClick: () => router.push(`/customers/${record.id}/rewards`),
-          priority: 12,
-        },
-        {
-          key: "coupons",
-          label: t("Coupons"),
-          labelText: t("Coupons"),
-          icon: <BadgePercent className="size-4" />,
-          onClick: () => router.push(`/customers/${record.id}/coupons`),
-          priority: 13,
-        },
-      ]}
     />
   )
 }
