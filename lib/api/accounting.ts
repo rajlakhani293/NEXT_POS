@@ -82,7 +82,6 @@ const endpointsConfig = {
       putMutation(`rules/${id}`, payLoad),
   },
   deleteAccountingRule: { query: deleteMutation("rules/delete") },
-  resetAccountingRules: { query: () => postMutation("rules/reset")({}) },
   getAccountingSettings: {
     type: "query",
     query: () => getMutation("settings"),

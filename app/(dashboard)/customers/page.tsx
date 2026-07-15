@@ -73,7 +73,6 @@ export default function CustomersPage() {
     triggerRefresh,
   } = useTableData({
     getMaster: (customers as any).useGetCustomersDataMutation,
-    itemsPerPage: 10,
   })
 
   const handleAdd = (open: boolean) => {

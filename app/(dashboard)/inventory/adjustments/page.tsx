@@ -51,7 +51,7 @@ export default function StockAdjustmentsPage() {
     triggerRefresh,
   } = useTableData({
     getMaster: (inventory as any).useGetStockAdjustmentsDataMutation,
-    itemsPerPage: 10,
+
   })
   const translatedColumns = columns.map((column) => ({
     ...column,
@@ -59,8 +59,8 @@ export default function StockAdjustmentsPage() {
     render:
       column.key === "adjustment_type_label"
         ? (_: any, context: any) =>
-            context.row.adjustment_type_label ||
-            t(String(context.row.adjustment_type || "-").replaceAll("_", " "))
+          context.row.adjustment_type_label ||
+          t(String(context.row.adjustment_type || "-").replaceAll("_", " "))
         : column.render,
   }))
 

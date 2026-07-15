@@ -67,7 +67,7 @@ export default function CategoriesPage() {
     triggerRefresh,
   } = useTableData({
     getMaster: (catalog as any).useGetCategoriesDataMutation,
-    itemsPerPage: 10,
+
   })
 
   const handleAdd = (open: boolean) => {
@@ -106,38 +106,38 @@ export default function CategoriesPage() {
   return (
     <PermissionGuard permission={PERMISSIONS.categories.view}>
       <div className="h-full space-y-4">
-      <DynamicTable
-        data={orders}
-        columns={translatedColumns}
-        tableTitle={t("Categories")}
-        title={canCreate ? t("Create Category") : undefined}
-        showSearch
-        searchTerm={searchTerm}
-        currentPage={currentPage}
-        itemsPerPage={itemsPerPage}
-        totalItems={totalItems}
-        onPageChange={setCurrentPage}
-        onFilterChange={handleFilterChange}
-        sortConfig={sortConfig}
-        onSort={handleSort}
-        showDateRange
-        sortableFields={sortableFields}
-        isLoading={isLoading}
-        setAddEntityOpen={canCreate ? handleAdd : undefined}
-        showEdit={canUpdate}
-        onEdit={handleEdit}
-        showDelete={canDelete}
-        deleteMutation={deleteCategory}
-        showStatus={canUpdate}
-        statusChangeMutation={({ ids, status }: any) =>
-          updateCategoryStatus({ payLoad: { ids, status } })
-        }
-        triggerRefresh={triggerRefresh}
-        deleteModalTitle={t("Delete Category")}
-        deleteModalDescription={t("Would you like to delete this ?")}
-        rowActions={(_, record) =>
-          canUpdate
-            ? [
+        <DynamicTable
+          data={orders}
+          columns={translatedColumns}
+          tableTitle={t("Categories")}
+          title={canCreate ? t("Create Category") : undefined}
+          showSearch
+          searchTerm={searchTerm}
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          totalItems={totalItems}
+          onPageChange={setCurrentPage}
+          onFilterChange={handleFilterChange}
+          sortConfig={sortConfig}
+          onSort={handleSort}
+          showDateRange
+          sortableFields={sortableFields}
+          isLoading={isLoading}
+          setAddEntityOpen={canCreate ? handleAdd : undefined}
+          showEdit={canUpdate}
+          onEdit={handleEdit}
+          showDelete={canDelete}
+          deleteMutation={deleteCategory}
+          showStatus={canUpdate}
+          statusChangeMutation={({ ids, status }: any) =>
+            updateCategoryStatus({ payLoad: { ids, status } })
+          }
+          triggerRefresh={triggerRefresh}
+          deleteModalTitle={t("Delete Category")}
+          deleteModalDescription={t("Would you like to delete this ?")}
+          rowActions={(_, record) =>
+            canUpdate
+              ? [
                 {
                   key: "compute",
                   label: t("Compute Products"),
@@ -149,22 +149,22 @@ export default function CategoriesPage() {
                     }).unwrap()
                     showToast.success(
                       response?.message ||
-                        t("The category products has been refreshed")
+                      t("The category products has been refreshed")
                     )
                     triggerRefresh()
                   },
                 },
               ]
-            : []
-        }
-      />
+              : []
+          }
+        />
 
-      <CategoryForm
-        isOpen={isFormOpen}
-        onClose={handleClose}
-        onSuccess={triggerRefresh}
-        editId={editId}
-      />
+        <CategoryForm
+          isOpen={isFormOpen}
+          onClose={handleClose}
+          onSuccess={triggerRefresh}
+          editId={editId}
+        />
       </div>
     </PermissionGuard>
   )

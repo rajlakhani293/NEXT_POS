@@ -81,7 +81,6 @@ export default function ProductsPage() {
     triggerRefresh,
   } = useTableData({
     getMaster: (catalog as any).useGetProductsDataMutation,
-    itemsPerPage: 10,
   })
   const handleToggleStatus = async (record: any) => {
     const currentStatus = Number(record?.status || 0)
@@ -122,8 +121,8 @@ export default function ProductsPage() {
               const row = record?.row || record
               const active = Number(val) === 0 || val === "available"
               const className = `inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${active
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "bg-gray-100 text-gray-600"
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-gray-100 text-gray-600"
                 }`
               if (!canUpdate) {
                 return <span className={className}>{active ? t("Active") : t("Inactive")}</span>

@@ -56,54 +56,54 @@ const buildColumns = (
   t: (key: string) => string,
   formatMoney: (value: any) => string
 ) => [
-  { key: "code", title: t("Code") },
-  {
-    key: "order_type",
-    title: t("Type"),
-    render: (value: string) => getStatusLabel(value, t),
-  },
-  {
-    key: "customer__full_name",
-    title: t("Customer"),
-    render: (value: any) => value || t("Walk-in Customer"),
-  },
-  {
-    key: "delivery_status",
-    title: t("Delivery"),
-    render: (value: string) => (
-      <span
-        className={cn(
-          "rounded-full px-2 py-1 text-xs font-semibold uppercase",
-          deliveryStatusColors[value] || "bg-gray-100 text-gray-700"
-        )}
-      >
-        {getStatusLabel(value || "pending", t)}
-      </span>
-    ),
-  },
-  {
-    key: "payment_status",
-    title: t("Payment"),
-    render: (value: string) => (
-      <span
-        className={cn(
-          "rounded-full px-2 py-1 text-xs font-semibold uppercase",
-          paymentStatusColors[value] || "bg-gray-100 text-gray-700"
-        )}
-      >
-        {getStatusLabel(value, t)}
-      </span>
-    ),
-  },
-  { key: "tax_amount", title: t("Tax"), render: formatMoney },
-  { key: "total", title: t("Total"), render: formatMoney },
-  { key: "author_username", title: t("Cashier") },
-  {
-    key: "created_at",
-    title: t("Created At"),
-    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
-  },
-]
+    { key: "code", title: t("Code") },
+    {
+      key: "order_type",
+      title: t("Type"),
+      render: (value: string) => getStatusLabel(value, t),
+    },
+    {
+      key: "customer__full_name",
+      title: t("Customer"),
+      render: (value: any) => value || t("Walk-in Customer"),
+    },
+    {
+      key: "delivery_status",
+      title: t("Delivery"),
+      render: (value: string) => (
+        <span
+          className={cn(
+            "rounded-full px-2 py-1 text-xs font-semibold uppercase",
+            deliveryStatusColors[value] || "bg-gray-100 text-gray-700"
+          )}
+        >
+          {getStatusLabel(value || "pending", t)}
+        </span>
+      ),
+    },
+    {
+      key: "payment_status",
+      title: t("Payment"),
+      render: (value: string) => (
+        <span
+          className={cn(
+            "rounded-full px-2 py-1 text-xs font-semibold uppercase",
+            paymentStatusColors[value] || "bg-gray-100 text-gray-700"
+          )}
+        >
+          {getStatusLabel(value, t)}
+        </span>
+      ),
+    },
+    { key: "tax_amount", title: t("Tax"), render: formatMoney },
+    { key: "total", title: t("Total"), render: formatMoney },
+    { key: "author_username", title: t("Cashier") },
+    {
+      key: "created_at",
+      title: t("Created At"),
+      render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+    },
+  ]
 
 export default function SalesHistoryPage() {
   const router = useRouter()
@@ -141,7 +141,7 @@ export default function SalesHistoryPage() {
     triggerRefresh,
   } = useTableData({
     getMaster: (sales as any).useGetSalesDataMutation,
-    itemsPerPage: 10,
+
   })
 
   return (
@@ -184,14 +184,14 @@ export default function SalesHistoryPage() {
           },
           ...(Number(record.latest_refund_id || 0) > 0
             ? [
-                {
-                  key: "refund_receipt",
-                  label: t("Refund Receipt"),
-                  labelText: t("Refund Receipt"),
-                  icon: <ReceiptText className="size-4" />,
-                  onClick: () => router.push(`/sales/${record.id}/receipt?doc=refund&refund_id=${record.latest_refund_id}`),
-                },
-              ]
+              {
+                key: "refund_receipt",
+                label: t("Refund Receipt"),
+                labelText: t("Refund Receipt"),
+                icon: <ReceiptText className="size-4" />,
+                onClick: () => router.push(`/sales/${record.id}/receipt?doc=refund&refund_id=${record.latest_refund_id}`),
+              },
+            ]
             : []),
           {
             key: "invoice",

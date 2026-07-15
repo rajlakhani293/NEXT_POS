@@ -41,7 +41,6 @@ export default function TransactionAccountsPage() {
   const canDelete = hasPermission(PERMISSIONS.transactionAccounts.delete)
   const table = useTableData({
     getMaster: (accounting as any).useGetAccountsDataMutation,
-    itemsPerPage: 10,
   })
 
   useEffect(() => {
@@ -77,11 +76,11 @@ export default function TransactionAccountsPage() {
         setAddEntityOpen={
           canCreate
             ? (open: boolean) => {
-                if (open) {
-                  setEditId(null)
-                  setIsFormOpen(true)
-                }
+              if (open) {
+                setEditId(null)
+                setIsFormOpen(true)
               }
+            }
             : undefined
         }
         showEdit={canUpdate}

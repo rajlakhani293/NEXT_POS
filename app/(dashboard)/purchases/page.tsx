@@ -32,63 +32,63 @@ const buildColumns = (
   t: (key: string) => string,
   formatMoney: (value: any) => string
 ) => [
-  { key: "code", title: t("Name") },
-  { key: "supplier_name", title: t("Provider") },
-  {
-    key: "workflow_status",
-    title: t("Delivery Status"),
-    render: (value: string) => (
-      <span
-        className={cn(
-          "rounded-full px-2 py-1 text-xs font-semibold",
-          value === "stocked" && "bg-green-50 text-green-700",
-          value === "delivered" && "bg-amber-50 text-amber-700",
-          value === "pending" && "bg-blue-50 text-blue-700",
-          value === "draft" && "bg-gray-100 text-gray-700"
-        )}
-      >
-        {t(workflowLabels[value] || value)}
-      </span>
-    ),
-  },
-  {
-    key: "payment_status",
-    title: t("Payment Status"),
-    render: (value: string) => (
-      <span
-        className={cn(
-          "rounded-full px-2 py-1 text-xs font-semibold",
-          value === "paid" && "bg-green-50 text-green-700",
-          value === "partially_paid" && "bg-amber-50 text-amber-700",
-          value === "unpaid" && "bg-red-50 text-red-700"
-        )}
-      >
-        {t(paymentLabels[value] || value)}
-      </span>
-    ),
-  },
-  {
-    key: "invoice_date",
-    title: t("Invoice Date"),
-    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
-  },
-  {
-    key: "total",
-    title: t("Sale Value"),
-    render: (value: any) => formatMoney(value),
-  },
-  {
-    key: "cost",
-    title: t("Purchase Value"),
-    render: (value: any) => formatMoney(value),
-  },
-  {
-    key: "tax_value",
-    title: t("Taxes"),
-    render: (value: any) => formatMoney(value),
-  },
-  { key: "user_username", title: t("User") },
-]
+    { key: "code", title: t("Name") },
+    { key: "supplier_name", title: t("Provider") },
+    {
+      key: "workflow_status",
+      title: t("Delivery Status"),
+      render: (value: string) => (
+        <span
+          className={cn(
+            "rounded-full px-2 py-1 text-xs font-semibold",
+            value === "stocked" && "bg-green-50 text-green-700",
+            value === "delivered" && "bg-amber-50 text-amber-700",
+            value === "pending" && "bg-blue-50 text-blue-700",
+            value === "draft" && "bg-gray-100 text-gray-700"
+          )}
+        >
+          {t(workflowLabels[value] || value)}
+        </span>
+      ),
+    },
+    {
+      key: "payment_status",
+      title: t("Payment Status"),
+      render: (value: string) => (
+        <span
+          className={cn(
+            "rounded-full px-2 py-1 text-xs font-semibold",
+            value === "paid" && "bg-green-50 text-green-700",
+            value === "partially_paid" && "bg-amber-50 text-amber-700",
+            value === "unpaid" && "bg-red-50 text-red-700"
+          )}
+        >
+          {t(paymentLabels[value] || value)}
+        </span>
+      ),
+    },
+    {
+      key: "invoice_date",
+      title: t("Invoice Date"),
+      render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+    },
+    {
+      key: "total",
+      title: t("Sale Value"),
+      render: (value: any) => formatMoney(value),
+    },
+    {
+      key: "cost",
+      title: t("Purchase Value"),
+      render: (value: any) => formatMoney(value),
+    },
+    {
+      key: "tax_value",
+      title: t("Taxes"),
+      render: (value: any) => formatMoney(value),
+    },
+    { key: "user_username", title: t("User") },
+  ]
 
 export default function PurchaseOrdersPage() {
   const router = useRouter()
@@ -127,7 +127,7 @@ export default function PurchaseOrdersPage() {
     triggerRefresh,
   } = useTableData({
     getMaster: (purchases as any).useGetPurchaseOrdersDataMutation,
-    itemsPerPage: 10,
+
   })
 
   return (

@@ -42,7 +42,7 @@ interface UseTableDataProps {
 export const useTableData = ({
   getMaster,
   enabled = true,
-  itemsPerPage: initialItemsPerPage = 10,
+  itemsPerPage: initialItemsPerPage = 20,
   searchTerm: initialSearchTerm,
   selectedFilters = {},
   advancedFilters: initialAdvancedFilters,
@@ -67,10 +67,10 @@ export const useTableData = ({
     disableDateFilter
       ? { startDate: undefined, endDate: undefined }
       : initialDateFilters ||
-          (() => {
-            const currentFY = getCurrentFinancialYear()
-            return getDateRange(currentFY)
-          })()
+      (() => {
+        const currentFY = getCurrentFinancialYear()
+        return getDateRange(currentFY)
+      })()
   )
   const [activeTab, setActiveTab] = useState<string>(allLabel)
   const [selectedDateRange, setSelectedDateRange] = useState<string | null>(
@@ -113,9 +113,9 @@ export const useTableData = ({
       ...(disableDateFilter
         ? {}
         : {
-            startDate: formatApiDate(dateFilters.startDate),
-            endDate: formatApiDate(dateFilters.endDate),
-          }),
+          startDate: formatApiDate(dateFilters.startDate),
+          endDate: formatApiDate(dateFilters.endDate),
+        }),
       sortBy: sortConfig?.key || undefined,
       sortDirection: sortConfig?.direction || undefined,
       filter: Object.keys(parsedSelectedFilters).length
@@ -239,18 +239,18 @@ export const useTableData = ({
 
   const orders = isArrayResponse
     ? allOrders.slice(
-        (currentPage - 1) * itemsPerPage,
-        (currentPage - 1) * itemsPerPage + itemsPerPage
-      )
+      (currentPage - 1) * itemsPerPage,
+      (currentPage - 1) * itemsPerPage + itemsPerPage
+    )
     : allOrders
 
   const otherData = responseData || []
   const totalItems = isArrayResponse
     ? allOrders.length
     : responseData?.items?.count ||
-      responseData?.total ||
-      responseData?.count ||
-      0
+    responseData?.total ||
+    responseData?.count ||
+    0
   const totalPages = isArrayResponse
     ? Math.ceil(allOrders.length / itemsPerPage)
     : responseData?.totalPages || 0

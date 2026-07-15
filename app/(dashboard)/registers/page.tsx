@@ -19,25 +19,25 @@ const buildRegisterColumns = (
   t: (key: string) => string,
   formatMoney: (value: any) => string
 ) => [
-  { key: "name", title: t("Name") },
-  {
-    key: "register_status",
-    title: t("Status"),
-    render: (value: string) => (
-      <span className="capitalize font-semibold text-xs">
-        {t(value || "closed")}
-      </span>
-    ),
-  },
-  { key: "cashier_username", title: t("Used By"), render: (value: any) => value || t("N/A") },
-  { key: "balance", title: t("Balance"), render: formatMoney },
-  { key: "user_username", title: t("User") },
-  {
-    key: "created_at",
-    title: t("Created At"),
-    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
-  },
-]
+    { key: "name", title: t("Name") },
+    {
+      key: "register_status",
+      title: t("Status"),
+      render: (value: string) => (
+        <span className="capitalize font-semibold text-xs">
+          {t(value || "closed")}
+        </span>
+      ),
+    },
+    { key: "cashier_username", title: t("Used By"), render: (value: any) => value || t("N/A") },
+    { key: "balance", title: t("Balance"), render: formatMoney },
+    { key: "user_username", title: t("User") },
+    {
+      key: "created_at",
+      title: t("Created At"),
+      render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+    },
+  ]
 
 type RegisterActionState = {
   action: "open" | "close" | "register-cash-in" | "register-cash-out"
@@ -81,7 +81,7 @@ export default function RegistersPage() {
   const canCashOut = hasPermission(PERMISSIONS.cashRegister.cashOut)
   const registerTable = useTableData({
     getMaster: (registers as any).useGetRegistersDataMutation,
-    itemsPerPage: 10,
+
   })
   const closeForm = () => {
     setIsRegisterFormOpen(false)

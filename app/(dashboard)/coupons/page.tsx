@@ -19,28 +19,28 @@ const buildColumns = (
   formatMoney: (value: any) => string,
   formatDate: (value: any) => string
 ) => [
-  { key: "name", title: t("Name") },
-  {
-    key: "type",
-    title: t("Type"),
-    render: (value: any) =>
-      value === "percentage_discount"
-        ? t("Percentage Discount")
-        : value === "flat_discount"
-          ? t("Flat Discount")
-          : value,
-  },
-  {
-    key: "discount_value",
-    title: t("Discount Value"),
-    render: (value: any, record: any) =>
-      record.type === "percentage_discount" ? `${value}%` : formatMoney(value),
-  },
-  { key: "valid_hours_start", title: t("Valid From") },
-  { key: "valid_hours_end", title: t("Valid Till") },
-  { key: "user_username", title: t("User") },
-  { key: "created_at", title: t("Created On"), render: (value: any) => formatDate(value) },
-]
+    { key: "name", title: t("Name") },
+    {
+      key: "type",
+      title: t("Type"),
+      render: (value: any) =>
+        value === "percentage_discount"
+          ? t("Percentage Discount")
+          : value === "flat_discount"
+            ? t("Flat Discount")
+            : value,
+    },
+    {
+      key: "discount_value",
+      title: t("Discount Value"),
+      render: (value: any, record: any) =>
+        record.type === "percentage_discount" ? `${value}%` : formatMoney(value),
+    },
+    { key: "valid_hours_start", title: t("Valid From") },
+    { key: "valid_hours_end", title: t("Valid Till") },
+    { key: "user_username", title: t("User") },
+    { key: "created_at", title: t("Created On"), render: (value: any) => formatDate(value) },
+  ]
 
 export default function CouponsPage() {
   const searchParams = useSearchParams()
@@ -72,7 +72,7 @@ export default function CouponsPage() {
     triggerRefresh,
   } = useTableData({
     getMaster: (promotions as any).useGetCouponsDataMutation,
-    itemsPerPage: 10,
+
   })
 
   const handleAdd = (open: boolean) => {

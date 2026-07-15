@@ -18,14 +18,14 @@ const buildColumns = (
   t: (key: string) => string,
   formatMoney: (value: any) => string
 ) => [
-  { key: "first_name", title: t("First Name") },
-  { key: "email", title: t("Email") },
-  { key: "phone", title: t("Phone") },
-  { key: "amount_due", title: t("Amount Due"), render: (value: any) => formatMoney(value) },
-  { key: "amount_paid", title: t("Amount Paid"), render: (value: any) => formatMoney(value) },
-  { key: "user_username", title: t("User") },
-  { key: "created_at", title: t("Created At"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
-]
+    { key: "first_name", title: t("First Name") },
+    { key: "email", title: t("Email") },
+    { key: "phone", title: t("Phone") },
+    { key: "amount_due", title: t("Amount Due"), render: (value: any) => formatMoney(value) },
+    { key: "amount_paid", title: t("Amount Paid"), render: (value: any) => formatMoney(value) },
+    { key: "user_username", title: t("User") },
+    { key: "created_at", title: t("Created At"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+  ]
 
 export default function ProvidersPage() {
   const router = useRouter()
@@ -63,7 +63,7 @@ export default function ProvidersPage() {
     dateFilters,
   } = useTableData({
     getMaster: (purchases as any).useGetProvidersDataMutation,
-    itemsPerPage: 10,
+
   })
 
   useEffect(() => {

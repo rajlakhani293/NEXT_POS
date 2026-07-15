@@ -51,7 +51,7 @@ export default function StockLedgerPage() {
     itemsPerPage,
   } = useTableData({
     getMaster: (inventory as any).useGetStockLedgerDataMutation,
-    itemsPerPage: 10,
+
     selectedFilters: productId ? { product_id: Number(productId) } : {},
   })
   const formatMoney = (value: any) => {

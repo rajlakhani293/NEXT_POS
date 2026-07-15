@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Plus, RotateCcw, Save, Trash2 } from "lucide-react"
+import { Plus, Save, Trash2 } from "lucide-react"
 
 import { PermissionGuard } from "@/components/permission-guard"
+import { useConfirmDialog } from "@/components/confirm-dialog"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Button } from "@/components/ui/button"
 import { SelectItem } from "@/components/ui/select"
@@ -39,8 +40,8 @@ export default function AccountingRulesPage() {
   const [createRule, createState] = (accounting as any).useCreateAccountingRuleMutation()
   const [editRule, editState] = (accounting as any).useEditAccountingRuleMutation()
   const [deleteRule] = (accounting as any).useDeleteAccountingRuleMutation()
-  const [resetRules, resetState] = (accounting as any).useResetAccountingRulesMutation()
   const [rules, setRules] = useState<Rule[]>([])
+  const { confirm, confirmDialog } = useConfirmDialog()
 
   useEffect(() => {
     if (!rulesQuery.data?.data) return
@@ -94,16 +95,19 @@ export default function AccountingRulesPage() {
       setRules((current) => current.filter((_, ruleIndex) => ruleIndex !== index))
       return
     }
+    const confirmed = await confirm({
+      title: t("Delete Permanent"),
+      description: t("You're about to delete this rule. This action cannot be undone. Would you like to proceed?"),
+      confirmLabel: t("Delete"),
+      variant: "destructive",
+    })
+    if (!confirmed) return
     const response = await deleteRule({ ids: [rule.id] }).unwrap()
     showToast.success(response?.message || t("Accounting rule deleted."))
     rulesQuery.refetch()
   }
 
-  const reset = async () => {
-    const response = await resetRules().unwrap()
-    showToast.success(response?.message || t("Default accounting rules restored."))
-    rulesQuery.refetch()
-  }
+
 
   const content = useMemo(() => {
     if (rulesQuery.isLoading || accounts.isLoading || actions.isLoading) {
@@ -217,10 +221,6 @@ export default function AccountingRulesPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={reset} disabled={resetState.isLoading}>
-              <RotateCcw className="size-4" />
-              {t("Restore Defaults")}
-            </Button>
             <Button onClick={() => setRules((current) => [...current, { ...emptyRule }])}>
               <Plus className="size-4" />
               {t("Create a new rule")}
@@ -230,6 +230,7 @@ export default function AccountingRulesPage() {
         <div className="min-h-0 flex-1 space-y-3 overflow-auto p-4">{content}</div>
         </div>
       </PermissionGuard>
+      {confirmDialog}
     </DashboardPage>
   )
 }

@@ -43,7 +43,7 @@ export default function SaleInstalmentsPage() {
     dateFilters,
   } = useTableData({
     getMaster: (sales as any).useGetInstallmentsDataMutation,
-    itemsPerPage: 10,
+
   })
 
   const columns = [

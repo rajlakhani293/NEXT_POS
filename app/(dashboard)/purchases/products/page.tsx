@@ -16,16 +16,16 @@ const buildColumns = (
   t: (key: string) => string,
   formatMoney: (value: any) => string
 ) => [
-  { key: "name", title: t("Name") },
-  { key: "unit_name", title: t("Unit") },
-  { key: "procurement_name", title: t("Procurement") },
-  { key: "quantity", title: t("Quantity") },
-  { key: "total_purchase_price", title: t("Total Price"), render: (value: any) => formatMoney(value) },
-  { key: "barcode", title: t("Barcode") },
-  { key: "expiration_date", title: t("Expiration Date"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
-  { key: "user_username", title: t("User") },
-  { key: "created_at", title: t("On"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
-]
+    { key: "name", title: t("Name") },
+    { key: "unit_name", title: t("Unit") },
+    { key: "procurement_name", title: t("Procurement") },
+    { key: "quantity", title: t("Quantity") },
+    { key: "total_purchase_price", title: t("Total Price"), render: (value: any) => formatMoney(value) },
+    { key: "barcode", title: t("Barcode") },
+    { key: "expiration_date", title: t("Expiration Date"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+    { key: "user_username", title: t("User") },
+    { key: "created_at", title: t("On"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+  ]
 
 export default function ProcurementProductsPage() {
   const router = useRouter()
@@ -39,7 +39,7 @@ export default function ProcurementProductsPage() {
     `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
   const table = useTableData({
     getMaster: (purchases as any).useGetProcurementProductsDataMutation,
-    itemsPerPage: 10,
+
   })
 
   const handleEdit = (record: any) => {

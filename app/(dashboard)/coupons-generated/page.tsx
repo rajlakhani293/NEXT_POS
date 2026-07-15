@@ -45,7 +45,7 @@ export default function GeneratedCustomerCouponsPage() {
     itemsPerPage,
   } = useTableData({
     getMaster: (promotions as any).useGetGeneratedCustomerCouponsDataMutation,
-    itemsPerPage: 10,
+
   })
 
   return (

@@ -47,7 +47,7 @@ export default function RewardSystemsPage() {
     triggerRefresh,
   } = useTableData({
     getMaster: (rewards as any).useGetRewardSystemsDataMutation,
-    itemsPerPage: 10,
+
   })
 
   const handleAdd = (open: boolean) => {

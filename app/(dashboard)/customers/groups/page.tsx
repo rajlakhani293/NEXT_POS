@@ -59,7 +59,7 @@ export default function CustomerGroupsPage() {
     triggerRefresh,
   } = useTableData({
     getMaster: (customers as any).useGetCustomerGroupsDataMutation,
-    itemsPerPage: 10,
+
   })
 
   const handleAdd = (open: boolean) => {
@@ -133,14 +133,14 @@ export default function CustomerGroupsPage() {
         rowActions={(_, record) =>
           canUpdate
             ? [
-                {
-                  key: "transfer",
-                  label: t("Transfer Customers"),
-                  labelText: t("Transfer Customers"),
-                  icon: <ArrowRightLeftIcon className="size-4" />,
-                  onClick: () => openTransfer(record),
-                },
-              ]
+              {
+                key: "transfer",
+                label: t("Transfer Customers"),
+                labelText: t("Transfer Customers"),
+                icon: <ArrowRightLeftIcon className="size-4" />,
+                onClick: () => openTransfer(record),
+              },
+            ]
             : []
         }
         triggerRefresh={triggerRefresh}
