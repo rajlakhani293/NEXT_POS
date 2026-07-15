@@ -487,50 +487,50 @@ export default function MediasPage() {
                       <div
                         key={resource.id}
                         className={cn(
-                          "group relative aspect-square rounded-xl overflow-hidden border bg-white transition-all duration-300 select-none cursor-pointer flex flex-col shadow-sm",
+                          "group relative aspect-square rounded-xl overflow-hidden bg-slate-100 transition-all duration-300 select-none cursor-pointer shadow-sm border",
                           resource.selected
-                            ? "border-indigo-600 ring-2 ring-indigo-500/20 bg-indigo-50/5"
-                            : "border-slate-200 hover:border-slate-300 hover:shadow"
+                            ? "border-indigo-600 scale-[0.97] ring-4 ring-indigo-500/10"
+                            : "border-slate-200 hover:border-slate-350 hover:shadow"
                         )}
                         onClick={() => selectResource(resource)}
                       >
                         {/* Selected Indicator Check Badge */}
                         {resource.selected && (
-                          <div className="absolute top-2 right-2 z-30 bg-indigo-600 text-white rounded-full p-0.5 shadow border-2 border-white flex items-center justify-center size-5 animate-in zoom-in-75 duration-200">
-                            <Check className="size-3 stroke-[3]" />
+                          <div className="absolute top-2.5 right-2.5 z-30 bg-indigo-600 text-white rounded-full flex items-center justify-center size-5 border-2 border-white shadow-md animate-in zoom-in-75 duration-200">
+                            <Check className="size-3 stroke-[3.5]" />
                           </div>
                         )}
 
                         {/* File Extension Badge (Top Left) */}
                         {resource.extension && (
-                          <span className="absolute top-2 left-2 z-20 text-[9px] font-bold tracking-wider uppercase bg-white/90 text-slate-600 px-1.5 py-0.5 rounded shadow-sm border border-slate-100/50 backdrop-blur-sm">
+                          <span className="absolute top-2.5 left-2.5 z-20 text-[9px] font-bold tracking-wider uppercase bg-white/90 text-slate-700 px-1.5 py-0.5 rounded shadow-sm border border-slate-200/20 backdrop-blur-sm">
                             {resource.extension}
                           </span>
                         )}
 
                         {/* Display Area */}
-                        <div className="flex-1 min-h-0 bg-slate-50 flex items-center justify-center relative overflow-hidden p-2">
+                        <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
                           {isImage(resource) && imageUrl ? (
                             <img
                               src={imageUrl}
                               alt={resource.name}
-                              className="max-h-full max-w-full object-contain rounded transition-transform duration-500 group-hover:scale-102"
+                              className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
                               loading="lazy"
                             />
                           ) : (
-                            <div className="transition-transform duration-300 group-hover:scale-102">
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50/50 transition-transform duration-300 group-hover:scale-105">
                               {getFileIcon(resource.extension)}
+                              <span className="text-[10px] text-slate-400 mt-2 font-mono uppercase font-bold">{resource.extension}</span>
                             </div>
                           )}
-                          <div className="absolute inset-0 bg-slate-950/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                         </div>
 
-                        {/* Info Footer */}
-                        <div className="p-2.5 border-t border-slate-100 bg-white">
-                          <p className="text-[11px] font-semibold text-slate-700 truncate" title={resource.name}>
+                        {/* Hover Metadata Overlay */}
+                        <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent p-3 pt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pointer-events-none">
+                          <p className="text-xs font-semibold text-white truncate" title={resource.name}>
                             {resource.name}
                           </p>
-                          <div className="flex items-center justify-between mt-0.5 text-[9px] text-slate-400">
+                          <div className="flex items-center justify-between mt-0.5 text-[9px] text-slate-300">
                             <span>{formatBusinessDate(resource.created_at, posOptions)}</span>
                             <span>{resource.user?.full_name || resource.user?.username || ""}</span>
                           </div>
