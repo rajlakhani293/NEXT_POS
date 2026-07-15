@@ -60,7 +60,6 @@ const initialValues: CouponFormValues = {
 }
 
 
-
 export default function CouponFormPage() {
   const params = useParams()
   const router = useRouter()
@@ -70,6 +69,7 @@ export default function CouponFormPage() {
   const couponId = routeId === "create" ? null : routeId
   const isEdit = Boolean(couponId)
   const loadKeyRef = useRef("")
+  const dropdownsLoadedRef = useRef(false)
 
   const [values, setValues] = useState<CouponFormValues>(initialValues)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -84,10 +84,12 @@ export default function CouponFormPage() {
   const [getCustomerGroupsDropdown, customerGroupsState] = (customers as any).useGetCustomerGroupsDropdownMutation()
 
   useEffect(() => {
+    if (dropdownsLoadedRef.current) return
+    dropdownsLoadedRef.current = true
     getProductsDropdown({})
     getCategoriesDropdown({})
     getCustomerGroupsDropdown({})
-  }, [getCategoriesDropdown, getCustomerGroupsDropdown, getProductsDropdown])
+  }, [])
 
   useEffect(() => {
     const loadKey = `${couponId || "create"}`
@@ -308,6 +310,8 @@ export default function CouponFormPage() {
                   error={errors.discount_value}
                   placeholder={t("Enter discount")}
                   onChange={(event) => updateField("discount_value", event.target.value)}
+                  prefix={values.type === "flat_discount" ? posOptions.currency_symbol : undefined}
+                  suffix={values.type === "percentage_discount" ? "%" : undefined}
                 />
                 <UniFieldInput
                   label={t("Minimum Cart")}
@@ -358,7 +362,7 @@ export default function CouponFormPage() {
 
             <section className="min-w-0">
               <Tabs value={activeTargetTab} onValueChange={(value) => setActiveTargetTab(value as CouponTargetTab)}>
-                <TabsList variant="line" className="-mb-px w-full justify-start overflow-x-auto">
+                <TabsList variant="line" className="w-full justify-start">
                   <TabsTrigger value="products">{t("Products")}</TabsTrigger>
                   <TabsTrigger value="categories">{t("Categories")}</TabsTrigger>
                   <TabsTrigger value="groups">{t("Customer Groups")}</TabsTrigger>
