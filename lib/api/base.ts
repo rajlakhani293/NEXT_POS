@@ -49,6 +49,18 @@ const actualBaseQuery = fetchBaseQuery({
   prepareHeaders: prepareHeadersWithToken,
 })
 
+const TOAST_THROTTLE_MS = 2500
+const recentErrorToasts = new Map<string, number>()
+
+const showErrorToastOnce = (key: string, message?: string) => {
+  if (!message) return
+  const now = Date.now()
+  const lastShownAt = recentErrorToasts.get(key) || 0
+  if (now - lastShownAt < TOAST_THROTTLE_MS) return
+  recentErrorToasts.set(key, now)
+  showToast.error(message)
+}
+
 export const createBaseQueryWithInterceptor = (
   reducerPath: string
 ): BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> => {
@@ -83,10 +95,12 @@ export const createBaseQueryWithInterceptor = (
             : ""
       const isSessionCheck = url.includes("accounts/session-data")
 
+      const toastKey = `${status}:${message || ""}`
+
       if (status === 401) {
         api.dispatch(setUnauthorized(true))
-        if (message && !isSessionCheck) {
-          showToast.error(message)
+        if (!isSessionCheck) {
+          showErrorToastOnce(toastKey, message)
         }
       } else if (status === 403) {
         api.dispatch(
@@ -96,11 +110,9 @@ export const createBaseQueryWithInterceptor = (
               message || "You do not have permission to perform this action.",
           })
         )
-        if (message) {
-          showToast.error(message)
-        }
+        showErrorToastOnce(toastKey, message)
       } else if (message) {
-        showToast.error(message)
+        showErrorToastOnce(toastKey, message)
       }
 
       if (status >= 500) {
