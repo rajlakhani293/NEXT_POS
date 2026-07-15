@@ -1911,7 +1911,6 @@
   "Sold Qty": "Quantidade vendida",
   "Sold Quantity": "Quantidade Vendida",
   "Sold Stock": "Estoque Vendido",
-  "Some expense type are disabled as POS is not able to <a target=\"_blank\" href=\"%s\">perform asynchronous requests</a>.": "Alguns tipos de despesa estão desativados, pois o POS não consegue <a target=\"_blank\" href=\"%s\">realizar requisições assíncronas</a>.",
   "Some products has been added to the cart. Would you like to discard this order ?": "Alguns produtos foram adicionados ao carrinho. Deseja descartar esta encomenda?",
   "Someone has requested to reset your password on __\"%s\"__. If you remember having done that request, please proceed by clicking the button below. ": "Alguém solicitou a redefinição de sua senha em __\"%s\"__. Se você se lembrar de ter feito essa solicitação, prossiga clicando no botão abaixo.",
   "Sort Results": "Classificar resultados",
@@ -2960,5 +2959,7 @@
   "50 / page": "50 / página",
   "100 / page": "100 / página",
   "Sr No": "Nº",
-  "Enter description": "Insira a descrição"
+  "Enter description": "Insira a descrição",
+  "Choose an account": "Choose an account",
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests."
 }

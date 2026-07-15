@@ -910,5 +910,8 @@
   "50 / page": "50 / page",
   "100 / page": "100 / page",
   "Sr No": "Sr No",
-  "Enter description": "Enter description"
+  "Enter description": "Enter description",
+  "Choose an account": "Choose an account",
+  "Further details on the transaction.": "Further details on the transaction.",
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests."
 }

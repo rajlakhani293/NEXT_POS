@@ -1911,7 +1911,6 @@
   "Sold Qty": "Satılan Miktar",
   "Sold Quantity": "Satılan Miktar",
   "Sold Stock": "Satılan Stok",
-  "Some expense type are disabled as POS is not able to <a target=\"_blank\" href=\"%s\">perform asynchronous requests</a>.": "Bazı gider türleri POS'un <a target=\"_blank\" href=\"%s\">asenkron istekleri gerçekleştiremediği için devre dışıdır.",
   "Some products has been added to the cart. Would you like to discard this order ?": "Bazı ürünler sepete eklenmiştir. Bu siparişten vazgeçmek ister misiniz?",
   "Someone has requested to reset your password on __\"%s\"__. If you remember having done that request, please proceed by clicking the button below. ": "Birisi __\"%s\"__ üzerinde şifrenizi sıfırlamak istedi. Bu isteği yaptığınızı hatırlıyorsanız, lütfen aşağıdaki düğmeyi tıklayarak devam edin. ",
   "Sort Results": "Sonuçları Sırala",
@@ -2960,5 +2959,7 @@
   "50 / page": "50 / sayfa",
   "100 / page": "100 / sayfa",
   "Sr No": "Sıra No",
-  "Enter description": "Açıklama girin"
+  "Enter description": "Açıklama girin",
+  "Choose an account": "Choose an account",
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests."
 }

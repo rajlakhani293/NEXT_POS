@@ -26,7 +26,7 @@ type TransactionAccountFormValues = {
 const initialValues: TransactionAccountFormValues = {
   name: "",
   account: "",
-  category_identifier: "assets",
+  category_identifier: "",
   sub_category_id: "",
   description: "",
 }

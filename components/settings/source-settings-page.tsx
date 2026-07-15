@@ -452,13 +452,9 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
 
     if (
       field.type === "select" ||
-      field.type === "search-select" ||
-      (sourceIdentifier === "accounting" && field.name === "accounting_expenses_accounts")
+      field.type === "search-select"
     ) {
-      const selectedValue =
-        field.name === "accounting_expenses_accounts" && Array.isArray(value)
-          ? String(value[0] || "")
-          : selectValue(field.name, value)
+      const selectedValue = selectValue(field.name, value)
       const optionsWithSelected =
         selectedValue && !options.some((option) => option.value === selectedValue)
           ? [
@@ -484,14 +480,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
             error={error}
             value={selectedValue}
             onValueChange={(nextValue) =>
-              updateValue(
-                field.name,
-                field.name === "accounting_expenses_accounts"
-                  ? nextValue
-                    ? [nextValue]
-                    : []
-                  : nextValue
-              )
+              updateValue(field.name, nextValue)
             }
             placeholder={selectPlaceholder}
             allowClear={!required}

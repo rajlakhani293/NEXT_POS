@@ -1911,7 +1911,6 @@
   "Sold Qty": "الكمية المباعة",
   "Sold Quantity": "الكمية المباعة",
   "Sold Stock": "تباع الأسهم",
-  "Some expense type are disabled as POS is not able to <a target=\"_blank\" href=\"%s\">perform asynchronous requests</a>.": "بعض أنواع المصاريف معطلة لأن نظام نيكسو بوز غير قادر على <a target=\"_blank\" href=\"%s\">إجراء طلبات غير متزامنة</a>.",
   "Some products has been added to the cart. Would you like to discard this order ?": "بعض المنتجات قد أضيفت إلى سلة التسوق. هل ترغب في التخلي عن هذا الطلب؟",
   "Someone has requested to reset your password on __\"%s\"__. If you remember having done that request, please proceed by clicking the button below. ": "طلب شخص ما إعادة تعيين كلمة المرور الخاصة بك على __ \"%s\" __. إذا كنت تتذكر أنك قمت بهذا الطلب ، فيرجى المتابعة بالنقر فوق الزر أدناه.",
   "Sort Results": "فرز النتائج",
@@ -2960,5 +2959,7 @@
   "50 / page": "50 / صفحة",
   "100 / page": "100 / صفحة",
   "Sr No": "الرقم",
-  "Enter description": "أدخل الوصف"
+  "Enter description": "أدخل الوصف",
+  "Choose an account": "Choose an account",
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "تم تعطيل بعض انواع المصروفات لان POS لا يمكنه تنفيذ الطلبات غير المتزامنة."
 }

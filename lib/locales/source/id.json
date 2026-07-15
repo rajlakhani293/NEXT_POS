@@ -1911,7 +1911,6 @@
   "Sold Qty": "Qty Terjual",
   "Sold Quantity": "Jumlah Terjual",
   "Sold Stock": "Stok Terjual",
-  "Some expense type are disabled as POS is not able to <a target=\"_blank\" href=\"%s\">perform asynchronous requests</a>.": "Beberapa jenis pengeluaran dinonaktifkan karena POS tidak dapat <a target=\"_blank\" href=\"%s\">melakukan permintaan asinkron</a>.",
   "Some products has been added to the cart. Would you like to discard this order ?": "Beberapa produk telah ditambahkan ke keranjang. Apakah Anda ingin membatalkan pesanan ini?",
   "Someone has requested to reset your password on __\"%s\"__. If you remember having done that request, please proceed by clicking the button below. ": "Seseorang telah meminta untuk mengatur ulang kata sandi Anda pada __\"%s\"__. Jika Anda ingat telah melakukan permintaan itu, silakan lanjutkan dengan mengklik tombol di bawah. ",
   "Sort Results": "Urutkan Hasil",
@@ -2962,5 +2961,7 @@
   "50 / page": "50 / halaman",
   "100 / page": "100 / halaman",
   "Sr No": "No.",
-  "Enter description": "Masukkan deskripsi"
+  "Enter description": "Masukkan deskripsi",
+  "Choose an account": "Choose an account",
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests."
 }

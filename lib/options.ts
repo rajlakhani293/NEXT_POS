@@ -80,6 +80,8 @@ const defaultOptions: OptionMap = {
   pos_tax_group: "",
   pos_tax_type: "exclusive",
   reports_email: false,
+  accounting_expenses_accounts: [],
+  accounting_default_paid_expense_offset_account: "",
 }
 
 export function normalizeBoolOption(value: unknown, fallback = false) {
@@ -90,6 +92,25 @@ export function normalizeBoolOption(value: unknown, fallback = false) {
     if (["no", "false", "0", "disabled"].includes(value.toLowerCase())) return false
   }
   return fallback
+}
+
+function normalizeListOption(value: unknown) {
+  if (Array.isArray(value)) return value
+  if (typeof value === "string") {
+    const trimmed = value.trim()
+    if (!trimmed) return []
+    try {
+      const parsed = JSON.parse(trimmed)
+      if (Array.isArray(parsed)) return parsed
+    } catch {
+      return trimmed
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    }
+  }
+  if (value === null || value === undefined) return []
+  return [value]
 }
 
 export function usePosOptions() {
@@ -176,6 +197,12 @@ export function usePosOptions() {
       pos_tax_group: String(options.pos_tax_group || ""),
       pos_tax_type: String(options.pos_tax_type || "exclusive"),
       reports_email: normalizeBoolOption(options.reports_email),
+      accounting_expenses_accounts: normalizeListOption(
+        optionMap.accounting_expenses_accounts || optionMap.accounting_expense_accounts
+      ),
+      accounting_default_paid_expense_offset_account: String(
+        optionMap.accounting_default_paid_expense_offset_account || ""
+      ),
     }
   }, [settings])
 }

@@ -710,5 +710,8 @@
   "50 / page": "50 / page",
   "100 / page": "100 / page",
   "Sr No": "N°",
-  "Enter description": "Saisir la description"
+  "Enter description": "Saisir la description",
+  "Choose an account": "Choisir un compte",
+  "Further details on the transaction.": "Plus de details sur la transaction.",
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Certains types de depenses sont desactives car POS ne peut pas effectuer des requetes asynchrones."
 }

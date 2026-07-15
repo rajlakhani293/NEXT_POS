@@ -1910,7 +1910,6 @@
   "Sold Qty": "Số lượng đã bán",
   "Sold Quantity": "Số lượng đã bán",
   "Sold Stock": "Hàng đã bán",
-  "Some expense type are disabled as POS is not able to <a target=\"_blank\" href=\"%s\">perform asynchronous requests</a>.": "Một số loại chi phí bị vô hiệu hóa vì POS không thể <a target=\"_blank\" href=\"%s\">thực hiện các yêu cầu không đồng bộ</a>.",
   "Some products has been added to the cart. Would you like to discard this order ?": "Một số sản phẩm đã được thêm vào giỏ hàng. Bạn có muốn hủy đơn hàng này không?",
   "Someone has requested to reset your password on __\"%s\"__. If you remember having done that request, please proceed by clicking the button below. ": "Ai đó đã yêu cầu đặt lại mật khẩu của bạn trên __\"%s\"__. Nếu bạn nhớ đã thực hiện yêu cầu đó, vui lòng tiến hành bằng cách nhấp vào nút bên dưới. ",
   "Sort Results": "Sắp xếp kết quả",
@@ -2959,5 +2958,7 @@
   "50 / page": "50 / trang",
   "100 / page": "100 / trang",
   "Sr No": "STT",
-  "Enter description": "Nhập mô tả"
+  "Enter description": "Nhập mô tả",
+  "Choose an account": "Choose an account",
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests."
 }

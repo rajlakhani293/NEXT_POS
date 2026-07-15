@@ -1911,7 +1911,6 @@
   "Sold Qty": "Qty បានលក់",
   "Sold Quantity": "បរិមាណដែលបានលក់",
   "Sold Stock": "ស្តុកដែលបានលក់",
-  "Some expense type are disabled as POS is not able to <a target=\"_blank\" href=\"%s\">perform asynchronous requests</a>.": "ករណីមួយចំនួនត្រូវបានបិទដោយសារ POS មិនអាច <a target=\"_blank\" href=\"%s\">ធ្វើការស្នើដោយមិនចាំប chờ</a>.",
   "Some products has been added to the cart. Would you like to discard this order ?": "ផលិតផលមួយចំនួនត្រូវបានបន្ថែមទៅក្នុង Cart។ តើអ្នកចង់លុប Order នេះ?",
   "Someone has requested to reset your password on __\"%s\"__. If you remember having done that request, please proceed by clicking the button below. ": "មាននរណាម្នាក់បានស្នើសុំឱ្យកំណត់ពាក្យសម្ងាត់របស់អ្នកឡើងវិញនៅលើ __\"%s\"__. ប្រសិនបើអ្នកចាំថាបានធ្វើសំណើនោះ សូមបន្តដោយចុចប៊ូតុងខាងក្រោម។",
   "Sort Results": "តម្រៀបលទ្ធផល",
@@ -2960,5 +2959,7 @@
   "50 / page": "៥០ / ទំព័រ",
   "100 / page": "១០០ / ទំព័រ",
   "Sr No": "ល.រ",
-  "Enter description": "បញ្ចូលការពិពណ៌នា"
+  "Enter description": "បញ្ចូលការពិពណ៌នា",
+  "Choose an account": "Choose an account",
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests."
 }

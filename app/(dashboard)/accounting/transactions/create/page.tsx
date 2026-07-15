@@ -2,13 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { AlertCircle, ArrowLeft } from "lucide-react"
 
 import { PermissionGuard } from "@/components/permission-guard"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Button } from "@/components/ui/button"
 import { SelectItem } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { accounting } from "@/lib/api/accounting"
@@ -18,7 +17,7 @@ import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
 
 const initialValues = {
-  active: false,
+  active: true,
   account_id: "",
   name: "",
   value: "",
@@ -26,17 +25,17 @@ const initialValues = {
   occurrence: "",
   occurrence_value: "",
   scheduled_date: "",
-  type: "direct-transaction",
+  type: "",
   description: "",
   media_id: "",
   group_id: "",
 }
 
 const transactionTypes = [
-  { label: "Direct Expense", value: "direct-transaction" },
-  { label: "Recurring Expense", value: "recurring-transaction" },
-  { label: "Entity Expense", value: "entity-transaction" },
-  { label: "Scheduled Expense", value: "scheduled-transaction" },
+  { label: "Direct Expense", value: "direct-transaction", enabled: true },
+  { label: "Recurring Expense", value: "recurring-transaction", enabled: false },
+  { label: "Entity Expense", value: "entity-transaction", enabled: false },
+  { label: "Scheduled Expense", value: "scheduled-transaction", enabled: false },
 ]
 
 const occurrenceOptions = [
@@ -70,6 +69,7 @@ export default function CreateAccountingTransactionPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const isEditing = Boolean(editId)
+  const hasSelectedType = isEditing || Boolean(values.type)
   const isRecurringType = values.type === "recurring-transaction"
   const isScheduledType =
     values.type === "scheduled-transaction" ||
@@ -120,6 +120,38 @@ export default function CreateAccountingTransactionPage() {
     [isRecurringType, values.occurrence, values.occurrence_value]
   )
 
+  const expenseAccountIds = useMemo(
+    () => {
+      const configuredIds =
+        (posOptions as any).accounting_expenses_accounts ||
+        (posOptions as any).accounting_expense_accounts ||
+        []
+      return (Array.isArray(configuredIds) ? configuredIds : [])
+        .map((id: any) => String(id))
+        .filter(Boolean)
+    },
+    [posOptions]
+  )
+
+  const expenseAccounts = useMemo(
+    () =>
+      (accounts.data?.data || []).filter(
+        (account: any) =>
+          account.category_identifier === "expenses" &&
+          expenseAccountIds.includes(String(account.id))
+      ),
+    [accounts.data?.data, expenseAccountIds]
+  )
+
+  const selectTransactionType = (type: (typeof transactionTypes)[number]) => {
+    if (!type.enabled) return
+    setValues((current) => ({
+      ...current,
+      type: type.value,
+      recurring: type.value === "recurring-transaction",
+    }))
+  }
+
   const submit = async () => {
     const nextErrors: Record<string, string> = {}
     if (!values.name.trim()) nextErrors.name = t("Name is required")
@@ -143,7 +175,7 @@ export default function CreateAccountingTransactionPage() {
       media_id: Number(values.media_id || 0),
       value: Number(values.value || 0),
       recurring: values.type === "recurring-transaction",
-      type: values.type,
+      type: values.type || "direct-transaction",
       group_id: values.group_id ? Number(values.group_id) : null,
       occurrence: values.occurrence || "",
       occurrence_value: values.occurrence_value || "",
@@ -188,6 +220,44 @@ export default function CreateAccountingTransactionPage() {
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto p-6 pb-24">
+          {!hasSelectedType ? (
+            <div className="mx-auto max-w-3xl rounded-xl border bg-white shadow-sm">
+              <div className="border-b px-4 py-3">
+                <h2 className="font-semibold text-gray-950">{t("Expense Type")}</h2>
+              </div>
+              <div className="border-b bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                <div className="flex gap-2">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                  <div>
+                    <p className="font-semibold">{t("Warning")}</p>
+                    <p>{t("Some expense type are disabled as POS is not able to perform asynchronous requests.")}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2">
+                {transactionTypes.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    disabled={!type.enabled}
+                    onClick={() => selectTransactionType(type)}
+                    className={`flex h-36 flex-col items-center justify-center border-b border-r text-center transition ${
+                      type.enabled
+                        ? "cursor-pointer bg-white hover:bg-gray-50"
+                        : "cursor-not-allowed bg-gray-50 text-gray-400"
+                    }`}
+                  >
+                    <span className="text-base font-bold">{t(type.label)}</span>
+                    {!type.enabled ? (
+                      <span className="mt-1 text-xs">{t("Disabled")}</span>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {hasSelectedType ? (
           <div className="mx-auto grid max-w-5xl gap-5 rounded-xl border bg-white p-6 md:grid-cols-2">
             <UniFieldInput
               label={t("Name")}
@@ -198,14 +268,16 @@ export default function CreateAccountingTransactionPage() {
               placeholder={t("Provide a name to the resource.")}
             />
             <UniFieldSelect
-              label={t("Transaction Account")}
+              label={t("Account")}
               required
               value={values.account_id}
               onValueChange={(value) => setValue("account_id", value)}
               error={errors.account_id}
-              placeholder={t("Assign the transaction to an account")}
+              placeholder={t("Choose an account")}
+              hasOptions={expenseAccounts.length > 0}
+              emptyLabel="You need to configure the expense accounts before creating a transaction."
             >
-              {(accounts.data?.data || []).map((account: any) => (
+              {expenseAccounts.map((account: any) => (
                 <SelectItem key={account.id} value={String(account.id)}>
                   {account.name}
                 </SelectItem>
@@ -223,42 +295,6 @@ export default function CreateAccountingTransactionPage() {
               error={errors.value}
               placeholder={t("Is the value or the cost of the transaction.")}
             />
-            <UniFieldSelect
-              label={t("Type")}
-              value={values.type}
-              onValueChange={(value) => setValue("type", value)}
-            >
-              {transactionTypes.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {t(type.label)}
-                </SelectItem>
-              ))}
-            </UniFieldSelect>
-            <div className="flex items-center justify-between rounded-md border p-3">
-              <div>
-                <div className="text-sm font-medium">{t("Active")}</div>
-                <p className="text-sm text-muted-foreground">
-                  {t("determine if the transaction is effective or not. Work for recurring and not recurring transactions.")}
-                </p>
-              </div>
-              <Switch
-                checked={values.active}
-                onCheckedChange={(checked) => setValue("active", checked)}
-              />
-            </div>
-            <div className="flex items-center justify-between rounded-md border p-3">
-              <div>
-                <div className="text-sm font-medium">{t("Recurring")}</div>
-                <p className="text-sm text-muted-foreground">
-                  {t("If set to Yes, the transaction will trigger on defined occurrence.")}
-                </p>
-              </div>
-              <Switch
-                checked={values.recurring}
-                disabled
-                onCheckedChange={(checked) => setValue("recurring", checked)}
-              />
-            </div>
             {visibleOccurrence ? (
               <>
                 <UniFieldSelect
@@ -309,11 +345,14 @@ export default function CreateAccountingTransactionPage() {
               as="textarea"
               value={values.description}
               onChange={(event) => setValue("description", event.target.value)}
+              placeholder={t("Further details on the transaction.")}
               containerClassName="md:col-span-2"
             />
           </div>
+          ) : null}
         </div>
 
+        {hasSelectedType ? (
         <div className="flex flex-none justify-end gap-2 border-t bg-white px-6 py-3">
           <Button variant="outline" onClick={() => router.back()}>
             {t("Cancel")}
@@ -327,6 +366,7 @@ export default function CreateAccountingTransactionPage() {
             {t("Save Transaction")}
           </Button>
         </div>
+        ) : null}
         </div>
       </PermissionGuard>
     </DashboardPage>

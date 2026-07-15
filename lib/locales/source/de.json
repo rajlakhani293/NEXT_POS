@@ -2815,7 +2815,6 @@
   "Recurring Expense": "Wiederkehrende Ausgabe",
   "Entity Expense": "Personalkosten",
   "Scheduled Expense": "Geplante Ausgabe",
-  "Some expense type are disabled as POS is not able to <a target=\"_blank\" href=\"%s\">perform asynchronous requests</a>.": "Some expense type are disabled as POS is not able to <a target=\"_blank\" href=\"%s\">perform asynchronous requests</a>.",
   "Direct Expense": "Direkte Aufwendungen",
   "The unit group %s doesn't have a base unit": "Die Einheitengruppe %s hat keine Basiseinheit",
   "One or more roles could not be found.": "Ein oder mehrere Rollen konnten nicht gefunden werden.",
@@ -2960,5 +2959,7 @@
   "50 / page": "50 / Seite",
   "100 / page": "100 / Seite",
   "Sr No": "Nr.",
-  "Enter description": "Beschreibung eingeben"
+  "Enter description": "Beschreibung eingeben",
+  "Choose an account": "Choose an account",
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests."
 }

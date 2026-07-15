@@ -1911,7 +1911,6 @@
   "Sold Qty": "Sasia e shituar",
   "Sold Quantity": "Sasia e shitur",
   "Sold Stock": "Stock i shitur",
-  "Some expense type are disabled as POS is not able to <a target=\"_blank\" href=\"%s\">perform asynchronous requests</a>.": "Disa lloje shpenzues janë ndezur, sepse POS nuk mund të <a target=\"_blank\" href=\"%s\">kryejë kërkime asinkrone</a>.",
   "Some products has been added to the cart. Would you like to discard this order ?": "Disa produkte janë shtuar në karretë. A dëshironi të shkoni atë porosje?",
   "Someone has requested to reset your password on __\"%s\"__. If you remember having done that request, please proceed by clicking the button below. ": "Dikush ka kërkuar të rikrijojë parolën tuaj në __\"%s\"__. Nëse kujtohet se keni kryer këtë kërsim, ju lutemi vazhdoni duke klikuar butonin më poshtë.",
   "Sort Results": "Rendit Rezultatet",
@@ -2960,5 +2959,7 @@
   "50 / page": "50 / faqe",
   "100 / page": "100 / faqe",
   "Sr No": "Nr. Rendor",
-  "Enter description": "Vendosni përshkrimin"
+  "Enter description": "Vendosni përshkrimin",
+  "Choose an account": "Choose an account",
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests."
 }

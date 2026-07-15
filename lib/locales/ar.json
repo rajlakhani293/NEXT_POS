@@ -710,5 +710,8 @@
   "50 / page": "50 / صفحة",
   "100 / page": "100 / صفحة",
   "Sr No": "الرقم",
-  "Enter description": "أدخل الوصف"
+  "Enter description": "أدخل الوصف",
+  "Choose an account": "اختر حسابا",
+  "Further details on the transaction.": "مزيد من التفاصيل حول المعاملة.",
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "تم تعطيل بعض انواع المصروفات لان POS لا يمكنه تنفيذ الطلبات غير المتزامنة."
 }
