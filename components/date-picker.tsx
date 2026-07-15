@@ -18,74 +18,106 @@ import { Calendar } from "./ui/calendar"
 
 const parseTimeParts = (value?: string) => {
   const match = String(value || "").match(/^(\d{1,2}):(\d{1,2})/)
-  if (!match) return { hour: "09", minute: "00" }
-  const hour = Math.min(23, Math.max(0, Number(match[1])))
-  const minute = Math.min(59, Math.max(0, Number(match[2])))
+  if (!match) return { hour: 9, minute: 0 }
   return {
-    hour: String(hour).padStart(2, "0"),
-    minute: String(minute).padStart(2, "0"),
+    hour: Math.min(23, Math.max(0, Number(match[1]))),
+    minute: Math.min(59, Math.max(0, Number(match[2]))),
   }
 }
 
-const formatTimeValue = (hour: string, minute: string) => `${hour}:${minute}`
+const formatTimeValue = (hour: number, minute: number) =>
+  `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`
 
-function TimeOptionList({
-  values,
-  selected,
-  onSelect,
+const HOURS = Array.from({ length: 24 }, (_, i) => i)
+const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5)
+
+function TimeGridPanel({
+  hour,
+  minute,
+  onHourChange,
+  onMinuteChange,
 }: {
-  values: string[]
-  selected: string
-  onSelect: (value: string) => void
+  hour: number
+  minute: number
+  onHourChange: (h: number) => void
+  onMinuteChange: (m: number) => void
 }) {
+  const [segment, setSegment] = useState<"hour" | "minute">("hour")
+
   return (
-    <div className="h-48 overflow-y-auto rounded-md border border-gray-200 bg-white p-1">
-      {values.map((value) => (
-        <Button
-          key={value}
+    <div className="w-[220px]">
+      {/* Time display header */}
+      <div className="mb-3 flex items-center justify-center gap-1 rounded-xl bg-gray-50 px-4 py-2.5 ring-1 ring-gray-200">
+        <button
           type="button"
-          variant={selected === value ? "blue" : "ghost"}
-          size="sm"
-          className="mb-1 h-8 w-full justify-center text-sm font-semibold"
-          onClick={() => onSelect(value)}
+          onClick={() => setSegment("hour")}
+          className={cn(
+            "rounded-md px-2 py-0.5 text-2xl font-bold tabular-nums transition-colors",
+            segment === "hour"
+              ? "bg-[#3155f6] text-white"
+              : "text-gray-800 hover:bg-gray-200"
+          )}
         >
-          {value}
-        </Button>
-      ))}
-    </div>
-  )
-}
+          {String(hour).padStart(2, "0")}
+        </button>
+        <span className="text-2xl font-bold text-gray-400">:</span>
+        <button
+          type="button"
+          onClick={() => setSegment("minute")}
+          className={cn(
+            "rounded-md px-2 py-0.5 text-2xl font-bold tabular-nums transition-colors",
+            segment === "minute"
+              ? "bg-[#3155f6] text-white"
+              : "text-gray-800 hover:bg-gray-200"
+          )}
+        >
+          {String(minute).padStart(2, "0")}
+        </button>
+      </div>
 
-function TimeSelector({
-  value,
-  onChange,
-  minuteStep = 1,
-}: {
-  value?: string
-  onChange?: (time: string) => void
-  minuteStep?: number
-}) {
-  const { hour, minute } = parseTimeParts(value)
-  const hours = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, "0"))
-  const safeMinuteStep = Math.max(1, Math.min(30, minuteStep))
-  const minutes = Array.from(
-    { length: Math.ceil(60 / safeMinuteStep) },
-    (_, index) => String(Math.min(59, index * safeMinuteStep)).padStart(2, "0")
-  )
-  const selectedMinute = minutes.includes(minute) ? minute : "00"
+      {/* Labels */}
+      <p className="mb-2 text-center text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+        {segment === "hour" ? "Select Hour" : "Select Minute"}
+      </p>
 
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      <TimeOptionList
-        values={hours}
-        selected={hour}
-        onSelect={(nextHour) => onChange?.(formatTimeValue(nextHour, selectedMinute))}
-      />
-      <TimeOptionList
-        values={minutes}
-        selected={selectedMinute}
-        onSelect={(nextMinute) => onChange?.(formatTimeValue(hour, nextMinute))}
-      />
+      {/* Grid */}
+      {segment === "hour" ? (
+        <div className="grid grid-cols-6 gap-1">
+          {HOURS.map((h) => (
+            <button
+              key={h}
+              type="button"
+              onClick={() => { onHourChange(h); setSegment("minute") }}
+              className={cn(
+                "flex h-7 w-full items-center justify-center rounded-md text-xs font-semibold tabular-nums transition-colors",
+                hour === h
+                  ? "bg-[#3155f6] text-white"
+                  : "text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              {String(h).padStart(2, "0")}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-4 gap-1">
+          {MINUTES.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => onMinuteChange(m)}
+              className={cn(
+                "flex h-7 w-full items-center justify-center rounded-md text-xs font-semibold tabular-nums transition-colors",
+                minute === m
+                  ? "bg-[#3155f6] text-white"
+                  : "text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              {String(m).padStart(2, "0")}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -111,57 +143,61 @@ export function TimePicker({
   required,
   error,
   clearLabel = "Clear",
-  minuteStep = 1,
 }: TimePickerProps) {
   const inputId = label?.toLowerCase().replace(/\s+/g, "-")
-  const displayValue = value ? formatTimeValue(parseTimeParts(value).hour, parseTimeParts(value).minute) : ""
+  const { hour, minute } = parseTimeParts(value)
+  const displayValue = value ? formatTimeValue(hour, minute) : ""
 
   return (
     <div className="space-y-1">
       {label && (
         <FieldLabel
           htmlFor={inputId}
-          className={cn(
-            "font-semibold text-gray-700",
-            error && "text-destructive"
-          )}
+          className={cn("font-semibold text-gray-700", error && "text-destructive")}
         >
           {label}
           {required && <span className="text-red-500">*</span>}
         </FieldLabel>
       )}
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            data-empty={!value}
-            id={inputId}
-            className={cn(
-              "h-10 w-full justify-start border-2 bg-white text-left text-sm font-semibold text-gray-500",
-              error && "border-red-500 focus:border-red-500 focus:ring-red-500",
-              className
-            )}
-          >
-            <Clock className="mr-2 h-4 w-4 text-gray-900" />
-            <span className="text-gray-900">{displayValue || placeholder}</span>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-64 p-3" align="start">
-          <TimeSelector value={value} onChange={onChange} minuteStep={minuteStep} />
-          {value && (
+      <div className="group relative">
+        <Popover>
+          <PopoverTrigger asChild>
             <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="mt-2 w-full justify-center"
-              onClick={() => onChange?.("")}
+              variant="outline"
+              data-empty={!value}
+              id={inputId}
+              className={cn(
+                "h-10 w-full justify-start border-2 bg-white text-left text-sm font-semibold text-gray-500",
+                error && "border-red-500 focus:border-red-500 focus:ring-red-500",
+                value && "pr-8",
+                className
+              )}
             >
-              <X className="mr-2 h-4 w-4" />
-              {clearLabel}
+              <Clock className="mr-2 h-4 w-4 text-gray-900" />
+              <span className="text-gray-900">{displayValue || placeholder}</span>
             </Button>
-          )}
-        </PopoverContent>
-      </Popover>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-3" align="start" collisionPadding={16}>
+            <TimeGridPanel
+              hour={hour}
+              minute={minute}
+              onHourChange={(h) => onChange?.(formatTimeValue(h, minute))}
+              onMinuteChange={(m) => onChange?.(formatTimeValue(hour, m))}
+            />
+          </PopoverContent>
+        </Popover>
+        {value && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onChange?.("") }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-gray-500 opacity-0 transition-opacity hover:bg-gray-300 hover:text-gray-700 group-hover:opacity-100"
+            tabIndex={-1}
+            aria-label="Clear time"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
+      </div>
       {error && <FieldError>{error}</FieldError>}
     </div>
   )
@@ -324,14 +360,44 @@ export function DateTimePicker({
             selected={value}
             onSelect={handleDateChange}
             initialFocus
-            className="text-gray-900 font-semibold"
+            className="mx-auto text-gray-900 font-semibold"
           />
-          <div className="border-t border-gray-100 p-3">
-            <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-gray-500">
-              <Clock className="h-4 w-4" />
+          <div className="flex items-center justify-between gap-3 border-t border-gray-100 px-4 py-1.5">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+              <Clock className="h-3.5 w-3.5" />
               {timeLabel}
             </div>
-            <TimeSelector value={timeValue} onChange={handleTimeChange} minuteStep={1} />
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex h-8 min-w-[72px] items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm font-bold tabular-nums text-gray-800 transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <Clock className="h-3.5 w-3.5 opacity-60" />
+                  {value
+                    ? `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`
+                    : "—:—"}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-3" align="start" side="right" collisionPadding={16}>
+                <TimeGridPanel
+                  hour={value ? value.getHours() : 12}
+                  minute={value ? value.getMinutes() : 0}
+                  onHourChange={(h) => {
+                    const next = value ? new Date(value) : new Date()
+                    next.setHours(h)
+                    next.setSeconds(0)
+                    onChange?.(next)
+                  }}
+                  onMinuteChange={(m) => {
+                    const next = value ? new Date(value) : new Date()
+                    next.setMinutes(m)
+                    next.setSeconds(0)
+                    onChange?.(next)
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </PopoverContent>
       </Popover>
