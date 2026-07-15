@@ -9,7 +9,6 @@ import {
   PackageCheck,
   ReceiptIndianRupee,
   ReceiptText,
-  RefreshCw,
   RotateCcw,
   ShoppingCart,
   Truck,
@@ -22,7 +21,6 @@ import { DashboardPage as DashboardPageShell } from "@/components/dashboard/dash
 import { Spinner } from "@/components/ui/spinner"
 import { reports } from "@/lib/api/reports"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
-import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
 const money = (value: any) => `₹${Number(value || 0).toFixed(2)}`
@@ -34,7 +32,6 @@ const apiDate = (date: Date) => {
 
 export default function DashboardPage() {
   const { t } = useTranslation()
-  const [refreshDashboardSnapshot, refreshState] = (reports as any).useRefreshDashboardSnapshotMutation()
 
   const queryArgs = useMemo(() => {
     const now = new Date()
@@ -44,7 +41,7 @@ export default function DashboardPage() {
     }
   }, [])
 
-  const { data: summaryResponse, refetch, isLoading } = (reports as any).useGetDashboardSummaryQuery(queryArgs)
+  const { data: summaryResponse, isLoading } = (reports as any).useGetDashboardSummaryQuery(queryArgs)
   const summary = summaryResponse?.data || null
 
   const sales = summary?.sales || {}
@@ -153,37 +150,21 @@ export default function DashboardPage() {
     return rows
   }, [prevWeeklySales, weeklySales])
 
-  const refreshSnapshot = async () => {
-    try {
-      const response = await refreshDashboardSnapshot({ date: queryArgs.startDate }).unwrap()
-      showToast.success(response?.message || t("Dashboard snapshot refreshed."))
-      refetch()
-    } catch (error: any) {
-      showToast.error(error?.data?.message || t("Unable to refresh dashboard."))
-    }
-  }
-
   const maxSales = Math.max(...weeklyData.map((item) => Math.max(item.currentSales, item.previousSales)), 1)
+  const todayLabel = useMemo(
+    () => new Date().toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "short", day: "numeric" }),
+    []
+  )
 
   return (
     <DashboardPageShell padding="default">
       <div className="space-y-5">
         <section className="overflow-hidden rounded-lg border border-gray-200 bg-white text-slate-900 shadow-sm">
-          <div className="flex flex-col gap-5 border-b border-gray-100 p-5 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-teal-600">{t("Today")}</p>
-              <h1 className="mt-1 text-3xl font-bold text-slate-900">{t("Dashboard")}</h1>
-              <p className="mt-1 text-sm text-slate-500">{t("Sales snapshot, due summary and register activity.")}</p>
-            </div>
-            <Button
-              type="button"
-              onClick={refreshSnapshot}
-              disabled={refreshState.isLoading}
-              className="bg-teal-600 text-white hover:bg-teal-500"
-            >
-              {refreshState.isLoading ? <Spinner /> : <RefreshCw className="size-4" />}
-              {t("Refresh")}
-            </Button>
+          <div className="grid gap-px border-b border-gray-100 bg-gray-200 md:grid-cols-4">
+            <InfoTile label={t("Business Date")} value={todayLabel} />
+            <InfoTile label={t("Gross Sales")} value={money(sales.total_sales)} />
+            <InfoTile label={t("Orders")} value={sales.order_count || 0} />
+            <InfoTile label={t("Register")} value={shift?.register__name || t("No active shift")} />
           </div>
 
           <div className="grid gap-px bg-gray-200 sm:grid-cols-2 xl:grid-cols-4">
@@ -244,7 +225,7 @@ export default function DashboardPage() {
                 const previousPct = Math.max((day.previousSales / maxSales) * 100, day.previousSales > 0 ? 4 : 1)
                 return (
                   <div key={day.date} className="group relative flex h-full min-w-0 flex-1 flex-col justify-end">
-                    <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 rounded-md bg-slate-950 px-3 py-2 text-xs text-white shadow-lg group-hover:block">
+                    <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-lg group-hover:block">
                       <p className="whitespace-nowrap font-semibold">{day.date}</p>
                       <p className="mt-1 whitespace-nowrap">{t("This Week")}: {money(day.currentSales)} ({day.currentOrders})</p>
                       <p className="whitespace-nowrap">{t("Last Week")}: {money(day.previousSales)} ({day.previousOrders})</p>
@@ -391,6 +372,15 @@ function ShiftMetric({ label, value, helper }: { label: string; value: any; help
       <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
       <p className="mt-1 text-lg font-bold text-slate-950">{value}</p>
       {helper ? <p className="mt-1 text-xs font-medium text-slate-500">{helper}</p> : null}
+    </div>
+  )
+}
+
+function InfoTile({ label, value }: { label: string; value: any }) {
+  return (
+    <div className="bg-white p-4">
+      <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
+      <p className="mt-1 truncate text-base font-bold text-slate-950">{value}</p>
     </div>
   )
 }
