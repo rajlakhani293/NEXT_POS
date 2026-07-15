@@ -32,10 +32,10 @@ const initialValues = {
 }
 
 const transactionTypes = [
-  { label: "Direct Expense", value: "direct-transaction", enabled: true },
-  { label: "Recurring Expense", value: "recurring-transaction", enabled: false },
-  { label: "Entity Expense", value: "entity-transaction", enabled: false },
-  { label: "Scheduled Expense", value: "scheduled-transaction", enabled: false },
+  { label: "Direct Expense", value: "direct", enabled: true },
+  { label: "Recurring Expense", value: "recurring", enabled: false },
+  { label: "Entity Expense", value: "entity", enabled: false },
+  { label: "Scheduled Expense", value: "scheduled", enabled: false },
 ]
 
 const occurrenceOptions = [
@@ -70,10 +70,10 @@ export default function CreateAccountingTransactionPage() {
 
   const isEditing = Boolean(editId)
   const hasSelectedType = isEditing || Boolean(values.type)
-  const isRecurringType = values.type === "recurring-transaction"
+  const isRecurringType = values.type === "recurring"
   const isScheduledType =
-    values.type === "scheduled-transaction" ||
-    values.type === "entity-transaction"
+    values.type === "scheduled" ||
+    values.type === "entity"
 
   useEffect(() => {
     if (!editId) return
@@ -94,7 +94,7 @@ export default function CreateAccountingTransactionPage() {
       scheduled_date: record.scheduled_date
         ? String(record.scheduled_date).slice(0, 10)
         : "",
-      type: record.type || "direct-transaction",
+      type: record.recurring ? "recurring" : "direct",
       description: record.description || "",
       media_id: record.media_id ? String(record.media_id) : "",
       group_id: record.group_id ? String(record.group_id) : "",
@@ -102,10 +102,10 @@ export default function CreateAccountingTransactionPage() {
   }, [transactionState.data])
 
   useEffect(() => {
-    if (values.type !== "recurring-transaction" && values.recurring) {
+    if (values.type !== "recurring" && values.recurring) {
       setValues((current) => ({ ...current, recurring: false }))
     }
-    if (values.type === "recurring-transaction" && !values.recurring) {
+    if (values.type === "recurring" && !values.recurring) {
       setValues((current) => ({ ...current, recurring: true }))
     }
   }, [values.recurring, values.type])
@@ -148,7 +148,7 @@ export default function CreateAccountingTransactionPage() {
     setValues((current) => ({
       ...current,
       type: type.value,
-      recurring: type.value === "recurring-transaction",
+      recurring: type.value === "recurring",
     }))
   }
 
@@ -174,8 +174,8 @@ export default function CreateAccountingTransactionPage() {
       description: values.description || "",
       media_id: Number(values.media_id || 0),
       value: Number(values.value || 0),
-      recurring: values.type === "recurring-transaction",
-      type: values.type || "direct-transaction",
+      recurring: values.type === "recurring",
+      type: "expense",
       group_id: values.group_id ? Number(values.group_id) : null,
       occurrence: values.occurrence || "",
       occurrence_value: values.occurrence_value || "",
@@ -331,7 +331,7 @@ export default function CreateAccountingTransactionPage() {
                 placeholder={t("Set the scheduled date.")}
               />
             ) : null}
-            {values.type === "entity-transaction" ? (
+            {values.type === "entity" ? (
               <UniFieldInput
                 label={t("Users Group")}
                 type="number"
