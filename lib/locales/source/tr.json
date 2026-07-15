@@ -2954,5 +2954,10 @@
   "{shipping_pobox}: displays the shipping pobox.": "{shipping_pobox}: gönderim PO kutusunu görüntüler.",
   "{store_email}: displays the store email.": "{store_email}: mağaza e-posta adresini gösterir.",
   "{store_name}: displays the store name.": "{store_name}: mağaza adını gösterir.",
-  "{store_phone}: displays the store phone number.": "{store_phone}: mağaza telefon numarasını gösterir."
+  "{store_phone}: displays the store phone number.": "{store_phone}: mağaza telefon numarasını gösterir.",
+  "Rows per page": "Sayfa başına satır",
+  "20 / page": "20 / sayfa",
+  "50 / page": "50 / sayfa",
+  "100 / page": "100 / sayfa",
+  "Sr No": "Sıra No"
 }

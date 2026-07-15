@@ -2954,5 +2954,10 @@
   "{shipping_pobox}: displays the shipping pobox.": "{shipping_pobox}: يعرض صندوق الشحن.",
   "{store_email}: displays the store email.": "{store_email}: يعرض البريد الإلكتروني للمتجر.",
   "{store_name}: displays the store name.": "{store_name}: يعرض اسم المتجر.",
-  "{store_phone}: displays the store phone number.": "{store_phone}: يعرض رقم هاتف المتجر."
+  "{store_phone}: displays the store phone number.": "{store_phone}: يعرض رقم هاتف المتجر.",
+  "Rows per page": "صفوف لكل صفحة",
+  "20 / page": "20 / صفحة",
+  "50 / page": "50 / صفحة",
+  "100 / page": "100 / صفحة",
+  "Sr No": "الرقم"
 }

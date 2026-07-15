@@ -646,7 +646,6 @@
   "Options": "Options",
   "Expiration Date": "Date d'expiration",
   "Product": "Produit",
-  "N/A": "N/A",
   "Set Paid": "Marquer paye",
   "Would you like to mark this procurement as paid?": "Voulez-vous marquer cet approvisionnement comme paye ?",
   "Would you like to refresh this ?": "Voulez-vous actualiser ceci ?",
@@ -705,5 +704,10 @@
   "Coupon Order Histories List": "Liste des historiques de commandes de coupons",
   "Display all coupon order histories.": "Afficher tous les historiques de commandes de coupons.",
   "Created At": "Cree le",
-  "Discount": "Remise"
+  "Discount": "Remise",
+  "Rows per page": "Lignes par page",
+  "20 / page": "20 / page",
+  "50 / page": "50 / page",
+  "100 / page": "100 / page",
+  "Sr No": "N°"
 }

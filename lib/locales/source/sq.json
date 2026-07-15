@@ -2954,5 +2954,10 @@
   "{shipping_pobox}: displays the shipping pobox.": "{shipping_pobox}: shfaqet adresa e dorësimit.",
   "{store_email}: displays the store email.": "{store_email}: shfaq emailin e dyqanit.",
   "{store_name}: displays the store name.": "{store_name}: shfaq emrin e dyqanit.",
-  "{store_phone}: displays the store phone number.": "{store_phone}: shfaq numrin e telefonit të dyqanit."
+  "{store_phone}: displays the store phone number.": "{store_phone}: shfaq numrin e telefonit të dyqanit.",
+  "Rows per page": "Rreshtat për faqe",
+  "20 / page": "20 / faqe",
+  "50 / page": "50 / faqe",
+  "100 / page": "100 / faqe",
+  "Sr No": "Nr. Rendor"
 }

@@ -2954,5 +2954,10 @@
   "{shipping_pobox}: displays the shipping pobox.": "{shipping_pobox}: បង្ហាញប្រអប់ PO ដឹកជញ្ជូន។",
   "{store_email}: displays the store email.": "{store_email}: បង្ហាញអ៊ីមែលហាង។",
   "{store_name}: displays the store name.": "{store_name}: បង្ហាញឈ្មោះហាង។",
-  "{store_phone}: displays the store phone number.": "{store_phone}: បង្ហាញលេខទូរស័ព្ទហាង។"
+  "{store_phone}: displays the store phone number.": "{store_phone}: បង្ហាញលេខទូរស័ព្ទហាង។",
+  "Rows per page": "ជួរដេកក្នុងមួយទំព័រ",
+  "20 / page": "២០ / ទំព័រ",
+  "50 / page": "៥០ / ទំព័រ",
+  "100 / page": "១០០ / ទំព័រ",
+  "Sr No": "ល.រ"
 }

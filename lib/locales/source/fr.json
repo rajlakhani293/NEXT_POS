@@ -2954,5 +2954,10 @@
   "{shipping_pobox}: displays the shipping pobox.": "{shipping_pobox} : affiche la pobox d'expédition.",
   "{store_email}: displays the store email.": "{store_email} : affiche l'e-mail du magasin.",
   "{store_name}: displays the store name.": "{store_name} : affiche le nom du magasin.",
-  "{store_phone}: displays the store phone number.": "{store_phone} : affiche le numéro de téléphone du magasin."
+  "{store_phone}: displays the store phone number.": "{store_phone} : affiche le numéro de téléphone du magasin.",
+  "Rows per page": "Lignes par page",
+  "20 / page": "20 / page",
+  "50 / page": "50 / page",
+  "100 / page": "100 / page",
+  "Sr No": "N°"
 }

@@ -546,7 +546,7 @@
   "Stock adjustment completed successfully.": "تم إكمال تعديل المخزون بنجاح.",
   "This product doesn't have any stock to adjust.": "هذا المنتج لا يحتوي على مخزون لتعديله.",
   "Value": "القيمة",
-  "N/A": "غير متوفر",
+  "N/A": "غير متاح",
   "Unit Conversion : {product}": "تحويل الوحدة : {product}",
   "Assigned Unit": "الوحدة المعينة",
   "The quantity should be greater than 0": "يجب أن تكون الكمية أكبر من 0",
@@ -646,7 +646,6 @@
   "Options": "الخيارات",
   "Expiration Date": "تاريخ الانتهاء",
   "Product": "المنتج",
-  "N/A": "غير متاح",
   "Set Paid": "تعيين كمدفوع",
   "Would you like to mark this procurement as paid?": "هل تريد تعيين هذا التوريد كمدفوع؟",
   "Would you like to refresh this ?": "هل تريد تحديث هذا؟",
@@ -705,5 +704,10 @@
   "Coupon Order Histories List": "قائمة سجلات طلبات الكوبونات",
   "Display all coupon order histories.": "عرض جميع سجلات طلبات الكوبونات.",
   "Created At": "تم الإنشاء في",
-  "Discount": "الخصم"
+  "Discount": "الخصم",
+  "Rows per page": "صفوف لكل صفحة",
+  "20 / page": "20 / صفحة",
+  "50 / page": "50 / صفحة",
+  "100 / page": "100 / صفحة",
+  "Sr No": "الرقم"
 }

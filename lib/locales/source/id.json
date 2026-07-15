@@ -2956,5 +2956,10 @@
   "{shipping_pobox}: displays the shipping pobox.": "{shipping_pobox}: menampilkan kotak pos pengiriman.",
   "{store_email}: displays the store email.": "{store_email}: menampilkan email toko.",
   "{store_name}: displays the store name.": "{store_name}: menampilkan nama toko.",
-  "{store_phone}: displays the store phone number.": "{store_phone}: menampilkan nomor telepon toko."
+  "{store_phone}: displays the store phone number.": "{store_phone}: menampilkan nomor telepon toko.",
+  "Rows per page": "Baris per halaman",
+  "20 / page": "20 / halaman",
+  "50 / page": "50 / halaman",
+  "100 / page": "100 / halaman",
+  "Sr No": "No."
 }

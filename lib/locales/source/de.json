@@ -2954,5 +2954,10 @@
   "Product Taxes (Included)": "Produktsteuern (Einkommtlich)",
   "Unassigned Tax Group": "Nicht zugewiesene Steuergruppe",
   "POS wasn't able to perform a database request. This error might be related to a misconfiguration on your .env file. The following guide might be useful to help you solving this issue.": "POS konnte keine Datenbankanfrage ausführen. Dieser Fehler hängt möglicherweise mit einer Fehlkonfiguration Ihrer .env-Datei zusammen. Der folgende Leitfaden könnte hilfreich sein, um Ihnen bei der Lösung dieses Problems zu helfen.",
-  "We're unable to locate the page you're searching for. This page was moved, deleted or simply invalid. You can start by giving another shot clicking on \"Try Again\". If the issue persist, uses the bellow output to receive support.": "Wir können die gesuchte Seite nicht finden. Diese Seite wurde möglicherweise verschoben, gelöscht oder ist ungültig. Sie können versuchen die Seite neu zu laden. Wenn das Problem weiterhin besteht kontaktieren Sie den Support."
+  "We're unable to locate the page you're searching for. This page was moved, deleted or simply invalid. You can start by giving another shot clicking on \"Try Again\". If the issue persist, uses the bellow output to receive support.": "Wir können die gesuchte Seite nicht finden. Diese Seite wurde möglicherweise verschoben, gelöscht oder ist ungültig. Sie können versuchen die Seite neu zu laden. Wenn das Problem weiterhin besteht kontaktieren Sie den Support.",
+  "Rows per page": "Zeilen pro Seite",
+  "20 / page": "20 / Seite",
+  "50 / page": "50 / Seite",
+  "100 / page": "100 / Seite",
+  "Sr No": "Nr."
 }

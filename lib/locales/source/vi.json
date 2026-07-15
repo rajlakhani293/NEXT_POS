@@ -2953,5 +2953,10 @@
   "{shipping_pobox}: displays the shipping pobox.": "{shipping_pobox}: hiển thị hộp thư nhận hàng.",
   "{store_email}: displays the store email.": "{store_email}: hiển thị địa chỉ email của cửa hàng.",
   "{store_name}: displays the store name.": "{store_name}: hiển thị tên cửa hàng.",
-  "{store_phone}: displays the store phone number.": "{store_phone}: hiển thị số điện thoại của cửa hàng."
+  "{store_phone}: displays the store phone number.": "{store_phone}: hiển thị số điện thoại của cửa hàng.",
+  "Rows per page": "Số hàng mỗi trang",
+  "20 / page": "20 / trang",
+  "50 / page": "50 / trang",
+  "100 / page": "100 / trang",
+  "Sr No": "STT"
 }
