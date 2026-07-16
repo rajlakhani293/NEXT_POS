@@ -227,6 +227,7 @@ export function UserCreateUpdatePage({ userId }: { userId?: string | number }) {
     first_name: values.first_name,
     last_name: values.last_name,
     password: values.password || undefined,
+    password_confirm: values.password ? values.password_confirm : undefined,
     active: values.active,
     roles: values.roles,
     group_id: values.group_id ? Number(values.group_id) : undefined,

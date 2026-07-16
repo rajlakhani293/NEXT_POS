@@ -194,8 +194,31 @@ export default function UserProfilePage() {
       return
     }
 
-    if (values.password && values.password !== values.password_confirm) {
+    const wantsPasswordChange = Boolean(
+      values.old_password || values.password || values.password_confirm
+    )
+
+    if (wantsPasswordChange && !values.old_password) {
+      showToast.error(t("Old password is required."))
+      setActiveTab("security")
+      return
+    }
+
+    if (wantsPasswordChange && !values.password) {
+      showToast.error(t("Password is required."))
+      setActiveTab("security")
+      return
+    }
+
+    if (values.password && values.password.length < 6) {
+      showToast.error(t("Password must contain at least 6 characters."))
+      setActiveTab("security")
+      return
+    }
+
+    if (wantsPasswordChange && values.password !== values.password_confirm) {
       showToast.error(t("Password confirmation does not match."))
+      setActiveTab("security")
       return
     }
 
@@ -212,7 +235,7 @@ export default function UserProfilePage() {
         shipping,
       }
 
-      if (values.password) {
+      if (wantsPasswordChange) {
         payload.old_password = values.old_password
         payload.password = values.password
         payload.password_confirm = values.password_confirm
@@ -321,7 +344,7 @@ export default function UserProfilePage() {
 
           <div className="flex-none">
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ProfileTab)}>
-              <TabsList variant="line" className="-mb-px w-full justify-start overflow-x-auto">
+              <TabsList variant="line" className="w-full justify-start">
                 {([
                   ["general", "General Info"],
                   ["billing", "Billing Address"],
