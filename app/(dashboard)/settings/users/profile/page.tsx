@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Copy, KeyRound, RefreshCw, Save, Search, Trash2 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ArrowLeft, Copy, KeyRound, RefreshCw, Save, Search, Trash2 } from "lucide-react"
 
 import { useConfirmDialog } from "@/components/confirm-dialog"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
@@ -108,6 +109,7 @@ function dateLabel(value?: string | null) {
 
 export default function UserProfilePage() {
   const { t } = useTranslation()
+  const router = useRouter()
   const dispatch = useAppDispatch()
   const { confirm, confirmDialog } = useConfirmDialog()
   const user = useAppSelector((state) => state.session.user)
@@ -250,8 +252,7 @@ export default function UserProfilePage() {
         password_confirm: "",
       }))
       showToast.success(response?.message || t("The profile has been successfully saved."))
-    } catch (error: any) {
-      showToast.error(error?.data?.message || t("Unable to proceed, the form is not valid."))
+    } catch {
     }
   }
 
@@ -267,8 +268,7 @@ export default function UserProfilePage() {
       setTokenName("")
       refetchTokens()
       showToast.success(response?.message || t("Token created successfully."))
-    } catch (error: any) {
-      showToast.error(error?.data?.message || t("Unable to proceed, the form is not valid."))
+    } catch {
     }
   }
 
@@ -290,7 +290,6 @@ export default function UserProfilePage() {
       refetchTokens()
       showToast.success(response?.message || t("Token deleted successfully."))
     } catch {
-      // The API interceptor already displays the backend error once.
     }
   }
 
@@ -334,13 +333,24 @@ export default function UserProfilePage() {
         <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
           <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
             <div className="flex items-center justify-between gap-3">
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  {user?.full_name || user?.username || t("My Profile")}
-                </h1>
-                <p className="text-xs font-medium text-gray-500">
-                  {user?.email || t("Manage your profile, addresses, security, and API tokens.")}
-                </p>
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => router.push("/settings/users")}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    {user?.full_name || user?.username || t("My Profile")}
+                  </h1>
+                  <p className="text-xs font-medium text-gray-500">
+                    {user?.email || t("Manage your profile, addresses, security, and API tokens.")}
+                  </p>
+                </div>
               </div>
               <Badge>{user?.status === 1 ? t("Deactive") : t("Active")}</Badge>
             </div>
