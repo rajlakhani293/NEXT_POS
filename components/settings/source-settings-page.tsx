@@ -706,7 +706,7 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
           {/* Underline tab bar */}
           <div>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList variant="line" className="-mb-px w-full justify-start overflow-x-auto">
+              <TabsList variant="line" className="w-full justify-start">
                 {tabs.map((tab) => {
                   const hasError = tabHasErrors(tab)
                   return (

@@ -31,8 +31,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Spinner } from "@/components/ui/spinner"
-import { Switch } from "@/components/ui/switch"
 import { UniFieldInput } from "@/components/ui/unifield-input"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { settings } from "@/lib/api/settings"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { showToast } from "@/lib/toast"
@@ -502,121 +509,117 @@ export default function RoleFormPage() {
 
   const renderPermissionTable = (rows: PermissionRow[]) => {
     return (
-      <div className="min-w-0 rounded-xl border">
-        <div className="thin-scrollbar w-full overflow-x-auto">
-          <table className="w-full min-w-[900px] border-collapse text-sm">
-            <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
-              <tr>
-                <th className="w-[280px] border-b border-r px-4 py-4 text-left font-bold">
-                  {t("Title")}
-                </th>
-                <th className="border-b border-r px-4 py-4 text-center font-bold">
-                  {t("Full")}
-                </th>
-                {actionColumns.map((column) => (
-                  <th
-                    key={column.key}
-                    className="border-b border-r px-4 py-4 text-center font-bold"
-                  >
-                    {t(column.label)}
-                  </th>
-                ))}
-                <th className="border-b px-4 py-4 text-left font-bold">
-                  {t("Other")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => {
-                const rowCodes = row.permissions.map((permission) => permission.codename)
-                const rowChecked = rowCodes.every((codename) =>
-                  selectedPermissions.includes(codename)
-                )
+      <Table className="min-w-[900px]">
+        <TableHeader className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+          <TableRow>
+            <TableHead className="w-[280px] px-4 py-4 font-bold text-left">
+              {t("Title")}
+            </TableHead>
+            <TableHead className="px-4 py-4 font-bold text-center">
+              {t("Full")}
+            </TableHead>
+            {actionColumns.map((column) => (
+              <TableHead
+                key={column.key}
+                className="px-4 py-4 font-bold text-center"
+              >
+                {t(column.label)}
+              </TableHead>
+            ))}
+            <TableHead className="px-4 py-4 font-bold text-left">
+              {t("Other")}
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row) => {
+            const rowCodes = row.permissions.map((permission) => permission.codename)
+            const rowChecked = rowCodes.every((codename) =>
+              selectedPermissions.includes(codename)
+            )
 
-                return (
-                  <tr key={row.key} className="border-b last:border-b-0">
-                    <td className="border-r px-4 py-4">
-                      <div className="font-semibold text-gray-900">{t(row.title)}</div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        {row.permissions.length}{" "}
-                        {row.permissions.length === 1 ? t("permission") : t("permissions")}
-                      </div>
-                    </td>
-                    <td className="border-r px-4 py-4 text-center">
-                      <Checkbox
-                        checked={rowChecked}
-                        onCheckedChange={(value) => toggleRow(row, Boolean(value))}
-                      />
-                    </td>
-                    {actionColumns.map((column) => {
-                      const permission = row.actions[column.key]
-                      const checked = permission
-                        ? selectedPermissions.includes(permission.codename)
-                        : false
+            return (
+              <TableRow key={row.key}>
+                <TableCell className="px-4 py-4">
+                  <div className="font-semibold text-gray-900">{t(row.title)}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    {row.permissions.length}{" "}
+                    {row.permissions.length === 1 ? t("permission") : t("permissions")}
+                  </div>
+                </TableCell>
+                <TableCell className="px-4 py-4 text-center">
+                  <Checkbox
+                    checked={rowChecked}
+                    onCheckedChange={(value) => toggleRow(row, Boolean(value))}
+                  />
+                </TableCell>
+                {actionColumns.map((column) => {
+                  const permission = row.actions[column.key]
+                  const checked = permission
+                    ? selectedPermissions.includes(permission.codename)
+                    : false
 
-                      return (
-                        <td key={column.key} className="border-r px-4 py-4 text-center">
-                          {permission ? (
-                            <Checkbox
-                              checked={checked}
-                              onCheckedChange={(value) =>
-                                togglePermission(permission.codename, Boolean(value))
-                              }
-                            />
-                          ) : (
-                            <span className="text-muted-foreground/40">-</span>
-                          )}
-                        </td>
-                      )
-                    })}
-                    <td className="px-4 py-4">
-                      {row.other.length ? (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-8 text-xs font-semibold"
-                            >
-                              {t("More actions")}
-                              <span className="ml-1 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-600">
-                                {row.other.length}
-                              </span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-72">
-                            <DropdownMenuLabel className="text-xs text-muted-foreground">
-                              {t(row.title)} {t("actions")}
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {row.other.map((permission) => {
-                              const checked = selectedPermissions.includes(permission.codename)
-                              return (
-                                <DropdownMenuItem
-                                  key={permission.codename}
-                                  onSelect={(event) => event.preventDefault()}
-                                  onClick={() => togglePermission(permission.codename, !checked)}
-                                  className="cursor-pointer gap-3 text-sm"
-                                >
-                                  <Checkbox checked={checked} />
-                                  <span>{t(permission.name || titleCase(permission.codename))}</span>
-                                </DropdownMenuItem>
-                              )
-                            })}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                  return (
+                    <TableCell key={column.key} className="px-4 py-4 text-center">
+                      {permission ? (
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={(value) =>
+                            togglePermission(permission.codename, Boolean(value))
+                          }
+                        />
                       ) : (
                         <span className="text-muted-foreground/40">-</span>
                       )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                    </TableCell>
+                  )
+                })}
+                <TableCell className="px-4 py-4">
+                  {row.other.length ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs font-semibold"
+                        >
+                          {t("More actions")}
+                          <span className="ml-1 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-600">
+                            {row.other.length}
+                          </span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-72">
+                        <DropdownMenuLabel className="text-xs text-muted-foreground">
+                          {t(row.title)} {t("actions")}
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {row.other.map((permission) => {
+                          const checked = selectedPermissions.includes(permission.codename)
+                          return (
+                            <DropdownMenuItem
+                              key={permission.codename}
+                              onSelect={(event) => event.preventDefault()}
+                              onClick={() => togglePermission(permission.codename, !checked)}
+                              className="cursor-pointer gap-3 text-sm"
+                            >
+                              <Checkbox checked={checked} />
+                              <span>{t(permission.name || titleCase(permission.codename))}</span>
+                            </DropdownMenuItem>
+                          )
+                        })}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <span className="text-muted-foreground/40">-</span>
+                  )}
+                </TableCell>
+              </TableRow>
+            )
+          })}
+        </TableBody>
+      </Table>
     )
   }
 
@@ -625,184 +628,184 @@ export default function RoleFormPage() {
   return (
     <DashboardPage padding="none">
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-        <div className="flex flex-none flex-col gap-3 border-b bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div className="flex items-center gap-3">
-            <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={goBack}>
-              <ArrowLeft className="size-4" />
-            </Button>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-                {isEdit ? t("Edit role") : t("Create a new role")}
-              </h1>
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="flex flex-none flex-col gap-3 border-b bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="flex items-center gap-3">
+              <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={goBack}>
+                <ArrowLeft className="size-4" />
+              </Button>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+                  {isEdit ? t("Edit role") : t("Create a new role")}
+                </h1>
+              </div>
+            </div>
+            <div className="flex flex-none justify-end gap-2 sm:gap-3">
+              <Button type="button" variant="outline" onClick={goBack} disabled={isSubmitting}>
+                {t("Cancel")}
+              </Button>
+              <Button type="submit" disabled={isSubmitting || isLoading}>
+                {isSubmitting ? <Spinner /> : t("Save Role")}
+              </Button>
             </div>
           </div>
-          <div className="flex flex-none justify-end gap-2 sm:gap-3">
-            <Button type="button" variant="outline" onClick={goBack} disabled={isSubmitting}>
-              {t("Cancel")}
-            </Button>
-            <Button type="submit" disabled={isSubmitting || isLoading}>
-              {isSubmitting ? <Spinner /> : t("Save Role")}
-            </Button>
-          </div>
-        </div>
 
-        <div
-          ref={pageScrollRef}
-          className="thin-scrollbar min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-4 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6"
-        >
-          {isLoading ? (
-            <div className="flex h-64 items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Spinner />
-              {t("Loading role data...")}
-            </div>
-          ) : (
-            <div className="space-y-3 lg:space-y-5">
-              <section className="rounded-xl border bg-white p-3 sm:p-4 lg:p-5">
-                <div className="mb-4 flex items-center gap-2">
-                  <BadgeCheck className="size-5 text-blue-600" />
-                  <h2 className="text-base font-semibold">{t("Role Information")}</h2>
-                </div>
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-5">
-                  <div className="space-y-4">
-                    <UniFieldInput
-                      label={t("Name")}
-                      placeholder={t("Provide a name to the role.")}
-                      value={values.name}
-                      required
-                      error={errors.name}
-                      onChange={(event) => updateField("name", event.target.value)}
-                    />
-                    <UniFieldInput
-                      as="textarea"
-                      label={t("Description")}
-                      placeholder={t("Provide more details about what this role is about.")}
-                      value={values.description}
-                      onChange={(event) => updateField("description", event.target.value)}
-                    />
+          <div
+            ref={pageScrollRef}
+            className="thin-scrollbar min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-4 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6"
+          >
+            {isLoading ? (
+              <div className="flex h-64 items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Spinner />
+                {t("Loading role data...")}
+              </div>
+            ) : (
+              <div className="space-y-3 lg:space-y-5">
+                <section className="rounded-xl border bg-white p-3 sm:p-4 lg:p-5">
+                  <div className="mb-4 flex items-center gap-2">
+                    <BadgeCheck className="size-5 text-blue-600" />
+                    <h2 className="text-base font-semibold">{t("Role Information")}</h2>
                   </div>
-                  <div className="space-y-4">
-                    <UniFieldInput
-                      label={t("Namespace")}
-                      placeholder={t("Should be a unique value with no spaces or special character")}
-                      value={values.namespace}
-                      disabled={values.locked}
-                      required
-                      error={errors.namespace}
-                      onChange={(event) => updateField("namespace", event.target.value)}
-                    />
-                    {values.locked && (
-                      <p className="text-xs text-muted-foreground">
-                        {t("System roles are locked and their namespaces cannot be changed.")}
-                      </p>
-                    )}
+                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-5">
+                    <div className="space-y-4">
+                      <UniFieldInput
+                        label={t("Name")}
+                        placeholder={t("Provide a name to the role.")}
+                        value={values.name}
+                        required
+                        error={errors.name}
+                        onChange={(event) => updateField("name", event.target.value)}
+                      />
+                      <UniFieldInput
+                        as="textarea"
+                        label={t("Description")}
+                        placeholder={t("Provide more details about what this role is about.")}
+                        value={values.description}
+                        onChange={(event) => updateField("description", event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <UniFieldInput
+                        label={t("Namespace")}
+                        placeholder={t("Should be a unique value with no spaces or special character")}
+                        value={values.namespace}
+                        disabled={values.locked}
+                        required
+                        error={errors.namespace}
+                        onChange={(event) => updateField("namespace", event.target.value)}
+                      />
+                      {values.locked && (
+                        <p className="text-xs text-muted-foreground">
+                          {t("System roles are locked and their namespaces cannot be changed.")}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </section>
+                </section>
 
-              <section
-                ref={permissionSectionRef}
-                className="grid min-w-0 rounded-xl border bg-white lg:sticky lg:top-0 lg:z-10 lg:h-[calc(100svh-8.5rem)] lg:min-h-[560px] lg:overflow-hidden lg:grid-cols-[300px_minmax(0,1fr)]"
-              >
-                <aside className="hidden min-h-0 border-b bg-gray-50/70 p-3 sm:p-4 lg:block lg:border-r lg:border-b-0">
-                  <div className="relative mb-4">
-                    <UniFieldInput
-                      prefix={<Search className="size-4" />}
-                      placeholder={t("Search permissions...")}
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      allowClear
-                      onClear={() => setSearch("")}
-                    />
-                  </div>
-                  <div className="mb-3 flex items-center gap-2 text-sm font-bold text-gray-800">
-                    <Building2 className="size-4" />
-                    {t("Modules")}
-                  </div>
-                  <div className="space-y-1">
-                    {sections.map((section) => {
-                      const Icon = section.icon
-                      const stats = getSectionStats(section)
-                      const isActive = section.key === activeSectionKey
+                <section
+                  ref={permissionSectionRef}
+                  className="grid min-w-0 rounded-xl border bg-white lg:sticky lg:top-0 lg:z-10 lg:h-[calc(100svh-8.5rem)] lg:min-h-[560px] lg:overflow-hidden lg:grid-cols-[300px_minmax(0,1fr)]"
+                >
+                  <aside className="hidden min-h-0 border-b bg-gray-50/70 p-3 sm:p-4 lg:block lg:border-r lg:border-b-0">
+                    <div className="relative mb-4">
+                      <UniFieldInput
+                        prefix={<Search className="size-4" />}
+                        placeholder={t("Search permissions...")}
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        allowClear
+                        onClear={() => setSearch("")}
+                      />
+                    </div>
+                    <div className="mb-3 flex items-center gap-2 text-sm font-bold text-gray-800">
+                      <Building2 className="size-4" />
+                      {t("Modules")}
+                    </div>
+                    <div className="space-y-1">
+                      {sections.map((section) => {
+                        const Icon = section.icon
+                        const stats = getSectionStats(section)
+                        const isActive = section.key === activeSectionKey
 
-                      return (
-                        <button
-                          key={section.key}
-                          type="button"
-                          onClick={() => scrollToSection(section.key)}
-                          className={cn(
-                            "flex min-w-max items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold duration-0 [transition:none] lg:w-full",
-                            isActive
-                              ? "bg-black text-white"
-                              : "text-gray-700 hover:bg-white hover:text-gray-950"
-                          )}
-                        >
-                          <span className="flex items-center gap-2">
-                            <Icon className="size-4" />
-                            {t(section.title)}
-                          </span>
-                          <span
+                        return (
+                          <button
+                            key={section.key}
+                            type="button"
+                            onClick={() => scrollToSection(section.key)}
                             className={cn(
-                              "rounded-full px-2 py-0.5 text-xs duration-0 [transition:none]",
-                              isActive ? "bg-white/15 text-white" : "bg-gray-200 text-gray-600"
+                              "flex min-w-max items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold duration-0 [transition:none] lg:w-full",
+                              isActive
+                                ? "bg-black text-white"
+                                : "text-gray-700 hover:bg-white hover:text-gray-950"
                             )}
                           >
-                            {stats.selected}/{stats.total}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </aside>
+                            <span className="flex items-center gap-2">
+                              <Icon className="size-4" />
+                              {t(section.title)}
+                            </span>
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-xs duration-0 [transition:none]",
+                                isActive ? "bg-white/15 text-white" : "bg-gray-200 text-gray-600"
+                              )}
+                            >
+                              {stats.selected}/{stats.total}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </aside>
 
-                <div
-                  ref={permissionsPanelRef}
-                  className="min-w-0 min-h-0 p-3 sm:p-4 lg:thin-scrollbar lg:overflow-y-auto"
-                >
-                  <div className="min-w-0 space-y-3">
-                    {filteredSections.map((section) => {
-                      const Icon = section.icon
-                      return (
-                        <div
-                          key={section.key}
-                          id={`role-permissions-${section.key}`}
-                          className="scroll-mt-4"
-                        >
-                          <div className="mb-2 flex flex-wrap items-center justify-between gap-1">
-                            <div className="flex items-center gap-1">
-                              <div className="flex size-8 items-center justify-center rounded-lg">
-                                <Icon className="size-5" />
+                  <div
+                    ref={permissionsPanelRef}
+                    className="min-w-0 min-h-0 p-3 sm:p-4 lg:thin-scrollbar lg:overflow-y-auto"
+                  >
+                    <div className="min-w-0 space-y-3">
+                      {filteredSections.map((section) => {
+                        const Icon = section.icon
+                        return (
+                          <div
+                            key={section.key}
+                            id={`role-permissions-${section.key}`}
+                            className="scroll-mt-4"
+                          >
+                            <div className="mb-2 flex flex-wrap items-center justify-between gap-1">
+                              <div className="flex items-center gap-1">
+                                <div className="flex size-8 items-center justify-center rounded-lg">
+                                  <Icon className="size-5" />
+                                </div>
+                                <div>
+                                  <h2 className="text-base font-bold">{t(section.title)}</h2>
+                                </div>
                               </div>
-                              <div>
-                                <h2 className="text-base font-bold">{t(section.title)}</h2>
-                              </div>
+                              <label className="flex items-center gap-2 rounded-lg border px-2 py-1.5 text-sm font-semibold">
+                                <Checkbox
+                                  checked={isSectionChecked(section)}
+                                  onCheckedChange={(value) =>
+                                    toggleSection(section, Boolean(value))
+                                  }
+                                />
+                                {t("Full Access")}
+                              </label>
                             </div>
-                            <label className="flex items-center gap-2 rounded-lg border px-2 py-1.5 text-sm font-semibold">
-                              <Checkbox
-                                checked={isSectionChecked(section)}
-                                onCheckedChange={(value) =>
-                                  toggleSection(section, Boolean(value))
-                                }
-                              />
-                              {t("Full Access")}
-                            </label>
+                            {renderPermissionTable(section.rows)}
                           </div>
-                          {renderPermissionTable(section.rows)}
+                        )
+                      })}
+                      {!filteredSections.length ? (
+                        <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+                          {t("No permissions found for this search.")}
                         </div>
-                      )
-                    })}
-                    {!filteredSections.length ? (
-                      <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
-                        {t("No permissions found for this search.")}
-                      </div>
-                    ) : null}
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              </section>
-            </div>
-          )}
-        </div>
-      </form>
+                </section>
+              </div>
+            )}
+          </div>
+        </form>
       </div>
     </DashboardPage>
   )
