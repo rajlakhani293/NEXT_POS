@@ -185,47 +185,8 @@ export default function RegistersPage() {
   }
 
   const registerRowActions = (_: any, record: any) => {
-    const isClosed = record.register_status === "closed"
-    const isOpen = record.register_status === "opened" || record.register_status === "in-use"
     const actions: any[] = []
-    if (canOpen && isClosed) {
-      actions.push({
-        key: "open",
-        label: t("Open Register"),
-        labelText: t("Open Register"),
-        icon: <LockOpen className="size-4" />,
-        onClick: () => openRegisterActionForm("open", record),
-      })
-    }
-    if (isOpen) {
-      if (canClose) {
-        actions.push({
-          key: "close",
-          label: t("Close Register"),
-          labelText: t("Close Register"),
-          icon: <Lock className="size-4" />,
-          onClick: () => openRegisterActionForm("close", record),
-        })
-      }
-      if (canCashIn) {
-        actions.push({
-          key: "cash-in",
-          label: t("Cash In"),
-          labelText: t("Cash In"),
-          icon: <ArrowDownCircle className="size-4" />,
-          onClick: () => openRegisterActionForm("register-cash-in", record),
-        })
-      }
-      if (canCashOut) {
-        actions.push({
-          key: "cash-out",
-          label: t("Cash Out"),
-          labelText: t("Cash Out"),
-          icon: <ArrowUpCircle className="size-4" />,
-          onClick: () => openRegisterActionForm("register-cash-out", record),
-        })
-      }
-    }
+    
     actions.push({
       key: "history",
       label: t("Register History"),
@@ -262,8 +223,14 @@ export default function RegistersPage() {
           }
           showDateRange
           showEdit={canUpdate}
+          canEditRow={(record: any) =>
+            record.register_status !== "opened" && record.register_status !== "in-use"
+          }
           onEdit={openRegisterForm}
           showDelete={canDelete}
+          canDeleteRow={(record: any) =>
+            record.register_status !== "opened" && record.register_status !== "in-use"
+          }
           deleteMutation={deleteRegister}
           showStatus={canUpdate}
           statusChangeMutation={({ ids, status }: any) =>
