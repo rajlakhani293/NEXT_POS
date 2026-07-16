@@ -9,18 +9,20 @@ import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Button } from "@/components/ui/button"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 
 const buildColumns = (
   t: (key: string) => string,
-  formatMoney: (value: any) => string
+  formatMoney: (value: any) => string,
+  formatDate: (value: any) => string
 ) => [
   { key: "name", title: t("Name") },
   { key: "purchase_price", title: t("Purchase Price"), render: (value: any) => formatMoney(value) },
   { key: "quantity", title: t("Quantity") },
   { key: "tax_group_name", title: t("Tax Group") },
   { key: "barcode", title: t("Barcode") },
-  { key: "expiration_date", title: t("Expiration Date"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+  { key: "expiration_date", title: t("Expiration Date"), render: formatDate },
   { key: "tax_type", title: t("Tax Type") },
   { key: "tax_value", title: t("Tax Value"), render: (value: any) => formatMoney(value) },
   { key: "total_purchase_price", title: t("Total Price"), render: (value: any) => formatMoney(value) },
@@ -31,9 +33,9 @@ export default function ProviderProductsPage() {
   const router = useRouter()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
-  const formatMoney = (value: any) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
-  const columns = buildColumns(t, formatMoney)
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
+  const formatDate = (value: any) => formatBusinessDate(value, posOptions)
+  const columns = buildColumns(t, formatMoney, formatDate)
   const id = params.id as string
   const lastRequestRef = useRef("")
   const [rows, setRows] = useState<any[]>([])

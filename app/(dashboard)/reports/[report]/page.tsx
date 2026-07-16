@@ -17,6 +17,7 @@ import {
 import { customers } from "@/lib/api/customers"
 import { reports } from "@/lib/api/reports"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDateTime, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { getDateRange } from "@/lib/utils"
 import { showToast } from "@/lib/toast"
@@ -32,8 +33,7 @@ export default function ReportViewPage() {
   const params = useParams()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
-  const formatMoney = (val: any) =>
-    `${posOptions.currency_symbol}${Number(val || 0).toFixed(posOptions.currency_precision)}`
+  const formatMoney = (val: any) => formatBusinessMoney(val, posOptions)
   const reportParam = String(params.report || "")
 
   if (!isReportKey(reportParam)) {
@@ -447,7 +447,7 @@ export default function ReportViewPage() {
         return {
           ...col,
           title: t(col.title),
-          render: (val: any) => (val ? new Date(val).toLocaleString() : "-"),
+          render: (val: any) => formatBusinessDateTime(val, posOptions),
         }
       }
 

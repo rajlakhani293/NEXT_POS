@@ -4,6 +4,17 @@ type BusinessDateOptions = {
   datetime_timezone?: string
 }
 
+type BusinessMoneyOptions = {
+  currency_symbol?: string
+  currency_iso?: string
+  currency_position?: string
+  currency_preferred?: string
+  currency_prefered?: string
+  currency_thousand_separator?: string
+  currency_decimal_separator?: string
+  currency_precision?: number | string
+}
+
 type ZonedParts = {
   year: string
   month: string
@@ -17,6 +28,17 @@ const defaultBusinessDateOptions: Required<BusinessDateOptions> = {
   date_format: "Y-m-d",
   datetime_format: "Y-m-d H:i",
   datetime_timezone: "UTC",
+}
+
+const defaultBusinessMoneyOptions: Required<BusinessMoneyOptions> = {
+  currency_symbol: "₹",
+  currency_iso: "INR",
+  currency_position: "before",
+  currency_preferred: "symbol",
+  currency_prefered: "symbol",
+  currency_thousand_separator: ",",
+  currency_decimal_separator: ".",
+  currency_precision: 2,
 }
 
 const parseDate = (value?: string | Date | null) => {
@@ -86,6 +108,20 @@ const monthLabel = (date: Date, timeZone: string, month: "short" | "long") => {
   }
 }
 
+const weekdayLabel = (date: Date, timeZone: string, weekday: "short" | "long") => {
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: timeZone || defaultBusinessDateOptions.datetime_timezone,
+      weekday,
+    }).format(date)
+  } catch {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: defaultBusinessDateOptions.datetime_timezone,
+      weekday,
+    }).format(date)
+  }
+}
+
 const formatWithBusinessPattern = (
   value: string | Date | null | undefined,
   pattern: string,
@@ -109,6 +145,8 @@ const formatWithBusinessPattern = (
     j: String(Number(parts.day)),
     M: monthLabel(date, normalized.datetime_timezone, "short"),
     F: monthLabel(date, normalized.datetime_timezone, "long"),
+    D: weekdayLabel(date, normalized.datetime_timezone, "short"),
+    l: weekdayLabel(date, normalized.datetime_timezone, "long"),
     H: parts.hour,
     h: String(twelveHour).padStart(2, "0"),
     i: parts.minute,
@@ -117,7 +155,7 @@ const formatWithBusinessPattern = (
     a: meridiem.toLowerCase(),
   }
 
-  return pattern.replace(/Y|y|m|n|d|j|M|F|H|h|i|s|A|a/g, (token) => tokens[token] || token)
+  return pattern.replace(/Y|y|m|n|d|j|M|F|D|l|H|h|i|s|A|a/g, (token) => tokens[token] || token)
 }
 
 export const formatBusinessDate = (
@@ -137,3 +175,35 @@ export const formatDateTime = (
 }
 
 export const formatBusinessDateTime = formatDateTime
+
+const normalizeMoneyOptions = (options?: BusinessMoneyOptions | null) => ({
+  ...defaultBusinessMoneyOptions,
+  ...(options || {}),
+})
+
+const groupThousands = (integerPart: string, separator: string) =>
+  integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, separator)
+
+export const formatBusinessMoney = (
+  value?: string | number | null,
+  options?: BusinessMoneyOptions | null
+) => {
+  const normalized = normalizeMoneyOptions(options)
+  const precision = Math.max(0, Math.min(6, Number(normalized.currency_precision ?? 2) || 0))
+  const amount = Number(value || 0)
+  const sign = amount < 0 ? "-" : ""
+  const fixedAmount = Math.abs(amount).toFixed(precision)
+  const [integerPart, decimalPart] = fixedAmount.split(".")
+  const formattedAmount = [
+    `${sign}${groupThousands(integerPart, normalized.currency_thousand_separator || ",")}`,
+    precision > 0 ? decimalPart : "",
+  ].filter(Boolean).join(normalized.currency_decimal_separator || ".")
+  const indicator =
+    String(normalized.currency_preferred || normalized.currency_prefered) === "iso"
+      ? normalized.currency_iso
+      : normalized.currency_symbol
+
+  return normalized.currency_position === "after"
+    ? `${formattedAmount}${indicator}`
+    : `${indicator}${formattedAmount}`
+}

@@ -13,6 +13,7 @@ import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { promotions } from "@/lib/api/promotions"
 import { rewards } from "@/lib/api/rewards"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 
@@ -49,6 +50,7 @@ export default function RewardSystemFormPage() {
   const router = useRouter()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
   const routeId = String(params.id || "create")
   const rewardId = routeId === "create" ? null : routeId
   const isEdit = Boolean(rewardId)
@@ -276,7 +278,7 @@ export default function RewardSystemFormPage() {
                 <div>
                   <h2 className="text-sm font-semibold text-gray-900">{t("Rules")}</h2>
                   <p className="mt-1 text-xs font-medium text-gray-500">
-                    {t("Example: spend {amount} and earn 1 point.").replace("{amount}", `${posOptions.currency_symbol}100`)}
+                    {t("Example: spend {amount} and earn 1 point.").replace("{amount}", formatMoney(100))}
                   </p>
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={addRule}>

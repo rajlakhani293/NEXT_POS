@@ -12,32 +12,36 @@ import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate } from "@/lib/format"
+import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 
-const columns = [
+const buildColumns = (t: (key: string) => string, formatDate: (value: any) => string) => [
   { key: "name", title: "Name" },
   {
     key: "parent_name",
     title: "Parent",
-    render: (value: any) => value || "No Parent",
+    render: (value: any) => value || t("No Parent"),
   },
   { key: "total_items", title: "Total Products", render: (val: any) => val ?? 0 },
   {
     key: "displays_on_pos",
     title: "Displays On POS",
-    render: (value: any) => (value ? "Yes" : "No"),
+    render: (value: any) => (value ? t("Yes") : t("No")),
   },
   { key: "user_username", title: "User" },
   {
     key: "created_at",
     title: "Created At",
-    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+    render: formatDate,
   },
 ]
 
 export default function CategoriesPage() {
   const searchParams = useSearchParams()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const columns = buildColumns(t, (value) => formatBusinessDate(value, posOptions))
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editId, setEditId] = useState<number | string | null>(null)
   const [deleteCategory] = (catalog as any).useDeleteCategoryMutation()

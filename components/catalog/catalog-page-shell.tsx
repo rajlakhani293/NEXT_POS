@@ -8,6 +8,8 @@ import DynamicTable from "@/components/DynamicTable"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { PermissionGuard } from "@/components/permission-guard"
 import { usePermissions } from "@/hooks/use-permissions"
+import { formatBusinessDate } from "@/lib/format"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
@@ -66,12 +68,17 @@ export function CatalogPageShell({
   const { hasPermission } = usePermissions()
   const { t } = useTranslation()
   const { refreshSession } = useSession()
+  const posOptions = usePosOptions()
   const canCreate = hasPermission(permissions.create)
   const canUpdate = hasPermission(permissions.update)
   const canDelete = hasPermission(permissions.delete)
   const translatedColumns = columns.map((column) => ({
     ...column,
     title: t(column.title),
+    render:
+      (column.key === "created_at"
+        ? (value: any) => formatBusinessDate(value, posOptions)
+        : column.render),
   }))
 
   const {

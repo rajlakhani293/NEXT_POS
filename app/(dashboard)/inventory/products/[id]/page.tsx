@@ -29,6 +29,7 @@ import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { MediaManagerDialog } from "@/components/media-manager"
 import { catalog } from "@/lib/api/catalog"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 
@@ -395,12 +396,7 @@ export default function ProductFormPage() {
     posOptions.currency_preferred === "iso"
       ? posOptions.currency_iso
       : posOptions.currency_symbol
-  const formatMoney = (value: any) => {
-    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
-    return posOptions.currency_position === "after"
-      ? `${amount}${currencyIndicator}`
-      : `${currencyIndicator}${amount}`
-  }
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
 
   const [formData, setFormData] = useState<ProductFormValues>(initialValues)
   type ProductTab = "identification" | "units" | "expiry" | "taxes" | "images"

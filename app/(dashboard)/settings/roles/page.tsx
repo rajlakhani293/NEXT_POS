@@ -10,12 +10,15 @@ import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { showToast } from "@/lib/toast"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate } from "@/lib/format"
+import { usePosOptions } from "@/lib/options"
 import { Copy } from "lucide-react"
 
 export default function RolesPage() {
   const router = useRouter()
   const { hasPermission } = usePermissions()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
   const { confirm, confirmDialog } = useConfirmDialog()
   const hasLoadedRolesRef = useRef(false)
   const [getRoles, roles] = (settings as any).useGetRolesMutation()
@@ -38,7 +41,7 @@ export default function RolesPage() {
     {
       key: "created_at",
       title: t("Created At"),
-      render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+      render: (value: any) => formatBusinessDate(value, posOptions),
     },
   ]
   const handleClone = async (id: string) => {

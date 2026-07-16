@@ -5,6 +5,7 @@ import { useEffect, useMemo } from "react"
 import DynamicForm from "@/components/DynamicForm"
 import { catalog } from "@/lib/api/catalog"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 
@@ -54,6 +55,11 @@ export function StockAdjustmentForm({
       unitQuantities[0],
     [unitQuantities]
   )
+  const formatQuantity = (value: any) =>
+    Number(value || 0).toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: Number(posOptions.currency_precision ?? 2),
+    })
   const unitOptions = unitQuantities.map((quantity: any) => {
     const unitName =
       quantity.unit_name ||
@@ -63,7 +69,7 @@ export function StockAdjustmentForm({
       quantity.unit?.identifier ||
       t("N/A")
     return {
-      label: `${unitName} (${Number(quantity.quantity || 0).toLocaleString()})`,
+      label: `${unitName} (${formatQuantity(quantity.quantity)})`,
       value: quantity.unit_id || quantity.unit?.id,
     }
   })
@@ -71,12 +77,7 @@ export function StockAdjustmentForm({
     unitQuantities.find(
       (quantity: any) => String(quantity.unit_id || quantity.unit?.id) === String(unitId)
     )
-  const formatMoney = (value: any) => {
-    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
-    return posOptions.currency_position === "after"
-      ? `${amount}${currencyIndicator}`
-      : `${currencyIndicator}${amount}`
-  }
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
 
   const handleSubmit = async (values: typeof initialValues) => {
     const selectedUnit = findSelectedUnit(values.adjust_unit_id)
@@ -184,7 +185,7 @@ export function StockAdjustmentForm({
       title={t("Stock Adjustment")}
       note={
         defaultUnit
-          ? `${t("Quantity")}: ${Number(defaultUnit.quantity || 0).toLocaleString()} | ${t("Value")}: ${formatMoney(defaultUnit.sale_price || 0)}`
+          ? `${t("Quantity")}: ${formatQuantity(defaultUnit.quantity)} | ${t("Value")}: ${formatMoney(defaultUnit.sale_price || 0)}`
           : t("This product doesn't have any stock to adjust.")
       }
       isOpen={isOpen}

@@ -7,7 +7,7 @@ import CustomModal from "@/components/ui/customModal"
 import { Spinner } from "@/components/ui/spinner"
 import { registers } from "@/lib/api/registers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
-import { formatDateTime } from "@/lib/format"
+import { formatBusinessMoney, formatDateTime } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 
 const buildEntryColumns = (
@@ -37,8 +37,7 @@ type ShiftDetailsProps = {
 export function ShiftDetails({ shiftId, onClose }: ShiftDetailsProps) {
   const { t } = useTranslation()
   const posOptions = usePosOptions()
-  const formatMoney = (value: any) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
   const formatDateTimeValue = (value: string | null) => formatDateTime(value, posOptions)
   const [shift, setShift] = useState<any>(null)
   const requestedShiftRef = useRef<string | null>(null)

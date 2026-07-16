@@ -8,13 +8,15 @@ import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { accounting } from "@/lib/api/accounting"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
 
 const buildColumns = (
   t: (key: string) => string,
-  formatMoney: (value: any) => string
+  formatMoney: (value: any) => string,
+  formatDate: (value: any) => string
 ) => [
     { key: "name", title: t("Name") },
     { key: "category_identifier", title: t("Main Account") },
@@ -29,7 +31,7 @@ const buildColumns = (
     {
       key: "created_at",
       title: t("Triggered On"),
-      render: (val: any) => (val ? new Date(val).toLocaleDateString() : "-"),
+      render: formatDate,
     },
   ]
 
@@ -38,8 +40,8 @@ export default function TransactionHistoryPage() {
   const { hasPermission } = usePermissions()
   const canDelete = hasPermission(PERMISSIONS.transactionHistory.delete)
   const posOptions = usePosOptions()
-  const formatMoney = (value: any) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
+  const formatDate = (value: any) => formatBusinessDate(value, posOptions)
   const table = useTableData({
     getMaster: (accounting as any).useGetTransactionHistoryDataMutation,
 
@@ -51,7 +53,7 @@ export default function TransactionHistoryPage() {
     <PermissionGuard permission={PERMISSIONS.transactionHistory.view}>
       <DynamicTable
         data={table.orders}
-        columns={buildColumns(t, formatMoney)}
+        columns={buildColumns(t, formatMoney, formatDate)}
         tableTitle={t("Transactions History List")}
         showSearch
         searchTerm={table.searchTerm}

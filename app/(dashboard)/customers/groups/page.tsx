@@ -9,22 +9,25 @@ import DynamicForm from "@/components/DynamicForm"
 import { CustomerGroupForm } from "@/app/(dashboard)/customers/groups/createUpdate"
 import { customers } from "@/lib/api/customers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate } from "@/lib/format"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { showToast } from "@/lib/toast"
 
-const buildColumns = (t: (key: string) => string) => [
+const buildColumns = (t: (key: string) => string, formatDate: (value: any) => string) => [
   { key: "name", title: t("Name") },
   { key: "reward_name", title: t("Reward System") },
   { key: "user_username", title: t("User") },
-  { key: "created_at", title: t("Created On"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+  { key: "created_at", title: t("Created On"), render: formatDate },
 ]
 
 export default function CustomerGroupsPage() {
   const searchParams = useSearchParams()
   const { t } = useTranslation()
-  const columns = buildColumns(t)
+  const posOptions = usePosOptions()
+  const columns = buildColumns(t, (value) => formatBusinessDate(value, posOptions))
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editId, setEditId] = useState<number | string | null>(null)
   const [transferGroup, setTransferGroup] = useState<any | null>(null)

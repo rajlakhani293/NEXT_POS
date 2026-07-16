@@ -29,6 +29,7 @@ import { usePermissions } from "@/hooks/use-permissions"
 import { payments } from "@/lib/api/payments"
 import { sales } from "@/lib/api/sales"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
@@ -140,12 +141,7 @@ export default function SaleDetailPage() {
     posOptions.currency_preferred === "iso"
       ? posOptions.currency_iso
       : posOptions.currency_symbol
-  const formatMoney = (value: any) => {
-    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
-    return posOptions.currency_position === "after"
-      ? `${amount}${currencyIndicator}`
-      : `${currencyIndicator}${amount}`
-  }
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
   const getPrintedDocumentUrl = (saleId: number | string) => {
     const documentType = posOptions.printing_document === "invoice" ? "invoice" : "receipt"
     return documentType === "invoice"

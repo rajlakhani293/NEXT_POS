@@ -25,6 +25,7 @@ import { ProviderForm } from "@/app/(dashboard)/providers/createUpdate"
 import { catalog } from "@/lib/api/catalog"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
@@ -100,7 +101,7 @@ export default function PurchaseOrderFormPage() {
   const contentRef = useRef<HTMLDivElement>(null)
 
   const formatMoney = (value: string | number | null | undefined) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+    formatBusinessMoney(value, posOptions)
 
   const [activeTab, setActiveTab] = useState("details")
   const [formData, setFormData] = useState<PurchaseFormValues>(initialValues)

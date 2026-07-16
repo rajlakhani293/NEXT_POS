@@ -9,6 +9,7 @@ import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
@@ -30,7 +31,8 @@ const paymentLabels: Record<string, string> = {
 
 const buildColumns = (
   t: (key: string) => string,
-  formatMoney: (value: any) => string
+  formatMoney: (value: any) => string,
+  formatDate: (value: any) => string
 ) => [
     { key: "code", title: t("Name") },
     { key: "supplier_name", title: t("Provider") },
@@ -70,7 +72,7 @@ const buildColumns = (
     {
       key: "invoice_date",
       title: t("Invoice Date"),
-      render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+      render: formatDate,
     },
     {
       key: "total",
@@ -95,9 +97,9 @@ export default function PurchaseOrdersPage() {
   const { t } = useTranslation()
   const { confirm, confirmDialog } = useConfirmDialog()
   const posOptions = usePosOptions()
-  const formatMoney = (value: any) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
-  const columns = buildColumns(t, formatMoney)
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
+  const formatDate = (value: any) => formatBusinessDate(value, posOptions)
+  const columns = buildColumns(t, formatMoney, formatDate)
   const [deletePurchaseOrder] = (
     purchases as any
   ).useDeletePurchaseOrderMutation()

@@ -15,6 +15,7 @@ import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { Switch } from "@/components/ui/switch"
 import { catalog } from "@/lib/api/catalog"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { useAppSelector } from "@/lib/redux/hooks"
 import { showToast } from "@/lib/toast"
@@ -59,16 +60,7 @@ export default function PrintLabelsPage() {
   const posOptions = usePosOptions()
   const companyName = useAppSelector((state) => state.session.company?.name)
   const storeName = companyName || t("POS Store")
-  const currencyIndicator =
-    posOptions.currency_preferred === "iso"
-      ? posOptions.currency_iso
-      : posOptions.currency_symbol
-  const formatMoney = (value: any) => {
-    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
-    return posOptions.currency_position === "after"
-      ? `${amount}${currencyIndicator}`
-      : `${currencyIndicator}${amount}`
-  }
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
 
   const [getProductsDropdown, { data: productsResponse, isLoading: isProductsLoading }] = (
     catalog as any

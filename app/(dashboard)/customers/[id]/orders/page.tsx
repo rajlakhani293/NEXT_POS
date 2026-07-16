@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { customers } from "@/lib/api/customers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { cn } from "@/lib/utils"
 
@@ -32,8 +33,8 @@ export default function CustomerOrdersPage() {
 
   const id = params.id as string
 
-  const formatMoney = (value: any) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
+  const formatDate = (value: any) => formatBusinessDate(value, posOptions)
 
   const [customerName, setCustomerName] = useState("")
   const [ordersRows, setOrdersRows] = useState<any[]>([])
@@ -161,7 +162,7 @@ export default function CustomerOrdersPage() {
               { key: "tax_amount", title: t("Tax"), render: (value: any) => formatMoney(value) },
               { key: "shipping", title: t("Shipping"), render: (value: any) => formatMoney(value) },
               { key: "total", title: t("Total"), render: (value: any) => formatMoney(value) },
-              { key: "created_at", title: t("Date"), render: (value: any) => new Date(value).toLocaleDateString() },
+              { key: "created_at", title: t("Date"), render: formatDate },
             ]}
             tableTitle={t("Orders History")}
             showSearch

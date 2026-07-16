@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { sales } from "@/lib/api/sales"
+import { formatBusinessDateTime, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 
 const formatLabel = (value: any) =>
@@ -27,16 +28,7 @@ export default function SaleReceiptPage() {
   const searchParams = useSearchParams()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
-  const currencyIndicator =
-    posOptions.currency_preferred === "iso"
-      ? posOptions.currency_iso
-      : posOptions.currency_symbol
-  const formatMoney = (value: any) => {
-    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
-    return posOptions.currency_position === "after"
-      ? `${amount}${currencyIndicator}`
-      : `${currencyIndicator}${amount}`
-  }
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
   const id = params.id as string
   const documentType = searchParams.get("doc") || "receipt"
   const refundId = searchParams.get("refund_id")
@@ -143,9 +135,7 @@ export default function SaleReceiptPage() {
           {t("Receipt Code")}: {order.code}
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            {(receipt.created_at || order.created_at)
-              ? new Date(receipt.created_at || order.created_at).toLocaleString()
-              : "-"}
+            {formatBusinessDateTime(receipt.created_at || order.created_at, posOptions)}
           </p>
         </div>
 

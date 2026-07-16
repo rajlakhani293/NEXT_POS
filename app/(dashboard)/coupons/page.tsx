@@ -8,7 +8,7 @@ import { History } from "lucide-react"
 import DynamicTable from "@/components/DynamicTable"
 import { promotions } from "@/lib/api/promotions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
-import { formatBusinessDate } from "@/lib/format"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
@@ -47,8 +47,7 @@ export default function CouponsPage() {
   const router = useRouter()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
-  const formatMoney = (value: any) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
   const formatDate = (value: any) => formatBusinessDate(value, posOptions)
   const columns = buildColumns(t, formatMoney, formatDate)
   const [deleteCoupon] = (promotions as any).useDeleteCouponMutation()

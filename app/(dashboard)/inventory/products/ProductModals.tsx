@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table"
 import { catalog } from "@/lib/api/catalog"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDateTime } from "@/lib/format"
 import { showToast } from "@/lib/toast"
 
 interface ProductModalsProps {
@@ -41,6 +42,11 @@ export function ProductModals({
   triggerRefresh,
 }: ProductModalsProps) {
   const { t } = useTranslation()
+  const formatNumber = (value: any) =>
+    Number(value || 0).toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: Number(posOptions.currency_precision ?? 2),
+    })
   const [getProductUnitQuantities, productUnitQuantities] = (catalog as any).useGetProductUnitQuantitiesMutation()
   const [convertProductUnits, convertProductUnitsState] = (catalog as any).useConvertProductUnitsMutation()
 
@@ -278,7 +284,7 @@ export function ProductModals({
                       <TableCell className="px-4 py-3 text-right tabular-nums">{formatMoney(quantity.sale_price)}</TableCell>
                       <TableCell className="px-4 py-3 text-right tabular-nums">{formatMoney(quantity.wholesale_price)}</TableCell>
                       <TableCell className="px-4 py-3 text-right tabular-nums">
-                        {Number(quantity.quantity || 0).toLocaleString()}
+                        {formatNumber(quantity.quantity)}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -288,10 +294,10 @@ export function ProductModals({
                       </TableCell>
                       <TableCell className="px-4 py-3">{unitName}</TableCell>
                       <TableCell className="px-4 py-3 text-right tabular-nums">
-                        {Number(quantity.quantity || 0).toLocaleString()}
+                        {formatNumber(quantity.quantity)}
                       </TableCell>
                       <TableCell className="px-4 py-3">
-                        {quantity.updated_at ? new Date(quantity.updated_at).toLocaleString() : "-"}
+                        {formatBusinessDateTime(quantity.updated_at, posOptions)}
                       </TableCell>
                     </TableRow>
                   )
@@ -336,7 +342,7 @@ export function ProductModals({
                 className="bg-blue-600 p-4 text-center text-white"
               >
                 <span className="block text-sm font-semibold">{getQuantityUnitName(getConversionState().source)}</span>
-                <span className="mt-2 block text-3xl font-bold">{Number(conversionQuantity || 0).toLocaleString()}</span>
+                <span className="mt-2 block text-3xl font-bold">{formatNumber(conversionQuantity)}</span>
               </button>
               <button
                 type="button"
@@ -348,7 +354,7 @@ export function ProductModals({
               <button type="button" className="p-4 text-center">
                 <span className="block text-sm font-semibold">{getQuantityUnitName(getConversionState().destination)}</span>
                 <span className="mt-2 block text-3xl font-bold">
-                  {Math.floor(getConversionState().destinationQuantity || 0).toLocaleString()}
+                  {formatNumber(Math.floor(getConversionState().destinationQuantity || 0))}
                 </span>
               </button>
             </div>
@@ -396,7 +402,7 @@ export function ProductModals({
                 >
                   {t("Convert {quantity} available").replace(
                     "{quantity}",
-                    Number(getConversionState().source?.quantity || 0).toLocaleString()
+                    formatNumber(getConversionState().source?.quantity)
                   )}
                 </Button>
               }

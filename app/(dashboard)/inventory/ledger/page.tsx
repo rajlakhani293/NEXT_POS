@@ -6,6 +6,7 @@ import DynamicTable from "@/components/DynamicTable"
 import { inventory } from "@/lib/api/inventory"
 import { useTableData } from "@/hooks/useTableData"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 
 const columns = [
@@ -22,8 +23,7 @@ const columns = [
   {
     key: "created_at",
     title: "Created At",
-    render: (value: any) =>
-      value ? new Date(value).toLocaleDateString() : "-",
+    render: (value: any) => value,
   },
 ]
 
@@ -33,10 +33,6 @@ export default function StockLedgerPage() {
   const searchParams = useSearchParams()
   const productId = searchParams.get("product_id")
   const productName = searchParams.get("product_name")
-  const currencyIndicator =
-    posOptions.currency_preferred === "iso"
-      ? posOptions.currency_iso
-      : posOptions.currency_symbol
   const {
     orders,
     totalItems,
@@ -54,12 +50,7 @@ export default function StockLedgerPage() {
 
     selectedFilters: productId ? { product_id: Number(productId) } : {},
   })
-  const formatMoney = (value: any) => {
-    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
-    return posOptions.currency_position === "after"
-      ? `${amount}${currencyIndicator}`
-      : `${currencyIndicator}${amount}`
-  }
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
   const translatedColumns = columns.map((column) => ({
     ...column,
     title: t(column.title),
@@ -68,6 +59,8 @@ export default function StockLedgerPage() {
         ? (value: string) => t(String(value || "-").replaceAll("-", " "))
         : column.key === "total_price"
           ? formatMoney
+          : column.key === "created_at"
+            ? (value: any) => formatBusinessDate(value, posOptions)
           : column.render,
   }))
 

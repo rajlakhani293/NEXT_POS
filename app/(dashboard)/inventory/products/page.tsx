@@ -12,11 +12,12 @@ import { useTableData } from "@/hooks/useTableData"
 import { catalog } from "@/lib/api/catalog"
 import { PERMISSIONS } from "@/lib/permissions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 import { ProductModals } from "./ProductModals"
 
-const columns = [
+const buildColumns = (formatDate: (value: any) => string) => [
   { key: "name", title: "Name" },
   { key: "type", title: "Type" },
   { key: "sku", title: "SKU" },
@@ -25,7 +26,7 @@ const columns = [
   {
     key: "created_at",
     title: "Date",
-    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+    render: formatDate,
   },
   { key: "status", title: "Status" }
 ]
@@ -50,12 +51,8 @@ export default function ProductsPage() {
     posOptions.currency_preferred === "iso"
       ? posOptions.currency_iso
       : posOptions.currency_symbol
-  const formatMoney = (value: any) => {
-    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
-    return posOptions.currency_position === "after"
-      ? `${amount}${currencyIndicator}`
-      : `${currencyIndicator}${amount}`
-  }
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
+  const columns = buildColumns((value) => formatBusinessDate(value, posOptions))
 
   const openQuantitiesList = (record: any, mode: "list" | "preview" = "list") => {
     setQuantitiesMode(mode)

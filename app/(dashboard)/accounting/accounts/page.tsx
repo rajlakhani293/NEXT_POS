@@ -6,12 +6,14 @@ import { useSearchParams } from "next/navigation"
 import DynamicTable from "@/components/DynamicTable"
 import { accounting } from "@/lib/api/accounting"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate } from "@/lib/format"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { TransactionAccountForm } from "./createUpdate"
 
-const buildColumns = (t: (key: string) => string) => [
+const buildColumns = (t: (key: string) => string, formatDate: (value: any) => string) => [
   { key: "category_identifier", title: t("Category") },
   {
     key: "sub_category__name",
@@ -24,13 +26,14 @@ const buildColumns = (t: (key: string) => string) => [
   {
     key: "created_at",
     title: t("Created At"),
-    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+    render: formatDate,
   },
 ]
 
 export default function TransactionAccountsPage() {
   const searchParams = useSearchParams()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editId, setEditId] = useState<number | string | null>(null)
   const [deleteRecord] = (accounting as any).useDeleteAccountMutation()
@@ -59,7 +62,7 @@ export default function TransactionAccountsPage() {
     <div className="h-full space-y-4">
       <DynamicTable
         data={table.orders}
-        columns={buildColumns(t)}
+        columns={buildColumns(t, (value) => formatBusinessDate(value, posOptions))}
         tableTitle={t("Accounts List")}
         title={canCreate ? t("Add a new Account") : undefined}
         showSearch

@@ -7,6 +7,7 @@ import DynamicTable from "@/components/DynamicTable"
 import { useTableData } from "@/hooks/useTableData"
 import { sales } from "@/lib/api/sales"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { cn } from "@/lib/utils"
 
@@ -50,7 +51,8 @@ const getStatusLabel = (value: any, t: (key: string) => string) => {
 
 const buildColumns = (
   t: (key: string) => string,
-  formatMoney: (value: any) => string
+  formatMoney: (value: any) => string,
+  formatDate: (value: any) => string
 ) => [
     { key: "code", title: t("Code") },
     {
@@ -92,7 +94,7 @@ const buildColumns = (
     {
       key: "created_at",
       title: t("Created At"),
-      render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+      render: formatDate,
     },
   ]
 
@@ -100,16 +102,8 @@ export default function AssignedOrdersPage() {
   const router = useRouter()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
-  const formatMoney = (value: any) => {
-    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
-    const indicator =
-      posOptions.currency_preferred === "iso"
-        ? posOptions.currency_iso
-        : posOptions.currency_symbol
-    return posOptions.currency_position === "after"
-      ? `${amount}${indicator}`
-      : `${indicator}${amount}`
-  }
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
+  const formatDate = (value: any) => formatBusinessDate(value, posOptions)
 
   const {
     orders,
@@ -132,7 +126,7 @@ export default function AssignedOrdersPage() {
     <div className="h-full space-y-4">
       <DynamicTable
         data={orders}
-        columns={buildColumns(t, formatMoney)}
+        columns={buildColumns(t, formatMoney, formatDate)}
         tableTitle={t("Assigned Orders")}
         showSearch
         showDateRange

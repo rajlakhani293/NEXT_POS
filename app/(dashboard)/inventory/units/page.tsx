@@ -16,11 +16,7 @@ const columns = [
   },
   { key: "group_name", title: "Group" },
   { key: "user_username", title: "User" },
-  {
-    key: "created_at",
-    title: "Created At",
-    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
-  },
+  { key: "created_at", title: "Created At" },
 ]
 
 export default function UnitsPage() {

@@ -8,6 +8,7 @@ import { PermissionGuard } from "@/components/permission-guard"
 import { useTableData } from "@/hooks/useTableData"
 import { sales } from "@/lib/api/sales"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
@@ -16,16 +17,8 @@ export default function SaleInstalmentsPage() {
   const router = useRouter()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
-  const currencyIndicator =
-    posOptions.currency_preferred === "iso"
-      ? posOptions.currency_iso
-      : posOptions.currency_symbol
-  const formatMoney = (value: any) => {
-    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
-    return posOptions.currency_position === "after"
-      ? `${amount}${currencyIndicator}`
-      : `${currencyIndicator}${amount}`
-  }
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
+  const formatDate = (value: any) => formatBusinessDate(value, posOptions)
 
   const {
     orders,
@@ -53,7 +46,7 @@ export default function SaleInstalmentsPage() {
     {
       key: "date",
       title: t("Date"),
-      render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+      render: formatDate,
     },
     {
       key: "paid",

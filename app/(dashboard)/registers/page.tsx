@@ -9,6 +9,7 @@ import DynamicForm from "@/components/DynamicForm"
 import { PermissionGuard } from "@/components/permission-guard"
 import { registers } from "@/lib/api/registers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
@@ -17,7 +18,8 @@ import { usePermissions } from "@/hooks/use-permissions"
 
 const buildRegisterColumns = (
   t: (key: string) => string,
-  formatMoney: (value: any) => string
+  formatMoney: (value: any) => string,
+  formatDate: (value: any) => string
 ) => [
     { key: "name", title: t("Name") },
     {
@@ -35,7 +37,7 @@ const buildRegisterColumns = (
     {
       key: "created_at",
       title: t("Created At"),
-      render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+      render: formatDate,
     },
   ]
 
@@ -51,8 +53,8 @@ export default function RegistersPage() {
   const router = useRouter()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
-  const formatMoney = (value: any) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
+  const formatDate = (value: any) => formatBusinessDate(value, posOptions)
   const [isRegisterFormOpen, setIsRegisterFormOpen] = useState(false)
   const [editRegisterId, setEditRegisterId] = useState<number | string | null>(null)
   const [registerValues, setRegisterValues] = useState({
@@ -239,7 +241,7 @@ export default function RegistersPage() {
       <div className="space-y-4">
         <DynamicTable
           data={registerTable.orders}
-          columns={buildRegisterColumns(t, formatMoney)}
+          columns={buildRegisterColumns(t, formatMoney, formatDate)}
           tableTitle={t("Registers List")}
           title={canCreate ? t("Add a new register") : undefined}
           showSearch

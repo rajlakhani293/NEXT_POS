@@ -7,6 +7,7 @@ import { Gift, ReceiptText, TicketPercent, Wallet } from "lucide-react"
 import DynamicTable from "@/components/DynamicTable"
 import { customers } from "@/lib/api/customers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
@@ -45,8 +46,7 @@ export default function CustomersPage() {
   const searchParams = useSearchParams()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
-  const formatMoney = (value: any) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
   const columns = buildColumns(t, formatMoney)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [deleteCustomer] = (customers as any).useDeleteCustomerMutation()

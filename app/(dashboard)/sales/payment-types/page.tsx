@@ -17,11 +17,7 @@ export default function PaymentTypesPage() {
       render: (value: any) => (value ? t("Yes") : t("No")),
     },
     { key: "priority", title: t("Priority") },
-    {
-      key: "created_at",
-      title: t("Created On"),
-      render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
-    },
+    { key: "created_at", title: t("Created On") },
     {
       key: "readonly",
       title: t("Readonly"),

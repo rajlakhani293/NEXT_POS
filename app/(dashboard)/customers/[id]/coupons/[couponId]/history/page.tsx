@@ -10,11 +10,13 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { promotions } from "@/lib/api/promotions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 
 const buildColumns = (
   t: (key: string) => string,
-  formatMoney: (value: any) => string
+  formatMoney: (value: any) => string,
+  formatDate: (value: any) => string
 ) => [
   { key: "sale_order__code", title: t("Sale No") },
   { key: "code", title: t("Code") },
@@ -25,7 +27,7 @@ const buildColumns = (
     title: t("Discount Applied"),
     render: (value: any) => formatMoney(value),
   },
-  { key: "created_at", title: t("Date") },
+  { key: "created_at", title: t("Date"), render: formatDate },
 ]
 
 export default function CustomerCouponHistoryPage() {
@@ -35,9 +37,9 @@ export default function CustomerCouponHistoryPage() {
   const posOptions = usePosOptions()
   const customerId = params.id as string
   const couponId = params.couponId as string
-  const formatMoney = (value: any) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
-  const columns = buildColumns(t, formatMoney)
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
+  const formatDate = (value: any) => formatBusinessDate(value, posOptions)
+  const columns = buildColumns(t, formatMoney, formatDate)
   const [rows, setRows] = useState<any[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [page, setPage] = useState(1)

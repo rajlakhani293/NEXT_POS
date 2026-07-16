@@ -21,9 +21,9 @@ import { DashboardPage as DashboardPageShell } from "@/components/dashboard/dash
 import { Spinner } from "@/components/ui/spinner"
 import { reports } from "@/lib/api/reports"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
+import { usePosOptions } from "@/lib/options"
 import { cn } from "@/lib/utils"
-
-const money = (value: any) => `₹${Number(value || 0).toFixed(2)}`
 
 const apiDate = (date: Date) => {
   const offset = date.getTimezoneOffset()
@@ -32,6 +32,8 @@ const apiDate = (date: Date) => {
 
 export default function DashboardPage() {
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const money = (value: any) => formatBusinessMoney(value, posOptions)
 
   const queryArgs = useMemo(() => {
     const now = new Date()
@@ -138,7 +140,7 @@ export default function DashboardPage() {
       const previousMatch = prevWeeklySales.find((day: any) => String(day.day).startsWith(previousDate))
 
       rows.push({
-        label: current.toLocaleDateString("en-US", { weekday: "short" }),
+        label: formatBusinessDate(current, { ...posOptions, date_format: "D" }),
         date: currentDate,
         currentSales: Number(currentMatch?.total_sales || 0),
         currentOrders: Number(currentMatch?.order_count || 0),
@@ -148,12 +150,12 @@ export default function DashboardPage() {
     }
 
     return rows
-  }, [prevWeeklySales, weeklySales])
+  }, [posOptions, prevWeeklySales, weeklySales])
 
   const maxSales = Math.max(...weeklyData.map((item) => Math.max(item.currentSales, item.previousSales)), 1)
   const todayLabel = useMemo(
-    () => new Date().toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "short", day: "numeric" }),
-    []
+    () => formatBusinessDate(new Date(), posOptions),
+    [posOptions]
   )
 
   return (

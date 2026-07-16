@@ -9,12 +9,14 @@ import { useTableData } from "@/hooks/useTableData"
 import { ProcurementProductForm } from "@/app/(dashboard)/purchases/products/createUpdate"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 
 const buildColumns = (
   t: (key: string) => string,
-  formatMoney: (value: any) => string
+  formatMoney: (value: any) => string,
+  formatDate: (value: any) => string
 ) => [
     { key: "name", title: t("Name") },
     { key: "unit_name", title: t("Unit") },
@@ -22,9 +24,9 @@ const buildColumns = (
     { key: "quantity", title: t("Quantity") },
     { key: "total_purchase_price", title: t("Total Price"), render: (value: any) => formatMoney(value) },
     { key: "barcode", title: t("Barcode") },
-    { key: "expiration_date", title: t("Expiration Date"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+    { key: "expiration_date", title: t("Expiration Date"), render: formatDate },
     { key: "user_username", title: t("User") },
-    { key: "created_at", title: t("On"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+    { key: "created_at", title: t("On"), render: formatDate },
   ]
 
 export default function ProcurementProductsPage() {
@@ -35,8 +37,8 @@ export default function ProcurementProductsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editRecord, setEditRecord] = useState<any | null>(null)
   const posOptions = usePosOptions()
-  const formatMoney = (value: any) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
+  const formatDate = (value: any) => formatBusinessDate(value, posOptions)
   const table = useTableData({
     getMaster: (purchases as any).useGetProcurementProductsDataMutation,
 
@@ -56,7 +58,7 @@ export default function ProcurementProductsPage() {
     <div className="h-full space-y-4">
       <DynamicTable
         data={table.orders}
-        columns={buildColumns(t, formatMoney)}
+        columns={buildColumns(t, formatMoney, formatDate)}
         tableTitle={t("Procurement Products List")}
         showSearch
         showDateRange

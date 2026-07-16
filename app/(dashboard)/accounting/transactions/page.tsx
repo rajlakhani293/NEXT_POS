@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { usePermissions } from "@/hooks/use-permissions"
 import { accounting } from "@/lib/api/accounting"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
@@ -16,7 +17,8 @@ import { useTableData } from "@/hooks/useTableData"
 
 const buildColumns = (
   t: (key: string) => string,
-  formatMoney: (value: any) => string
+  formatMoney: (value: any) => string,
+  formatDate: (value: any) => string
 ) => [
     { key: "name", title: t("Name") },
     { key: "type", title: t("Type") },
@@ -25,7 +27,7 @@ const buildColumns = (
     { key: "recurring", title: t("Recurring"), render: (value: any) => (value ? t("Yes") : t("No")) },
     { key: "occurrence", title: t("Occurrence") },
     { key: "user_username", title: t("User") },
-    { key: "created_at", title: t("Created At") },
+    { key: "created_at", title: t("Created At"), render: formatDate },
   ]
 
 export default function TransactionsPage() {
@@ -38,8 +40,8 @@ export default function TransactionsPage() {
   const canDelete = hasPermission(PERMISSIONS.expenses.delete)
   const [deleteTransaction] = (accounting as any).useDeleteTransactionMutation()
   const [triggerTransaction] = (accounting as any).useTriggerTransactionMutation()
-  const formatMoney = (value: any) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
+  const formatDate = (value: any) => formatBusinessDate(value, posOptions)
   const table = useTableData({
     getMaster: (accounting as any).useGetTransactionsDataMutation,
 
@@ -49,7 +51,7 @@ export default function TransactionsPage() {
     <PermissionGuard permission={PERMISSIONS.expenses.view}>
       <DynamicTable
         data={table.orders}
-        columns={buildColumns(t, formatMoney)}
+        columns={buildColumns(t, formatMoney, formatDate)}
         tableTitle={t("Transactions List")}
         showSearch
         searchTerm={table.searchTerm}

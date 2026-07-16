@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { useTableData } from "@/hooks/useTableData"
 import { registers } from "@/lib/api/registers"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
-import { formatDateTime } from "@/lib/format"
+import { formatBusinessMoney, formatDateTime } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { ShiftDetails } from "./shiftDetails"
 import { IoMdEye } from "react-icons/io"
@@ -42,8 +42,7 @@ export default function RegisterShiftHistoryPage() {
   const params = useParams()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
-  const formatMoney = (value: any) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
   const formatDateTimeValue = (value: string | null) => formatDateTime(value, posOptions)
   const rawRegisterId = Array.isArray(params.id) ? params.id[0] : params.id
   const registerId = Number(rawRegisterId)

@@ -8,6 +8,7 @@ import DynamicTable from "@/components/DynamicTable"
 import { PermissionGuard } from "@/components/permission-guard"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { usePermissions } from "@/hooks/use-permissions"
@@ -16,7 +17,8 @@ import { ProviderForm } from "./createUpdate"
 
 const buildColumns = (
   t: (key: string) => string,
-  formatMoney: (value: any) => string
+  formatMoney: (value: any) => string,
+  formatDate: (value: any) => string
 ) => [
     { key: "first_name", title: t("First Name") },
     { key: "email", title: t("Email") },
@@ -24,7 +26,7 @@ const buildColumns = (
     { key: "amount_due", title: t("Amount Due"), render: (value: any) => formatMoney(value) },
     { key: "amount_paid", title: t("Amount Paid"), render: (value: any) => formatMoney(value) },
     { key: "user_username", title: t("User") },
-    { key: "created_at", title: t("Created At"), render: (value: any) => value ? new Date(value).toLocaleDateString() : "-" },
+    { key: "created_at", title: t("Created At"), render: formatDate },
   ]
 
 export default function ProvidersPage() {
@@ -32,9 +34,9 @@ export default function ProvidersPage() {
   const searchParams = useSearchParams()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
-  const formatMoney = (value: any) =>
-    `${posOptions.currency_symbol}${Number(value || 0).toFixed(posOptions.currency_precision)}`
-  const columns = buildColumns(t, formatMoney)
+  const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
+  const formatDate = (value: any) => formatBusinessDate(value, posOptions)
+  const columns = buildColumns(t, formatMoney, formatDate)
   const [formState, setFormState] = useState<{
     isOpen: boolean
     editId?: number | string | null

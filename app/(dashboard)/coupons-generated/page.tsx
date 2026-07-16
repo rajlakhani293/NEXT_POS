@@ -7,9 +7,11 @@ import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
 import { promotions } from "@/lib/api/promotions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate } from "@/lib/format"
+import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 
-const buildColumns = (t: (key: string) => string) => [
+const buildColumns = (t: (key: string) => string, formatDate: (value: any) => string) => [
   { key: "name", title: t("Name") },
   { key: "code", title: t("Code") },
   { key: "coupon__name", title: t("Coupon") },
@@ -20,14 +22,15 @@ const buildColumns = (t: (key: string) => string) => [
   {
     key: "created_at",
     title: t("Created On"),
-    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
+    render: formatDate,
   },
 ]
 
 export default function GeneratedCustomerCouponsPage() {
   const router = useRouter()
   const { t } = useTranslation()
-  const columns = buildColumns(t)
+  const posOptions = usePosOptions()
+  const columns = buildColumns(t, (value) => formatBusinessDate(value, posOptions))
   const { hasPermission } = usePermissions()
   const canUpdate = hasPermission(PERMISSIONS.promotions.update)
 

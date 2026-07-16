@@ -9,18 +9,19 @@ import { customers } from "@/lib/api/customers"
 import { PERMISSIONS } from "@/lib/permissions"
 import { useAppSelector } from "@/lib/redux/hooks"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
+import { usePosOptions } from "@/lib/options"
 
-const columns = [
+const buildColumns = (formatMoney: (value: any) => string, formatDate: (value: any) => string) => [
   { key: "username", title: "Username" },
-  { key: "account_amount", title: "Wallet" },
-  { key: "owed_amount", title: "Owed" },
-  { key: "purchases_amount", title: "Purchases" },
+  { key: "account_amount", title: "Wallet", render: formatMoney },
+  { key: "owed_amount", title: "Owed", render: formatMoney },
+  { key: "purchases_amount", title: "Purchases", render: formatMoney },
   { key: "roles_names", title: "Roles" },
   {
     key: "created_at",
     title: "Created At",
-    render: (value: any) =>
-      value ? new Date(value).toLocaleDateString() : "-",
+    render: formatDate,
   },
 ]
 
@@ -199,6 +200,11 @@ export function UserForm(props: any) {
 export default function UsersPage() {
   const router = useRouter()
   const { t } = useTranslation()
+  const posOptions = usePosOptions()
+  const columns = buildColumns(
+    (value) => formatBusinessMoney(value, posOptions),
+    (value) => formatBusinessDate(value, posOptions)
+  )
   const currentUserId = useAppSelector((state) => state.session.user?.id)
 
   return (

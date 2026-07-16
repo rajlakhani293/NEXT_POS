@@ -10,11 +10,7 @@ const columns = [
   { key: "parent_name", title: "Parent" },
   { key: "rate", title: "Rate", render: (value: any) => `${value}%` },
   { key: "user_username", title: "User" },
-  {
-    key: "created_at",
-    title: "Created At",
-    render: (value: any) => (value ? new Date(value).toLocaleDateString() : "-"),
-  },
+  { key: "created_at", title: "Created At" },
 ]
 
 export default function TaxesPage() {

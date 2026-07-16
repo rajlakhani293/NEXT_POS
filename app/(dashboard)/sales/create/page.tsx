@@ -50,6 +50,7 @@ import { payments } from "@/lib/api/payments"
 import { promotions } from "@/lib/api/promotions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
+import { formatBusinessDateTime, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { registers } from "@/lib/api/registers"
@@ -191,21 +192,10 @@ export default function SalesPage() {
   const pinnedPreviewEnabled = posOptions.show_preview_pinned_products
   const [itemsMergeEnabled, setItemsMergeEnabled] = useState(Boolean(posOptions.items_merge))
   const [forceAutoFocus, setForceAutoFocus] = useState(Boolean(posOptions.force_autofocus))
-  const formatMoney = useCallback((value: number | string | null | undefined) => {
-    const amount = Number(value || 0).toFixed(posOptions.currency_precision)
-    const indicator = posOptions.currency_preferred === "iso"
-      ? posOptions.currency_iso
-      : posOptions.currency_symbol
-    return posOptions.currency_position === "after"
-      ? `${amount}${indicator}`
-      : `${indicator}${amount}`
-  }, [
-    posOptions.currency_iso,
-    posOptions.currency_position,
-    posOptions.currency_precision,
-    posOptions.currency_preferred,
-    posOptions.currency_symbol,
-  ])
+  const formatMoney = useCallback(
+    (value: number | string | null | undefined) => formatBusinessMoney(value, posOptions),
+    [posOptions]
+  )
   const { hasPermission } = usePermissions()
 
   const [shift, setShift] = useState<any>(null)
@@ -2757,7 +2747,7 @@ export default function SalesPage() {
                       </div>
                       <div className="space-y-1">
                         <p><strong>{t("Customer")}</strong>: {order.customer__full_name || order.customer__name || order.customer?.name || t("Walk-in Customer")}</p>
-                        <p><strong>{t("Date")}</strong>: {order.created_at ? new Date(order.created_at).toLocaleString() : "-"}</p>
+                        <p><strong>{t("Date")}</strong>: {formatBusinessDateTime(order.created_at, posOptions)}</p>
                         <p><strong>{t("Type")}</strong>: {order.order_type || order.type || "-"}</p>
                       </div>
                     </div>
