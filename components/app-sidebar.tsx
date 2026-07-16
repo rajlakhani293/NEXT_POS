@@ -291,6 +291,17 @@ const settingsNavSections: DashboardNavSection[] = [
     permissionMatch: "any"
   },
   {
+    title: "Roles",
+    url: "/settings/roles",
+    icon: <ShieldCheckIcon />,
+    permission: [
+      PERMISSIONS.roles.view,
+      PERMISSIONS.roles.create,
+      PERMISSIONS.roles.update,
+    ],
+    permissionMatch: "any",
+  },
+  {
     title: "General",
     url: "/settings/general",
     icon: <SlidersHorizontalIcon />,
@@ -331,17 +342,6 @@ const settingsNavSections: DashboardNavSection[] = [
     url: "/settings/reports",
     icon: <ChartNoAxesCombinedIcon />,
     permission: PERMISSIONS.settings.view,
-  },
-  {
-    title: "Roles",
-    url: "/settings/roles",
-    icon: <ShieldCheckIcon />,
-    permission: [
-      PERMISSIONS.roles.view,
-      PERMISSIONS.roles.create,
-      PERMISSIONS.roles.update,
-    ],
-    permissionMatch: "any",
   },
   {
     title: "Taxes",
