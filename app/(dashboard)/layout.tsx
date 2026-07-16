@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import {
@@ -36,6 +37,7 @@ export default function DashboardLayout({
 function DashboardLayoutFrame({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
   const padding = useDashboardPadding()
+  const pathname = usePathname()
   const { logout } = useSession()
   const user = useAppSelector((state) => state.session.user)
   const branch = useAppSelector((state) => state.session.branch)
@@ -57,41 +59,51 @@ function DashboardLayoutFrame({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const isFullScreenPos = pathname === "/sales/create"
+
+  const pageContent = isFullScreenPos ? (
+    <div className="h-svh overflow-hidden bg-white">
+      <RoutePermissionGuard>{children}</RoutePermissionGuard>
+    </div>
+  ) : (
+    <div className="h-svh overflow-hidden [--header-height:calc(--spacing(12))]">
+      <SidebarProvider
+        defaultOpen={false}
+        className="flex h-full min-h-0 flex-col"
+      >
+        <SiteHeader
+          companyLogo={company?.logo}
+          companyName={company?.name}
+          companyCode={company?.code}
+          branchName={branch?.name}
+          branchCode={branch?.code}
+          branchId={branch?.id}
+          branchList={branchList}
+          userName={user?.full_name}
+          userContact={user?.phone || user?.email}
+          userImage={user?.profile_image}
+          onLogout={logout}
+        />
+        <div className="flex min-h-0 flex-1 bg-[#F9F9F9]">
+          <AppSidebar />
+          <SidebarInset className="min-h-0 overflow-hidden bg-[#F9F9F9]">
+            <div
+              className={[
+                "thin-scrollbar m-2 flex min-h-0 flex-1 flex-col rounded-lg border border-gray-100 bg-white",
+                padding === "none" ? "overflow-hidden p-0" : "overflow-y-auto p-6",
+              ].join(" ")}
+            >
+              <RoutePermissionGuard>{children}</RoutePermissionGuard>
+            </div>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
+    </div>
+  )
+
   return (
     <>
-      <div className="h-svh overflow-hidden [--header-height:calc(--spacing(12))]">
-        <SidebarProvider
-          defaultOpen={false}
-          className="flex h-full min-h-0 flex-col"
-        >
-          <SiteHeader
-            companyLogo={company?.logo}
-            companyName={company?.name}
-            companyCode={company?.code}
-            branchName={branch?.name}
-            branchCode={branch?.code}
-            branchId={branch?.id}
-            branchList={branchList}
-            userName={user?.full_name}
-            userContact={user?.phone || user?.email}
-            userImage={user?.profile_image}
-            onLogout={logout}
-          />
-          <div className="flex min-h-0 flex-1 bg-[#F9F9F9]">
-            <AppSidebar />
-            <SidebarInset className="min-h-0 overflow-hidden bg-[#F9F9F9]">
-              <div
-                className={[
-                  "thin-scrollbar m-2 flex min-h-0 flex-1 flex-col rounded-lg border border-gray-100 bg-white",
-                  padding === "none" ? "overflow-hidden p-0" : "overflow-y-auto p-6",
-                ].join(" ")}
-              >
-                <RoutePermissionGuard>{children}</RoutePermissionGuard>
-              </div>
-            </SidebarInset>
-          </div>
-        </SidebarProvider>
-      </div>
+      {pageContent}
 
       <Dialog open={isOffline}>
         <DialogContent

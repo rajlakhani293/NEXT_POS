@@ -172,6 +172,55 @@ const getCartItemDiscount = (item: CartItem) => {
   return val
 }
 
+const shortcutKeyAliases: Record<string, string> = {
+  " ": "space",
+  esc: "escape",
+  escape: "escape",
+  control: "ctrl",
+  ctrl: "ctrl",
+  option: "alt",
+  alt: "alt",
+  return: "enter",
+}
+
+const normalizeShortcutPart = (value: unknown) => {
+  const key = String(value || "").trim().toLowerCase()
+  return shortcutKeyAliases[key] || key
+}
+
+const normalizeShortcut = (shortcut: unknown) => {
+  if (!Array.isArray(shortcut)) return []
+  return shortcut.map(normalizeShortcutPart).filter(Boolean)
+}
+
+const eventShortcutParts = (event: KeyboardEvent) => {
+  const parts = []
+  if (event.ctrlKey || event.metaKey) parts.push("ctrl")
+  if (event.shiftKey) parts.push("shift")
+  if (event.altKey) parts.push("alt")
+  const key = normalizeShortcutPart(event.key)
+  if (!["ctrl", "shift", "alt", "meta"].includes(key)) parts.push(key)
+  return Array.from(new Set(parts)).sort()
+}
+
+const shortcutMatches = (event: KeyboardEvent, shortcut: unknown) => {
+  const expected = normalizeShortcut(shortcut).sort()
+  if (expected.length === 0) return false
+  const actual = eventShortcutParts(event)
+  return expected.length === actual.length && expected.every((key, index) => key === actual[index])
+}
+
+const shouldIgnorePosShortcut = (event: KeyboardEvent) => {
+  const target = event.target as HTMLElement | null
+  if (!target) return false
+  const tagName = target.tagName.toLowerCase()
+  return Boolean(
+    target.isContentEditable ||
+      ["input", "textarea", "select"].includes(tagName) ||
+      target.closest("[role='dialog']")
+  )
+}
+
 
 export default function SalesPage() {
   const router = useRouter()
@@ -438,6 +487,14 @@ export default function SalesPage() {
     )
     return payment?.label || activePaymentType || t("Payment")
   }, [activePaymentType, paymentTypeOptions, t])
+  const paymentAmountShortcuts = useMemo(
+    () =>
+      String(posOptions.pos_amount_shortcut || "")
+        .split("|")
+        .map((amount) => Number(amount.trim()))
+        .filter((amount) => Number.isFinite(amount) && amount > 0),
+    [posOptions.pos_amount_shortcut]
+  )
 
   const loadShift = async () => {
     if (!cashRegistersEnabled) {
@@ -1447,6 +1504,87 @@ export default function SalesPage() {
     }
   }
 
+  useEffect(() => {
+    const hasOpenDialog =
+      isUnitPickerOpen ||
+      isPaymentDialogOpen ||
+      isHeldCartDialogOpen ||
+      isHoldReferenceDialogOpen ||
+      isNoteDialogOpen ||
+      isCouponsDialogOpen ||
+      isOrderSettingsOpen ||
+      isTaxesDialogOpen ||
+      isQuickProductDialogOpen ||
+      isCartDiscountDialogOpen ||
+      isProductSearchOpen ||
+      Boolean(activeDiscountItem) ||
+      Boolean(priceEditItem)
+
+    const handleShortcut = (event: KeyboardEvent) => {
+      if (hasOpenDialog || shouldIgnorePosShortcut(event)) return
+
+      const run = (shortcut: unknown, action: () => void) => {
+        if (!shortcutMatches(event, shortcut)) return false
+        event.preventDefault()
+        action()
+        return true
+      }
+
+      if (run(posOptions.pos_keyboard_quick_search, () => setIsProductSearchOpen(true))) return
+      if (run(posOptions.pos_keyboard_toggle_merge, () => setItemsMergeEnabled((current) => !current))) return
+      if (run(posOptions.pos_keyboard_cancel_order, handleVoidCart)) return
+      if (
+        run(posOptions.pos_keyboard_hold_order, () => {
+          if (cartItems.length && !isHoldingSale) setIsHoldReferenceDialogOpen(true)
+        })
+      ) return
+      if (run(posOptions.pos_keyboard_payment, handleOpenPaymentDialog)) return
+      if (run(posOptions.pos_keyboard_note, () => setIsNoteDialogOpen(true))) return
+      if (run(posOptions.pos_keyboard_order_type, openOrderSettingsDialog)) return
+      if (run(posOptions.pos_keyboard_create_customer, () => window.open("/customers/create", "_blank"))) return
+      if (
+        run(posOptions.pos_keyboard_fullscreen, () => {
+          if (document.fullscreenElement) {
+            void document.exitFullscreen()
+          } else {
+            void document.documentElement.requestFullscreen()
+          }
+        })
+      ) return
+    }
+
+    window.addEventListener("keydown", handleShortcut)
+    return () => window.removeEventListener("keydown", handleShortcut)
+  }, [
+    activeDiscountItem,
+    cartItems.length,
+    handleOpenPaymentDialog,
+    handleVoidCart,
+    isCartDiscountDialogOpen,
+    isCouponsDialogOpen,
+    isHeldCartDialogOpen,
+    isHoldReferenceDialogOpen,
+    isHoldingSale,
+    isNoteDialogOpen,
+    isOrderSettingsOpen,
+    isPaymentDialogOpen,
+    isProductSearchOpen,
+    isQuickProductDialogOpen,
+    isTaxesDialogOpen,
+    isUnitPickerOpen,
+    openOrderSettingsDialog,
+    posOptions.pos_keyboard_cancel_order,
+    posOptions.pos_keyboard_create_customer,
+    posOptions.pos_keyboard_fullscreen,
+    posOptions.pos_keyboard_hold_order,
+    posOptions.pos_keyboard_note,
+    posOptions.pos_keyboard_order_type,
+    posOptions.pos_keyboard_payment,
+    posOptions.pos_keyboard_quick_search,
+    posOptions.pos_keyboard_toggle_merge,
+    priceEditItem,
+  ])
+
   const removePaymentRow = (rowId: string) => {
     setPaymentsRows((current) =>
       current.length === 1 ? current : current.filter((row) => row.id !== rowId)
@@ -2447,7 +2585,7 @@ export default function SalesPage() {
                     </div>
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
-                    {[5, 10, 20, 50].map((amount) => (
+                    {(paymentAmountShortcuts.length ? paymentAmountShortcuts : [5, 10, 20, 50]).map((amount) => (
                       <Button
                         key={amount}
                         type="button"
