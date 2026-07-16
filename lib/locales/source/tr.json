@@ -2961,5 +2961,8 @@
   "Sr No": "Sıra No",
   "Enter description": "Açıklama girin",
   "Choose an account": "Choose an account",
-  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests."
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests.",
+  "Select Group": "Grup seç",
+  "Select Gender": "Cinsiyet seç",
+  "Pick a date": "Bir tarih seçin"
 }

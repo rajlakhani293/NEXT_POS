@@ -2961,5 +2961,8 @@
   "Sr No": "Nr. Rendor",
   "Enter description": "Vendosni përshkrimin",
   "Choose an account": "Choose an account",
-  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests."
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests.",
+  "Select Group": "Zgjidh grupin",
+  "Select Gender": "Zgjidh gjininë",
+  "Pick a date": "Zgjidh një datë"
 }

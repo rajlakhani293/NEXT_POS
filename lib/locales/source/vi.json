@@ -2960,5 +2960,8 @@
   "Sr No": "STT",
   "Enter description": "Nhập mô tả",
   "Choose an account": "Choose an account",
-  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests."
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests.",
+  "Select Group": "Chọn nhóm",
+  "Select Gender": "Chọn giới tính",
+  "Pick a date": "Chọn ngày"
 }

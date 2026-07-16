@@ -2961,5 +2961,8 @@
   "Sr No": "Nº",
   "Enter description": "Insira a descrição",
   "Choose an account": "Choose an account",
-  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests."
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests.",
+  "Select Group": "Selecionar grupo",
+  "Select Gender": "Selecionar gênero",
+  "Pick a date": "Escolha uma data"
 }

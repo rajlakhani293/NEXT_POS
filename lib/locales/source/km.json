@@ -2961,5 +2961,8 @@
   "Sr No": "ល.រ",
   "Enter description": "បញ្ចូលការពិពណ៌នា",
   "Choose an account": "Choose an account",
-  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests."
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests.",
+  "Select Group": "ជ្រើសរើសក្រុម",
+  "Select Gender": "ជ្រើសរើសភេទ",
+  "Pick a date": "ជ្រើសរើសកាលបរិច្ឆេទ"
 }

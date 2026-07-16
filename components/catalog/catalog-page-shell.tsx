@@ -37,6 +37,7 @@ type CatalogPageShellProps = {
   showDateRange?: boolean
   refreshSessionOnMutation?: boolean
   rowActions?: (id: string, record: any) => any[]
+  onAddRecord?: () => void
   onEditRecord?: (record: any, openEditForm: (record: any) => void) => void
 }
 
@@ -54,6 +55,7 @@ export function CatalogPageShell({
   showDateRange = true,
   refreshSessionOnMutation = false,
   rowActions,
+  onAddRecord,
   onEditRecord,
 }: CatalogPageShellProps) {
   const searchParams = useSearchParams()
@@ -101,6 +103,10 @@ export function CatalogPageShell({
   }
 
   const handleAdd = (open: boolean) => {
+    if (open && onAddRecord) {
+      onAddRecord()
+      return
+    }
     setEditId(null)
     setIsFormOpen(open)
   }
@@ -124,10 +130,14 @@ export function CatalogPageShell({
 
   useEffect(() => {
     if (searchParams.get("create") === "1" && canCreate) {
+      if (onAddRecord) {
+        onAddRecord()
+        return
+      }
       setEditId(null)
       setIsFormOpen(true)
     }
-  }, [canCreate, searchParams])
+  }, [canCreate, onAddRecord, searchParams])
 
   return (
     <DashboardPage padding="default">

@@ -45,6 +45,7 @@ export default function ReportViewPage() {
   const [rows, setRows] = useState<any[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [page, setPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(20)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedDateRange, setSelectedDateRange] = useState<string | null>(
     "This Month"
@@ -57,48 +58,20 @@ export default function ReportViewPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState("")
   const [annualTotals, setAnnualTotals] = useState<any>(null)
 
-  const [getCustomersDropdown, customersDropdownState] = (
-    customers as any
-  ).useGetCustomersDropdownMutation()
-  const [getCustomerStatement, customerStatementState] = (
-    reports as any
-  ).useGetCustomerStatementMutation()
-  const [getProductHistoryCombinedReport, stockHistoryState] = (
-    reports as any
-  ).useGetProductHistoryCombinedReportMutation()
-  const [computeProductHistoryCombinedReport, computeStockHistoryState] = (
-    reports as any
-  ).useComputeProductHistoryCombinedReportMutation()
-  const [getSaleReport, saleReportState] = (
-    reports as any
-  ).useGetSaleReportMutation()
-  const [getSoldStockReport, soldStockState] = (
-    reports as any
-  ).useGetSoldStockReportMutation()
-  const [getProfitReport, profitState] = (
-    reports as any
-  ).useGetProfitReportMutation()
-  const [getPaymentTypesReport, paymentTypesState] = (
-    reports as any
-  ).useGetPaymentTypesReportMutation()
-  const [getProductsReport, productsState] = (
-    reports as any
-  ).useGetProductsReportMutation()
-  const [getLowStockReport, lowStockState] = (
-    reports as any
-  ).useGetLowStockReportMutation()
-  const [getStockReport, stockReportState] = (
-    reports as any
-  ).useGetStockReportMutation()
-  const [getTransactionsReport, transactionsState] = (
-    reports as any
-  ).useGetTransactionsReportMutation()
-  const [getAnnualReport, annualState] = (
-    reports as any
-  ).useGetAnnualReportMutation()
-  const [computeAnnualReport, computeAnnualState] = (
-    reports as any
-  ).useComputeAnnualReportMutation()
+  const [getCustomersDropdown, customersDropdownState] = (customers as any).useGetCustomersDropdownMutation()
+  const [getCustomerStatement, customerStatementState] = (reports as any).useGetCustomerStatementMutation()
+  const [getProductHistoryCombinedReport, stockHistoryState] = (reports as any).useGetProductHistoryCombinedReportMutation()
+  const [computeProductHistoryCombinedReport, computeStockHistoryState] = (reports as any).useComputeProductHistoryCombinedReportMutation()
+  const [getSaleReport, saleReportState] = (reports as any).useGetSaleReportMutation()
+  const [getSoldStockReport, soldStockState] = (reports as any).useGetSoldStockReportMutation()
+  const [getProfitReport, profitState] = (reports as any).useGetProfitReportMutation()
+  const [getPaymentTypesReport, paymentTypesState] = (reports as any).useGetPaymentTypesReportMutation()
+  const [getProductsReport, productsState] = (reports as any).useGetProductsReportMutation()
+  const [getLowStockReport, lowStockState] = (reports as any).useGetLowStockReportMutation()
+  const [getStockReport, stockReportState] = (reports as any).useGetStockReportMutation()
+  const [getTransactionsReport, transactionsState] = (reports as any).useGetTransactionsReportMutation()
+  const [getAnnualReport, annualState] = (reports as any).useGetAnnualReportMutation()
+  const [computeAnnualReport, computeAnnualState] = (reports as any).useComputeAnnualReportMutation()
 
   const isTableLoading =
     customerStatementState.isLoading ||
@@ -122,7 +95,7 @@ export default function ReportViewPage() {
     }
     const payload: any = {
       page,
-      limit: 10,
+      limit: itemsPerPage,
       search: searchTerm || undefined,
       startDate: dateFilters.startDate,
       endDate: dateFilters.endDate,
@@ -131,10 +104,9 @@ export default function ReportViewPage() {
       payload.date = dateFilters.endDate || dateFilters.startDate
     }
     return payload
-  }, [activeReport, selectedYear, dateFilters.endDate, dateFilters.startDate, page, searchTerm])
+  }, [activeReport, selectedYear, dateFilters.endDate, dateFilters.startDate, page, searchTerm, itemsPerPage])
 
   useEffect(() => {
-    // Reset data when report type changes
     setRows([])
     setTotalItems(0)
     setAnnualTotals(null)
@@ -175,7 +147,7 @@ export default function ReportViewPage() {
       payment_types: getPaymentTypesReport,
     }
 
-    const payload = activeReport === "annual" ? rowsPayload : { ...rowsPayload, limit: 10 }
+    const payload = activeReport === "annual" ? rowsPayload : { ...rowsPayload }
 
     void mutationMap[activeReport](payload)
       .unwrap()
@@ -262,6 +234,12 @@ export default function ReportViewPage() {
           setPage(1)
           setSelectedDateRange("Custom")
           setDateFilters({ startDate, endDate })
+        }
+        break
+      case "itemsPerPage":
+        if (typeof payload === "number") {
+          setPage(1)
+          setItemsPerPage(payload)
         }
         break
       default:
@@ -519,53 +497,53 @@ export default function ReportViewPage() {
   return (
     <DashboardPage padding="none">
       <div className="flex h-full min-h-0 flex-col">
-      <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-9"
-            onClick={() => router.push("/reports")}
-          >
-            <ArrowLeft className="size-4" />
-          </Button>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">
-              {t(tabLabels[activeReport])}
-            </h1>
-            <p className="text-sm font-medium text-gray-500">
-              {activeReport === "annual" 
-                ? t("Monthly summary breakdown of sales, taxes, expenses, and net income.")
-                : activeReport === "customers_statement"
-                  ? t("Display the complete customer statement.")
-                : t("Review this report with search, date filters and pagination.")}
-            </p>
+        <div className="z-20 flex-none border-b border-gray-200 bg-white px-4 py-2">
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-9"
+              onClick={() => router.push("/reports")}
+            >
+              <ArrowLeft className="size-4" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">
+                {t(tabLabels[activeReport])}
+              </h1>
+              <p className="text-sm font-medium text-gray-500">
+                {activeReport === "annual"
+                  ? t("Monthly summary breakdown of sales, taxes, expenses, and net income.")
+                  : activeReport === "customers_statement"
+                    ? t("Display the complete customer statement.")
+                    : t("Review this report with search, date filters and pagination.")}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <DynamicTable
-          data={rows}
-          columns={formattedColumns}
-          tableTitle={t(tabLabels[activeReport])}
-          showSearch={activeReport !== "annual"}
-          showDateRange={activeReport !== "annual"}
-          searchTerm={searchTerm}
-          selectedDateRange={selectedDateRange}
-          dateFilters={dateFilters}
-          currentPage={page}
-          itemsPerPage={activeReport === "annual" ? 12 : 10}
-          totalItems={totalItems}
-          onPageChange={setPage}
-          onFilterChange={handleFilterChange}
-          isLoading={isTableLoading}
-          hideActions
-          secondaryActionButton={reportActions}
-          footerSummary={footerSummary}
-        />
-      </div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          <DynamicTable
+            data={rows}
+            columns={formattedColumns}
+            tableTitle={t(tabLabels[activeReport])}
+            showSearch={activeReport !== "annual"}
+            showDateRange={activeReport !== "annual"}
+            searchTerm={searchTerm}
+            selectedDateRange={selectedDateRange}
+            dateFilters={dateFilters}
+            currentPage={page}
+            itemsPerPage={itemsPerPage}
+            totalItems={totalItems}
+            onPageChange={setPage}
+            onFilterChange={handleFilterChange}
+            isLoading={isTableLoading}
+            hideActions
+            secondaryActionButton={reportActions}
+            footerSummary={footerSummary}
+          />
+        </div>
       </div>
     </DashboardPage>
   )

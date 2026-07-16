@@ -572,8 +572,8 @@
   "Loading customer coupons...": "Cargando cupones del cliente...",
   "Loading coupon history...": "Cargando historial del cupon...",
   "Flat": "Fijo",
-  "Select Gender": "Seleccionar genero",
-  "Pick a date": "Seleccionar fecha",
+  "Select Gender": "Seleccionar género",
+  "Pick a date": "Elegir una fecha",
   "Something went wrong.": "Algo salio mal.",
   "Dashboard": "Panel",
   "Sales": "Ventas",
@@ -713,5 +713,6 @@
   "Enter description": "Ingrese descripción",
   "Choose an account": "Elige una cuenta",
   "Further details on the transaction.": "Mas detalles sobre la transaccion.",
-  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Algunos tipos de gasto estan desactivados ya que POS no puede realizar peticiones asincronas."
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Algunos tipos de gasto estan desactivados ya que POS no puede realizar peticiones asincronas.",
+  "Select Group": "Seleccionar grupo"
 }

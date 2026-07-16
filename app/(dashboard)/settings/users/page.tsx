@@ -213,12 +213,13 @@ export default function UsersPage() {
       deleteTitle="Delete User"
       deleteDescription="Would you like to delete this ?"
       permissions={PERMISSIONS.users}
+      onAddRecord={() => router.push("/settings/users/create")}
       onEditRecord={(record, openEditForm) => {
         if (String(record?.id) === String(currentUserId || "")) {
           router.push("/settings/users/profile")
           return
         }
-        openEditForm(record)
+        router.push(`/settings/users/${record.id}`)
       }}
     />
   )

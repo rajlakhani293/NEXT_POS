@@ -2961,5 +2961,8 @@
   "Sr No": "الرقم",
   "Enter description": "أدخل الوصف",
   "Choose an account": "Choose an account",
-  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "تم تعطيل بعض انواع المصروفات لان POS لا يمكنه تنفيذ الطلبات غير المتزامنة."
+  "Some expense type are disabled as POS is not able to perform asynchronous requests.": "تم تعطيل بعض انواع المصروفات لان POS لا يمكنه تنفيذ الطلبات غير المتزامنة.",
+  "Select Group": "اختر المجموعة",
+  "Select Gender": "اختر الجنس",
+  "Pick a date": "اختر تاريخاً"
 }
