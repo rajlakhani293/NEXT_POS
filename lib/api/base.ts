@@ -94,12 +94,13 @@ export const createBaseQueryWithInterceptor = (
             ? String(modifiedArgs.url)
             : ""
       const isSessionCheck = url.includes("accounts/session-data")
+      const isLogoutRequest = url.includes("accounts/logout")
 
       const toastKey = `${status}:${message || ""}`
 
       if (status === 401) {
         api.dispatch(setUnauthorized(true))
-        if (!isSessionCheck) {
+        if (!isSessionCheck && !isLogoutRequest) {
           showErrorToastOnce(toastKey, message)
         }
       } else if (status === 403) {
@@ -111,7 +112,7 @@ export const createBaseQueryWithInterceptor = (
           })
         )
         showErrorToastOnce(toastKey, message)
-      } else if (message) {
+      } else if (message && !isLogoutRequest) {
         showErrorToastOnce(toastKey, message)
       }
 

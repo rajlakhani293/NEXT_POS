@@ -36,7 +36,7 @@ export default function DashboardLayout({
 function DashboardLayoutFrame({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
   const padding = useDashboardPadding()
-  const { clearSession } = useSession()
+  const { logout } = useSession()
   const user = useAppSelector((state) => state.session.user)
   const branch = useAppSelector((state) => state.session.branch)
   const branchList = useAppSelector((state) => state.session.branchList)
@@ -75,7 +75,7 @@ function DashboardLayoutFrame({ children }: { children: React.ReactNode }) {
             userName={user?.full_name}
             userContact={user?.phone || user?.email}
             userImage={user?.profile_image}
-            onLogout={clearSession}
+            onLogout={logout}
           />
           <div className="flex min-h-0 flex-1 bg-[#F9F9F9]">
             <AppSidebar />

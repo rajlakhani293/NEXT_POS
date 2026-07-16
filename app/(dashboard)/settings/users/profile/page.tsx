@@ -273,6 +273,10 @@ export default function UserProfilePage() {
   }
 
   const handleDeleteToken = async (token: AccessTokenRecord) => {
+    if (token.current) {
+      showToast.error(t("Please logout to revoke the current session."))
+      return
+    }
     const confirmed = await confirm({
       title: t("Delete"),
       description: t("You're about to delete a token that might be in use by an external app. Would you like to proceed?"),
@@ -285,8 +289,8 @@ export default function UserProfilePage() {
       const response = await deleteToken(token.id).unwrap()
       refetchTokens()
       showToast.success(response?.message || t("Token deleted successfully."))
-    } catch (error: any) {
-      showToast.error(error?.data?.message || t("An unexpected error occurred."))
+    } catch {
+      // The API interceptor already displays the backend error once.
     }
   }
 
@@ -550,6 +554,7 @@ export default function UserProfilePage() {
                             <div className="min-w-0">
                               <div className="truncate font-medium">{token.name || t("Untitled Token")}</div>
                               <div className="mt-1 space-y-0.5 text-xs text-slate-500">
+                                {token.current ? <div className="font-semibold text-slate-700">{t("Current Session")}</div> : null}
                                 <div>{t("Created")}: {dateLabel(token.created_at)}</div>
                                 <div>{t("Last Use")}: {t(dateLabel(token.last_used_at))}</div>
                                 <div>{t("Expires")}: {t(dateLabel(token.expires_at))}</div>
@@ -559,7 +564,7 @@ export default function UserProfilePage() {
                               type="button"
                               variant="destructive"
                               size="sm"
-                              disabled={deleteTokenState.isLoading}
+                              disabled={deleteTokenState.isLoading || token.current}
                               onClick={() => handleDeleteToken(token)}
                             >
                               <Trash2 className="mr-2 size-4" />

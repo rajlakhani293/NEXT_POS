@@ -20,6 +20,7 @@ interface SessionContextType {
   isLoading: boolean
   refreshSession: () => Promise<void>
   clearSession: () => void
+  logout: () => Promise<void>
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined)
@@ -57,6 +58,23 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       router.replace("/login")
     }
   }, [dispatch, router])
+
+  const logout = useCallback(async () => {
+    const token = Cookies.get("token")
+    if (token) {
+      try {
+        const request = dispatch(
+          auth.endpoints.logout.initiate(undefined, {
+            track: false,
+          })
+        )
+        await request.unwrap()
+      } catch {
+        // Local session must still be cleared if the server token is already invalid.
+      }
+    }
+    clearSession()
+  }, [clearSession, dispatch])
 
   const refreshSession = useCallback(async () => {
     const token = Cookies.get("token")
@@ -104,8 +122,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       refreshSession,
       clearSession,
+      logout,
     }),
-    [clearSession, isLoading, refreshSession]
+    [clearSession, isLoading, logout, refreshSession]
   )
 
   return (

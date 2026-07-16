@@ -40,6 +40,7 @@ export type AccessTokenRecord = {
   last_used_at?: string | null
   expires_at?: string | null
   expired?: boolean
+  current?: boolean
 }
 
 const endpointsConfig = {
@@ -61,6 +62,12 @@ const endpointsConfig = {
     query: () => ({
       url: "accounts/session-data",
       method: "GET",
+    }),
+  },
+  logout: {
+    query: () => ({
+      url: "accounts/logout",
+      method: "POST",
     }),
   },
   switchBranch: {
@@ -134,6 +141,7 @@ export const auth = createApi({
     getSessionData: builder.query<ApiEnvelope<any>, void>(
       endpointsConfig.getSessionData
     ),
+    logout: builder.mutation<ApiEnvelope<any>, void>(endpointsConfig.logout),
     switchBranch: builder.mutation<ApiEnvelope<any>, { branch_id: number }>(
       endpointsConfig.switchBranch
     ),
@@ -168,6 +176,7 @@ export const {
   useRegisterMutation,
   useGetSessionDataQuery,
   useLazyGetSessionDataQuery,
+  useLogoutMutation,
   useSwitchBranchMutation,
   usePasswordLostMutation,
   useNewPasswordMutation,
