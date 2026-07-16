@@ -115,6 +115,9 @@ export default function CompanySettingsPage() {
 
     if (response?.data) {
       dispatch(setSessionData(response.data))
+      if (response.data.company?.logo) {
+        setValues((current) => ({ ...current, logo: response.data.company.logo }))
+      }
     }
     setLogoFile(null)
     showToast.success(response?.message || t("Organization updated successfully."))
@@ -218,10 +221,14 @@ export default function CompanySettingsPage() {
         {/* Branding */}
         <FormRow label={t("Company Logo")}>
           <ImageUpload
-            label={t("Company Logo")}
             value={logoFile}
             initialUrl={values.logo}
-            onChange={setLogoFile}
+            onChange={(file) => {
+              setLogoFile(file)
+              if (!file) {
+                updateValue("logo", "")
+              }
+            }}
             onError={setLogoError}
             error={logoError}
           />
