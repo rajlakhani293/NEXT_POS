@@ -714,5 +714,13 @@
   "Choose an account": "اختر حسابا",
   "Further details on the transaction.": "مزيد من التفاصيل حول المعاملة.",
   "Some expense type are disabled as POS is not able to perform asynchronous requests.": "تم تعطيل بعض انواع المصروفات لان POS لا يمكنه تنفيذ الطلبات غير المتزامنة.",
-  "Select Group": "اختر المجموعة"
+  "Select Group": "اختر المجموعة",
+  "Password must contain at least 6 characters.": "يجب أن تحتوي كلمة المرور على 6 أحرف على الأقل.",
+  "Username must contain at least 3 characters.": "يجب أن يحتوي اسم المستخدم على 3 أحرف على الأقل.",
+  "Username is required.": "اسم المستخدم مطلوب.",
+  "Email is required.": "البريد الإلكتروني مطلوب.",
+  "Password is required.": "كلمة المرور مطلوبة.",
+  "Passwords do not match": "كلمات المرور غير متطابقة",
+  "Enter a valid email address.": "أدخل عنوان بريد إلكتروني صالح.",
+  "Password confirmation does not match.": "تأكيد كلمة المرور غير مطابق."
 }

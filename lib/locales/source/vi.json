@@ -2963,5 +2963,13 @@
   "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests.",
   "Select Group": "Chọn nhóm",
   "Select Gender": "Chọn giới tính",
-  "Pick a date": "Chọn ngày"
+  "Pick a date": "Chọn ngày",
+  "Password must contain at least 6 characters.": "Mật khẩu phải chứa ít nhất 6 ký tự.",
+  "Username must contain at least 3 characters.": "Tên người dùng phải chứa ít nhất 3 ký tự.",
+  "Username is required.": "Tên người dùng là bắt buộc.",
+  "Email is required.": "Email là bắt buộc.",
+  "Password is required.": "Mật khẩu là bắt buộc.",
+  "Passwords do not match": "Mật khẩu không khớp",
+  "Enter a valid email address.": "Nhập một địa chỉ email hợp lệ.",
+  "Password confirmation does not match.": "Xác nhận mật khẩu không khớp."
 }

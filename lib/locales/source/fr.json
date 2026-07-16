@@ -2964,5 +2964,13 @@
   "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Certains types de depenses sont desactives car POS ne peut pas effectuer des requetes asynchrones.",
   "Select Group": "Sélectionner un groupe",
   "Select Gender": "Sélectionner le genre",
-  "Pick a date": "Choisir une date"
+  "Pick a date": "Choisir une date",
+  "Password must contain at least 6 characters.": "Le mot de passe doit contenir au moins 6 caractères.",
+  "Username must contain at least 3 characters.": "Le nom d'utilisateur doit contenir au moins 3 caractères.",
+  "Username is required.": "Le nom d'utilisateur est obligatoire.",
+  "Email is required.": "L'e-mail est obligatoire.",
+  "Password is required.": "Le mot de passe est obligatoire.",
+  "Passwords do not match": "Les mots de passe ne correspondent pas",
+  "Enter a valid email address.": "Entrez une adresse e-mail valide.",
+  "Password confirmation does not match.": "La confirmation du mot de passe ne correspond pas."
 }

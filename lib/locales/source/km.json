@@ -2964,5 +2964,13 @@
   "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests.",
   "Select Group": "ជ្រើសរើសក្រុម",
   "Select Gender": "ជ្រើសរើសភេទ",
-  "Pick a date": "ជ្រើសរើសកាលបរិច្ឆេទ"
+  "Pick a date": "ជ្រើសរើសកាលបរិច្ឆេទ",
+  "Password must contain at least 6 characters.": "លេខសម្ងាត់ត្រូវតែមានយ៉ាងហោចណាស់ 6 តួអក្សរ។",
+  "Username must contain at least 3 characters.": "ឈ្មោះអ្នកប្រើប្រាស់ត្រូវតែមានយ៉ាងហោចណាស់ 3 តួអក្សរ។",
+  "Username is required.": "ឈ្មោះអ្នកប្រើប្រាស់ត្រូវបានទាមទារ។",
+  "Email is required.": "អ៊ីមែលត្រូវបានទាមទារ។",
+  "Password is required.": "លេខសម្ងាត់ត្រូវបានទាមទារ។",
+  "Passwords do not match": "លេខសម្ងាត់មិនត្រូវគ្នាទេ។",
+  "Enter a valid email address.": "សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលត្រឹមត្រូវ។",
+  "Password confirmation does not match.": "ការបញ្ជាក់លេខសម្ងាត់មិនត្រូវគ្នាទេ។"
 }

@@ -2966,5 +2966,13 @@
   "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests.",
   "Select Group": "Pilih grup",
   "Select Gender": "Pilih jenis kelamin",
-  "Pick a date": "Pilih tanggal"
+  "Pick a date": "Pilih tanggal",
+  "Password must contain at least 6 characters.": "Kata sandi harus berisi setidaknya 6 karakter.",
+  "Username must contain at least 3 characters.": "Nama pengguna harus berisi setidaknya 3 karakter.",
+  "Username is required.": "Nama pengguna wajib diisi.",
+  "Email is required.": "Email wajib diisi.",
+  "Password is required.": "Kata sandi wajib diisi.",
+  "Passwords do not match": "Kata sandi tidak cocok",
+  "Enter a valid email address.": "Masukkan alamat email yang valid.",
+  "Password confirmation does not match.": "Konfirmasi kata sandi tidak cocok."
 }

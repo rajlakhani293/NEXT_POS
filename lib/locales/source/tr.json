@@ -2964,5 +2964,13 @@
   "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests.",
   "Select Group": "Grup seç",
   "Select Gender": "Cinsiyet seç",
-  "Pick a date": "Bir tarih seçin"
+  "Pick a date": "Bir tarih seçin",
+  "Password must contain at least 6 characters.": "Şifre en az 6 karakter içermelidir.",
+  "Username must contain at least 3 characters.": "Kullanıcı adı en az 3 karakter içermelidir.",
+  "Username is required.": "Kullanıcı adı gereklidir.",
+  "Email is required.": "E-posta gereklidir.",
+  "Password is required.": "Şifre gereklidir.",
+  "Passwords do not match": "Şifreler uyuşmuyor",
+  "Enter a valid email address.": "Geçerli bir e-posta adresi girin.",
+  "Password confirmation does not match.": "Şifre onayı uyuşmuyor."
 }

@@ -200,7 +200,7 @@ export function UserCreateUpdatePage({ userId }: { userId?: string | number }) {
     if (!values.username.trim()) nextErrors.username = t("Username is required.")
     if (!values.email.trim()) nextErrors.email = t("Email is required.")
     if (!isEdit && !values.password) nextErrors.password = t("Password is required.")
-    if (values.password && values.password.length < 8) nextErrors.password = t("Password must contain at least 8 characters.")
+    if (values.password && values.password.length < 6) nextErrors.password = t("Password must contain at least 6 characters.")
     if (values.password && values.password_confirm !== values.password) {
       nextErrors.password_confirm = t("Passwords do not match")
     }

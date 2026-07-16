@@ -2964,5 +2964,13 @@
   "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests.",
   "Select Group": "Zgjidh grupin",
   "Select Gender": "Zgjidh gjininë",
-  "Pick a date": "Zgjidh një datë"
+  "Pick a date": "Zgjidh një datë",
+  "Password must contain at least 6 characters.": "Fjalëkalimi duhet të përmbajë të paktën 6 karaktere.",
+  "Username must contain at least 3 characters.": "Emri i përdoruesit duhet të përmbajë të paktën 3 karaktere.",
+  "Username is required.": "Emri i përdoruesit kërkohet.",
+  "Email is required.": "Email-i kërkohet.",
+  "Password is required.": "Fjalëkalimi kërkohet.",
+  "Passwords do not match": "Fjalëkalimet nuk përputhen",
+  "Enter a valid email address.": "Vendosni një adresë email të vlefshme.",
+  "Password confirmation does not match.": "Konfirmimi i fjalëkalimit nuk përputhet."
 }

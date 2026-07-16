@@ -55,8 +55,8 @@ export function LoginForm({
 
   const validate = () => {
     const nextErrors: Record<string, string> = {}
-    if (username.trim().length < 5) {
-      nextErrors.username = t("Username must contain at least 5 characters.")
+    if (username.trim().length < 3) {
+      nextErrors.username = t("Username must contain at least 3 characters.")
     }
     if (password.length < 6) {
       nextErrors.password = t("Password must contain at least 6 characters.")

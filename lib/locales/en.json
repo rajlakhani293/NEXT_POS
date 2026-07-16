@@ -431,8 +431,6 @@
   "Amount must be a valid number.": "Amount must be a valid number.",
   "Unable to process the register action.": "Unable to process the register action.",
   "Unable to process authentication request.": "Unable to process authentication request.",
-  "Username is required.": "Username is required.",
-  "Password confirmation does not match.": "Password confirmation does not match.",
   "The profile has been successfully saved.": "The profile has been successfully saved.",
   "Unable to proceed, the form is not valid.": "Unable to proceed, the form is not valid.",
   "Token Name is required.": "Token Name is required.",
@@ -914,5 +912,13 @@
   "Choose an account": "Choose an account",
   "Further details on the transaction.": "Further details on the transaction.",
   "Some expense type are disabled as POS is not able to perform asynchronous requests.": "Some expense type are disabled as POS is not able to perform asynchronous requests.",
-  "Select Group": "Select Group"
+  "Select Group": "Select Group",
+  "Password must contain at least 6 characters.": "Password must contain at least 6 characters.",
+  "Username must contain at least 3 characters.": "Username must contain at least 3 characters.",
+  "Username is required.": "Username is required.",
+  "Email is required.": "Email is required.",
+  "Password is required.": "Password is required.",
+  "Passwords do not match": "Passwords do not match",
+  "Enter a valid email address.": "Enter a valid email address.",
+  "Password confirmation does not match.": "Password confirmation does not match."
 }
