@@ -50,8 +50,8 @@ const CustomModal = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className={cn("sm:max-w-[500px] p-0 gap-0 [&>[data-slot=dialog-close]]:top-2 [&>[data-slot=dialog-close]]:right-3 [&>[data-slot=dialog-close]]:p-1.5", className)}>
-        <DialogHeader className={cn("border-b border-gray-200 px-4 py-3 text-left", headerClassName)}>
+      <DialogContent className={cn("sm:max-w-[500px] p-0 gap-0 [&>[data-slot=dialog-close]]:top-3 [&>[data-slot=dialog-close]]:right-3 [&>[data-slot=dialog-close]]:p-2", className)}>
+        <DialogHeader className={cn("border-b border-gray-200 p-4 text-left", headerClassName)}>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
