@@ -288,7 +288,6 @@ export default function SalesPage() {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
   const [activePaymentType, setActivePaymentType] = useState("cash-payment")
   const [paymentAmountInput, setPaymentAmountInput] = useState("")
-  const [showPaymentList, setShowPaymentList] = useState(false)
   const [isHeldCartDialogOpen, setIsHeldCartDialogOpen] = useState(false)
   const [pendingOrdersTab, setPendingOrdersTab] = useState<"hold" | "unpaid" | "partially_paid">("hold")
   const [pendingOrderSearch, setPendingOrderSearch] = useState("")
@@ -380,6 +379,14 @@ export default function SalesPage() {
   const registerOptions = registersDropdownData?.data || []
   const taxGroupOptions = taxGroupsData?.data || []
   const unitOptions = unitsDropdownData?.data || []
+  const selectedCustomer = useMemo(
+    () => customerOptions.find((customer: any) => String(customer.id) === String(customerId)),
+    [customerOptions, customerId]
+  )
+  const selectedTaxGroup = useMemo(
+    () => taxGroupOptions.find((taxGroup: any) => String(taxGroup.id) === String(cartTaxGroupId)),
+    [taxGroupOptions, cartTaxGroupId]
+  )
   const rewardBalances = rewardBalanceState.data?.data || []
   const redeemableReward = rewardBalances.find(
     (balance: any) =>
@@ -1472,7 +1479,6 @@ export default function SalesPage() {
       ]
     })
     setPaymentAmountInput("")
-    setShowPaymentList(true)
   }
 
   const makeFullPaymentFromPopup = () => {
@@ -1490,7 +1496,6 @@ export default function SalesPage() {
       return
     }
     setIsPaymentDialogOpen(true)
-    setShowPaymentList(false)
     const firstPayment = paymentTypeOptions[0]
     if (!activePaymentType && firstPayment) {
       setActivePaymentType(firstPayment.value || firstPayment.identifier || "cash-payment")
@@ -1644,11 +1649,11 @@ export default function SalesPage() {
                 {t("Both")}
               </Button>
             </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={resetSaleForm}>
               {t("Reset")}
             </Button>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
           {cashRegistersEnabled && shift ? (
             <>
             {hasPermission(PERMISSIONS.cashRegister.cashIn) ? (
@@ -1701,12 +1706,12 @@ export default function SalesPage() {
       </div>
 
       {!cashRegistersEnabled || shift ? (
-        <div className="flex-auto overflow-hidden p-3">
+        <div className="flex flex-auto overflow-hidden p-3">
           <div className="flex h-full min-h-0 flex-auto gap-3 overflow-hidden">
           {/* ======== LEFT: Product Grid ======== */}
           <div className={[
             "order-2 flex min-h-0 overflow-hidden",
-            visibleSection === "both" ? "hidden lg:flex lg:w-[58%]" : visibleSection === "grid" ? "flex w-full" : "hidden",
+            visibleSection === "both" ? "hidden lg:flex lg:w-[56%]" : visibleSection === "grid" ? "flex w-full" : "hidden",
           ].join(" ")}>
           <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="flex pl-2 lg:hidden">
@@ -1729,16 +1734,28 @@ export default function SalesPage() {
               </Button>
             </div>
             {/* Top bar: product tools + customer */}
-            <div className="border-b p-2">
-              <div className="overflow-hidden rounded border border-gray-200">
-                <div className="flex">
+            <div className="border-b border-slate-200 p-3">
+              <UniFieldInput
+                ref={barcodeInputRef}
+                value={barcode}
+                onChange={(e) => setBarcode(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    handleBarcodeSearch()
+                  }
+                }}
+                placeholder={t("scan_barcode")}
+                containerClassName="bg-transparent"
+                addonBefore={
+                  <>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     title={t("Search for products.")}
                     onClick={() => setIsProductSearchOpen(true)}
-                    className="flex h-10 w-10 items-center justify-center border-r border-gray-200 hover:bg-gray-50 rounded-none"
+                    className="h-10 rounded-r-none border-r border-slate-200"
                   >
                     <Search className="size-4" />
                   </Button>
@@ -1749,7 +1766,7 @@ export default function SalesPage() {
                     title={t("Toggle merging similar products.")}
                     onClick={() => setItemsMergeEnabled((current) => !current)}
                     className={[
-                      "flex h-10 w-10 items-center justify-center border-r border-gray-200 hover:bg-gray-50 rounded-none",
+                      "h-10 rounded-none border-r border-slate-200",
                       itemsMergeEnabled ? "bg-blue-50 text-blue-700" : "",
                     ].join(" ")}
                   >
@@ -1762,48 +1779,22 @@ export default function SalesPage() {
                     title={t("Toggle auto focus.")}
                     onClick={() => setForceAutoFocus((current) => !current)}
                     className={[
-                      "flex h-10 w-10 items-center justify-center border-r border-gray-200 hover:bg-gray-50 rounded-none",
+                      "h-10 rounded-none border-r border-slate-200",
                       forceAutoFocus ? "bg-blue-50 text-blue-700" : "",
                     ].join(" ")}
                   >
                     <ScanBarcode className="size-4" />
                   </Button>
-                  <input
-                    ref={barcodeInputRef}
-                    value={barcode}
-                    onChange={(e) => setBarcode(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault()
-                        handleBarcodeSearch()
-                      }
-                    }}
-                    placeholder={t("scan_barcode")}
-                    className="h-10 min-w-0 flex-auto bg-white px-3 text-sm outline-none"
-                  />
-                  {barcodeSearchState.isLoading ? (
-                    <span className="flex h-10 w-10 items-center justify-center border-l border-gray-200">
+                  </>
+                }
+                addonAfter={
+                  barcodeSearchState.isLoading ? (
+                    <span className="flex h-10 w-10 items-center justify-center border-l border-slate-200 bg-white">
                       <Spinner />
                     </span>
-                  ) : null}
-                </div>
-              </div>
-              <div className="mt-3">
-                <UniFieldSelect
-                  label={t("customer")}
-                  value={customerId}
-                  onValueChange={setCustomerId}
-                  placeholder={t("Walk-in Customer")}
-                  allowClear
-                >
-                  {customerOptions.map((customer: any) => (
-                    <SelectItem key={customer.id} value={String(customer.id)}>
-                      {customer.name}
-                      {customer.phone ? ` - ${customer.phone}` : ""}
-                    </SelectItem>
-                  ))}
-                </UniFieldSelect>
-              </div>
+                  ) : undefined
+                }
+              />
             </div>
 
             {/* Breadcrumb navigation */}
@@ -1946,7 +1937,7 @@ export default function SalesPage() {
           {/* ======== RIGHT: Cart + Checkout ======== */}
           <div className={[
             "order-1 flex min-h-0 overflow-hidden",
-            visibleSection === "both" ? "hidden lg:flex lg:w-[42%]" : visibleSection === "cart" ? "flex w-full" : "hidden",
+            visibleSection === "both" ? "hidden lg:flex lg:w-[44%]" : visibleSection === "cart" ? "flex w-full" : "hidden",
           ].join(" ")}>
           <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="flex pl-2 lg:hidden">
@@ -2075,11 +2066,13 @@ export default function SalesPage() {
                       >
                         <Minus className="size-4" />
                       </Button>
-                      <input
+                      <UniFieldInput
                         type="number"
                         step={allowDecimalQuantities ? "0.01" : "1"}
                         min="0"
                         value={item.qty}
+                        containerClassName="w-20 bg-transparent"
+                        className="text-center"
                         onChange={(e) => {
                           const val = Number(e.target.value)
                           if (val >= 0) {
@@ -2094,7 +2087,6 @@ export default function SalesPage() {
                             )
                           }
                         }}
-                        className="w-16 rounded border border-gray-200 px-2 py-1 text-center text-sm font-semibold focus:border-blue-400 focus:ring-1 focus:ring-blue-100 outline-none"
                       />
                       <Button
                         type="button"
@@ -2143,191 +2135,96 @@ export default function SalesPage() {
             </div>
 
             {/* Bill summary + checkout */}
-            <div className="border-t border-gray-100 overflow-y-auto p-4">
-              <h2 className="text-base font-bold">{t("bill_summary")}</h2>
+            <div className="border-t border-slate-200 bg-slate-50/60 p-3">
+              <div className="grid gap-3 md:grid-cols-2">
+                <UniFieldSelect
+                  label={t("Customer")}
+                  value={customerId}
+                  onValueChange={setCustomerId}
+                  placeholder={t("N/A")}
+                  allowClear
+                >
+                  {customerOptions.map((customer: any) => (
+                    <SelectItem key={customer.id} value={String(customer.id)}>
+                      {customer.name}
+                      {customer.phone ? ` - ${customer.phone}` : ""}
+                    </SelectItem>
+                  ))}
+                </UniFieldSelect>
+                <UniFieldSelect
+                  label={t("Type")}
+                  value={activeOrderType}
+                  onValueChange={setOrderType}
+                  placeholder={t("order_type_select")}
+                >
+                  {enabledOrderTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </UniFieldSelect>
+              </div>
 
-              <div className="mt-4 space-y-4">
-              <UniFieldSelect
-                label={t("order_type")}
-                value={activeOrderType}
-                onValueChange={setOrderType}
-                placeholder={t("order_type_select")}
-              >
-                {enabledOrderTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </UniFieldSelect>
-
-              <UniFieldSelect
-                label={t("suggested_coupon")}
-                value={selectedCouponId}
-                onValueChange={setSelectedCouponId}
-                placeholder={t("choose_coupon")}
-                allowClear
-              >
-                {couponOptions.map((coupon: any) => (
-                  <SelectItem key={coupon.id} value={String(coupon.id)}>
-                    {coupon.name} - {coupon.code}
-                  </SelectItem>
-                ))}
-              </UniFieldSelect>
-
-              <UniFieldInput
-                label={t("coupon_codes")}
-                value={couponInput}
-                onChange={(event) => setCouponInput(event.target.value)}
-                placeholder={t("coupon_codes_placeholder")}
-              />
-
-              {customerId ? (
-                <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-bold text-blue-950">
-                        {t("customer_rewards")}
-                      </p>
-                      <p className="mt-1 text-xs font-medium text-blue-700">
-                        {rewardBalanceState.isLoading
-                          ? t("loading_reward_balance")
-                          : redeemableReward
-                            ? `${redeemableReward.points} ${t("points_available")} ${redeemableReward.target_points} ${t("for_coupon")}`
-                            : t("no_redeemable_points")}
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRedeemReward}
-                      disabled={!redeemableReward || redeemRewardState.isLoading}
-                      className="bg-white"
-                    >
-                      {redeemRewardState.isLoading ? <Spinner /> : t("redeem")}
+              <div className="mt-3 rounded-md border border-slate-200 bg-white text-sm font-semibold">
+                <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+                  <span>{t("Sub Total")}</span>
+                  <span>{formatMoney(itemsSubtotal)}</span>
+                </div>
+                {(couponCodes.length > 0 || selectedCouponId) ? (
+                  <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+                    <span>{t("Coupons")}</span>
+                    <Button type="button" variant="link" className="h-auto p-0" onClick={() => setIsCouponsDialogOpen(true)}>
+                      {couponCodes.length || 1}
                     </Button>
                   </div>
-                </div>
-              ) : null}
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-900">{t("payments")}</p>
-                  <Button type="button" variant="outline" size="sm" onClick={addPaymentRow}>
-                    {t("add_payment")}
+                ) : null}
+                <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+                  <span>
+                    {t("Discount")}
+                    {cartDiscountType === "percentage" ? ` (${cartDiscountVal || 0}%)` : cartDiscount > 0 ? ` (${t("Flat")})` : ""}
+                  </span>
+                  <Button type="button" variant="link" className="h-auto p-0" onClick={openCartDiscountDialog}>
+                    {formatMoney(cartDiscount)}
                   </Button>
                 </div>
-                {paymentsRows.map((row, index) => (
-                  <div
-                    key={row.id}
-                    className="space-y-3 rounded-xl border border-gray-100 bg-gray-50 p-3"
-                  >
-                    <div className="grid gap-3 md:grid-cols-[1fr_140px_44px]">
-                      <UniFieldSelect
-                        label={index === 0 ? t("payment_type") : undefined}
-                        value={row.payment_type}
-                        onValueChange={(value) =>
-                          updatePaymentRow(row.id, "payment_type", value)
-                        }
-                        placeholder={t("choose_payment_type")}
-                      >
-                        {paymentTypeOptions.map((payment: any) => (
-                          <SelectItem
-                            key={payment.value || payment.identifier}
-                            value={payment.value || payment.identifier}
-                          >
-                            {payment.label}
-                          </SelectItem>
-                        ))}
-                      </UniFieldSelect>
-                      <UniFieldInput
-                        label={index === 0 ? t("amount") : undefined}
-                        value={row.amount}
-                        onChange={(event) =>
-                          updatePaymentRow(row.id, "amount", event.target.value)
-                        }
-                        placeholder={t("0.00")}
-                        prefix={posOptions.currency_symbol}
-                        type="number"
-                      />
-                      <div className="flex items-end">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="text-red-500 hover:text-red-600"
-                          onClick={() => removePaymentRow(row.id)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <UniFieldInput
-                        value={row.reference_number}
-                        onChange={(event) =>
-                          updatePaymentRow(
-                            row.id,
-                            "reference_number",
-                            event.target.value
-                          )
-                        }
-                        placeholder={t("reference_number")}
-                      />
-                      <UniFieldInput
-                        value={row.note}
-                        onChange={(event) =>
-                          updatePaymentRow(row.id, "note", event.target.value)
-                        }
-                        placeholder={t("payment_note")}
-                      />
-                    </div>
+                {posOptions.pos_vat !== "disabled" ? (
+                  <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+                    <span>{selectedTaxGroup?.name || t("Tax")}</span>
+                    <Button type="button" variant="link" className="h-auto p-0" onClick={() => setIsTaxesDialogOpen(true)}>
+                      {formatMoney(0)}
+                    </Button>
                   </div>
-                ))}
+                ) : null}
+                <div className="flex items-center justify-between px-3 py-3 text-base font-bold">
+                  <span>{t("Total")}</span>
+                  <span>{formatMoney(subtotal)}</span>
+                </div>
               </div>
 
-              <UniFieldInput
-                label={t("sale_note")}
-                value={saleNote}
-                onChange={(event) => setSaleNote(event.target.value)}
-                placeholder={t("add_note_placeholder")}
-              />
-            </div>
-
-            <div className="mt-6 space-y-3 text-sm font-semibold">
-              <div className="flex justify-between">
-                <span>{t("subtotal")}</span>
-                <span>{formatMoney(itemsSubtotal)}</span>
-              </div>
-              {cartDiscount > 0 ? (
-                <div className="flex justify-between text-emerald-700">
-                  <span>{t("Cart Discount")}</span>
-                  <span>-{formatMoney(cartDiscount)}</span>
+              {customerId ? (
+                <div className="mt-3 flex items-center justify-between rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800">
+                  <span>
+                    {rewardBalanceState.isLoading
+                      ? t("loading_reward_balance")
+                      : redeemableReward
+                        ? `${selectedCustomer?.name || t("Customer")} · ${redeemableReward.points} ${t("points_available")}`
+                        : t("no_redeemable_points")}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRedeemReward}
+                    disabled={!redeemableReward || redeemRewardState.isLoading}
+                    className="bg-white"
+                  >
+                    {redeemRewardState.isLoading ? <Spinner /> : t("redeem")}
+                  </Button>
                 </div>
               ) : null}
-              <div className="flex justify-between">
-                <span>{t("total")}</span>
-                <span>{formatMoney(subtotal)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>{t("received")}</span>
-                <span>{formatMoney(totalPaid)}</span>
-              </div>
-              <div className="flex justify-between text-amber-600">
-                <span>{t("due")}</span>
-                <span>{formatMoney(dueAmount)}</span>
-              </div>
-              <div className="flex justify-between text-green-600">
-                <span>{t("change")}</span>
-                <span>{formatMoney(changeAmount)}</span>
-              </div>
-              <div className="flex justify-between border-t pt-3 text-lg font-bold">
-                <span>{t("total")}</span>
-                <span>{formatMoney(subtotal)}</span>
-              </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-4 overflow-hidden rounded border border-gray-200 text-sm font-bold">
+            <div className="grid h-16 shrink-0 grid-cols-4 overflow-hidden border-t border-gray-200 text-sm font-bold">
               <Button
                 type="button"
                 variant="ghost"
@@ -2368,7 +2265,6 @@ export default function SalesPage() {
           </div>
           </div>
           </div>
-        </div>
       ) : null}
 
       <SalesModals
@@ -2388,8 +2284,6 @@ export default function SalesPage() {
         paymentTypeOptions={paymentTypeOptions}
         activePaymentType={activePaymentType}
         setActivePaymentType={setActivePaymentType}
-        showPaymentList={showPaymentList}
-        setShowPaymentList={setShowPaymentList}
         paymentsRows={paymentsRows}
         removePaymentRow={removePaymentRow}
         subtotal={subtotal}

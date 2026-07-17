@@ -36,8 +36,6 @@ interface SalesModalsProps {
   paymentTypeOptions: any[]
   activePaymentType: string
   setActivePaymentType: (type: string) => void
-  showPaymentList: boolean
-  setShowPaymentList: (show: boolean) => void
   paymentsRows: any[]
   removePaymentRow: (id: any) => void
   subtotal: number
@@ -221,8 +219,6 @@ export default function SalesModals({
   paymentTypeOptions,
   activePaymentType,
   setActivePaymentType,
-  showPaymentList,
-  setShowPaymentList,
   paymentsRows,
   removePaymentRow,
   subtotal,
@@ -372,6 +368,8 @@ export default function SalesModals({
 }: SalesModalsProps) {
   const formatMoney = (value: number | string | null | undefined) =>
     formatBusinessMoney(value, posOptions)
+  const enteredPayments = paymentsRows.filter((row) => money(row.amount) > 0)
+  const remainingAmount = Math.max(subtotal - totalPaid, 0)
 
   return (
     <>
@@ -385,31 +383,26 @@ export default function SalesModals({
       >
         <div className="flex min-h-[360px] flex-col overflow-hidden">
           <div className="border-b pb-3">
-            <div className="flex overflow-hidden rounded border-2 border-gray-200">
-              <input
-                value={productSearchTerm}
-                onChange={(event) => setProductSearchTerm(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault()
-                    handleProductSearch()
-                  }
-                  if (event.key === "Escape") {
-                    setIsProductSearchOpen(false)
-                  }
-                }}
-                placeholder={t("Search Product")}
-                autoFocus
-                className="min-w-0 flex-auto p-2 text-sm outline-none"
-              />
-              <button
-                type="button"
-                onClick={handleProductSearch}
-                className="border-l px-3 text-sm font-semibold hover:bg-gray-50"
-              >
-                {productSearchState.isLoading ? <Spinner /> : t("Search")}
-              </button>
-            </div>
+            <UniFieldInput
+              value={productSearchTerm}
+              onChange={(event) => setProductSearchTerm(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault()
+                  handleProductSearch()
+                }
+                if (event.key === "Escape") {
+                  setIsProductSearchOpen(false)
+                }
+              }}
+              placeholder={t("Search Product")}
+              autoFocus
+              addonAfter={
+                <Button type="button" variant="outline" className="h-10 rounded-l-none" onClick={handleProductSearch}>
+                  {productSearchState.isLoading ? <Spinner /> : t("Search")}
+                </Button>
+              }
+            />
           </div>
           <div className="relative flex-auto overflow-y-auto">
             {productSearchResults.length ? (
@@ -447,12 +440,12 @@ export default function SalesModals({
         open={isPaymentDialogOpen}
         onOpenChange={setIsPaymentDialogOpen}
         title={t("Payment")}
-        className="h-[92vh] max-w-7xl overflow-hidden p-0"
+        className="max-w-6xl overflow-hidden p-0"
         headerClassName="sr-only"
-        bodyClassName="-mx-0 px-0 py-0 max-h-none h-full border-y-0"
+        bodyClassName="-mx-0 px-0 py-0 max-h-[82vh] border-y-0"
         showFooter={false}
       >
-        <div className="flex h-full flex-col overflow-hidden bg-slate-50">
+        <div className="flex max-h-[82vh] flex-col overflow-hidden bg-slate-50">
           <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
             <div>
               <h3 className="text-xl font-bold text-slate-950">{t("Payment")}</h3>
@@ -475,213 +468,151 @@ export default function SalesModals({
               </div>
             </div>
           ) : (
-          <div className="grid min-h-0 flex-auto gap-3 overflow-hidden p-3 lg:grid-cols-[280px_minmax(0,1fr)_340px]">
-            <div className="min-h-0 overflow-y-auto rounded-lg border border-slate-200 bg-white p-3">
+          <div className="grid min-h-0 flex-auto gap-3 overflow-y-auto p-4 lg:grid-cols-[240px_minmax(0,1fr)_300px]">
+            <div className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="mb-3 text-xs font-bold uppercase text-muted-foreground">{t("Payment Type")}</p>
               <div className="grid gap-2">
                 {paymentTypeOptions.map((payment: any) => {
                   const identifier = payment.value || payment.identifier
                   return (
-                    <button
+                    <Button
                       key={identifier}
                       type="button"
+                      variant="outline"
                       onClick={() => {
                         setActivePaymentType(identifier)
-                        setShowPaymentList(false)
                       }}
                       className={[
-                        "flex min-h-12 items-center justify-between rounded-md border px-3 py-2 text-left text-sm font-semibold transition",
-                        activePaymentType === identifier && !showPaymentList
+                        "justify-start border text-left font-semibold",
+                        activePaymentType === identifier
                           ? "border-slate-950 bg-slate-950 text-white"
                           : "border-slate-200 bg-white text-slate-800 hover:border-slate-400",
                       ].join(" ")}
                     >
                       <span>{payment.label}</span>
-                    </button>
+                    </Button>
                   )
                 })}
-                <button
-                  type="button"
-                  onClick={() => setShowPaymentList(true)}
-                  className={[
-                    "mt-2 flex min-h-12 items-center justify-between rounded-md border px-3 py-2 text-left text-sm font-semibold transition",
-                    showPaymentList
-                      ? "border-blue-700 bg-blue-700 text-white"
-                      : "border-slate-200 bg-blue-50 text-blue-800 hover:border-blue-300",
-                  ].join(" ")}
-                >
-                  <span>{t("Payment List")}</span>
-                  <span className={[
-                    "inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs",
-                    showPaymentList ? "bg-white text-blue-700" : "bg-blue-700 text-white",
-                  ].join(" ")}>
-                    {paymentsRows.filter((row) => money(row.amount) > 0).length}
-                  </span>
-                </button>
               </div>
             </div>
 
-            <div className="min-h-0 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4">
-              {showPaymentList ? (
-                <>
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-lg font-bold">{t("List Of Payments")}</h3>
-                    <Button type="button" variant="outline" onClick={() => setShowPaymentList(false)}>
-                      {t("Add Payment")}
-                    </Button>
+            <div className="rounded-lg border border-slate-200 bg-white p-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs font-bold uppercase text-muted-foreground">{t("Total")}</p>
+                  <p className="mt-1 text-2xl font-bold">{formatMoney(subtotal)}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={openCartDiscountDialog}
+                  className="rounded-md border border-red-100 bg-red-50 p-3 text-left"
+                >
+                  <p className="text-xs font-bold uppercase text-red-700">{t("Discount")}</p>
+                  <p className="mt-1 text-2xl font-bold text-red-700">{formatMoney(cartDiscount)}</p>
+                </button>
+                <div className="rounded-md border border-emerald-100 bg-emerald-50 p-3">
+                  <p className="text-xs font-bold uppercase text-emerald-700">{t("Paid")}</p>
+                  <p className="mt-1 text-2xl font-bold text-emerald-700">{formatMoney(totalPaid)}</p>
+                </div>
+                <div className="rounded-md border border-amber-100 bg-amber-50 p-3">
+                  <p className="text-xs font-bold uppercase text-amber-700">{t("Due")}</p>
+                  <p className="mt-1 text-2xl font-bold text-amber-700">{formatMoney(remainingAmount)}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase text-muted-foreground">{t("Amount")}</p>
+                    <p className="text-sm font-semibold text-slate-700">{activePaymentLabel}</p>
                   </div>
-                  <ul className="space-y-2">
-                    {paymentsRows.filter((row) => money(row.amount) > 0).length ? (
-                      paymentsRows
-                        .filter((row) => money(row.amount) > 0)
-                        .map((row) => (
-                          <li
-                            key={row.id}
-                            className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 p-3"
-                          >
-                            <span className="font-semibold">
-                              {
-                                paymentTypeOptions.find(
-                                  (payment: any) =>
-                                    (payment.value || payment.identifier) === row.payment_type
-                                )?.label || row.payment_type
-                              }
-                            </span>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold">{formatMoney(row.amount)}</span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="text-red-500 hover:text-red-600"
-                                onClick={() => removePaymentRow(row.id)}
-                              >
-                                <Trash2 className="size-4" />
-                              </Button>
-                            </div>
-                          </li>
-                        ))
-                    ) : (
-                      <li className="rounded-md border border-dashed border-slate-200 p-6 text-center font-semibold text-muted-foreground">
-                        {t("No Payment added.")}
-                      </li>
-                    )}
-                  </ul>
-                </>
-              ) : (
-                <>
-                  <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                      <p className="text-xs font-bold uppercase text-muted-foreground">{t("Total")}</p>
-                      <p className="mt-1 text-2xl font-bold">{formatMoney(subtotal)}</p>
-                    </div>
-                    <button
+                  <p className="text-2xl font-bold">{formatMoney(paymentAmountInput || 0)}</p>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-[1fr_150px]">
+                  <UniFieldInput
+                    value={paymentAmountInput}
+                    onChange={(event) => setPaymentAmountInput(event.target.value)}
+                    type="number"
+                    min="0"
+                    prefix={posOptions.currency_symbol}
+                    placeholder={t("0.00")}
+                  />
+                  <Button
+                    type="button"
+                    className="h-10"
+                    onClick={() => addPaymentFromPopup(money(paymentAmountInput))}
+                  >
+                    {t("Add Payment")}
+                  </Button>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+                  {(paymentAmountShortcuts.length ? paymentAmountShortcuts : [5, 10, 20, 50]).map((amount) => (
+                    <Button
+                      key={amount}
                       type="button"
-                      onClick={openCartDiscountDialog}
-                      className="rounded-md border border-red-100 bg-red-50 p-3 text-left"
+                      variant="outline"
+                      onClick={() =>
+                        setPaymentAmountInput(String(money(paymentAmountInput) + amount))
+                      }
                     >
-                      <p className="text-xs font-bold uppercase text-red-700">{t("Discount")}</p>
-                      <p className="mt-1 text-2xl font-bold text-red-700">{formatMoney(cartDiscount)}</p>
-                    </button>
-                    <div className="rounded-md border border-emerald-100 bg-emerald-50 p-3">
-                      <p className="text-xs font-bold uppercase text-emerald-700">{t("Paid")}</p>
-                      <p className="mt-1 text-2xl font-bold text-emerald-700">{formatMoney(totalPaid)}</p>
-                    </div>
-                    <div className="rounded-md border border-amber-100 bg-amber-50 p-3">
-                      <p className="text-xs font-bold uppercase text-amber-700">{t("Change")}</p>
-                      <p className="mt-1 text-2xl font-bold text-amber-700">{formatMoney(changeAmount)}</p>
-                    </div>
-                  </div>
-                  <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-bold uppercase text-muted-foreground">{t("Amount")}</p>
-                        <p className="text-sm font-semibold text-slate-700">{activePaymentLabel}</p>
-                      </div>
-                      <p className="text-3xl font-bold">{formatMoney(paymentAmountInput || 0)}</p>
-                    </div>
-                    <div className="mt-4 grid gap-3 md:grid-cols-[1fr_170px]">
-                      <UniFieldInput
-                        value={paymentAmountInput}
-                        onChange={(event) => setPaymentAmountInput(event.target.value)}
-                        type="number"
-                        min="0"
-                        prefix={posOptions.currency_symbol}
-                        placeholder={t("0.00")}
-                      />
-                      <Button
-                        type="button"
-                        className="h-11 w-full"
-                        onClick={() => addPaymentFromPopup(money(paymentAmountInput))}
-                      >
-                        {t("Add Payment")}
-                      </Button>
-                    </div>
-                    <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-                      {(paymentAmountShortcuts.length ? paymentAmountShortcuts : [5, 10, 20, 50]).map((amount) => (
-                        <Button
-                          key={amount}
-                          type="button"
-                          variant="outline"
-                          onClick={() =>
-                            setPaymentAmountInput(String(money(paymentAmountInput) + amount))
-                          }
-                        >
-                          {formatMoney(amount)}
-                        </Button>
-                      ))}
-                      <Button
-                        type="button"
-                        className="col-span-2 md:col-span-4"
-                        onClick={makeFullPaymentFromPopup}
-                      >
-                        {t("Full Payment")}
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              )}
+                      {formatMoney(amount)}
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    className="col-span-2 md:col-span-4"
+                    onClick={makeFullPaymentFromPopup}
+                  >
+                    {t("Full Payment")}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold">
+                <div className="flex justify-between">
+                  <span>{t("Change")}</span>
+                  <span className="text-green-700">{formatMoney(changeAmount)}</span>
+                </div>
+              </div>
             </div>
 
             <div className="flex min-h-0 flex-col rounded-lg border border-slate-200 bg-white">
               <div className="border-b border-slate-200 p-4">
                 <h3 className="text-lg font-bold">{t("Payment List")}</h3>
                 <p className="text-sm font-medium text-muted-foreground">
-                  {paymentsRows.filter((row) => money(row.amount) > 0).length} {t("payments")}
+                  {enteredPayments.length} {t("payments")}
                 </p>
               </div>
               <div className="min-h-0 flex-auto overflow-y-auto p-3">
                 <ul className="space-y-2">
-                  {paymentsRows.filter((row) => money(row.amount) > 0).length ? (
-                    paymentsRows
-                      .filter((row) => money(row.amount) > 0)
-                      .map((row) => (
-                        <li
-                          key={row.id}
-                          className="rounded-md border border-slate-200 bg-slate-50 p-3"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm font-semibold">
-                              {
-                                paymentTypeOptions.find(
-                                  (payment: any) =>
-                                    (payment.value || payment.identifier) === row.payment_type
-                                )?.label || row.payment_type
-                              }
-                            </span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="size-8 text-red-500 hover:text-red-600"
-                              onClick={() => removePaymentRow(row.id)}
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </div>
-                          <p className="mt-1 text-xl font-bold">{formatMoney(row.amount)}</p>
-                        </li>
-                      ))
+                  {enteredPayments.length ? (
+                    enteredPayments.map((row) => (
+                      <li
+                        key={row.id}
+                        className="rounded-md border border-slate-200 bg-slate-50 p-3"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-semibold">
+                            {
+                              paymentTypeOptions.find(
+                                (payment: any) =>
+                                  (payment.value || payment.identifier) === row.payment_type
+                              )?.label || row.payment_type
+                            }
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-red-500 hover:text-red-600"
+                            onClick={() => removePaymentRow(row.id)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                        <p className="mt-1 text-xl font-bold">{formatMoney(row.amount)}</p>
+                      </li>
+                    ))
                   ) : (
                     <li className="rounded-md border border-dashed border-slate-200 p-5 text-center text-sm font-semibold text-muted-foreground">
                       {t("No Payment added.")}
@@ -700,7 +631,7 @@ export default function SalesModals({
                 </div>
                 <div className="flex justify-between text-amber-700">
                   <span>{t("due")}</span>
-                  <span>{formatMoney(Math.max(subtotal - totalPaid, 0))}</span>
+                  <span>{formatMoney(remainingAmount)}</span>
                 </div>
               </div>
             </div>
@@ -734,12 +665,6 @@ export default function SalesModals({
                   ) : null}
                 </>
               )}
-              <Button variant="outline" onClick={() => setShowPaymentList(true)}>
-                {t("Payment List")}
-                <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs text-white">
-                  {paymentsRows.filter((row) => money(row.amount) > 0).length}
-                </span>
-              </Button>
             </div>
         </div>
       </CustomModal>
@@ -932,26 +857,22 @@ export default function SalesModals({
           </div>
 
           <div className="p-1">
-            <div className="flex overflow-hidden rounded border-2 border-gray-200">
-              <input
-                value={pendingOrderSearch}
-                onChange={(event) => setPendingOrderSearch(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault()
-                    handleSearchPendingOrders()
-                  }
-                }}
-                className="min-w-0 flex-auto p-2 text-sm outline-none"
-              />
-              <button
-                type="button"
-                onClick={handleSearchPendingOrders}
-                className="w-20 border-l text-sm font-semibold hover:bg-gray-50"
-              >
-                {t("Search")}
-              </button>
-            </div>
+            <UniFieldInput
+              value={pendingOrderSearch}
+              onChange={(event) => setPendingOrderSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault()
+                  handleSearchPendingOrders()
+                }
+              }}
+              placeholder={t("Search")}
+              addonAfter={
+                <Button type="button" variant="outline" className="h-10 rounded-l-none" onClick={handleSearchPendingOrders}>
+                  {t("Search")}
+                </Button>
+              }
+            />
           </div>
 
           <div className="flex-auto overflow-y-auto p-2">
