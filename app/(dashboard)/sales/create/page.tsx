@@ -14,12 +14,9 @@ import {
   ImageIcon,
   LogOut,
   MessageSquare,
-  Minus,
   Package,
   Pause,
   Percent,
-  Plus,
-  PlusCircle,
   ScanBarcode,
   Search,
   Settings,
@@ -145,17 +142,6 @@ const emptyPaymentRow = (): PaymentRow => ({
   note: "",
 })
 
-const emptyQuickProductForm = () => ({
-  name: "",
-  product_type: "product",
-  rate: "",
-  unit_price: "0",
-  quantity: "1",
-  unit_id: "",
-  tax_type: "inclusive",
-  tax_group_id: "",
-})
-
 const getCartItemDiscount = (item: CartItem) => {
   const type = item.discount_type || "flat"
   const val = item.discount_value || 0
@@ -273,13 +259,10 @@ export default function SalesPage() {
   })
   const [gridLoading, setGridLoading] = useState(false)
   const [gridBreadcrumbs, setGridBreadcrumbs] = useState<POSCategory[]>([])
-  const [visibleSection, setVisibleSection] = useState<"both" | "cart" | "grid">("both")
   const [unitPickerProduct, setUnitPickerProduct] = useState<POSProduct | null>(null)
   const [isUnitPickerOpen, setIsUnitPickerOpen] = useState(false)
   const [pendingCartProduct, setPendingCartProduct] = useState<PendingCartProduct | null>(null)
   const [quantityInput, setQuantityInput] = useState("1")
-  const [priceEditItem, setPriceEditItem] = useState<CartItem | null>(null)
-  const [priceInput, setPriceInput] = useState("")
   const barcodeInputRef = useRef<HTMLInputElement>(null)
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [paymentsRows, setPaymentsRows] = useState<PaymentRow[]>([
@@ -299,8 +282,6 @@ export default function SalesPage() {
   const [isCouponsDialogOpen, setIsCouponsDialogOpen] = useState(false)
   const [isOrderSettingsOpen, setIsOrderSettingsOpen] = useState(false)
   const [isTaxesDialogOpen, setIsTaxesDialogOpen] = useState(false)
-  const [isQuickProductDialogOpen, setIsQuickProductDialogOpen] = useState(false)
-  const [quickProductForm, setQuickProductForm] = useState(emptyQuickProductForm)
   const [isCartDiscountDialogOpen, setIsCartDiscountDialogOpen] = useState(false)
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false)
   const [productSearchTerm, setProductSearchTerm] = useState("")
@@ -340,14 +321,6 @@ export default function SalesPage() {
   const [getPOSGrid] = (catalog as any).useGetPOSGridMutation()
   const [getPOSGridByCategory] = (catalog as any).useGetPOSGridByCategoryMutation()
   const [getTaxGroupsDropdown, { data: taxGroupsData }] = (catalog as any).useGetTaxGroupsDropdownMutation()
-  const [getUnitsDropdown, { data: unitsDropdownData, isLoading: isUnitsLoading }] =
-    (catalog as any).useGetUnitsDropdownMutation()
-  const [createProduct, { isLoading: isCreatingQuickProduct }] = (
-    catalog as any
-  ).useCreateProductMutation()
-  const [createProductUnitQuantity] = (
-    catalog as any
-  ).useCreateProductUnitQuantityMutation()
   const [getProductsData, productSearchState] = (catalog as any).useGetProductsDataMutation()
   const [getProductById] = (catalog as any).useGetProductByIdMutation()
   const [searchProductUsingBarcode, barcodeSearchState] = (
@@ -378,7 +351,6 @@ export default function SalesPage() {
   const couponOptions = couponsData?.data || []
   const registerOptions = registersDropdownData?.data || []
   const taxGroupOptions = taxGroupsData?.data || []
-  const unitOptions = unitsDropdownData?.data || []
   const selectedCustomer = useMemo(
     () => customerOptions.find((customer: any) => String(customer.id) === String(customerId)),
     [customerOptions, customerId]
@@ -531,7 +503,6 @@ export default function SalesPage() {
     getPaymentTypesDropdown()
     getCouponsDropdown()
     getTaxGroupsDropdown()
-    getUnitsDropdown()
     loadGrid()
   }, [
     getCouponsDropdown,
@@ -539,7 +510,6 @@ export default function SalesPage() {
     getCustomersDropdown,
     getPaymentTypesDropdown,
     getTaxGroupsDropdown,
-    getUnitsDropdown,
     loadGrid,
   ])
 
@@ -552,25 +522,6 @@ export default function SalesPage() {
     setCartTaxGroupId(posOptions.pos_tax_group ? String(posOptions.pos_tax_group) : "")
     setCartTaxType(posOptions.pos_tax_type ? String(posOptions.pos_tax_type) : "exclusive")
   }, [posOptions.pos_tax_group, posOptions.pos_tax_type])
-
-  useEffect(() => {
-    setQuickProductForm((current) => ({
-      ...current,
-      unit_id:
-        current.unit_id ||
-        (posOptions.quick_product_default_unit
-          ? String(posOptions.quick_product_default_unit)
-          : ""),
-      tax_group_id:
-        current.tax_group_id ||
-        (posOptions.pos_tax_group ? String(posOptions.pos_tax_group) : ""),
-      tax_type: current.tax_type || posOptions.pos_tax_type || "inclusive",
-    }))
-  }, [
-    posOptions.pos_tax_group,
-    posOptions.pos_tax_type,
-    posOptions.quick_product_default_unit,
-  ])
 
   useEffect(() => {
     if (!forceAutoFocus || !barcode.trim()) return
@@ -891,114 +842,6 @@ export default function SalesPage() {
     handleGridProductClick(fullProduct)
   }
 
-  const updateQuickProductForm = (field: keyof ReturnType<typeof emptyQuickProductForm>, value: string) => {
-    setQuickProductForm((current) => ({ ...current, [field]: value }))
-  }
-
-  const resetQuickProductForm = () => {
-    setQuickProductForm({
-      ...emptyQuickProductForm(),
-      unit_id: posOptions.quick_product_default_unit
-        ? String(posOptions.quick_product_default_unit)
-        : "",
-      tax_group_id: posOptions.pos_tax_group ? String(posOptions.pos_tax_group) : "",
-      tax_type: posOptions.pos_tax_type || "inclusive",
-    })
-  }
-
-  const handleCreateQuickProduct = async () => {
-    const form = quickProductForm
-    const isDynamic = form.product_type === "dynamic"
-    const name = form.name.trim()
-    const unitPrice = money(form.unit_price)
-    const quantity = isDynamic ? 1 : money(form.quantity)
-    const rate = money(form.rate)
-
-    if (!name) {
-      showToast.error(t("Provide a unique name for the product."))
-      return
-    }
-    if (isDynamic && rate <= 0) {
-      showToast.error(t("In case the product is computed based on a percentage, define the rate here."))
-      return
-    }
-    if (!isDynamic && (!form.unit_id || unitPrice < 0 || quantity <= 0)) {
-      showToast.error(t("Unable to proceed. The form is not valid."))
-      return
-    }
-
-    const selectedUnit = unitOptions.find((unit: any) => String(unit.id) === String(form.unit_id))
-    const productForm = new FormData()
-    productForm.append("name", name)
-    productForm.append("product_type", "product")
-    productForm.append("type", isDynamic ? "dematerialized" : "materialized")
-    productForm.append("stock_management", "disabled")
-    productForm.append("searchable", "true")
-    productForm.append("auto_cogs", "true")
-    productForm.append("accurate_tracking", "false")
-    if (isDynamic) {
-      productForm.append("tax_type", "exclusive")
-    } else if (form.tax_type) {
-      productForm.append("tax_type", form.tax_type)
-    }
-    if (form.tax_group_id && !isDynamic) {
-      productForm.append("tax_group_id", form.tax_group_id)
-    }
-    if (selectedUnit?.group_id && !isDynamic) {
-      productForm.append("unit_group_id", String(selectedUnit.group_id))
-    }
-
-    const productResponse = await createProduct(productForm).unwrap()
-    const product = productResponse?.data
-    if (!product?.id) {
-      showToast.error(t("Unable to proceed. The form is not valid."))
-      return
-    }
-
-    let unitQuantity: POSUnitQuantity | any = undefined
-    if (!isDynamic) {
-      const unitResponse = await createProductUnitQuantity({
-        productId: product.id,
-        payLoad: {
-          unit_id: Number(form.unit_id),
-          quantity: 0,
-          sale_price: unitPrice,
-          sale_price_edit: unitPrice,
-          sale_price_net: unitPrice,
-          sale_price_gross: unitPrice,
-          visible: true,
-        },
-      }).unwrap()
-      unitQuantity = {
-        ...(unitResponse?.data || {}),
-        unit_name: selectedUnit?.name,
-        unit_identifier: selectedUnit?.identifier,
-        sale_price: unitPrice,
-        sale_price_net: unitPrice,
-        sale_price_gross: unitPrice,
-        quantity: 0,
-      }
-    }
-
-    const cartProduct = {
-      ...product,
-      name,
-      mode: "custom",
-      product_type: isDynamic ? "dynamic" : "product",
-      rate: isDynamic ? rate : 0,
-      stock_management: "disabled",
-      type: isDynamic ? "dematerialized" : "materialized",
-      unit_id: form.unit_id ? Number(form.unit_id) : undefined,
-      unit_name: selectedUnit?.name || (isDynamic ? t("N/A") : ""),
-    }
-    const added = addProductToCart(cartProduct, unitQuantity, quantity)
-    if (!added) return
-    showToast.success(t("{product} added to cart.").replace("{product}", name))
-    resetQuickProductForm()
-    setIsQuickProductDialogOpen(false)
-    await loadGrid()
-  }
-
   useEffect(() => {
     if (!isProductSearchOpen || !productSearchTerm.trim()) return
     const searchTimer = window.setTimeout(() => {
@@ -1053,28 +896,6 @@ export default function SalesPage() {
       })
     )
     setActiveDiscountItem(null)
-  }
-
-  const openPriceEditDialog = (item: CartItem) => {
-    if (!posOptions.unit_price_editable) return
-    if (item.product_type === "dynamic") {
-      showToast.error(t("Dynamic product can't have their price updated."))
-      return
-    }
-    setPriceEditItem(item)
-    setPriceInput(String(item.price || ""))
-  }
-
-  const handleApplyProductPrice = () => {
-    if (!priceEditItem) return
-    const price = Math.max(Number(priceInput || 0), 0)
-    setCartItems((items) =>
-      items.map((item) =>
-        item.line_id === priceEditItem.line_id ? { ...item, price } : item
-      )
-    )
-    setPriceEditItem(null)
-    setPriceInput("")
   }
 
   const openCartDiscountDialog = () => {
@@ -1512,11 +1333,9 @@ export default function SalesPage() {
       isCouponsDialogOpen ||
       isOrderSettingsOpen ||
       isTaxesDialogOpen ||
-      isQuickProductDialogOpen ||
       isCartDiscountDialogOpen ||
       isProductSearchOpen ||
-      Boolean(activeDiscountItem) ||
-      Boolean(priceEditItem)
+      Boolean(activeDiscountItem)
 
     const handleShortcut = (event: KeyboardEvent) => {
       if (hasOpenDialog || shouldIgnorePosShortcut(event)) return
@@ -1567,7 +1386,6 @@ export default function SalesPage() {
     isOrderSettingsOpen,
     isPaymentDialogOpen,
     isProductSearchOpen,
-    isQuickProductDialogOpen,
     isTaxesDialogOpen,
     isUnitPickerOpen,
     openOrderSettingsDialog,
@@ -1580,7 +1398,6 @@ export default function SalesPage() {
     posOptions.pos_keyboard_payment,
     posOptions.pos_keyboard_quick_search,
     posOptions.pos_keyboard_toggle_merge,
-    priceEditItem,
   ])
 
   const removePaymentRow = (rowId: string) => {
@@ -1614,40 +1431,35 @@ export default function SalesPage() {
               <ShoppingCart className="size-4" />
               {t("Pending Orders")}
             </Button>
-            <div className="flex overflow-hidden rounded-md border border-slate-200 bg-slate-50">
-              <Button
-                variant="ghost"
+            <div className="min-w-[220px]">
+              <UniFieldSelect
+                value={customerId}
+                onValueChange={setCustomerId}
+                placeholder={t("Customer")}
+                allowClear
                 size="sm"
-                onClick={() => setVisibleSection("cart")}
-                className={[
-                  "rounded-none border-r border-slate-200",
-                  visibleSection === "cart" ? "bg-slate-900 text-white hover:bg-slate-800 hover:text-white" : "",
-                ].join(" ")}
               >
-                {t("Cart")}
-              </Button>
-              <Button
-                variant="ghost"
+                {customerOptions.map((customer: any) => (
+                  <SelectItem key={customer.id} value={String(customer.id)}>
+                    {customer.name}
+                    {customer.phone ? ` - ${customer.phone}` : ""}
+                  </SelectItem>
+                ))}
+              </UniFieldSelect>
+            </div>
+            <div className="min-w-[160px]">
+              <UniFieldSelect
+                value={activeOrderType}
+                onValueChange={setOrderType}
+                placeholder={t("Type")}
                 size="sm"
-                onClick={() => setVisibleSection("grid")}
-                className={[
-                  "rounded-none border-r border-slate-200",
-                  visibleSection === "grid" ? "bg-slate-900 text-white hover:bg-slate-800 hover:text-white" : "",
-                ].join(" ")}
               >
-                {t("Products")}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setVisibleSection("both")}
-                className={[
-                  "rounded-none",
-                  visibleSection === "both" ? "bg-slate-900 text-white hover:bg-slate-800 hover:text-white" : "",
-                ].join(" ")}
-              >
-                {t("Both")}
-              </Button>
+                {enabledOrderTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </UniFieldSelect>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -1707,32 +1519,12 @@ export default function SalesPage() {
 
       {!cashRegistersEnabled || shift ? (
         <div className="flex flex-auto overflow-hidden p-3">
-          <div className="flex h-full min-h-0 flex-auto gap-3 overflow-hidden">
+          <div className="flex h-full min-h-0 flex-auto flex-col gap-3 overflow-hidden lg:flex-row">
           {/* ======== LEFT: Product Grid ======== */}
           <div className={[
-            "order-2 flex min-h-0 overflow-hidden",
-            visibleSection === "both" ? "hidden lg:flex lg:w-[56%]" : visibleSection === "grid" ? "flex w-full" : "hidden",
+            "order-2 flex min-h-0 w-full overflow-hidden lg:w-[56%]",
           ].join(" ")}>
           <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="flex pl-2 lg:hidden">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setVisibleSection("cart")}
-                className="cursor-pointer rounded-none rounded-t-lg border-l border-r border-t px-3 py-2 h-auto"
-              >
-                <span>{t("Cart")}</span>
-                <span className="ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-sm">{cartItems.length}</span>
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setVisibleSection("grid")}
-                className="cursor-pointer rounded-none rounded-t-lg px-3 py-2 font-semibold h-auto"
-              >
-                {t("Products")}
-              </Button>
-            </div>
             {/* Top bar: product tools + customer */}
             <div className="border-b border-slate-200 p-3">
               <UniFieldInput
@@ -1936,29 +1728,9 @@ export default function SalesPage() {
 
           {/* ======== RIGHT: Cart + Checkout ======== */}
           <div className={[
-            "order-1 flex min-h-0 overflow-hidden",
-            visibleSection === "both" ? "hidden lg:flex lg:w-[44%]" : visibleSection === "cart" ? "flex w-full" : "hidden",
+            "order-1 flex min-h-0 w-full overflow-hidden lg:w-[44%]",
           ].join(" ")}>
           <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="flex pl-2 lg:hidden">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setVisibleSection("cart")}
-                className="cursor-pointer rounded-none rounded-t-lg px-3 py-2 font-semibold h-auto"
-              >
-                <span>{t("Cart")}</span>
-                <span className="ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-sm text-white">{cartItems.length}</span>
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setVisibleSection("grid")}
-                className="cursor-pointer rounded-none rounded-t-lg border-l border-r border-t px-3 py-2 h-auto"
-              >
-                {t("Products")}
-              </Button>
-            </div>
             <div className="border-b border-gray-100 p-2">
               <div className="flex flex-wrap overflow-hidden rounded border border-gray-200 bg-white">
                 <Button
@@ -1984,17 +1756,6 @@ export default function SalesPage() {
                     </span>
                   ) : null}
                 </Button>
-                {posOptions.quick_product_enabled ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setIsQuickProductDialogOpen(true)}
-                    className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-none h-auto"
-                  >
-                    <PlusCircle className="size-4" />
-                    {t("Product")}
-                  </Button>
-                ) : null}
                 <Button
                   type="button"
                   variant="ghost"
@@ -2016,35 +1777,37 @@ export default function SalesPage() {
               </div>
             </div>
             {/* Cart items */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="sticky top-0 grid grid-cols-[1.4fr_130px_110px_120px_56px] bg-gray-50 px-4 py-2 text-sm font-bold text-gray-700">
-                <span>{t("item")}</span>
-                <span>{t("qty")}</span>
-                <span>{t("price")}</span>
-                <span>{t("total")}</span>
-                <span />
-              </div>
+            <div className="flex-1 overflow-y-auto bg-slate-50/40 p-3">
               {cartItems.length ? (
                 cartItems.map((item) => (
                   <div
                     key={item.line_id}
-                    className="grid grid-cols-[1.4fr_130px_110px_120px_56px] items-center border-t px-4 py-3 text-sm font-semibold"
+                    className="mb-3 rounded-md border border-slate-200 bg-white p-3 text-sm shadow-sm"
                   >
-                    <div>
-                      <p className="font-semibold text-gray-900">{item.name}</p>
-                      <p className="text-xs text-gray-500">
-                        {t("sku")}: {item.sku || "-"}
-                        {item.unit_label ? ` · ${t("unit")}: ${item.unit_label}` : ""}
-                      </p>
-                      <div className="mt-1 flex items-center gap-1.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-slate-950">{item.name}</p>
+                        <p className="text-xs font-medium text-muted-foreground">
+                          {t("sku")}: {item.sku || "-"}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          {item.unit_label ? (
+                            <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs">
+                              {item.unit_label}
+                            </Button>
+                          ) : item.product_type ? (
+                            <span className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-muted-foreground">
+                              {item.product_type}
+                            </span>
+                          ) : null}
                         <Button
                           type="button"
                           variant="link"
                           onClick={() => openItemDiscountDialog(item)}
-                          className="h-auto p-0 text-xs text-blue-600 hover:text-blue-700 underline font-semibold flex items-center gap-0.5"
+                          className="h-auto p-0 text-xs font-semibold"
                         >
                           {item.discount_value && item.discount_value > 0 ? (
-                            <span className="text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 no-underline">
+                            <span className="rounded border border-emerald-100 bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-700 no-underline">
                               {t("Discount")}: {item.discount_type === "percentage" ? `${item.discount_value}%` : formatMoney(item.discount_value)} (-{formatMoney(getCartItemDiscount(item))})
                             </span>
                           ) : (
@@ -2053,26 +1816,25 @@ export default function SalesPage() {
                         </Button>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
-                        className="size-8"
-                        onClick={() =>
-                          updateQuantity(item.line_id, -1)
-                        }
+                        className="size-8 shrink-0 text-red-500 hover:text-red-600"
+                        onClick={() => removeItem(item.line_id)}
                       >
-                        <Minus className="size-4" />
+                        <Trash2 className="size-4" />
                       </Button>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-[120px_1fr_120px] items-end gap-3">
                       <UniFieldInput
+                        label={t("qty")}
                         type="number"
                         step={allowDecimalQuantities ? "0.01" : "1"}
                         min="0"
                         value={item.qty}
-                        containerClassName="w-20 bg-transparent"
-                        className="text-center"
+                        containerClassName="bg-transparent"
                         onChange={(e) => {
                           const val = Number(e.target.value)
                           if (val >= 0) {
@@ -2088,42 +1850,34 @@ export default function SalesPage() {
                           }
                         }}
                       />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="size-8"
-                        onClick={() =>
-                          updateQuantity(item.line_id, 1)
-                        }
-                      >
-                        <Plus className="size-4" />
-                      </Button>
+                      <UniFieldInput
+                        label={t("price")}
+                        type="number"
+                        min="0"
+                        value={item.price}
+                        prefix={posOptions.currency_symbol}
+                        disabled={!posOptions.unit_price_editable}
+                        containerClassName="bg-transparent"
+                        onChange={(event) => {
+                          const price = Number(event.target.value)
+                          if (price >= 0) {
+                            setCartItems((prev) =>
+                              prev.map((cartItem) =>
+                                cartItem.line_id === item.line_id
+                                  ? { ...cartItem, price, mode: "custom" }
+                                  : cartItem
+                              )
+                            )
+                          }
+                        }}
+                      />
+                      <div className="pb-1 text-right">
+                        <p className="text-xs font-semibold text-muted-foreground">{t("total")}</p>
+                        <p className="text-base font-bold text-slate-950">
+                          {formatMoney(item.qty * item.price - getCartItemDiscount(item))}
+                        </p>
+                      </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => openPriceEditDialog(item)}
-                      disabled={!posOptions.unit_price_editable}
-                      className={[
-                        "text-left font-semibold h-auto p-0 hover:bg-transparent rounded-none justify-start",
-                        posOptions.unit_price_editable ? "cursor-pointer border-b border-dashed border-blue-300 text-blue-700 hover:text-blue-800" : "cursor-default hover:text-current",
-                      ].join(" ")}
-                    >
-                      {formatMoney(item.price)}
-                    </Button>
-                    <span>{formatMoney(item.qty * item.price - getCartItemDiscount(item))}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 text-red-500 hover:text-red-600"
-                      onClick={() =>
-                        removeItem(item.line_id)
-                      }
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
                   </div>
                 ))
               ) : (
@@ -2136,36 +1890,7 @@ export default function SalesPage() {
 
             {/* Bill summary + checkout */}
             <div className="border-t border-slate-200 bg-slate-50/60 p-3">
-              <div className="grid gap-3 md:grid-cols-2">
-                <UniFieldSelect
-                  label={t("Customer")}
-                  value={customerId}
-                  onValueChange={setCustomerId}
-                  placeholder={t("N/A")}
-                  allowClear
-                >
-                  {customerOptions.map((customer: any) => (
-                    <SelectItem key={customer.id} value={String(customer.id)}>
-                      {customer.name}
-                      {customer.phone ? ` - ${customer.phone}` : ""}
-                    </SelectItem>
-                  ))}
-                </UniFieldSelect>
-                <UniFieldSelect
-                  label={t("Type")}
-                  value={activeOrderType}
-                  onValueChange={setOrderType}
-                  placeholder={t("order_type_select")}
-                >
-                  {enabledOrderTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </UniFieldSelect>
-              </div>
-
-              <div className="mt-3 rounded-md border border-slate-200 bg-white text-sm font-semibold">
+              <div className="rounded-md border border-slate-200 bg-white text-sm font-semibold">
                 <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
                   <span>{t("Sub Total")}</span>
                   <span>{formatMoney(itemsSubtotal)}</span>
@@ -2363,11 +2088,6 @@ export default function SalesPage() {
         setQuantityInput={setQuantityInput}
         allowDecimalQuantities={allowDecimalQuantities}
         handleConfirmQuantity={handleConfirmQuantity}
-        priceEditItem={priceEditItem}
-        setPriceEditItem={setPriceEditItem}
-        priceInput={priceInput}
-        setPriceInput={setPriceInput}
-        handleApplyProductPrice={handleApplyProductPrice}
         isNoteDialogOpen={isNoteDialogOpen}
         setIsNoteDialogOpen={setIsNoteDialogOpen}
         saleNote={saleNote}
@@ -2379,15 +2099,6 @@ export default function SalesPage() {
         couponOptions={couponOptions}
         couponInput={couponInput}
         setCouponInput={setCouponInput}
-        isQuickProductDialogOpen={isQuickProductDialogOpen}
-        setIsQuickProductDialogOpen={setIsQuickProductDialogOpen}
-        quickProductForm={quickProductForm}
-        updateQuickProductForm={updateQuickProductForm}
-        resetQuickProductForm={resetQuickProductForm}
-        handleCreateQuickProduct={handleCreateQuickProduct}
-        isCreatingQuickProduct={isCreatingQuickProduct}
-        isUnitsLoading={isUnitsLoading}
-        unitOptions={unitOptions}
         taxGroupOptions={taxGroupOptions}
         isOrderSettingsOpen={isOrderSettingsOpen}
         setIsOrderSettingsOpen={setIsOrderSettingsOpen}

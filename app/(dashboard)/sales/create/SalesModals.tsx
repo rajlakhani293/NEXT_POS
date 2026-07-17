@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import CustomModal from "@/components/ui/customModal"
 import { SelectItem } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { formatBusinessDateTime, formatBusinessMoney } from "@/lib/format"
@@ -132,13 +133,6 @@ interface SalesModalsProps {
   allowDecimalQuantities: boolean
   handleConfirmQuantity: () => void
 
-  // Product Price
-  priceEditItem: any
-  setPriceEditItem: (item: any) => void
-  priceInput: string
-  setPriceInput: (val: string) => void
-  handleApplyProductPrice: () => void
-
   // Comments / Note
   isNoteDialogOpen: boolean
   setIsNoteDialogOpen: (open: boolean) => void
@@ -154,16 +148,6 @@ interface SalesModalsProps {
   couponInput: string
   setCouponInput: (val: string) => void
 
-  // Quick Product
-  isQuickProductDialogOpen: boolean
-  setIsQuickProductDialogOpen: (open: boolean) => void
-  quickProductForm: any
-  updateQuickProductForm: (field: any, value: any) => void
-  resetQuickProductForm: () => void
-  handleCreateQuickProduct: () => void
-  isCreatingQuickProduct: boolean
-  isUnitsLoading: boolean
-  unitOptions: any[]
   taxGroupOptions: any[]
 
   // Order Settings
@@ -307,12 +291,6 @@ export default function SalesModals({
   allowDecimalQuantities,
   handleConfirmQuantity,
 
-  priceEditItem,
-  setPriceEditItem,
-  priceInput,
-  setPriceInput,
-  handleApplyProductPrice,
-
   isNoteDialogOpen,
   setIsNoteDialogOpen,
   saleNote,
@@ -326,15 +304,6 @@ export default function SalesModals({
   couponInput,
   setCouponInput,
 
-  isQuickProductDialogOpen,
-  setIsQuickProductDialogOpen,
-  quickProductForm,
-  updateQuickProductForm,
-  resetQuickProductForm,
-  handleCreateQuickProduct,
-  isCreatingQuickProduct,
-  isUnitsLoading,
-  unitOptions,
   taxGroupOptions,
 
   isOrderSettingsOpen,
@@ -1138,49 +1107,6 @@ export default function SalesModals({
       </CustomModal>
 
       <CustomModal
-        open={Boolean(priceEditItem)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPriceEditItem(null)
-            setPriceInput("")
-          }
-        }}
-        title={t("Product Price")}
-        description={priceEditItem?.name}
-        showFooter={true}
-        footer={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setPriceEditItem(null)
-                setPriceInput("")
-              }}
-            >
-              {t("Cancel")}
-            </Button>
-            <Button onClick={handleApplyProductPrice}>
-              {t("Apply")}
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <div className="flex h-16 items-center justify-center rounded bg-blue-50 text-2xl font-bold text-blue-950">
-            {formatMoney(priceInput || priceEditItem?.price || 0)}
-          </div>
-          <UniFieldInput
-            label={t("Price")}
-            value={priceInput}
-            onChange={(event) => setPriceInput(event.target.value)}
-            type="number"
-            min="0"
-            prefix={posOptions.currency_symbol}
-          />
-        </div>
-      </CustomModal>
-
-      <CustomModal
         open={isNoteDialogOpen}
         onOpenChange={setIsNoteDialogOpen}
         title={t("Comments")}
@@ -1208,151 +1134,80 @@ export default function SalesModals({
       <CustomModal
         open={isCouponsDialogOpen}
         onOpenChange={setIsCouponsDialogOpen}
-        title={t("Coupons")}
-        description={t("Input the coupon code that should apply to the POS. If a coupon is issued for a customer, that customer must be selected priorly.")}
-        showFooter={true}
-        footer={
-          <>
-            <Button variant="outline" onClick={() => setIsCouponsDialogOpen(false)}>
-              {t("Cancel")}
-            </Button>
-            <Button onClick={() => setIsCouponsDialogOpen(false)}>
-              {t("Apply")}
-            </Button>
-          </>
-        }
+        title={t("Load Coupon")}
+        showFooter={false}
       >
-        <div className="space-y-4 py-2">
-          <UniFieldSelect
-            label={t("suggested_coupon")}
-            value={selectedCouponId}
-            onValueChange={setSelectedCouponId}
-            placeholder={t("choose_coupon")}
-            allowClear
-          >
-            {couponOptions.map((coupon: { id: number | string; name?: string; code?: string }) => (
-              <SelectItem key={coupon.id} value={String(coupon.id)}>
-                {coupon.name} - {coupon.code}
-              </SelectItem>
-            ))}
-          </UniFieldSelect>
-          <UniFieldInput
-            label={t("coupon_codes")}
-            value={couponInput}
-            onChange={(event) => setCouponInput(event.target.value)}
-            placeholder={t("coupon_codes_placeholder")}
-          />
-        </div>
-      </CustomModal>
-
-      <CustomModal
-        open={isQuickProductDialogOpen}
-        onOpenChange={setIsQuickProductDialogOpen}
-        title={t("Product / Service")}
-        description={t("Create a quick product or service for the current sale.")}
-        showFooter={true}
-        footer={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                resetQuickProductForm()
-                setIsQuickProductDialogOpen(false)
-              }}
-            >
-              {t("Cancel")}
-            </Button>
-            <Button onClick={handleCreateQuickProduct} disabled={isCreatingQuickProduct}>
-              {isCreatingQuickProduct ? <Spinner /> : t("Create")}
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-4 py-2">
-          <UniFieldInput
-            label={t("Name")}
-            value={quickProductForm.name}
-            onChange={(event) => updateQuickProductForm("name", event.target.value)}
-            autoFocus
-            required
-          />
-          <UniFieldSelect
-            label={t("Product Type")}
-            value={quickProductForm.product_type}
-            onValueChange={(value) => updateQuickProductForm("product_type", value)}
-            required
-          >
-            <SelectItem value="product">{t("Normal")}</SelectItem>
-            <SelectItem value="dynamic">{t("Dynamic")}</SelectItem>
-          </UniFieldSelect>
-
-          {quickProductForm.product_type === "dynamic" ? (
+        <Tabs defaultValue={(couponInput || selectedCouponId) ? "active-coupons" : "apply-coupon"}>
+          <TabsList variant="line" className="w-full justify-start">
+            <TabsTrigger value="apply-coupon">{t("Apply A Coupon")}</TabsTrigger>
+            <TabsTrigger value="active-coupons">{t("Active Coupons")}</TabsTrigger>
+          </TabsList>
+          <TabsContent value="apply-coupon" className="space-y-4 pt-4">
             <UniFieldInput
-              label={t("Rate")}
-              value={quickProductForm.rate}
-              onChange={(event) => updateQuickProductForm("rate", event.target.value)}
-              type="number"
-              min="0"
-              required
+              label={t("Coupon Code")}
+              value={couponInput}
+              onChange={(event) => setCouponInput(event.target.value)}
+              placeholder={t("Coupon Code")}
+              addonAfter={
+                <Button type="button" className="h-10 rounded-l-none" onClick={() => setIsCouponsDialogOpen(false)}>
+                  {t("Load")}
+                </Button>
+              }
             />
-          ) : (
-            <>
-              <UniFieldInput
-                label={t("Unit Price")}
-                value={quickProductForm.unit_price}
-                onChange={(event) => updateQuickProductForm("unit_price", event.target.value)}
-                type="number"
-                min="0"
-                prefix={posOptions.currency_symbol}
-                required
-              />
-              <UniFieldInput
-                label={t("Quantity")}
-                value={quickProductForm.quantity}
-                onChange={(event) => updateQuickProductForm("quantity", event.target.value)}
-                type="number"
-                min="0"
-                required
-              />
-              <UniFieldSelect
-                label={t("Unit")}
-                value={quickProductForm.unit_id}
-                onValueChange={(value) => updateQuickProductForm("unit_id", value)}
-                placeholder={isUnitsLoading ? t("Loading") : t("Unit")}
-                required
-              >
-                {unitOptions.map((unit: any) => (
-                  <SelectItem key={unit.id} value={String(unit.id)}>
-                    {unit.name}
-                  </SelectItem>
-                ))}
-              </UniFieldSelect>
-              <UniFieldSelect
-                label={t("Tax Type")}
-                value={quickProductForm.tax_type || "disabled"}
-                onValueChange={(value) =>
-                  updateQuickProductForm("tax_type", value === "disabled" ? "" : value)
-                }
-              >
-                <SelectItem value="disabled">{t("Disabled")}</SelectItem>
-                <SelectItem value="inclusive">{t("Inclusive")}</SelectItem>
-                <SelectItem value="exclusive">{t("Exclusive")}</SelectItem>
-              </UniFieldSelect>
-              <UniFieldSelect
-                label={t("Tax Group")}
-                value={quickProductForm.tax_group_id}
-                onValueChange={(value) => updateQuickProductForm("tax_group_id", value)}
-                placeholder={t("Tax Group")}
-              >
-                {taxGroupOptions.map((group: any) => (
-                  <SelectItem key={group.id} value={String(group.id)}>
-                    {group.name}
-                  </SelectItem>
-                ))}
-              </UniFieldSelect>
-            </>
-          )}
-        </div>
+            <div className="rounded-md border border-blue-100 bg-blue-50 p-3 text-sm font-medium text-blue-900">
+              {t("Input the coupon code that should apply to the POS. If a coupon is issued for a customer, that customer must be selected priorly.")}
+            </div>
+            <UniFieldSelect
+              label={t("Name")}
+              value={selectedCouponId}
+              onValueChange={setSelectedCouponId}
+              placeholder={t("choose_coupon")}
+              allowClear
+            >
+              {couponOptions.map((coupon: { id: number | string; name?: string; code?: string }) => (
+                <SelectItem key={coupon.id} value={String(coupon.id)}>
+                  {coupon.name || coupon.code || coupon.id}
+                </SelectItem>
+              ))}
+            </UniFieldSelect>
+          </TabsContent>
+          <TabsContent value="active-coupons" className="pt-4">
+            <div className="space-y-2">
+              {selectedCouponId || couponInput ? (
+                <div className="rounded-md border border-slate-200 bg-white p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-slate-900">
+                        {couponOptions.find((coupon: any) => String(coupon.id) === selectedCouponId)?.name ||
+                          couponInput ||
+                          t("Coupon")}
+                      </p>
+                      {couponInput ? (
+                        <p className="text-xs font-medium text-muted-foreground">{couponInput}</p>
+                      ) : null}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-red-500 hover:text-red-600"
+                      onClick={() => {
+                        setSelectedCouponId("")
+                        setCouponInput("")
+                      }}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-md border border-dashed border-slate-200 p-4 text-center text-sm font-semibold text-muted-foreground">
+                  {t("No coupons applies to the cart.")}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </CustomModal>
 
       <CustomModal
@@ -1392,79 +1247,58 @@ export default function SalesModals({
         open={isTaxesDialogOpen}
         onOpenChange={setIsTaxesDialogOpen}
         title={t("Tax & Summary")}
-        description={t("Set the taxes to apply to the cart.")}
-        showFooter={true}
-        footer={
-          <>
-            {["variable_vat", "products_variable_vat"].includes(String(posOptions.pos_vat)) ? (
+        showFooter={false}
+      >
+        <Tabs defaultValue="settings">
+          <TabsList variant="line" className="w-full justify-start">
+            <TabsTrigger value="settings">{t("Settings")}</TabsTrigger>
+            <TabsTrigger value="summary">{t("Summary")}</TabsTrigger>
+            {["products_vat", "products_variable_vat"].includes(String(posOptions.pos_vat)) ? (
+              <TabsTrigger value="product-taxes">{t("Product Taxes")}</TabsTrigger>
+            ) : null}
+          </TabsList>
+          <TabsContent value="settings" className="space-y-4 pt-4">
+            <UniFieldSelect
+              label={t("Select Tax")}
+              value={cartTaxGroupId}
+              onValueChange={setCartTaxGroupId}
+              placeholder={t("Select Tax")}
+              disabled={!["variable_vat", "products_variable_vat"].includes(String(posOptions.pos_vat))}
+            >
+              {taxGroupOptions.map((group: any) => (
+                <SelectItem key={group.id} value={String(group.id)}>
+                  {group.name}
+                </SelectItem>
+              ))}
+            </UniFieldSelect>
+            <UniFieldSelect
+              label={t("Type")}
+              value={cartTaxType}
+              onValueChange={setCartTaxType}
+              placeholder={t("Type")}
+              disabled={!["variable_vat", "products_variable_vat"].includes(String(posOptions.pos_vat))}
+            >
+              <SelectItem value="exclusive">{t("Exclusive")}</SelectItem>
+              <SelectItem value="inclusive">{t("Inclusive")}</SelectItem>
+            </UniFieldSelect>
+            <div className="flex justify-end">
               <Button onClick={() => setIsTaxesDialogOpen(false)}>
                 {t("Save")}
               </Button>
-            ) : null}
-            <Button onClick={() => setIsTaxesDialogOpen(false)}>
-              {t("Close")}
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          {["variable_vat", "products_variable_vat"].includes(String(posOptions.pos_vat)) ? (
-            <div className="space-y-3 rounded border border-gray-200 bg-white p-3">
-              <UniFieldSelect
-                label={t("Select Tax")}
-                value={cartTaxGroupId}
-                onValueChange={setCartTaxGroupId}
-                placeholder={t("Select Tax")}
-              >
-                {taxGroupOptions.map((group: any) => (
-                  <SelectItem key={group.id} value={String(group.id)}>
-                    {group.name}
-                  </SelectItem>
-                ))}
-              </UniFieldSelect>
-              <UniFieldSelect
-                label={t("Type")}
-                value={cartTaxType}
-                onValueChange={setCartTaxType}
-                placeholder={t("Type")}
-              >
-                <SelectItem value="exclusive">{t("Exclusive")}</SelectItem>
-                <SelectItem value="inclusive">{t("Inclusive")}</SelectItem>
-              </UniFieldSelect>
             </div>
-          ) : (
-            <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm font-medium text-gray-700">
-              <div className="flex justify-between">
-                <span>{t("Tax Type")}</span>
-                <span>{cartTaxType || "-"}</span>
-              </div>
-              <div className="mt-2 flex justify-between">
-                <span>{t("Tax Group")}</span>
-                <span>
-                  {taxGroupOptions.find((group: any) => String(group.id) === cartTaxGroupId)?.name ||
-                    cartTaxGroupId ||
-                    "-"}
-                </span>
-              </div>
+          </TabsContent>
+          <TabsContent value="summary" className="space-y-2 pt-4">
+            <div className="rounded-md border border-dashed border-slate-200 p-4 text-center text-sm font-semibold text-muted-foreground">
+              {t("No tax is active")}
             </div>
-          )}
-          <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-            <div className="flex justify-between font-semibold">
-              <span>{t("Summary")}</span>
-              <span>{formatMoney(subtotal)}</span>
+          </TabsContent>
+          <TabsContent value="product-taxes" className="pt-4">
+            <div className="flex items-center justify-between rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold">
+              <span>{t("Product Taxes")}</span>
+              <span>{formatMoney(0)}</span>
             </div>
-            <div className="mt-2 flex justify-between">
-              <span>{t("VAT")}</span>
-              <span>{String(posOptions.pos_vat || "disabled")}</span>
-            </div>
-            {posOptions.pos_vat === "products_vat" ? (
-              <div className="mt-2 flex justify-between">
-                <span>{t("Product Taxes")}</span>
-                <span>{t("Applied from products")}</span>
-              </div>
-            ) : null}
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </CustomModal>
 
       <CustomModal
