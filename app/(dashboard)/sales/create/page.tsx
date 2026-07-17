@@ -23,11 +23,13 @@ import {
   ShoppingCart,
   Tags,
   Trash2,
+  User,
   WalletCards,
 } from "lucide-react"
 
 import { useConfirmDialog } from "@/components/confirm-dialog"
 import { Button } from "@/components/ui/button"
+import { ButtonGroup } from "@/components/ui/button-group"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import SalesModals from "./SalesModals"
 import { SelectItem } from "@/components/ui/select"
@@ -195,8 +197,8 @@ const shouldIgnorePosShortcut = (event: KeyboardEvent) => {
   const tagName = target.tagName.toLowerCase()
   return Boolean(
     target.isContentEditable ||
-      ["input", "textarea", "select"].includes(tagName) ||
-      target.closest("[role='dialog']")
+    ["input", "textarea", "select"].includes(tagName) ||
+    target.closest("[role='dialog']")
   )
 }
 
@@ -240,10 +242,13 @@ export default function SalesPage() {
   const [closingNote, setClosingNote] = useState("")
 
   const [customerId, setCustomerId] = useState("")
+  const [isCustomerSelectOpen, setIsCustomerSelectOpen] = useState(false)
+  const [customerSearchTerm, setCustomerSearchTerm] = useState("")
   const [draftId, setDraftId] = useState("")
   const [barcode, setBarcode] = useState("")
   const [couponInput, setCouponInput] = useState("")
   const [selectedCouponId, setSelectedCouponId] = useState("")
+  const [orderTitle, setOrderTitle] = useState("")
   const [orderType, setOrderType] = useState("takeaway")
   const [saleNote, setSaleNote] = useState("")
   const [cartTaxGroupId, setCartTaxGroupId] = useState("")
@@ -368,27 +373,27 @@ export default function SalesPage() {
   const heldSales = heldSalesState.data?.data?.items || []
   const categoriesForGrid = hideEmptyCategories
     ? gridData.categories.filter((category: POSCategory & { products_count?: number; products?: unknown[]; children_count?: number }) => {
-        if (category.products_count === undefined && category.children_count === undefined && category.products === undefined) return true
-        return Boolean(category.products_count || category.children_count || category.products?.length)
-      })
+      if (category.products_count === undefined && category.children_count === undefined && category.products === undefined) return true
+      return Boolean(category.products_count || category.children_count || category.products?.length)
+    })
     : gridData.categories
   const productsForGrid = hideExhaustedProducts
     ? gridData.products.filter((product) => {
-        const quantities = product.unit_quantities || []
-        if (!quantities.length) return true
-        return quantities.some((quantity) => Number(quantity.quantity || 0) > 0)
-      })
+      const quantities = product.unit_quantities || []
+      if (!quantities.length) return true
+      return quantities.some((quantity) => Number(quantity.quantity || 0) > 0)
+    })
     : gridData.products
   const pinnedProductsForGrid = pinnedProductsEnabled
     ? (
-        hideExhaustedProducts
-          ? gridData.pinnedProducts.filter((product) => {
-              const quantities = product.unit_quantities || []
-              if (!quantities.length) return true
-              return quantities.some((quantity) => Number(quantity.quantity || 0) > 0)
-            })
-          : gridData.pinnedProducts
-      )
+      hideExhaustedProducts
+        ? gridData.pinnedProducts.filter((product) => {
+          const quantities = product.unit_quantities || []
+          if (!quantities.length) return true
+          return quantities.some((quantity) => Number(quantity.quantity || 0) > 0)
+        })
+        : gridData.pinnedProducts
+    )
     : []
 
   const getFeaturedImage = (product: POSProduct) => {
@@ -718,7 +723,7 @@ export default function SalesPage() {
       if (existing && itemsMergeEnabled) {
         return items.map((item) =>
           item.product_id === String(product.id) &&
-          (item.unit_quantity_id || "") === unitQuantityId
+            (item.unit_quantity_id || "") === unitQuantityId
             ? { ...item, qty: item.qty + initialQty }
             : item
         )
@@ -936,6 +941,7 @@ export default function SalesPage() {
     setBarcode("")
     setCouponInput("")
     setSelectedCouponId("")
+    setOrderTitle("")
     setOrderType("takeaway")
     setCartTaxGroupId(posOptions.pos_tax_group ? String(posOptions.pos_tax_group) : "")
     setCartTaxType(posOptions.pos_tax_type ? String(posOptions.pos_tax_type) : "exclusive")
@@ -999,6 +1005,7 @@ export default function SalesPage() {
     if (!heldSale) return
 
     setDraftId(String(heldSale.id))
+    setOrderTitle(heldSale.title || "")
     setCustomerId(heldSale.customer_id ? String(heldSale.customer_id) : "")
     setCouponInput((heldSale.coupon_codes || []).join(", "))
     setCartTaxGroupId(heldSale.tax_group_id ? String(heldSale.tax_group_id) : "")
@@ -1007,12 +1014,12 @@ export default function SalesPage() {
     setPaymentsRows(
       (heldSale.payments || []).length
         ? (heldSale.payments || []).map((payment: any) => ({
-            id: crypto.randomUUID(),
-            payment_type: payment.payment_type || "cash-payment",
-            amount: String(payment.amount || ""),
-            reference_number: payment.reference_number || "",
-            note: payment.note || "",
-          }))
+          id: crypto.randomUUID(),
+          payment_type: payment.payment_type || "cash-payment",
+          amount: String(payment.amount || ""),
+          reference_number: payment.reference_number || "",
+          note: payment.note || "",
+        }))
         : [emptyPaymentRow()]
     )
     setCartItems(
@@ -1111,6 +1118,7 @@ export default function SalesPage() {
     }
 
     const payLoad = {
+      title: orderTitle,
       customer_id: customerId ? Number(customerId) : null,
       coupon_codes: couponCodes,
       note: [holdReference ? `${t("Order Reference")}: ${holdReference}` : "", saleNote]
@@ -1199,6 +1207,7 @@ export default function SalesPage() {
     const validPayments = paymentsRows.filter((row) => money(row.amount) > 0)
     const payLoad = {
       draft_id: draftId ? Number(draftId) : null,
+      title: orderTitle,
       customer_id: customerId ? Number(customerId) : null,
       shift_id: cashRegistersEnabled ? shift.id : null,
       order_type: activeOrderType,
@@ -1420,714 +1429,732 @@ export default function SalesPage() {
   return (
     <DashboardPage padding="none">
       <div className="flex h-full min-h-0 flex-col bg-slate-100" id="pos-container">
-      <div className="shrink-0 border-b border-slate-200 bg-white px-3 py-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
-              <Home className="size-4" />
-              {t("Dashboard")}
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleOpenHeldSales}>
-              <ShoppingCart className="size-4" />
-              {t("Pending Orders")}
-            </Button>
-            <div className="min-w-[220px]">
-              <UniFieldSelect
-                value={customerId}
-                onValueChange={setCustomerId}
-                placeholder={t("Customer")}
-                allowClear
-                size="sm"
-              >
-                {customerOptions.map((customer: any) => (
-                  <SelectItem key={customer.id} value={String(customer.id)}>
-                    {customer.name}
-                    {customer.phone ? ` - ${customer.phone}` : ""}
-                  </SelectItem>
-                ))}
-              </UniFieldSelect>
+        <div className="shrink-0 border-b border-slate-200 bg-white px-3 py-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
+                <Home className="size-4" />
+                {t("Dashboard")}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleOpenHeldSales}>
+                <ShoppingCart className="size-4" />
+                {t("Pending Orders")}
+              </Button>
+              {/* <div className="min-w-[220px]">
+                <UniFieldSelect
+                  value={customerId}
+                  onValueChange={setCustomerId}
+                  placeholder={t("Customer")}
+                  allowClear
+                  size="sm"
+                >
+                  {customerOptions.map((customer: any) => (
+                    <SelectItem key={customer.id} value={String(customer.id)}>
+                      {customer.name}
+                      {customer.phone ? ` - ${customer.phone}` : ""}
+                    </SelectItem>
+                  ))}
+                </UniFieldSelect>
+              </div> */}
+              <div className="min-w-[160px]">
+                <UniFieldSelect
+                  value={activeOrderType}
+                  onValueChange={setOrderType}
+                  placeholder={t("Type")}
+                  size="sm"
+                >
+                  {enabledOrderTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </UniFieldSelect>
+              </div>
             </div>
-            <div className="min-w-[160px]">
-              <UniFieldSelect
-                value={activeOrderType}
-                onValueChange={setOrderType}
-                placeholder={t("Type")}
-                size="sm"
-              >
-                {enabledOrderTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </UniFieldSelect>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" onClick={resetSaleForm}>
+                {t("Reset")}
+              </Button>
+              {cashRegistersEnabled && shift ? (
+                <>
+                  {hasPermission(PERMISSIONS.cashRegister.cashIn) ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShiftAction("cash_in")}
+                    >
+                      <BanknoteArrowDown className="size-4" />
+                      {t("cash_in")}
+                    </Button>
+                  ) : null}
+                  {hasPermission(PERMISSIONS.cashRegister.cashOut) ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShiftAction("cash_out")}
+                    >
+                      <BanknoteArrowUp className="size-4" />
+                      {t("cash_out")}
+                    </Button>
+                  ) : null}
+                  {hasPermission(PERMISSIONS.cashRegister.close) ? (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        setDeclaredCash(String(shift.expected_cash || ""))
+                        setShiftAction("close")
+                      }}
+                    >
+                      <LogOut className="size-4" />
+                      {t("close_shift")}
+                    </Button>
+                  ) : null}
+                </>
+              ) : cashRegistersEnabled ? (
+                hasPermission(PERMISSIONS.cashRegister.open) ? (
+                  <Button size="sm" onClick={() => setIsOpenShiftDialogOpen(true)}>
+                    {t("open_shift")}
+                  </Button>
+                ) : null
+              ) : (
+                <Button variant="outline" size="sm" onClick={handleOpenHeldSales}>
+                  {t("held_carts")}
+                </Button>
+              )}
             </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={resetSaleForm}>
-              {t("Reset")}
-            </Button>
-          {cashRegistersEnabled && shift ? (
-            <>
-            {hasPermission(PERMISSIONS.cashRegister.cashIn) ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShiftAction("cash_in")}
-              >
-                <BanknoteArrowDown className="size-4" />
-                {t("cash_in")}
-              </Button>
-            ) : null}
-            {hasPermission(PERMISSIONS.cashRegister.cashOut) ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShiftAction("cash_out")}
-              >
-                <BanknoteArrowUp className="size-4" />
-                {t("cash_out")}
-              </Button>
-            ) : null}
-            {hasPermission(PERMISSIONS.cashRegister.close) ? (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => {
-                  setDeclaredCash(String(shift.expected_cash || ""))
-                  setShiftAction("close")
-                }}
-              >
-                <LogOut className="size-4" />
-                {t("close_shift")}
-              </Button>
-            ) : null}
-            </>
-        ) : cashRegistersEnabled ? (
-          hasPermission(PERMISSIONS.cashRegister.open) ? (
-            <Button size="sm" onClick={() => setIsOpenShiftDialogOpen(true)}>
-              {t("open_shift")}
-            </Button>
-          ) : null
-        ) : (
-          <Button variant="outline" size="sm" onClick={handleOpenHeldSales}>
-            {t("held_carts")}
-          </Button>
-        )}
           </div>
         </div>
-      </div>
 
-      {!cashRegistersEnabled || shift ? (
-        <div className="flex flex-auto overflow-hidden p-3">
-          <div className="flex h-full min-h-0 flex-auto flex-col gap-3 overflow-hidden lg:flex-row">
-          {/* ======== LEFT: Product Grid ======== */}
-          <div className={[
-            "order-2 flex min-h-0 w-full overflow-hidden lg:w-[56%]",
-          ].join(" ")}>
-          <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            {/* Top bar: product tools + customer */}
-            <div className="border-b border-slate-200 p-3">
-              <UniFieldInput
-                ref={barcodeInputRef}
-                value={barcode}
-                onChange={(e) => setBarcode(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault()
-                    handleBarcodeSearch()
-                  }
-                }}
-                placeholder={t("scan_barcode")}
-                containerClassName="bg-transparent"
-                addonBefore={
-                  <>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    title={t("Search for products.")}
-                    onClick={() => setIsProductSearchOpen(true)}
-                    className="h-10 rounded-r-none border-r border-slate-200"
-                  >
-                    <Search className="size-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    title={t("Toggle merging similar products.")}
-                    onClick={() => setItemsMergeEnabled((current) => !current)}
-                    className={[
-                      "h-10 rounded-none border-r border-slate-200",
-                      itemsMergeEnabled ? "bg-blue-50 text-blue-700" : "",
-                    ].join(" ")}
-                  >
-                    <ChevronsDownUp className="size-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    title={t("Toggle auto focus.")}
-                    onClick={() => setForceAutoFocus((current) => !current)}
-                    className={[
-                      "h-10 rounded-none border-r border-slate-200",
-                      forceAutoFocus ? "bg-blue-50 text-blue-700" : "",
-                    ].join(" ")}
-                  >
-                    <ScanBarcode className="size-4" />
-                  </Button>
-                  </>
-                }
-                addonAfter={
-                  barcodeSearchState.isLoading ? (
-                    <span className="flex h-10 w-10 items-center justify-center border-l border-slate-200 bg-white">
-                      <Spinner />
-                    </span>
-                  ) : undefined
-                }
-              />
-            </div>
+        {!cashRegistersEnabled || shift ? (
+          <div className="flex flex-auto overflow-hidden">
+            <div className="flex h-full min-h-0 flex-auto flex-col overflow-hidden lg:flex-row">
+              {/* ======== LEFT: Product Grid ======== */}
+              <div className={[
+                "order-2 flex min-h-0 w-full overflow-hidden lg:w-[56%]",
+              ].join(" ")}>
+                <div className="flex min-h-0 flex-auto flex-col overflow-hidden bg-white">
+                  {/* Top bar: product tools + customer */}
+                  <div className="border-b border-slate-200 p-3">
+                    <UniFieldInput
+                      ref={barcodeInputRef}
+                      value={barcode}
+                      onChange={(e) => setBarcode(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          handleBarcodeSearch()
+                        }
+                      }}
+                      placeholder={t("scan_barcode")}
+                      containerClassName="bg-transparent"
+                      addonBefore={
+                        <>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            title={t("Search for products.")}
+                            onClick={() => setIsProductSearchOpen(true)}
+                            className="h-10 rounded-r-none border-r border-slate-200"
+                          >
+                            <Search className="size-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            title={t("Toggle merging similar products.")}
+                            onClick={() => setItemsMergeEnabled((current) => !current)}
+                            className={[
+                              "h-10 rounded-none border-r border-slate-200",
+                              itemsMergeEnabled ? "bg-blue-50 text-blue-700" : "",
+                            ].join(" ")}
+                          >
+                            <ChevronsDownUp className="size-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            title={t("Toggle auto focus.")}
+                            onClick={() => setForceAutoFocus((current) => !current)}
+                            className={[
+                              "h-10 rounded-none border-r border-slate-200",
+                              forceAutoFocus ? "bg-blue-50 text-blue-700" : "",
+                            ].join(" ")}
+                          >
+                            <ScanBarcode className="size-4" />
+                          </Button>
+                        </>
+                      }
+                      addonAfter={
+                        barcodeSearchState.isLoading ? (
+                          <span className="flex h-10 w-10 items-center justify-center border-l border-slate-200 bg-white">
+                            <Spinner />
+                          </span>
+                        ) : undefined
+                      }
+                    />
+                  </div>
 
-            {/* Breadcrumb navigation */}
-            <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-2 text-sm">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigateBreadcrumb(-1)}
-                className="flex items-center gap-1 rounded px-2 py-1 text-blue-600 hover:bg-blue-50 h-auto font-medium"
-              >
-                <Home className="size-3.5" />
-                <span>{t("Home")}</span>
-              </Button>
-              {gridBreadcrumbs.map((crumb, i) => (
-                <span key={crumb.id} className="flex items-center gap-1">
-                  <ChevronRight className="size-3 text-gray-400" />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigateBreadcrumb(i)}
-                    className="rounded px-2 py-1 text-blue-600 hover:bg-blue-50 h-auto font-medium"
-                  >
-                    {crumb.name}
-                  </Button>
-                </span>
-              ))}
-              {gridLoading && <Spinner className="ml-2 size-3.5" />}
-            </div>
-
-            {/* Pinned products strip */}
-              {pinnedProductsForGrid.length > 0 && (
-              <div className="border-b border-gray-100 bg-amber-50/60 px-3 py-2">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">{t("Pinned")}</p>
-                <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                  {pinnedProductsForGrid.map((product) => {
-                    const uq = product.unit_quantities?.[0]
-                    const featuredImage = getFeaturedImage(product)
-                    return (
-                      <button
-                        key={product.id}
-                        onClick={() => handleGridProductClick(product)}
-                        className={[
-                          "cell-item group relative flex flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400",
-                          pinnedPreviewEnabled ? "h-36" : "h-20",
-                        ].join(" ")}
-                      >
-                        {pinnedPreviewEnabled && featuredImage ? (
-                          <img
-                            src={featuredImage}
-                            alt={product.name}
-                            className="absolute inset-0 h-full w-full object-cover opacity-80 transition group-hover:opacity-100"
-                          />
-                        ) : pinnedPreviewEnabled ? (
-                          <ImageIcon className="absolute top-4 size-10 text-gray-300" />
-                        ) : null}
-                        <div className="relative z-10 flex h-20 w-full flex-col items-center justify-center bg-gradient-to-t from-black/70 to-transparent p-2 text-white">
-                          <p className="w-full truncate text-center text-sm font-semibold">{product.name}</p>
-                          {product.unit_quantities?.length === 1 && uq ? (
-                            <span className="text-sm">{formatMoney(getDisplayPrice(uq))}</span>
-                          ) : null}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Grid area: categories + products */}
-            <div className="flex-1 overflow-y-auto p-3">
-              {!gridLoading && categoriesForGrid.length === 0 && productsForGrid.length === 0 && pinnedProductsForGrid.length === 0 && (
-                <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-400">
-                  <Package className="size-14 opacity-30" />
-                  <p className="text-sm font-medium">{t("Looks like there is either no products and no categories. How about creating those first to get started ?")}</p>
-                </div>
-              )}
-
-              {/* Category tiles */}
-              {categoriesForGrid.length > 0 && (
-                <div className="mb-4 grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-                  {categoriesForGrid.map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => drillIntoCategory(category)}
-                      className="cell-item group relative flex h-36 flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400"
+                  {/* Breadcrumb navigation */}
+                  <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-2 text-sm">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigateBreadcrumb(-1)}
+                      className="flex items-center gap-1 rounded px-2 py-1 text-blue-600 hover:bg-blue-50 h-auto font-medium"
                     >
-                      {category.preview_url ? (
-                        <img
-                          src={category.preview_url}
-                          alt={category.name}
-                          className="absolute inset-0 h-full w-full object-cover opacity-70 group-hover:opacity-90 transition"
-                        />
-                      ) : (
-                        <Folder className="absolute top-4 size-10 text-blue-200 group-hover:text-blue-400 transition" />
-                      )}
-                      <div className="relative z-10 w-full bg-gradient-to-t from-black/60 to-transparent px-2 pb-2 pt-6">
-                        <p className="truncate text-center text-xs font-bold text-white">{category.name}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Product tiles (shown when no sub-categories) */}
-              {categoriesForGrid.length === 0 && productsForGrid.length > 0 && (
-                <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-                  {productsForGrid.map((product) => {
-                    const uq = product.unit_quantities?.[0]
-                    const featuredImage = getFeaturedImage(product)
-                    return (
-                      <button
-                        key={product.id}
-                        onClick={() => handleGridProductClick(product)}
-                        className="cell-item group relative flex h-36 flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400"
-                      >
-                        {featuredImage ? (
-                          <img
-                            src={featuredImage}
-                            alt={product.name}
-                            className="absolute inset-0 h-full w-full object-cover opacity-75 group-hover:opacity-100 transition"
-                          />
-                        ) : (
-                          <ImageIcon className="absolute top-4 size-10 text-gray-200 group-hover:text-gray-300 transition" />
-                        )}
-                        <div className="relative z-10 w-full bg-gradient-to-t from-black/65 to-transparent px-2 pb-2 pt-6">
-                          <p className="truncate text-center text-xs font-bold text-white">{product.name}</p>
-                          {product.unit_quantities?.length === 1 && uq ? (
-                            <span className="block text-center text-sm text-blue-200">{formatMoney(getDisplayPrice(uq))}</span>
-                          ) : null}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-          </div>
-
-          {/* ======== RIGHT: Cart + Checkout ======== */}
-          <div className={[
-            "order-1 flex min-h-0 w-full overflow-hidden lg:w-[44%]",
-          ].join(" ")}>
-          <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-gray-100 p-2">
-              <div className="flex flex-wrap overflow-hidden rounded border border-gray-200 bg-white">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setIsNoteDialogOpen(true)}
-                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-none h-auto"
-                >
-                  <MessageSquare className="size-4" />
-                  {t("Comments")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setIsCouponsDialogOpen(true)}
-                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-none h-auto"
-                >
-                  <Tags className="size-4" />
-                  {t("Coupons")}
-                  {couponCodes.length ? (
-                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs text-white">
-                      {couponCodes.length}
-                    </span>
-                  ) : null}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={openOrderSettingsDialog}
-                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-none h-auto"
-                >
-                  <Settings className="size-4" />
-                  {t("Settings")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setIsTaxesDialogOpen(true)}
-                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-none h-auto"
-                >
-                  <WalletCards className="size-4" />
-                  {t("Taxes")}
-                </Button>
-              </div>
-            </div>
-            {/* Cart items */}
-            <div className="flex-1 overflow-y-auto bg-slate-50/40 p-3">
-              {cartItems.length ? (
-                cartItems.map((item) => (
-                  <div
-                    key={item.line_id}
-                    className="mb-3 rounded-md border border-slate-200 bg-white p-3 text-sm shadow-sm"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-slate-950">{item.name}</p>
-                        <p className="text-xs font-medium text-muted-foreground">
-                          {t("sku")}: {item.sku || "-"}
-                        </p>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          {item.unit_label ? (
-                            <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs">
-                              {item.unit_label}
-                            </Button>
-                          ) : item.product_type ? (
-                            <span className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-muted-foreground">
-                              {item.product_type}
-                            </span>
-                          ) : null}
+                      <Home className="size-3.5" />
+                      <span>{t("Home")}</span>
+                    </Button>
+                    {gridBreadcrumbs.map((crumb, i) => (
+                      <span key={crumb.id} className="flex items-center gap-1">
+                        <ChevronRight className="size-3 text-gray-400" />
                         <Button
-                          type="button"
-                          variant="link"
-                          onClick={() => openItemDiscountDialog(item)}
-                          className="h-auto p-0 text-xs font-semibold"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigateBreadcrumb(i)}
+                          className="rounded px-2 py-1 text-blue-600 hover:bg-blue-50 h-auto font-medium"
                         >
-                          {item.discount_value && item.discount_value > 0 ? (
-                            <span className="rounded border border-emerald-100 bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-700 no-underline">
-                              {t("Discount")}: {item.discount_type === "percentage" ? `${item.discount_value}%` : formatMoney(item.discount_value)} (-{formatMoney(getCartItemDiscount(item))})
-                            </span>
-                          ) : (
-                            t("Discount")
-                          )}
+                          {crumb.name}
                         </Button>
+                      </span>
+                    ))}
+                    {gridLoading && <Spinner className="ml-2 size-3.5" />}
+                  </div>
+
+                  {/* Pinned products strip */}
+                  {pinnedProductsForGrid.length > 0 && (
+                    <div className="border-b border-gray-100 bg-amber-50/60 px-3 py-2">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">{t("Pinned")}</p>
+                      <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                        {pinnedProductsForGrid.map((product) => {
+                          const uq = product.unit_quantities?.[0]
+                          const featuredImage = getFeaturedImage(product)
+                          return (
+                            <button
+                              key={product.id}
+                              onClick={() => handleGridProductClick(product)}
+                              className={[
+                                "cell-item group relative flex flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400",
+                                pinnedPreviewEnabled ? "h-36" : "h-20",
+                              ].join(" ")}
+                            >
+                              {pinnedPreviewEnabled && featuredImage ? (
+                                <img
+                                  src={featuredImage}
+                                  alt={product.name}
+                                  className="absolute inset-0 h-full w-full object-cover opacity-80 transition group-hover:opacity-100"
+                                />
+                              ) : pinnedPreviewEnabled ? (
+                                <ImageIcon className="absolute top-4 size-10 text-gray-300" />
+                              ) : null}
+                              <div className="relative z-10 flex h-20 w-full flex-col items-center justify-center bg-gradient-to-t from-black/70 to-transparent p-2 text-white">
+                                <p className="w-full truncate text-center text-sm font-semibold">{product.name}</p>
+                                {product.unit_quantities?.length === 1 && uq ? (
+                                  <span className="text-sm">{formatMoney(getDisplayPrice(uq))}</span>
+                                ) : null}
+                              </div>
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
+                  )}
+
+                  {/* Grid area: categories + products */}
+                  <div className="flex-1 overflow-y-auto p-3">
+                    {!gridLoading && categoriesForGrid.length === 0 && productsForGrid.length === 0 && pinnedProductsForGrid.length === 0 && (
+                      <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-400">
+                        <Package className="size-14 opacity-30" />
+                        <p className="text-sm font-medium">{t("Looks like there is either no products and no categories. How about creating those first to get started ?")}</p>
+                      </div>
+                    )}
+
+                    {/* Category tiles */}
+                    {categoriesForGrid.length > 0 && (
+                      <div className="mb-4 grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                        {categoriesForGrid.map((category) => (
+                          <button
+                            key={category.id}
+                            onClick={() => drillIntoCategory(category)}
+                            className="cell-item group relative flex h-36 flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400"
+                          >
+                            {category.preview_url ? (
+                              <img
+                                src={category.preview_url}
+                                alt={category.name}
+                                className="absolute inset-0 h-full w-full object-cover opacity-70 group-hover:opacity-90 transition"
+                              />
+                            ) : (
+                              <Folder className="absolute top-4 size-10 text-blue-200 group-hover:text-blue-400 transition" />
+                            )}
+                            <div className="relative z-10 w-full bg-gradient-to-t from-black/60 to-transparent px-2 pb-2 pt-6">
+                              <p className="truncate text-center text-xs font-bold text-white">{category.name}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Product tiles (shown when no sub-categories) */}
+                    {categoriesForGrid.length === 0 && productsForGrid.length > 0 && (
+                      <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                        {productsForGrid.map((product) => {
+                          const uq = product.unit_quantities?.[0]
+                          const featuredImage = getFeaturedImage(product)
+                          return (
+                            <button
+                              key={product.id}
+                              onClick={() => handleGridProductClick(product)}
+                              className="cell-item group relative flex h-36 flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400"
+                            >
+                              {featuredImage ? (
+                                <img
+                                  src={featuredImage}
+                                  alt={product.name}
+                                  className="absolute inset-0 h-full w-full object-cover opacity-75 group-hover:opacity-100 transition"
+                                />
+                              ) : (
+                                <ImageIcon className="absolute top-4 size-10 text-gray-200 group-hover:text-gray-300 transition" />
+                              )}
+                              <div className="relative z-10 w-full bg-gradient-to-t from-black/65 to-transparent px-2 pb-2 pt-6">
+                                <p className="truncate text-center text-xs font-bold text-white">{product.name}</p>
+                                {product.unit_quantities?.length === 1 && uq ? (
+                                  <span className="block text-center text-sm text-blue-200">{formatMoney(getDisplayPrice(uq))}</span>
+                                ) : null}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* ======== RIGHT: Cart + Checkout ======== */}
+              <div className={[
+                "order-1 flex min-h-0 w-full overflow-hidden lg:w-[44%]",
+              ].join(" ")}>
+                <div className="flex min-h-0 flex-auto flex-col overflow-hidden bg-white">
+                  <div className="border-b border-gray-100 p-2">
+                    <ButtonGroup className="w-full">
                       <Button
                         type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 shrink-0 text-red-500 hover:text-red-600"
-                        onClick={() => removeItem(item.line_id)}
+                        variant="outline"
+                        onClick={() => setIsCustomerSelectOpen(true)}
+                        className="flex-1"
                       >
-                        <Trash2 className="size-4" />
+                        <User className="size-4" />
+                        <span className="truncate">{selectedCustomer ? selectedCustomer.name : t("Customer")}</span>
                       </Button>
-                    </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsNoteDialogOpen(true)}
+                        className="flex-1"
+                      >
+                        <MessageSquare className="size-4" />
+                        <span>{t("Comments")}</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsCouponsDialogOpen(true)}
+                        className="flex-1"
+                      >
+                        <Tags className="size-4" />
+                        <span>{t("Coupons")}</span>
+                        {couponCodes.length ? (
+                          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs text-white">
+                            {couponCodes.length}
+                          </span>
+                        ) : null}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={openOrderSettingsDialog}
+                        className="flex-1"
+                      >
+                        <Settings className="size-4" />
+                        <span>{t("Settings")}</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsTaxesDialogOpen(true)}
+                        className="flex-1"
+                      >
+                        <WalletCards className="size-4" />
+                        <span>{t("Taxes")}</span>
+                      </Button>
+                    </ButtonGroup>
+                  </div>
+                  {/* Cart items */}
+                  <div className="flex-1 overflow-y-auto bg-slate-50/40 p-3">
+                    {cartItems.length ? (
+                      cartItems.map((item) => (
+                        <div
+                          key={item.line_id}
+                          className="mb-3 rounded-md border border-slate-200 bg-white p-3 text-sm shadow-sm"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate font-semibold text-slate-950">{item.name}</p>
+                              <p className="text-xs font-medium text-muted-foreground">
+                                {t("sku")}: {item.sku || "-"}
+                              </p>
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                                {item.unit_label ? (
+                                  <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs">
+                                    {item.unit_label}
+                                  </Button>
+                                ) : item.product_type ? (
+                                  <span className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-muted-foreground">
+                                    {item.product_type}
+                                  </span>
+                                ) : null}
+                                <Button
+                                  type="button"
+                                  variant="link"
+                                  onClick={() => openItemDiscountDialog(item)}
+                                  className="h-auto p-0 text-xs font-semibold"
+                                >
+                                  {item.discount_value && item.discount_value > 0 ? (
+                                    <span className="rounded border border-emerald-100 bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-700 no-underline">
+                                      {t("Discount")}: {item.discount_type === "percentage" ? `${item.discount_value}%` : formatMoney(item.discount_value)} (-{formatMoney(getCartItemDiscount(item))})
+                                    </span>
+                                  ) : (
+                                    t("Discount")
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 shrink-0 text-red-500 hover:text-red-600"
+                              onClick={() => removeItem(item.line_id)}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
 
-                    <div className="mt-3 grid grid-cols-[120px_1fr_120px] items-end gap-3">
-                      <UniFieldInput
-                        label={t("qty")}
-                        type="number"
-                        step={allowDecimalQuantities ? "0.01" : "1"}
-                        min="0"
-                        value={item.qty}
-                        containerClassName="bg-transparent"
-                        onChange={(e) => {
-                          const val = Number(e.target.value)
-                          if (val >= 0) {
-                            setCartItems((prev) =>
-                              prev
-                                .map((i) =>
-                                  i.line_id === item.line_id
-                                    ? { ...i, qty: val }
-                                    : i
-                                )
-                                .filter((i) => i.qty > 0)
-                            )
-                          }
-                        }}
-                      />
-                      <UniFieldInput
-                        label={t("price")}
-                        type="number"
-                        min="0"
-                        value={item.price}
-                        prefix={posOptions.currency_symbol}
-                        disabled={!posOptions.unit_price_editable}
-                        containerClassName="bg-transparent"
-                        onChange={(event) => {
-                          const price = Number(event.target.value)
-                          if (price >= 0) {
-                            setCartItems((prev) =>
-                              prev.map((cartItem) =>
-                                cartItem.line_id === item.line_id
-                                  ? { ...cartItem, price, mode: "custom" }
-                                  : cartItem
-                              )
-                            )
-                          }
-                        }}
-                      />
-                      <div className="pb-1 text-right">
-                        <p className="text-xs font-semibold text-muted-foreground">{t("total")}</p>
-                        <p className="text-base font-bold text-slate-950">
-                          {formatMoney(item.qty * item.price - getCartItemDiscount(item))}
-                        </p>
+                          <div className="mt-3 grid grid-cols-[120px_1fr_120px] items-end gap-3">
+                            <UniFieldInput
+                              label={t("qty")}
+                              type="number"
+                              step={allowDecimalQuantities ? "0.01" : "1"}
+                              min="0"
+                              value={item.qty}
+                              containerClassName="bg-transparent"
+                              onChange={(e) => {
+                                const val = Number(e.target.value)
+                                if (val >= 0) {
+                                  setCartItems((prev) =>
+                                    prev
+                                      .map((i) =>
+                                        i.line_id === item.line_id
+                                          ? { ...i, qty: val }
+                                          : i
+                                      )
+                                      .filter((i) => i.qty > 0)
+                                  )
+                                }
+                              }}
+                            />
+                            <UniFieldInput
+                              label={t("price")}
+                              type="number"
+                              min="0"
+                              value={item.price}
+                              prefix={posOptions.currency_symbol}
+                              disabled={!posOptions.unit_price_editable}
+                              containerClassName="bg-transparent"
+                              onChange={(event) => {
+                                const price = Number(event.target.value)
+                                if (price >= 0) {
+                                  setCartItems((prev) =>
+                                    prev.map((cartItem) =>
+                                      cartItem.line_id === item.line_id
+                                        ? { ...cartItem, price, mode: "custom" }
+                                        : cartItem
+                                    )
+                                  )
+                                }
+                              }}
+                            />
+                            <div className="pb-1 text-right">
+                              <p className="text-xs font-semibold text-muted-foreground">{t("total")}</p>
+                              <p className="text-base font-bold text-slate-950">
+                                {formatMoney(item.qty * item.price - getCartItemDiscount(item))}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex min-h-64 flex-col items-center justify-center gap-3 text-muted-foreground">
+                        <ShoppingCart className="size-10" />
+                        <p className="text-sm font-semibold">{t("no_items_in_cart")}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bill summary + checkout */}
+                  <div className="border-t border-slate-200 bg-slate-50/60 p-3">
+                    <div className="rounded-md border border-slate-200 bg-white text-sm font-semibold">
+                      <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+                        <span>{t("Sub Total")}</span>
+                        <span>{formatMoney(itemsSubtotal)}</span>
+                      </div>
+                      {(couponCodes.length > 0 || selectedCouponId) ? (
+                        <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+                          <span>{t("Coupons")}</span>
+                          <Button type="button" variant="link" className="h-auto p-0" onClick={() => setIsCouponsDialogOpen(true)}>
+                            {couponCodes.length || 1}
+                          </Button>
+                        </div>
+                      ) : null}
+                      <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+                        <span>
+                          {t("Discount")}
+                          {cartDiscountType === "percentage" ? ` (${cartDiscountVal || 0}%)` : cartDiscount > 0 ? ` (${t("Flat")})` : ""}
+                        </span>
+                        <Button type="button" variant="link" className="h-auto p-0" onClick={openCartDiscountDialog}>
+                          {formatMoney(cartDiscount)}
+                        </Button>
+                      </div>
+                      {posOptions.pos_vat !== "disabled" ? (
+                        <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+                          <span>{selectedTaxGroup?.name || t("Tax")}</span>
+                          <Button type="button" variant="link" className="h-auto p-0" onClick={() => setIsTaxesDialogOpen(true)}>
+                            {formatMoney(0)}
+                          </Button>
+                        </div>
+                      ) : null}
+                      <div className="flex items-center justify-between px-3 py-3 text-base font-bold">
+                        <span>{t("Total")}</span>
+                        <span>{formatMoney(subtotal)}</span>
                       </div>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex min-h-64 flex-col items-center justify-center gap-3 text-muted-foreground">
-                  <ShoppingCart className="size-10" />
-                  <p className="text-sm font-semibold">{t("no_items_in_cart")}</p>
-                </div>
-              )}
-            </div>
 
-            {/* Bill summary + checkout */}
-            <div className="border-t border-slate-200 bg-slate-50/60 p-3">
-              <div className="rounded-md border border-slate-200 bg-white text-sm font-semibold">
-                <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
-                  <span>{t("Sub Total")}</span>
-                  <span>{formatMoney(itemsSubtotal)}</span>
-                </div>
-                {(couponCodes.length > 0 || selectedCouponId) ? (
-                  <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
-                    <span>{t("Coupons")}</span>
-                    <Button type="button" variant="link" className="h-auto p-0" onClick={() => setIsCouponsDialogOpen(true)}>
-                      {couponCodes.length || 1}
+                    {customerId ? (
+                      <div className="mt-3 flex items-center justify-between rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800">
+                        <span>
+                          {rewardBalanceState.isLoading
+                            ? t("loading_reward_balance")
+                            : redeemableReward
+                              ? `${selectedCustomer?.name || t("Customer")} · ${redeemableReward.points} ${t("points_available")}`
+                              : t("no_redeemable_points")}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRedeemReward}
+                          disabled={!redeemableReward || redeemRewardState.isLoading}
+                          className="bg-white"
+                        >
+                          {redeemRewardState.isLoading ? <Spinner /> : t("redeem")}
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="grid h-16 shrink-0 grid-cols-4 overflow-hidden border-t border-gray-200 text-sm font-bold">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={openCartDiscountDialog}
+                      className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-gray-50 px-2 py-2 text-gray-700 hover:bg-gray-100 rounded-none h-auto"
+                    >
+                      <Percent className="size-5" />
+                      {t("Discount")}
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={!cartItems.length || isHoldingSale}
+                      onClick={() => setIsHoldReferenceDialogOpen(true)}
+                      className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-blue-600 px-2 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 rounded-none h-auto hover:text-white"
+                    >
+                      <Pause className="size-5" />
+                      {isHoldingSale ? t("Saving") : t("Hold")}
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={!cartItems.length || isCreatingSale}
+                      onClick={handleOpenPaymentDialog}
+                      className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-green-600 px-2 py-2 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 rounded-none h-auto hover:text-white"
+                    >
+                      <CreditCard className="size-5" />
+                      {isCreatingSale ? t("Completing") : t("Pay")}
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleVoidCart}
+                      className="flex min-h-16 flex-col items-center justify-center gap-1 bg-red-600 px-2 py-2 text-white hover:bg-red-700 rounded-none h-auto hover:text-white hover:bg-red-700/90"
+                    >
+                      <Ban className="size-5" />
+                      {t("Void")}
                     </Button>
                   </div>
-                ) : null}
-                <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
-                  <span>
-                    {t("Discount")}
-                    {cartDiscountType === "percentage" ? ` (${cartDiscountVal || 0}%)` : cartDiscount > 0 ? ` (${t("Flat")})` : ""}
-                  </span>
-                  <Button type="button" variant="link" className="h-auto p-0" onClick={openCartDiscountDialog}>
-                    {formatMoney(cartDiscount)}
-                  </Button>
-                </div>
-                {posOptions.pos_vat !== "disabled" ? (
-                  <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
-                    <span>{selectedTaxGroup?.name || t("Tax")}</span>
-                    <Button type="button" variant="link" className="h-auto p-0" onClick={() => setIsTaxesDialogOpen(true)}>
-                      {formatMoney(0)}
-                    </Button>
-                  </div>
-                ) : null}
-                <div className="flex items-center justify-between px-3 py-3 text-base font-bold">
-                  <span>{t("Total")}</span>
-                  <span>{formatMoney(subtotal)}</span>
                 </div>
               </div>
-
-              {customerId ? (
-                <div className="mt-3 flex items-center justify-between rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800">
-                  <span>
-                    {rewardBalanceState.isLoading
-                      ? t("loading_reward_balance")
-                      : redeemableReward
-                        ? `${selectedCustomer?.name || t("Customer")} · ${redeemableReward.points} ${t("points_available")}`
-                        : t("no_redeemable_points")}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRedeemReward}
-                    disabled={!redeemableReward || redeemRewardState.isLoading}
-                    className="bg-white"
-                  >
-                    {redeemRewardState.isLoading ? <Spinner /> : t("redeem")}
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="grid h-16 shrink-0 grid-cols-4 overflow-hidden border-t border-gray-200 text-sm font-bold">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={openCartDiscountDialog}
-                className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-gray-50 px-2 py-2 text-gray-700 hover:bg-gray-100 rounded-none h-auto"
-              >
-                <Percent className="size-5" />
-                {t("Discount")}
-              </Button>
-              <Button
-                type="button"
-                disabled={!cartItems.length || isHoldingSale}
-                onClick={() => setIsHoldReferenceDialogOpen(true)}
-                className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-blue-600 px-2 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 rounded-none h-auto hover:text-white"
-              >
-                <Pause className="size-5" />
-                {isHoldingSale ? t("Saving") : t("Hold")}
-              </Button>
-              <Button
-                type="button"
-                disabled={!cartItems.length || isCreatingSale}
-                onClick={handleOpenPaymentDialog}
-                className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-green-600 px-2 py-2 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 rounded-none h-auto hover:text-white"
-              >
-                <CreditCard className="size-5" />
-                {isCreatingSale ? t("Completing") : t("Pay")}
-              </Button>
-              <Button
-                type="button"
-                onClick={handleVoidCart}
-                className="flex min-h-16 flex-col items-center justify-center gap-1 bg-red-600 px-2 py-2 text-white hover:bg-red-700 rounded-none h-auto hover:text-white hover:bg-red-700/90"
-              >
-                <Ban className="size-5" />
-                {t("Void")}
-              </Button>
-            </div>
             </div>
           </div>
-          </div>
-          </div>
-      ) : null}
+        ) : null}
 
-      <SalesModals
-        t={t}
-        posOptions={posOptions}
-        isProductSearchOpen={isProductSearchOpen}
-        setIsProductSearchOpen={setIsProductSearchOpen}
-        productSearchTerm={productSearchTerm}
-        setProductSearchTerm={setProductSearchTerm}
-        handleProductSearch={handleProductSearch}
-        productSearchState={productSearchState}
-        productSearchResults={productSearchResults}
-        handleProductSearchPick={handleProductSearchPick}
-        isPaymentDialogOpen={isPaymentDialogOpen}
-        setIsPaymentDialogOpen={setIsPaymentDialogOpen}
-        activePaymentLabel={activePaymentLabel}
-        paymentTypeOptions={paymentTypeOptions}
-        activePaymentType={activePaymentType}
-        setActivePaymentType={setActivePaymentType}
-        paymentsRows={paymentsRows}
-        removePaymentRow={removePaymentRow}
-        subtotal={subtotal}
-        cartDiscount={cartDiscount}
-        totalPaid={totalPaid}
-        changeAmount={changeAmount}
-        paymentAmountInput={paymentAmountInput}
-        setPaymentAmountInput={setPaymentAmountInput}
-        addPaymentFromPopup={addPaymentFromPopup}
-        paymentAmountShortcuts={paymentAmountShortcuts}
-        makeFullPaymentFromPopup={makeFullPaymentFromPopup}
-        handleCompleteSale={handleCompleteSale}
-        isCreatingSale={isCreatingSale}
-        ordersAllowUnpaid={ordersAllowUnpaid}
-        ordersAllowPartial={ordersAllowPartial}
-        handleSaveAsUnpaid={handleSaveAsUnpaid}
-        openCartDiscountDialog={openCartDiscountDialog}
-        isOpenShiftDialogOpen={isOpenShiftDialogOpen}
-        setIsOpenShiftDialogOpen={setIsOpenShiftDialogOpen}
-        shift={shift}
-        handleOpenShift={handleOpenShift}
-        isOpeningShift={isOpeningShift}
-        selectedRegisterId={selectedRegisterId}
-        setSelectedRegisterId={setSelectedRegisterId}
-        registerOptions={registerOptions}
-        isRegistersLoading={isRegistersLoading}
-        openingCash={openingCash}
-        setOpeningCash={setOpeningCash}
-        openingNote={openingNote}
-        setOpeningNote={setOpeningNote}
-        router={router}
-        shiftAction={shiftAction}
-        setShiftAction={setShiftAction}
-        movementAmount={movementAmount}
-        setMovementAmount={setMovementAmount}
-        movementNote={movementNote}
-        setMovementNote={setMovementNote}
-        isCashingIn={isCashingIn}
-        isCashingOut={isCashingOut}
-        handleCashMovement={handleCashMovement}
-        declaredCash={declaredCash}
-        setDeclaredCash={setDeclaredCash}
-        closingNote={closingNote}
-        setClosingNote={setClosingNote}
-        isClosingShift={isClosingShift}
-        handleCloseShift={handleCloseShift}
-        isHeldCartDialogOpen={isHeldCartDialogOpen}
-        setIsHeldCartDialogOpen={setIsHeldCartDialogOpen}
-        pendingOrdersTab={pendingOrdersTab}
-        handlePendingTabChange={handlePendingTabChange}
-        pendingOrderSearch={pendingOrderSearch}
-        setPendingOrderSearch={setPendingOrderSearch}
-        handleSearchPendingOrders={handleSearchPendingOrders}
-        pendingOrders={pendingOrders}
-        handleOpenPendingOrder={handleOpenPendingOrder}
-        handlePreviewPendingOrder={handlePreviewPendingOrder}
-        handlePrintPendingOrder={handlePrintPendingOrder}
-        handleDeleteHeldSale={handleDeleteHeldSale}
-        isHoldReferenceDialogOpen={isHoldReferenceDialogOpen}
-        setIsHoldReferenceDialogOpen={setIsHoldReferenceDialogOpen}
-        holdReference={holdReference}
-        setHoldReference={setHoldReference}
-        handleHoldSale={handleHoldSale}
-        isHoldingSale={isHoldingSale}
-        previewPendingOrder={previewPendingOrder}
-        setPreviewPendingOrder={setPreviewPendingOrder}
-        isUnitPickerOpen={isUnitPickerOpen}
-        setIsUnitPickerOpen={setIsUnitPickerOpen}
-        unitPickerProduct={unitPickerProduct}
-        setUnitPickerProduct={setUnitPickerProduct}
-        getUnitQuantityLabel={getUnitQuantityLabel}
-        getDisplayPrice={getDisplayPrice}
-        openQuantityDialog={openQuantityDialog}
-        pendingCartProduct={pendingCartProduct}
-        setPendingCartProduct={setPendingCartProduct}
-        quantityInput={quantityInput}
-        setQuantityInput={setQuantityInput}
-        allowDecimalQuantities={allowDecimalQuantities}
-        handleConfirmQuantity={handleConfirmQuantity}
-        isNoteDialogOpen={isNoteDialogOpen}
-        setIsNoteDialogOpen={setIsNoteDialogOpen}
-        saleNote={saleNote}
-        setSaleNote={setSaleNote}
-        isCouponsDialogOpen={isCouponsDialogOpen}
-        setIsCouponsDialogOpen={setIsCouponsDialogOpen}
-        selectedCouponId={selectedCouponId}
-        setSelectedCouponId={setSelectedCouponId}
-        couponOptions={couponOptions}
-        couponInput={couponInput}
-        setCouponInput={setCouponInput}
-        taxGroupOptions={taxGroupOptions}
-        isOrderSettingsOpen={isOrderSettingsOpen}
-        setIsOrderSettingsOpen={setIsOrderSettingsOpen}
-        activeOrderType={activeOrderType}
-        setOrderType={setOrderType}
-        enabledOrderTypes={enabledOrderTypes}
-        isTaxesDialogOpen={isTaxesDialogOpen}
-        setIsTaxesDialogOpen={setIsTaxesDialogOpen}
-        cartTaxGroupId={cartTaxGroupId}
-        setCartTaxGroupId={setCartTaxGroupId}
-        cartTaxType={cartTaxType}
-        setCartTaxType={setCartTaxType}
-        isCartDiscountDialogOpen={isCartDiscountDialogOpen}
-        setIsCartDiscountDialogOpen={setIsCartDiscountDialogOpen}
-        cartDiscountType={cartDiscountType}
-        setCartDiscountType={setCartDiscountType}
-        cartDiscountVal={cartDiscountVal}
-        setCartDiscountVal={setCartDiscountVal}
-        handleApplyCartDiscount={handleApplyCartDiscount}
-        activeDiscountItem={activeDiscountItem}
-        setActiveDiscountItem={setActiveDiscountItem}
-        itemDiscountType={itemDiscountType}
-        setItemDiscountType={setItemDiscountType}
-        itemDiscountVal={itemDiscountVal}
-        setItemDiscountVal={setItemDiscountVal}
-        handleApplyItemDiscount={handleApplyItemDiscount}
-      />
+        <SalesModals
+          t={t}
+          posOptions={posOptions}
+          isCustomerSelectOpen={isCustomerSelectOpen}
+          setIsCustomerSelectOpen={setIsCustomerSelectOpen}
+          customerSearchTerm={customerSearchTerm}
+          setCustomerSearchTerm={setCustomerSearchTerm}
+          customerOptions={customerOptions}
+          customerId={customerId}
+          setCustomerId={setCustomerId}
+          isProductSearchOpen={isProductSearchOpen}
+          setIsProductSearchOpen={setIsProductSearchOpen}
+          productSearchTerm={productSearchTerm}
+          setProductSearchTerm={setProductSearchTerm}
+          handleProductSearch={handleProductSearch}
+          productSearchState={productSearchState}
+          productSearchResults={productSearchResults}
+          handleProductSearchPick={handleProductSearchPick}
+          isPaymentDialogOpen={isPaymentDialogOpen}
+          setIsPaymentDialogOpen={setIsPaymentDialogOpen}
+          activePaymentLabel={activePaymentLabel}
+          paymentTypeOptions={paymentTypeOptions}
+          activePaymentType={activePaymentType}
+          setActivePaymentType={setActivePaymentType}
+          paymentsRows={paymentsRows}
+          removePaymentRow={removePaymentRow}
+          subtotal={subtotal}
+          cartDiscount={cartDiscount}
+          totalPaid={totalPaid}
+          changeAmount={changeAmount}
+          paymentAmountInput={paymentAmountInput}
+          setPaymentAmountInput={setPaymentAmountInput}
+          addPaymentFromPopup={addPaymentFromPopup}
+          paymentAmountShortcuts={paymentAmountShortcuts}
+          makeFullPaymentFromPopup={makeFullPaymentFromPopup}
+          handleCompleteSale={handleCompleteSale}
+          isCreatingSale={isCreatingSale}
+          ordersAllowUnpaid={ordersAllowUnpaid}
+          ordersAllowPartial={ordersAllowPartial}
+          handleSaveAsUnpaid={handleSaveAsUnpaid}
+          openCartDiscountDialog={openCartDiscountDialog}
+          isOpenShiftDialogOpen={isOpenShiftDialogOpen}
+          setIsOpenShiftDialogOpen={setIsOpenShiftDialogOpen}
+          shift={shift}
+          handleOpenShift={handleOpenShift}
+          isOpeningShift={isOpeningShift}
+          selectedRegisterId={selectedRegisterId}
+          setSelectedRegisterId={setSelectedRegisterId}
+          registerOptions={registerOptions}
+          isRegistersLoading={isRegistersLoading}
+          openingCash={openingCash}
+          setOpeningCash={setOpeningCash}
+          openingNote={openingNote}
+          setOpeningNote={setOpeningNote}
+          router={router}
+          shiftAction={shiftAction}
+          setShiftAction={setShiftAction}
+          movementAmount={movementAmount}
+          setMovementAmount={setMovementAmount}
+          movementNote={movementNote}
+          setMovementNote={setMovementNote}
+          isCashingIn={isCashingIn}
+          isCashingOut={isCashingOut}
+          handleCashMovement={handleCashMovement}
+          declaredCash={declaredCash}
+          setDeclaredCash={setDeclaredCash}
+          closingNote={closingNote}
+          setClosingNote={setClosingNote}
+          isClosingShift={isClosingShift}
+          handleCloseShift={handleCloseShift}
+          isHeldCartDialogOpen={isHeldCartDialogOpen}
+          setIsHeldCartDialogOpen={setIsHeldCartDialogOpen}
+          pendingOrdersTab={pendingOrdersTab}
+          handlePendingTabChange={handlePendingTabChange}
+          pendingOrderSearch={pendingOrderSearch}
+          setPendingOrderSearch={setPendingOrderSearch}
+          handleSearchPendingOrders={handleSearchPendingOrders}
+          pendingOrders={pendingOrders}
+          handleOpenPendingOrder={handleOpenPendingOrder}
+          handlePreviewPendingOrder={handlePreviewPendingOrder}
+          handlePrintPendingOrder={handlePrintPendingOrder}
+          handleDeleteHeldSale={handleDeleteHeldSale}
+          isHoldReferenceDialogOpen={isHoldReferenceDialogOpen}
+          setIsHoldReferenceDialogOpen={setIsHoldReferenceDialogOpen}
+          holdReference={holdReference}
+          setHoldReference={setHoldReference}
+          handleHoldSale={handleHoldSale}
+          isHoldingSale={isHoldingSale}
+          previewPendingOrder={previewPendingOrder}
+          setPreviewPendingOrder={setPreviewPendingOrder}
+          isUnitPickerOpen={isUnitPickerOpen}
+          setIsUnitPickerOpen={setIsUnitPickerOpen}
+          unitPickerProduct={unitPickerProduct}
+          setUnitPickerProduct={setUnitPickerProduct}
+          getUnitQuantityLabel={getUnitQuantityLabel}
+          getDisplayPrice={getDisplayPrice}
+          openQuantityDialog={openQuantityDialog}
+          pendingCartProduct={pendingCartProduct}
+          setPendingCartProduct={setPendingCartProduct}
+          quantityInput={quantityInput}
+          setQuantityInput={setQuantityInput}
+          allowDecimalQuantities={allowDecimalQuantities}
+          handleConfirmQuantity={handleConfirmQuantity}
+          isNoteDialogOpen={isNoteDialogOpen}
+          setIsNoteDialogOpen={setIsNoteDialogOpen}
+          saleNote={saleNote}
+          setSaleNote={setSaleNote}
+          isCouponsDialogOpen={isCouponsDialogOpen}
+          setIsCouponsDialogOpen={setIsCouponsDialogOpen}
+          selectedCouponId={selectedCouponId}
+          setSelectedCouponId={setSelectedCouponId}
+          couponOptions={couponOptions}
+          couponInput={couponInput}
+          setCouponInput={setCouponInput}
+          taxGroupOptions={taxGroupOptions}
+          isOrderSettingsOpen={isOrderSettingsOpen}
+          setIsOrderSettingsOpen={setIsOrderSettingsOpen}
+          orderTitle={orderTitle}
+          setOrderTitle={setOrderTitle}
+          activeOrderType={activeOrderType}
+          setOrderType={setOrderType}
+          enabledOrderTypes={enabledOrderTypes}
+          isTaxesDialogOpen={isTaxesDialogOpen}
+          setIsTaxesDialogOpen={setIsTaxesDialogOpen}
+          cartTaxGroupId={cartTaxGroupId}
+          setCartTaxGroupId={setCartTaxGroupId}
+          cartTaxType={cartTaxType}
+          setCartTaxType={setCartTaxType}
+          isCartDiscountDialogOpen={isCartDiscountDialogOpen}
+          setIsCartDiscountDialogOpen={setIsCartDiscountDialogOpen}
+          cartDiscountType={cartDiscountType}
+          setCartDiscountType={setCartDiscountType}
+          cartDiscountVal={cartDiscountVal}
+          setCartDiscountVal={setCartDiscountVal}
+          handleApplyCartDiscount={handleApplyCartDiscount}
+          activeDiscountItem={activeDiscountItem}
+          setActiveDiscountItem={setActiveDiscountItem}
+          itemDiscountType={itemDiscountType}
+          setItemDiscountType={setItemDiscountType}
+          itemDiscountVal={itemDiscountVal}
+          setItemDiscountVal={setItemDiscountVal}
+          handleApplyItemDiscount={handleApplyItemDiscount}
+        />
 
-      {confirmDialog}
+        {confirmDialog}
       </div>
     </DashboardPage>
   )

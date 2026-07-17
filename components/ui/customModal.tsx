@@ -50,21 +50,21 @@ const CustomModal = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className={cn("sm:max-w-[500px]", className)}>
-        <DialogHeader className={headerClassName}>
+      <DialogContent className={cn("sm:max-w-[500px] p-0 gap-0 [&>[data-slot=dialog-close]]:top-2 [&>[data-slot=dialog-close]]:right-3 [&>[data-slot=dialog-close]]:p-1.5", className)}>
+        <DialogHeader className={cn("border-b border-gray-200 px-4 py-3 text-left", headerClassName)}>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <div
           className={cn(
-            "-mx-6 no-scrollbar max-h-[60vh] overflow-y-auto border-y border-gray-100 px-6 py-4",
+            "no-scrollbar max-h-[70vh] overflow-y-auto p-2",
             bodyClassName
           )}
         >
           {children}
         </div>
         {showFooter && (
-          <DialogFooter className={footerClassName}>
+          <DialogFooter className={cn("mt-0 border-t border-gray-200 px-4 py-3", footerClassName)}>
             {footer ? (
               footer
             ) : (

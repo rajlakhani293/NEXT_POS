@@ -45,7 +45,7 @@ export function useConfirmDialog() {
       onOpenChange={(open) => !open && close(false)}
       title={pending?.title || t("Confirm")}
       className="sm:max-w-[420px]"
-      bodyClassName="border-y-0 py-0"
+      bodyClassName="p-4"
       footerClassName="gap-2"
       footer={
         <>

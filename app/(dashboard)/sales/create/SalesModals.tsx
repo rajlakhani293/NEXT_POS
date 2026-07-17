@@ -153,6 +153,8 @@ interface SalesModalsProps {
   // Order Settings
   isOrderSettingsOpen: boolean
   setIsOrderSettingsOpen: (open: boolean) => void
+  orderTitle: string
+  setOrderTitle: (title: string) => void
   activeOrderType: string
   setOrderType: (type: string) => void
   enabledOrderTypes: any[]
@@ -182,11 +184,28 @@ interface SalesModalsProps {
   itemDiscountVal: string
   setItemDiscountVal: (val: string) => void
   handleApplyItemDiscount: () => void
+
+  // Customer selection
+  isCustomerSelectOpen: boolean
+  setIsCustomerSelectOpen: (open: boolean) => void
+  customerSearchTerm: string
+  setCustomerSearchTerm: (term: string) => void
+  customerOptions: any[]
+  customerId: string
+  setCustomerId: (id: string) => void
 }
 
 export default function SalesModals({
   t,
   posOptions,
+
+  isCustomerSelectOpen,
+  setIsCustomerSelectOpen,
+  customerSearchTerm,
+  setCustomerSearchTerm,
+  customerOptions,
+  customerId,
+  setCustomerId,
 
   isProductSearchOpen,
   setIsProductSearchOpen,
@@ -308,6 +327,8 @@ export default function SalesModals({
 
   isOrderSettingsOpen,
   setIsOrderSettingsOpen,
+  orderTitle,
+  setOrderTitle,
   activeOrderType,
   setOrderType,
   enabledOrderTypes,
@@ -339,6 +360,16 @@ export default function SalesModals({
     formatBusinessMoney(value, posOptions)
   const enteredPayments = paymentsRows.filter((row) => money(row.amount) > 0)
   const remainingAmount = Math.max(subtotal - totalPaid, 0)
+
+  const filteredCustomers = React.useMemo(() => {
+    if (!customerSearchTerm.trim()) return customerOptions
+    const term = customerSearchTerm.toLowerCase()
+    return customerOptions.filter((c: any) =>
+      c.name?.toLowerCase().includes(term) ||
+      c.phone?.toLowerCase().includes(term) ||
+      c.email?.toLowerCase().includes(term)
+    )
+  }, [customerOptions, customerSearchTerm])
 
   return (
     <>
@@ -1123,11 +1154,12 @@ export default function SalesModals({
           </>
         }
       >
-        <textarea
+        <UniFieldInput
+          as="textarea"
           value={saleNote}
           onChange={(event) => setSaleNote(event.target.value)}
           placeholder={t("add_note_placeholder")}
-          className="min-h-32 w-full rounded border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100"
+          className="min-h-32"
         />
       </CustomModal>
 
@@ -1228,6 +1260,12 @@ export default function SalesModals({
         }
       >
         <div className="space-y-4 py-2">
+          <UniFieldInput
+            label={t("Name")}
+            value={orderTitle}
+            onChange={(event) => setOrderTitle(event.target.value)}
+            placeholder={t("Order Reference")}
+          />
           <UniFieldSelect
             label={t("order_type")}
             value={activeOrderType}
@@ -1384,6 +1422,63 @@ export default function SalesModals({
             type="number"
             prefix={itemDiscountType === "flat" ? posOptions.currency_symbol : "%"}
           />
+        </div>
+      </CustomModal>
+
+      <CustomModal
+        open={isCustomerSelectOpen}
+        onOpenChange={setIsCustomerSelectOpen}
+        title={t("Customer List")}
+        className="max-w-2xl"
+        showFooter={false}
+      >
+        <div className="flex min-h-[400px] flex-col overflow-hidden">
+          <div className="border-b pb-3">
+            <UniFieldInput
+              value={customerSearchTerm}
+              onChange={(event) => setCustomerSearchTerm(event.target.value)}
+              placeholder={t("Search Customer")}
+              autoFocus
+            />
+          </div>
+          <div className="flex-auto overflow-y-auto pt-3">
+            {filteredCustomers.length ? (
+              <ul className="space-y-1">
+                {filteredCustomers.map((customer: any) => (
+                  <li key={customer.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCustomerId(String(customer.id))
+                        setIsCustomerSelectOpen(false)
+                        setCustomerSearchTerm("")
+                      }}
+                      className={[
+                        "flex w-full cursor-pointer justify-between rounded-lg border p-3 text-left transition hover:bg-slate-50",
+                        String(customerId) === String(customer.id)
+                          ? "border-slate-950 bg-slate-50"
+                          : "border-slate-200"
+                      ].join(" ")}
+                    >
+                      <div>
+                        <h4 className="font-semibold text-slate-900">{customer.name}</h4>
+                        {customer.phone ? (
+                          <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                        ) : null}
+                      </div>
+                      {String(customerId) === String(customer.id) ? (
+                        <span className="text-xs font-semibold text-slate-900">{t("Selected")}</span>
+                      ) : null}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="p-4 text-center text-sm text-muted-foreground">
+                {t("No customers found.")}
+              </p>
+            )}
+          </div>
         </div>
       </CustomModal>
     </>
