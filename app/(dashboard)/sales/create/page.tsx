@@ -6,8 +6,8 @@ import {
   BanknoteArrowDown,
   BanknoteArrowUp,
   Ban,
+  CheckCircle2,
   ChevronRight,
-  ChevronsDownUp,
   CreditCard,
   Folder,
   Home,
@@ -17,25 +17,25 @@ import {
   Package,
   Pause,
   Percent,
-  ScanBarcode,
-  Search,
   Settings,
+  ShoppingBag,
   ShoppingCart,
   Tags,
   Trash2,
+  Truck,
   User,
   WalletCards,
+  Search,
 } from "lucide-react"
 
 import { useConfirmDialog } from "@/components/confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
+import CustomModal from "@/components/ui/customModal"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import SalesModals from "./SalesModals"
-import { SelectItem } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
-import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { catalog } from "@/lib/api/catalog"
 import { customers } from "@/lib/api/customers"
 import { payments } from "@/lib/api/payments"
@@ -90,6 +90,7 @@ type POSUnitQuantity = {
   sale_price_gross?: number
   sale_price_net?: number
   quantity: number
+  visible?: boolean
 }
 
 type PendingCartProduct = {
@@ -265,6 +266,7 @@ export default function SalesPage() {
   const [gridLoading, setGridLoading] = useState(false)
   const [gridBreadcrumbs, setGridBreadcrumbs] = useState<POSCategory[]>([])
   const [unitPickerProduct, setUnitPickerProduct] = useState<POSProduct | null>(null)
+  const [unitPickerMode, setUnitPickerMode] = useState<"quantity" | "direct">("quantity")
   const [isUnitPickerOpen, setIsUnitPickerOpen] = useState(false)
   const [pendingCartProduct, setPendingCartProduct] = useState<PendingCartProduct | null>(null)
   const [quantityInput, setQuantityInput] = useState("1")
@@ -277,6 +279,7 @@ export default function SalesPage() {
   const [activePaymentType, setActivePaymentType] = useState("cash-payment")
   const [paymentAmountInput, setPaymentAmountInput] = useState("")
   const [isHeldCartDialogOpen, setIsHeldCartDialogOpen] = useState(false)
+  const [isOrderTypeOpen, setIsOrderTypeOpen] = useState(false)
   const [pendingOrdersTab, setPendingOrdersTab] = useState<"hold" | "unpaid" | "partially_paid">("hold")
   const [pendingOrderSearch, setPendingOrderSearch] = useState("")
   const [pendingOrders, setPendingOrders] = useState<any[]>([])
@@ -288,8 +291,7 @@ export default function SalesPage() {
   const [isOrderSettingsOpen, setIsOrderSettingsOpen] = useState(false)
   const [isTaxesDialogOpen, setIsTaxesDialogOpen] = useState(false)
   const [isCartDiscountDialogOpen, setIsCartDiscountDialogOpen] = useState(false)
-  const [isProductSearchOpen, setIsProductSearchOpen] = useState(false)
-  const [productSearchTerm, setProductSearchTerm] = useState("")
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false)
   const [productSearchResults, setProductSearchResults] = useState<POSProduct[]>([])
   const [activeDiscountItem, setActiveDiscountItem] = useState<CartItem | null>(null)
   const [itemDiscountVal, setItemDiscountVal] = useState("")
@@ -328,9 +330,7 @@ export default function SalesPage() {
   const [getTaxGroupsDropdown, { data: taxGroupsData }] = (catalog as any).useGetTaxGroupsDropdownMutation()
   const [getProductsData, productSearchState] = (catalog as any).useGetProductsDataMutation()
   const [getProductById] = (catalog as any).useGetProductByIdMutation()
-  const [searchProductUsingBarcode, barcodeSearchState] = (
-    catalog as any
-  ).useSearchProductUsingBarcodeMutation()
+  const [getProductUnitQuantitiesData] = (catalog as any).useGetProductUnitQuantitiesMutation()
   const [getCustomerRewardBalance, rewardBalanceState] = (
     rewards as any
   ).useGetCustomerRewardBalanceMutation()
@@ -379,7 +379,7 @@ export default function SalesPage() {
     : gridData.categories
   const productsForGrid = hideExhaustedProducts
     ? gridData.products.filter((product) => {
-      const quantities = product.unit_quantities || []
+      const quantities = getProductUnitQuantities(product)
       if (!quantities.length) return true
       return quantities.some((quantity) => Number(quantity.quantity || 0) > 0)
     })
@@ -388,7 +388,7 @@ export default function SalesPage() {
     ? (
       hideExhaustedProducts
         ? gridData.pinnedProducts.filter((product) => {
-          const quantities = product.unit_quantities || []
+          const quantities = getProductUnitQuantities(product)
           if (!quantities.length) return true
           return quantities.some((quantity) => Number(quantity.quantity || 0) > 0)
         })
@@ -413,9 +413,106 @@ export default function SalesPage() {
     unitQuantity?.unit_name ||
     unitQuantity?.unit_short_name ||
     unitQuantity?.unit_identifier ||
+    unitQuantity?.name ||
+    unitQuantity?.identifier ||
     unitQuantity?.unit?.name ||
     unitQuantity?.unit?.identifier ||
     (unitQuantity?.id ? `${t("Unit")} ${unitQuantity.id}` : "")
+
+  function parseProductUnitsPayload(payload: unknown): any[] {
+    if (!payload) return []
+    if (typeof payload === "string") {
+      try {
+        const parsed = JSON.parse(payload)
+        return parseProductUnitsPayload(parsed)
+      } catch {
+        return []
+      }
+    }
+    if (Array.isArray(payload)) return payload
+    if (typeof payload === "object") {
+      const objectPayload = payload as Record<string, any>
+      if (Array.isArray(objectPayload.selling_group)) return objectPayload.selling_group
+      if (Array.isArray(objectPayload.unit_quantities)) return objectPayload.unit_quantities
+      if (Array.isArray(objectPayload.units)) return objectPayload.units
+    }
+    return []
+  }
+
+  function normalizeUnitQuantity(unitQuantity?: any): POSUnitQuantity | undefined {
+    if (!unitQuantity) return undefined
+    const unit = unitQuantity.unit || {}
+    const id = Number(unitQuantity.id || unitQuantity.unit_quantity_id || 0)
+    const unitId = Number(unitQuantity.unit_id || unit.id || 0)
+    if (!id && !unitId) return undefined
+    return {
+      ...unitQuantity,
+      id: id || unitId,
+      unit_id: unitId || id,
+      unit,
+      unit_name: unitQuantity.unit_name || unitQuantity.unit__name || unitQuantity.name || unit.name,
+      unit_short_name: unitQuantity.unit_short_name || unitQuantity.short_name,
+      unit_identifier:
+        unitQuantity.unit_identifier ||
+        unitQuantity.unit__identifier ||
+        unitQuantity.identifier ||
+        unit.identifier,
+      sale_price: Number(
+        unitQuantity.sale_price ??
+        unitQuantity.sale_price_edit ??
+        unitQuantity.selling_price ??
+        unitQuantity.price ??
+        0
+      ),
+      sale_price_gross:
+        unitQuantity.sale_price_gross ??
+        unitQuantity.sale_price ??
+        unitQuantity.sale_price_edit ??
+        unitQuantity.selling_price,
+      sale_price_net:
+        unitQuantity.sale_price_net ??
+        unitQuantity.sale_price ??
+        unitQuantity.sale_price_edit ??
+        unitQuantity.selling_price,
+      quantity: Number(unitQuantity.quantity ?? unitQuantity.current_stock ?? unitQuantity.stock ?? 0),
+      visible: unitQuantity.visible ?? true,
+    }
+  }
+
+  function getProductUnitQuantities(product?: POSProduct | any): POSUnitQuantity[] {
+    if (!product) return []
+    const rawUnits =
+      product.unit_quantities ??
+      product.unitQuantities ??
+      product.selling_units ??
+      product.selling_group ??
+      product.units_json ??
+      product.units ??
+      []
+    return parseProductUnitsPayload(rawUnits)
+      .map((unitQuantity) => normalizeUnitQuantity(unitQuantity))
+      .filter((unitQuantity): unitQuantity is POSUnitQuantity => Boolean(unitQuantity))
+  }
+
+  function normalizeProductForCart(product: POSProduct | any) {
+    return {
+      ...product,
+      unit_quantities: getProductUnitQuantities(product),
+    }
+  }
+
+  const getProductWithSellingUnits = async (product: POSProduct | any) => {
+    const detailResponse = await getProductById({ id: product.id }).unwrap()
+    let fullProduct = normalizeProductForCart(detailResponse?.data || product)
+    if (!fullProduct.unit_quantities.length) {
+      const unitsResponse = await getProductUnitQuantitiesData({ productId: product.id }).unwrap()
+      fullProduct = normalizeProductForCart({
+        ...fullProduct,
+        unit_quantities: unitsResponse?.data || [],
+      })
+    }
+    return fullProduct
+  }
 
   const itemsSubtotal = useMemo(
     () =>
@@ -527,14 +624,6 @@ export default function SalesPage() {
     setCartTaxGroupId(posOptions.pos_tax_group ? String(posOptions.pos_tax_group) : "")
     setCartTaxType(posOptions.pos_tax_type ? String(posOptions.pos_tax_type) : "exclusive")
   }, [posOptions.pos_tax_group, posOptions.pos_tax_type])
-
-  useEffect(() => {
-    if (!forceAutoFocus || !barcode.trim()) return
-    const searchTimer = window.setTimeout(() => {
-      handleBarcodeSearch()
-    }, 200)
-    return () => window.clearTimeout(searchTimer)
-  }, [barcode, forceAutoFocus])
 
   useEffect(() => {
     if (!forceAutoFocus) return
@@ -697,32 +786,42 @@ export default function SalesPage() {
 
   const addProductToCart = (product: POSProduct | any, unitQuantity?: POSUnitQuantity | any, initialQty = 1) => {
     if (!product) return false
+    const normalizedProduct = normalizeProductForCart(product)
+    const selectedUnitQuantity = normalizeUnitQuantity(unitQuantity) || normalizedProduct.unit_quantities[0]
     const stockManaged =
-      product.stock_management !== "disabled" && product.type !== "dematerialized"
+      normalizedProduct.stock_management !== "disabled" && normalizedProduct.type !== "dematerialized"
 
-    if (stockManaged && !unitQuantity?.id) {
+    if (stockManaged && !selectedUnitQuantity?.id) {
       showToast.error(t("Select a selling unit before adding this product."))
       return false
     }
-    if (!validateProductQuantity(product, unitQuantity, initialQty)) return false
-
-    const price = getDisplayPrice(unitQuantity)
-    const availableStock = Number(unitQuantity?.quantity || 0)
-    const unitQuantityId = unitQuantity?.id ? String(unitQuantity.id) : ""
+    const price = getDisplayPrice(selectedUnitQuantity)
+    const availableStock = Number(selectedUnitQuantity?.quantity || 0)
+    const unitQuantityId = selectedUnitQuantity?.id ? String(selectedUnitQuantity.id) : ""
     const unitLabel =
-      getUnitQuantityLabel(unitQuantity) ||
-      product.unit_name ||
+      getUnitQuantityLabel(selectedUnitQuantity) ||
+      normalizedProduct.unit_name ||
       ""
+    const existingCartItem = cartItems.find(
+      (item) =>
+        item.product_id === String(normalizedProduct.id) &&
+        (item.unit_quantity_id || "") === unitQuantityId
+    )
+    const requestedQuantity = existingCartItem && itemsMergeEnabled
+      ? existingCartItem.qty + initialQty
+      : initialQty
+
+    if (!validateProductQuantity(normalizedProduct, selectedUnitQuantity, requestedQuantity)) return false
 
     setCartItems((items) => {
       const existing = items.find(
         (item) =>
-          item.product_id === String(product.id) &&
+          item.product_id === String(normalizedProduct.id) &&
           (item.unit_quantity_id || "") === unitQuantityId
       )
       if (existing && itemsMergeEnabled) {
         return items.map((item) =>
-          item.product_id === String(product.id) &&
+          item.product_id === String(normalizedProduct.id) &&
             (item.unit_quantity_id || "") === unitQuantityId
             ? { ...item, qty: item.qty + initialQty }
             : item
@@ -733,22 +832,22 @@ export default function SalesPage() {
         ...items,
         {
           line_id: crypto.randomUUID(),
-          product_id: String(product.id),
+          product_id: String(normalizedProduct.id),
           unit_quantity_id: unitQuantityId || undefined,
-          unit_id: unitQuantity?.unit_id
-            ? String(unitQuantity.unit_id)
-            : product.unit_id
-              ? String(product.unit_id)
+          unit_id: selectedUnitQuantity?.unit_id
+            ? String(selectedUnitQuantity.unit_id)
+            : normalizedProduct.unit_id
+              ? String(normalizedProduct.unit_id)
               : undefined,
           unit_label: unitLabel,
-          mode: product.mode || "normal",
-          product_type: product.product_type || "product",
-          rate: Number(product.rate || 0),
-          name: product.name,
+          mode: normalizedProduct.mode || "normal",
+          product_type: normalizedProduct.product_type || "product",
+          rate: Number(normalizedProduct.rate || 0),
+          name: normalizedProduct.name,
           qty: initialQty,
           price,
           available_stock: availableStock,
-          sku: product.sku,
+          sku: normalizedProduct.sku,
         },
       ]
     })
@@ -756,18 +855,41 @@ export default function SalesPage() {
   }
 
   const handleGridProductClick = (product: POSProduct) => {
-    const unitQuantities = product.unit_quantities || []
+    const normalizedProduct = normalizeProductForCart(product)
+    const unitQuantities = normalizedProduct.unit_quantities
     if (unitQuantities.length === 0) {
-      openQuantityDialog(product, undefined)
+      openQuantityDialog(normalizedProduct, undefined)
       return
     }
     if (unitQuantities.length === 1) {
-      openQuantityDialog(product, unitQuantities[0])
+      openQuantityDialog(normalizedProduct, unitQuantities[0])
       return
     }
     // Multiple units — open picker
-    setUnitPickerProduct(product)
+    setUnitPickerMode("quantity")
+    setUnitPickerProduct(normalizedProduct)
     setIsUnitPickerOpen(true)
+  }
+
+  const handleUnitPickerSelect = (unitQuantity: POSUnitQuantity | any) => {
+    if (!unitPickerProduct) return
+    const product = normalizeProductForCart(unitPickerProduct)
+    const selectedUnitQuantity = normalizeUnitQuantity(unitQuantity)
+    setIsUnitPickerOpen(false)
+    setUnitPickerProduct(null)
+    if (unitPickerMode === "direct") {
+      const added = addProductToCart(product, selectedUnitQuantity, 1)
+      if (added) {
+        setBarcode("")
+        setProductSearchResults([])
+        setIsSearchDropdownOpen(false)
+        showToast.success(t("{product} added to cart.").replace("{product}", product.name))
+      }
+      setUnitPickerMode("quantity")
+      return
+    }
+    setUnitPickerMode("quantity")
+    openQuantityDialog(product, selectedUnitQuantity)
   }
 
   const openQuantityDialog = (product: POSProduct | any, unitQuantity?: POSUnitQuantity | any, initialQty = 1) => {
@@ -794,28 +916,8 @@ export default function SalesPage() {
     setQuantityInput("1")
   }
 
-  const handleBarcodeSearch = async () => {
-    const reference = barcode.trim()
-    if (!reference) return
-    const response = await searchProductUsingBarcode({ reference }).unwrap()
-    const product = response?.data
-    if (!product) return
-    // Use matched_unit_quantity from barcode API, or first available unit_quantity
-    const matchedUnitQuantity =
-      product.matched_unit_quantity ||
-      (product.unit_quantities && product.unit_quantities.length > 0
-        ? product.unit_quantities[0]
-        : undefined)
-    const initialQty = product.scale_value !== undefined ? Number(product.scale_value) : 1
-    const added = addProductToCart(product, matchedUnitQuantity, initialQty)
-    if (added) {
-      setBarcode("")
-      showToast.success(t("{product} added to cart.").replace("{product}", product.name))
-    }
-  }
-
-  const handleProductSearch = async () => {
-    const search = productSearchTerm.trim()
+  const handleProductSearch = async (query = barcode) => {
+    const search = query.trim()
     if (!search) return
     const response = await getProductsData({
       page: 1,
@@ -824,11 +926,7 @@ export default function SalesPage() {
     }).unwrap()
     const products = response?.data?.items || response?.data || []
     setProductSearchResults(products)
-    if (products.length === 1) {
-      await handleProductSearchPick(products[0])
-    } else if (!products.length) {
-      showToast.error(t("No result to result match the search value provided."))
-    }
+    setIsSearchDropdownOpen(true)
   }
 
   const handleProductSearchPick = async (product: POSProduct | any) => {
@@ -839,21 +937,36 @@ export default function SalesPage() {
       )
       return
     }
-    const response = await getProductById({ id: product.id }).unwrap()
-    const fullProduct = response?.data || product
-    setIsProductSearchOpen(false)
-    setProductSearchTerm("")
+    const fullProduct = await getProductWithSellingUnits(product)
+    const unitQuantities = fullProduct.unit_quantities
+    if (unitQuantities.length > 1) {
+      setUnitPickerMode("direct")
+      setUnitPickerProduct(fullProduct)
+      setIsUnitPickerOpen(true)
+      setIsSearchDropdownOpen(false)
+      return
+    }
+    const matchedUnitQuantity = normalizeUnitQuantity(fullProduct.matched_unit_quantity) || unitQuantities[0]
+    const added = addProductToCart(fullProduct, matchedUnitQuantity, 1)
+    if (!added) return
+    setBarcode("")
     setProductSearchResults([])
-    handleGridProductClick(fullProduct)
+    setIsSearchDropdownOpen(false)
+    showToast.success(t("{product} added to cart.").replace("{product}", fullProduct.name))
   }
 
   useEffect(() => {
-    if (!isProductSearchOpen || !productSearchTerm.trim()) return
+    const search = barcode.trim()
+    if (!search) {
+      setProductSearchResults([])
+      setIsSearchDropdownOpen(false)
+      return
+    }
     const searchTimer = window.setTimeout(() => {
-      handleProductSearch()
+      handleProductSearch(search)
     }, 500)
     return () => window.clearTimeout(searchTimer)
-  }, [isProductSearchOpen, productSearchTerm])
+  }, [barcode])
 
   const updateQuantity = (lineId: string, delta: number) => {
     setCartItems((items) =>
@@ -1343,7 +1456,6 @@ export default function SalesPage() {
       isOrderSettingsOpen ||
       isTaxesDialogOpen ||
       isCartDiscountDialogOpen ||
-      isProductSearchOpen ||
       Boolean(activeDiscountItem)
 
     const handleShortcut = (event: KeyboardEvent) => {
@@ -1356,8 +1468,7 @@ export default function SalesPage() {
         return true
       }
 
-      if (run(posOptions.pos_keyboard_quick_search, () => setIsProductSearchOpen(true))) return
-      if (run(posOptions.pos_keyboard_toggle_merge, () => setItemsMergeEnabled((current) => !current))) return
+      if (run(posOptions.pos_keyboard_quick_search, () => barcodeInputRef.current?.focus())) return
       if (run(posOptions.pos_keyboard_cancel_order, handleVoidCart)) return
       if (
         run(posOptions.pos_keyboard_hold_order, () => {
@@ -1394,7 +1505,6 @@ export default function SalesPage() {
     isNoteDialogOpen,
     isOrderSettingsOpen,
     isPaymentDialogOpen,
-    isProductSearchOpen,
     isTaxesDialogOpen,
     isUnitPickerOpen,
     openOrderSettingsDialog,
@@ -1406,7 +1516,6 @@ export default function SalesPage() {
     posOptions.pos_keyboard_order_type,
     posOptions.pos_keyboard_payment,
     posOptions.pos_keyboard_quick_search,
-    posOptions.pos_keyboard_toggle_merge,
   ])
 
   const removePaymentRow = (rowId: string) => {
@@ -1429,317 +1538,88 @@ export default function SalesPage() {
   return (
     <DashboardPage padding="none">
       <div className="flex h-full min-h-0 flex-col bg-slate-100" id="pos-container">
-        <div className="shrink-0 border-b border-slate-200 bg-white px-3 py-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
-                <Home className="size-4" />
-                {t("Dashboard")}
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleOpenHeldSales}>
-                <ShoppingCart className="size-4" />
-                {t("Pending Orders")}
-              </Button>
-              {/* <div className="min-w-[220px]">
-                <UniFieldSelect
-                  value={customerId}
-                  onValueChange={setCustomerId}
-                  placeholder={t("Customer")}
-                  allowClear
-                  size="sm"
-                >
-                  {customerOptions.map((customer: any) => (
-                    <SelectItem key={customer.id} value={String(customer.id)}>
-                      {customer.name}
-                      {customer.phone ? ` - ${customer.phone}` : ""}
-                    </SelectItem>
-                  ))}
-                </UniFieldSelect>
-              </div> */}
-              <div className="min-w-[160px]">
-                <UniFieldSelect
-                  value={activeOrderType}
-                  onValueChange={setOrderType}
-                  placeholder={t("Type")}
-                  size="sm"
-                >
-                  {enabledOrderTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </UniFieldSelect>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" size="sm" onClick={resetSaleForm}>
-                {t("Reset")}
-              </Button>
-              {cashRegistersEnabled && shift ? (
-                <>
-                  {hasPermission(PERMISSIONS.cashRegister.cashIn) ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShiftAction("cash_in")}
-                    >
-                      <BanknoteArrowDown className="size-4" />
-                      {t("cash_in")}
-                    </Button>
-                  ) : null}
-                  {hasPermission(PERMISSIONS.cashRegister.cashOut) ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShiftAction("cash_out")}
-                    >
-                      <BanknoteArrowUp className="size-4" />
-                      {t("cash_out")}
-                    </Button>
-                  ) : null}
-                  {hasPermission(PERMISSIONS.cashRegister.close) ? (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        setDeclaredCash(String(shift.expected_cash || ""))
-                        setShiftAction("close")
-                      }}
-                    >
-                      <LogOut className="size-4" />
-                      {t("close_shift")}
-                    </Button>
-                  ) : null}
-                </>
-              ) : cashRegistersEnabled ? (
-                hasPermission(PERMISSIONS.cashRegister.open) ? (
-                  <Button size="sm" onClick={() => setIsOpenShiftDialogOpen(true)}>
-                    {t("open_shift")}
-                  </Button>
-                ) : null
-              ) : (
-                <Button variant="outline" size="sm" onClick={handleOpenHeldSales}>
-                  {t("held_carts")}
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
 
         {!cashRegistersEnabled || shift ? (
           <div className="flex flex-auto overflow-hidden">
             <div className="flex h-full min-h-0 flex-auto flex-col overflow-hidden lg:flex-row">
-              {/* ======== LEFT: Product Grid ======== */}
+
+              {/* ======== LEFT: Cart + Checkout ======== */}
               <div className={[
-                "order-2 flex min-h-0 w-full overflow-hidden lg:w-[56%]",
+                "order-1 flex min-h-0 w-full overflow-hidden border-r border-slate-200 lg:w-[50%]",
               ].join(" ")}>
                 <div className="flex min-h-0 flex-auto flex-col overflow-hidden bg-white">
-                  {/* Top bar: product tools + customer */}
-                  <div className="border-b border-slate-200 p-3">
-                    <UniFieldInput
-                      ref={barcodeInputRef}
-                      value={barcode}
-                      onChange={(e) => setBarcode(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault()
-                          handleBarcodeSearch()
-                        }
-                      }}
-                      placeholder={t("scan_barcode")}
-                      containerClassName="bg-transparent"
-                      addonBefore={
-                        <>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            title={t("Search for products.")}
-                            onClick={() => setIsProductSearchOpen(true)}
-                            className="h-10 rounded-r-none border-r border-slate-200"
-                          >
-                            <Search className="size-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            title={t("Toggle merging similar products.")}
-                            onClick={() => setItemsMergeEnabled((current) => !current)}
-                            className={[
-                              "h-10 rounded-none border-r border-slate-200",
-                              itemsMergeEnabled ? "bg-blue-50 text-blue-700" : "",
-                            ].join(" ")}
-                          >
-                            <ChevronsDownUp className="size-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            title={t("Toggle auto focus.")}
-                            onClick={() => setForceAutoFocus((current) => !current)}
-                            className={[
-                              "h-10 rounded-none border-r border-slate-200",
-                              forceAutoFocus ? "bg-blue-50 text-blue-700" : "",
-                            ].join(" ")}
-                          >
-                            <ScanBarcode className="size-4" />
-                          </Button>
-                        </>
-                      }
-                      addonAfter={
-                        barcodeSearchState.isLoading ? (
-                          <span className="flex h-10 w-10 items-center justify-center border-l border-slate-200 bg-white">
-                            <Spinner />
-                          </span>
-                        ) : undefined
-                      }
-                    />
-                  </div>
-
-                  {/* Breadcrumb navigation */}
-                  <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-2 text-sm">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigateBreadcrumb(-1)}
-                      className="flex items-center gap-1 rounded px-2 py-1 text-blue-600 hover:bg-blue-50 h-auto font-medium"
-                    >
-                      <Home className="size-3.5" />
-                      <span>{t("Home")}</span>
-                    </Button>
-                    {gridBreadcrumbs.map((crumb, i) => (
-                      <span key={crumb.id} className="flex items-center gap-1">
-                        <ChevronRight className="size-3 text-gray-400" />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigateBreadcrumb(i)}
-                          className="rounded px-2 py-1 text-blue-600 hover:bg-blue-50 h-auto font-medium"
-                        >
-                          {crumb.name}
+                  <div className="p-2 border-b">
+                    <ButtonGroup>
+                      <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
+                        <Home className="size-4" />
+                        {t("Dashboard")}
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleOpenHeldSales}>
+                        <ShoppingCart className="size-4" />
+                        {t("Pending Orders")}
+                      </Button>
+                      {enabledOrderTypes.length === 1 ? (
+                        <Button variant="outline" size="sm" disabled className="pointer-events-none cursor-default opacity-100">
+                          {enabledOrderTypes[0].label}
                         </Button>
-                      </span>
-                    ))}
-                    {gridLoading && <Spinner className="ml-2 size-3.5" />}
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsOrderTypeOpen(true)}
+                        >
+                          {enabledOrderTypes.find((t) => t.value === activeOrderType)?.label || t("Type")}
+                        </Button>
+                      )}
+                      <Button variant="outline" size="sm" onClick={resetSaleForm}>
+                        {t("Reset")}
+                      </Button>
+                      {cashRegistersEnabled && shift ? (
+                        <>
+                          {hasPermission(PERMISSIONS.cashRegister.cashIn) ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShiftAction("cash_in")}
+                            >
+                              <BanknoteArrowDown className="size-4" />
+                              {t("cash_in")}
+                            </Button>
+                          ) : null}
+                          {hasPermission(PERMISSIONS.cashRegister.cashOut) ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShiftAction("cash_out")}
+                            >
+                              <BanknoteArrowUp className="size-4" />
+                              {t("cash_out")}
+                            </Button>
+                          ) : null}
+                          {hasPermission(PERMISSIONS.cashRegister.close) ? (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                setDeclaredCash(String(shift.expected_cash || ""))
+                                setShiftAction("close")
+                              }}
+                            >
+                              <LogOut className="size-4" />
+                              {t("close_shift")}
+                            </Button>
+                          ) : null}
+                        </>
+                      ) : cashRegistersEnabled ? (
+                        hasPermission(PERMISSIONS.cashRegister.open) ? (
+                          <Button size="sm" onClick={() => setIsOpenShiftDialogOpen(true)}>
+                            {t("open_shift")}
+                          </Button>
+                        ) : null
+                      ) : null}
+                    </ButtonGroup>
                   </div>
 
-                  {/* Pinned products strip */}
-                  {pinnedProductsForGrid.length > 0 && (
-                    <div className="border-b border-gray-100 bg-amber-50/60 px-3 py-2">
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">{t("Pinned")}</p>
-                      <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                        {pinnedProductsForGrid.map((product) => {
-                          const uq = product.unit_quantities?.[0]
-                          const featuredImage = getFeaturedImage(product)
-                          return (
-                            <button
-                              key={product.id}
-                              onClick={() => handleGridProductClick(product)}
-                              className={[
-                                "cell-item group relative flex flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400",
-                                pinnedPreviewEnabled ? "h-36" : "h-20",
-                              ].join(" ")}
-                            >
-                              {pinnedPreviewEnabled && featuredImage ? (
-                                <img
-                                  src={featuredImage}
-                                  alt={product.name}
-                                  className="absolute inset-0 h-full w-full object-cover opacity-80 transition group-hover:opacity-100"
-                                />
-                              ) : pinnedPreviewEnabled ? (
-                                <ImageIcon className="absolute top-4 size-10 text-gray-300" />
-                              ) : null}
-                              <div className="relative z-10 flex h-20 w-full flex-col items-center justify-center bg-gradient-to-t from-black/70 to-transparent p-2 text-white">
-                                <p className="w-full truncate text-center text-sm font-semibold">{product.name}</p>
-                                {product.unit_quantities?.length === 1 && uq ? (
-                                  <span className="text-sm">{formatMoney(getDisplayPrice(uq))}</span>
-                                ) : null}
-                              </div>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Grid area: categories + products */}
-                  <div className="flex-1 overflow-y-auto p-3">
-                    {!gridLoading && categoriesForGrid.length === 0 && productsForGrid.length === 0 && pinnedProductsForGrid.length === 0 && (
-                      <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-400">
-                        <Package className="size-14 opacity-30" />
-                        <p className="text-sm font-medium">{t("Looks like there is either no products and no categories. How about creating those first to get started ?")}</p>
-                      </div>
-                    )}
-
-                    {/* Category tiles */}
-                    {categoriesForGrid.length > 0 && (
-                      <div className="mb-4 grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-                        {categoriesForGrid.map((category) => (
-                          <button
-                            key={category.id}
-                            onClick={() => drillIntoCategory(category)}
-                            className="cell-item group relative flex h-36 flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400"
-                          >
-                            {category.preview_url ? (
-                              <img
-                                src={category.preview_url}
-                                alt={category.name}
-                                className="absolute inset-0 h-full w-full object-cover opacity-70 group-hover:opacity-90 transition"
-                              />
-                            ) : (
-                              <Folder className="absolute top-4 size-10 text-blue-200 group-hover:text-blue-400 transition" />
-                            )}
-                            <div className="relative z-10 w-full bg-gradient-to-t from-black/60 to-transparent px-2 pb-2 pt-6">
-                              <p className="truncate text-center text-xs font-bold text-white">{category.name}</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Product tiles (shown when no sub-categories) */}
-                    {categoriesForGrid.length === 0 && productsForGrid.length > 0 && (
-                      <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-                        {productsForGrid.map((product) => {
-                          const uq = product.unit_quantities?.[0]
-                          const featuredImage = getFeaturedImage(product)
-                          return (
-                            <button
-                              key={product.id}
-                              onClick={() => handleGridProductClick(product)}
-                              className="cell-item group relative flex h-36 flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400"
-                            >
-                              {featuredImage ? (
-                                <img
-                                  src={featuredImage}
-                                  alt={product.name}
-                                  className="absolute inset-0 h-full w-full object-cover opacity-75 group-hover:opacity-100 transition"
-                                />
-                              ) : (
-                                <ImageIcon className="absolute top-4 size-10 text-gray-200 group-hover:text-gray-300 transition" />
-                              )}
-                              <div className="relative z-10 w-full bg-gradient-to-t from-black/65 to-transparent px-2 pb-2 pt-6">
-                                <p className="truncate text-center text-xs font-bold text-white">{product.name}</p>
-                                {product.unit_quantities?.length === 1 && uq ? (
-                                  <span className="block text-center text-sm text-blue-200">{formatMoney(getDisplayPrice(uq))}</span>
-                                ) : null}
-                              </div>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* ======== RIGHT: Cart + Checkout ======== */}
-              <div className={[
-                "order-1 flex min-h-0 w-full overflow-hidden lg:w-[44%]",
-              ].join(" ")}>
-                <div className="flex min-h-0 flex-auto flex-col overflow-hidden bg-white">
                   <div className="border-b border-gray-100 p-2">
                     <ButtonGroup className="w-full">
                       <Button
@@ -1899,7 +1779,7 @@ export default function SalesPage() {
                         </div>
                       ))
                     ) : (
-                      <div className="flex min-h-64 flex-col items-center justify-center gap-3 text-muted-foreground">
+                      <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
                         <ShoppingCart className="size-10" />
                         <p className="text-sm font-semibold">{t("no_items_in_cart")}</p>
                       </div>
@@ -2006,6 +1886,217 @@ export default function SalesPage() {
                   </div>
                 </div>
               </div>
+
+              {/* ======== RIGHT: Product Grid ======== */}
+              <div className={[
+                "order-2 flex min-h-0 w-full overflow-hidden lg:w-[50%]",
+              ].join(" ")}>
+                <div className="flex min-h-0 flex-auto flex-col overflow-hidden bg-white">
+                  {/* Top bar: product tools + customer */}
+                  <div className="relative border-b border-slate-200 p-2">
+                    <UniFieldInput
+                      ref={barcodeInputRef}
+                      value={barcode}
+                      onChange={(e) => setBarcode(e.target.value)}
+                      onFocus={() => {
+                        if (productSearchResults.length) setIsSearchDropdownOpen(true)
+                      }}
+                      prefix={<Search className="size-4" />}
+                      prefixPadding="pl-10"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          if (productSearchResults.length === 1) {
+                            handleProductSearchPick(productSearchResults[0])
+                            return
+                          }
+                          handleProductSearch()
+                        }
+                        if (e.key === "Escape") {
+                          setIsSearchDropdownOpen(false)
+                        }
+                      }}
+                      placeholder={t("Search Product")}
+                      containerClassName="bg-transparent"
+                      addonAfter={
+                        productSearchState.isLoading ? (
+                          <div className="flex w-10 items-center justify-center bg-white">
+                            <Spinner />
+                          </div>
+                        ) : undefined
+                      }
+                    />
+                    {isSearchDropdownOpen ? (
+                      <div className="absolute left-2 right-2 top-[58px] z-30 max-h-80 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                        {productSearchResults.length ? (
+                          productSearchResults.map((product) => {
+                            const unitCount = getProductUnitQuantities(product).length
+                            return (
+                              <button
+                                key={product.id}
+                                type="button"
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => handleProductSearchPick(product)}
+                                className="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-3 py-2 text-left text-sm hover:bg-slate-50"
+                              >
+                                <span className="min-w-0">
+                                  <span className="block truncate font-semibold text-slate-950">{product.name}</span>
+                                  <span className="block truncate text-xs text-muted-foreground">
+                                    {product.sku || t("Unassigned")}
+                                  </span>
+                                </span>
+                                <span className="text-xs font-semibold text-muted-foreground">
+                                  {unitCount > 1 ? t("Units") : t("Add")}
+                                </span>
+                              </button>
+                            )
+                          })
+                        ) : (
+                          <div className="px-3 py-4 text-center text-sm font-semibold text-muted-foreground">
+                            {productSearchState.isLoading ? t("Loading") : t("Nothing to display...")}
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* Breadcrumb navigation */}
+                  <div className="flex items-center border-b border-gray-100 bg-gray-50 px-2 py-2 text-sm">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigateBreadcrumb(-1)}
+                    >
+                      <Home className="size-3.5" />
+                      <span>{t("Home")}</span>
+                    </Button>
+                    {gridBreadcrumbs.map((crumb, i) => (
+                      <span key={crumb.id} className="flex items-center gap-1">
+                        <ChevronRight className="size-3 text-gray-400" />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigateBreadcrumb(i)}
+                        >
+                          {crumb.name}
+                        </Button>
+                      </span>
+                    ))}
+                    {gridLoading && <Spinner className="ml-2 size-3.5" />}
+                  </div>
+
+                  {/* Pinned products strip */}
+                  {pinnedProductsForGrid.length > 0 && (
+                    <div className="border-b border-gray-100 bg-amber-50/60 px-3 py-2">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">{t("Pinned")}</p>
+                      <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                        {pinnedProductsForGrid.map((product) => {
+                          const unitQuantities = getProductUnitQuantities(product)
+                          const uq = unitQuantities[0]
+                          const featuredImage = getFeaturedImage(product)
+                          return (
+                            <button
+                              key={product.id}
+                              onClick={() => handleGridProductClick(product)}
+                              className={[
+                                "cell-item group relative flex flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400",
+                                pinnedPreviewEnabled ? "h-36" : "h-20",
+                              ].join(" ")}
+                            >
+                              {pinnedPreviewEnabled && featuredImage ? (
+                                <img
+                                  src={featuredImage}
+                                  alt={product.name}
+                                  className="absolute inset-0 h-full w-full object-cover opacity-80 transition group-hover:opacity-100"
+                                />
+                              ) : pinnedPreviewEnabled ? (
+                                <ImageIcon className="absolute top-4 size-10 text-gray-300" />
+                              ) : null}
+                              <div className="relative z-10 flex h-20 w-full flex-col items-center justify-center bg-gradient-to-t from-black/70 to-transparent p-2 text-white">
+                                <p className="w-full truncate text-center text-sm font-semibold">{product.name}</p>
+                                {unitQuantities.length === 1 && uq ? (
+                                  <span className="text-sm">{formatMoney(getDisplayPrice(uq))}</span>
+                                ) : null}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Grid area: categories + products */}
+                  <div className="flex-1 overflow-y-auto p-3">
+                    {!gridLoading && categoriesForGrid.length === 0 && productsForGrid.length === 0 && pinnedProductsForGrid.length === 0 && (
+                      <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-400">
+                        <Package className="size-14 opacity-30" />
+                        <p className="text-sm font-medium">{t("Looks like there is either no products and no categories. How about creating those first to get started ?")}</p>
+                      </div>
+                    )}
+
+                    {/* Category tiles */}
+                    {categoriesForGrid.length > 0 && (
+                      <div className="mb-4 grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                        {categoriesForGrid.map((category) => (
+                          <button
+                            key={category.id}
+                            onClick={() => drillIntoCategory(category)}
+                            className="cell-item group relative flex h-36 flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400"
+                          >
+                            {category.preview_url ? (
+                              <img
+                                src={category.preview_url}
+                                alt={category.name}
+                                className="absolute inset-0 h-full w-full object-cover opacity-70 group-hover:opacity-90 transition"
+                              />
+                            ) : (
+                              <Folder className="absolute top-4 size-10 text-blue-200 group-hover:text-blue-400 transition" />
+                            )}
+                            <div className="relative z-10 w-full bg-gradient-to-t from-black/60 to-transparent px-2 pb-2 pt-6">
+                              <p className="truncate text-center text-xs font-bold text-white">{category.name}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Product tiles (shown when no sub-categories) */}
+                    {categoriesForGrid.length === 0 && productsForGrid.length > 0 && (
+                      <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                        {productsForGrid.map((product) => {
+                          const unitQuantities = getProductUnitQuantities(product)
+                          const uq = unitQuantities[0]
+                          const featuredImage = getFeaturedImage(product)
+                          return (
+                            <button
+                              key={product.id}
+                              onClick={() => handleGridProductClick(product)}
+                              className="cell-item group relative flex h-36 flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400"
+                            >
+                              {featuredImage ? (
+                                <img
+                                  src={featuredImage}
+                                  alt={product.name}
+                                  className="absolute inset-0 h-full w-full object-cover opacity-75 group-hover:opacity-100 transition"
+                                />
+                              ) : (
+                                <ImageIcon className="absolute top-4 size-10 text-gray-200 group-hover:text-gray-300 transition" />
+                              )}
+                              <div className="relative z-10 w-full bg-gradient-to-t from-black/65 to-transparent px-2 pb-2 pt-6">
+                                <p className="truncate text-center text-xs font-bold text-white">{product.name}</p>
+                                {unitQuantities.length === 1 && uq ? (
+                                  <span className="block text-center text-sm text-blue-200">{formatMoney(getDisplayPrice(uq))}</span>
+                                ) : null}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         ) : null}
@@ -2020,14 +2111,6 @@ export default function SalesPage() {
           customerOptions={customerOptions}
           customerId={customerId}
           setCustomerId={setCustomerId}
-          isProductSearchOpen={isProductSearchOpen}
-          setIsProductSearchOpen={setIsProductSearchOpen}
-          productSearchTerm={productSearchTerm}
-          setProductSearchTerm={setProductSearchTerm}
-          handleProductSearch={handleProductSearch}
-          productSearchState={productSearchState}
-          productSearchResults={productSearchResults}
-          handleProductSearchPick={handleProductSearchPick}
           isPaymentDialogOpen={isPaymentDialogOpen}
           setIsPaymentDialogOpen={setIsPaymentDialogOpen}
           activePaymentLabel={activePaymentLabel}
@@ -2106,7 +2189,7 @@ export default function SalesPage() {
           setUnitPickerProduct={setUnitPickerProduct}
           getUnitQuantityLabel={getUnitQuantityLabel}
           getDisplayPrice={getDisplayPrice}
-          openQuantityDialog={openQuantityDialog}
+          handleUnitPickerSelect={handleUnitPickerSelect}
           pendingCartProduct={pendingCartProduct}
           setPendingCartProduct={setPendingCartProduct}
           quantityInput={quantityInput}
@@ -2152,6 +2235,8 @@ export default function SalesPage() {
           itemDiscountVal={itemDiscountVal}
           setItemDiscountVal={setItemDiscountVal}
           handleApplyItemDiscount={handleApplyItemDiscount}
+          isOrderTypeOpen={isOrderTypeOpen}
+          setIsOrderTypeOpen={setIsOrderTypeOpen}
         />
 
         {confirmDialog}

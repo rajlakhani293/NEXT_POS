@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { Trash2 } from "lucide-react"
+import { CheckCircle2, ShoppingBag, Trash2, Truck } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import CustomModal from "@/components/ui/customModal"
@@ -19,16 +19,6 @@ interface SalesModalsProps {
   // Localization & Options
   t: (key: string) => string
   posOptions: any
-
-  // Product Search
-  isProductSearchOpen: boolean
-  setIsProductSearchOpen: (open: boolean) => void
-  productSearchTerm: string
-  setProductSearchTerm: (term: string) => void
-  handleProductSearch: () => void
-  productSearchState: { isLoading: boolean }
-  productSearchResults: any[]
-  handleProductSearchPick: (product: any) => void
 
   // Payment
   isPaymentDialogOpen: boolean
@@ -123,7 +113,7 @@ interface SalesModalsProps {
   setUnitPickerProduct: (product: any) => void
   getUnitQuantityLabel: (uq: any) => string
   getDisplayPrice: (uq: any) => number
-  openQuantityDialog: (product: any, uq: any) => void
+  handleUnitPickerSelect: (uq: any) => void
 
   // Define Quantity
   pendingCartProduct: any
@@ -193,6 +183,10 @@ interface SalesModalsProps {
   customerOptions: any[]
   customerId: string
   setCustomerId: (id: string) => void
+
+  // Order Type Picker
+  isOrderTypeOpen: boolean
+  setIsOrderTypeOpen: (open: boolean) => void
 }
 
 export default function SalesModals({
@@ -206,15 +200,6 @@ export default function SalesModals({
   customerOptions,
   customerId,
   setCustomerId,
-
-  isProductSearchOpen,
-  setIsProductSearchOpen,
-  productSearchTerm,
-  setProductSearchTerm,
-  handleProductSearch,
-  productSearchState,
-  productSearchResults,
-  handleProductSearchPick,
 
   isPaymentDialogOpen,
   setIsPaymentDialogOpen,
@@ -301,7 +286,7 @@ export default function SalesModals({
   setUnitPickerProduct,
   getUnitQuantityLabel,
   getDisplayPrice,
-  openQuantityDialog,
+  handleUnitPickerSelect,
 
   pendingCartProduct,
   setPendingCartProduct,
@@ -355,6 +340,9 @@ export default function SalesModals({
   itemDiscountVal,
   setItemDiscountVal,
   handleApplyItemDiscount,
+
+  isOrderTypeOpen,
+  setIsOrderTypeOpen,
 }: SalesModalsProps) {
   const formatMoney = (value: number | string | null | undefined) =>
     formatBusinessMoney(value, posOptions)
@@ -373,69 +361,6 @@ export default function SalesModals({
 
   return (
     <>
-      <CustomModal
-        open={isProductSearchOpen}
-        onOpenChange={setIsProductSearchOpen}
-        title={t("Search Product")}
-        description={t("Search and select a product to add to the current cart.")}
-        className="max-w-3xl"
-        showFooter={false}
-      >
-        <div className="flex min-h-[360px] flex-col overflow-hidden">
-          <div className="border-b pb-3">
-            <UniFieldInput
-              value={productSearchTerm}
-              onChange={(event) => setProductSearchTerm(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault()
-                  handleProductSearch()
-                }
-                if (event.key === "Escape") {
-                  setIsProductSearchOpen(false)
-                }
-              }}
-              placeholder={t("Search Product")}
-              autoFocus
-              addonAfter={
-                <Button type="button" variant="outline" className="h-10 rounded-l-none" onClick={handleProductSearch}>
-                  {productSearchState.isLoading ? <Spinner /> : t("Search")}
-                </Button>
-              }
-            />
-          </div>
-          <div className="relative flex-auto overflow-y-auto">
-            {productSearchResults.length ? (
-              <ul>
-                {productSearchResults.map((product) => (
-                  <li key={product.id}>
-                    <button
-                      type="button"
-                      onClick={() => handleProductSearchPick(product)}
-                      className="flex w-full cursor-pointer justify-between border-b p-2 text-left hover:bg-gray-50"
-                    >
-                      <div>
-                        <h2 className="text-sm font-semibold text-gray-900">{product.name}</h2>
-                        <small className="text-xs text-gray-500">{product.sku || t("Unassigned")}</small>
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="p-2 text-center text-sm text-gray-500">
-                {t("There is nothing to display. Have you started the search ?")}
-              </p>
-            )}
-            {productSearchState.isLoading ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-slate-100/50">
-                <Spinner />
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </CustomModal>
-
       <CustomModal
         open={isPaymentDialogOpen}
         onOpenChange={setIsPaymentDialogOpen}
@@ -1065,11 +990,7 @@ export default function SalesModals({
             <button
               key={uq.id}
               onClick={() => {
-                setIsUnitPickerOpen(false)
-                setUnitPickerProduct(null)
-                if (unitPickerProduct) {
-                  openQuantityDialog(unitPickerProduct, uq)
-                }
+                handleUnitPickerSelect(uq)
               }}
               className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold hover:border-blue-400 hover:bg-blue-50 transition"
             >
@@ -1141,7 +1062,6 @@ export default function SalesModals({
         open={isNoteDialogOpen}
         onOpenChange={setIsNoteDialogOpen}
         title={t("Comments")}
-        description={t("Add a note to the current order.")}
         showFooter={true}
         footer={
           <>
@@ -1159,7 +1079,7 @@ export default function SalesModals({
           value={saleNote}
           onChange={(event) => setSaleNote(event.target.value)}
           placeholder={t("add_note_placeholder")}
-          className="min-h-32"
+          rows={4}
         />
       </CustomModal>
 
@@ -1168,6 +1088,7 @@ export default function SalesModals({
         onOpenChange={setIsCouponsDialogOpen}
         title={t("Load Coupon")}
         showFooter={false}
+        bodyClassName="pt-0 px-4 pb-4"
       >
         <Tabs defaultValue={(couponInput || selectedCouponId) ? "active-coupons" : "apply-coupon"}>
           <TabsList variant="line" className="w-full justify-start">
@@ -1181,14 +1102,14 @@ export default function SalesModals({
               onChange={(event) => setCouponInput(event.target.value)}
               placeholder={t("Coupon Code")}
               addonAfter={
-                <Button type="button" className="h-10 rounded-l-none" onClick={() => setIsCouponsDialogOpen(false)}>
+                <Button type="button" variant="outline" className="h-10 border-2 rounded-l-none" onClick={() => setIsCouponsDialogOpen(false)}>
                   {t("Load")}
                 </Button>
               }
             />
-            <div className="rounded-md border border-blue-100 bg-blue-50 p-3 text-sm font-medium text-blue-900">
+            {/* <div className="rounded-md border border-blue-100 bg-blue-50 p-3 text-sm font-medium text-blue-900">
               {t("Input the coupon code that should apply to the POS. If a coupon is issued for a customer, that customer must be selected priorly.")}
-            </div>
+            </div> */}
             <UniFieldSelect
               label={t("Name")}
               value={selectedCouponId}
@@ -1259,26 +1180,12 @@ export default function SalesModals({
           </>
         }
       >
-        <div className="space-y-4 py-2">
-          <UniFieldInput
-            label={t("Name")}
-            value={orderTitle}
-            onChange={(event) => setOrderTitle(event.target.value)}
-            placeholder={t("Order Reference")}
-          />
-          <UniFieldSelect
-            label={t("order_type")}
-            value={activeOrderType}
-            onValueChange={setOrderType}
-            placeholder={t("order_type_select")}
-          >
-            {enabledOrderTypes.map((type: any) => (
-              <SelectItem key={type.value} value={type.value}>
-                {type.label}
-              </SelectItem>
-            ))}
-          </UniFieldSelect>
-        </div>
+        <UniFieldInput
+          label={t("Name")}
+          value={orderTitle}
+          onChange={(event) => setOrderTitle(event.target.value)}
+          placeholder={t("Order Reference")}
+        />
       </CustomModal>
 
       <CustomModal
@@ -1286,6 +1193,7 @@ export default function SalesModals({
         onOpenChange={setIsTaxesDialogOpen}
         title={t("Tax & Summary")}
         showFooter={false}
+        bodyClassName="px-4 pb-4 pt-0"
       >
         <Tabs defaultValue="settings">
           <TabsList variant="line" className="w-full justify-start">
@@ -1469,6 +1377,57 @@ export default function SalesModals({
               </p>
             )}
           </div>
+        </div>
+      </CustomModal>
+
+      {/* Order Type Picker */}
+      <CustomModal
+        open={isOrderTypeOpen}
+        onOpenChange={setIsOrderTypeOpen}
+        title={t("Order Type")}
+        showFooter={false}
+        className="sm:max-w-[380px]"
+      >
+        <div className="grid grid-cols-2 gap-3 p-2">
+          {enabledOrderTypes.map((type) => {
+            const isActive = activeOrderType === type.value
+            const Icon = type.value === "delivery" ? Truck : ShoppingBag
+            return (
+              <button
+                key={type.value}
+                type="button"
+                onClick={() => {
+                  setOrderType(type.value)
+                  setIsOrderTypeOpen(false)
+                }}
+                className={[
+                  "group relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 px-4 py-8 text-center transition-all duration-150",
+                  isActive
+                    ? "border-slate-900 bg-slate-900 shadow-md"
+                    : "border-slate-200 bg-white hover:border-slate-400 hover:shadow-sm",
+                ].join(" ")}
+              >
+                {isActive && (
+                  <CheckCircle2 className="absolute right-2.5 top-2.5 size-4 text-white" />
+                )}
+                <div className={[
+                  "flex size-12 items-center justify-center rounded-full",
+                  isActive ? "bg-white/15" : "bg-slate-100 group-hover:bg-slate-200",
+                ].join(" ")}>
+                  <Icon className={[
+                    "size-6 transition",
+                    isActive ? "text-white" : "text-slate-600",
+                  ].join(" ")} />
+                </div>
+                <span className={[
+                  "text-sm font-semibold",
+                  isActive ? "text-white" : "text-slate-800",
+                ].join(" ")}>
+                  {type.label}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </CustomModal>
     </>

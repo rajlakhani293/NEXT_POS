@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { X } from "lucide-react"
 import { Button } from "./button"
 import {
   Dialog,
@@ -50,14 +51,20 @@ const CustomModal = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className={cn("sm:max-w-[500px] p-0 gap-0 [&>[data-slot=dialog-close]]:top-3 [&>[data-slot=dialog-close]]:right-3 [&>[data-slot=dialog-close]]:p-2", className)}>
-        <DialogHeader className={cn("border-b border-gray-200 p-4 text-left", headerClassName)}>
-          <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
+      <DialogContent className={cn("sm:max-w-[500px] p-0 gap-0 [&>[data-slot=dialog-close]]:hidden", className)}>
+        <DialogHeader className={cn("flex flex-row items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 text-left", headerClassName)}>
+          <div className="min-w-0 flex-1 space-y-0.5">
+            <DialogTitle className="leading-snug">{title}</DialogTitle>
+            {description && <DialogDescription className="text-xs">{description}</DialogDescription>}
+          </div>
+          <DialogClose className="shrink-0 rounded-md p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300">
+            <X className="size-4" />
+            <span className="sr-only">Close</span>
+          </DialogClose>
         </DialogHeader>
         <div
           className={cn(
-            "no-scrollbar max-h-[70vh] overflow-y-auto p-2",
+            "no-scrollbar max-h-[70vh] overflow-y-auto p-4",
             bodyClassName
           )}
         >
