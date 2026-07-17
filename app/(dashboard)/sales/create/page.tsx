@@ -1698,48 +1698,64 @@ export default function SalesPage() {
           ].join(" ")}>
           <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded shadow bg-white">
             <div className="flex pl-2 lg:hidden">
-              <button type="button" onClick={() => setVisibleSection("cart")} className="cursor-pointer rounded-tl-lg rounded-tr-lg border-l border-r border-t px-3 py-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setVisibleSection("cart")}
+                className="cursor-pointer rounded-none rounded-t-lg border-l border-r border-t px-3 py-2 h-auto"
+              >
                 <span>{t("Cart")}</span>
                 <span className="ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-sm">{cartItems.length}</span>
-              </button>
-              <button type="button" onClick={() => setVisibleSection("grid")} className="cursor-pointer rounded-tl-lg rounded-tr-lg px-3 py-2 font-semibold">
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setVisibleSection("grid")}
+                className="cursor-pointer rounded-none rounded-t-lg px-3 py-2 font-semibold h-auto"
+              >
                 {t("Products")}
-              </button>
+              </Button>
             </div>
             {/* Top bar: product tools + customer */}
             <div className="border-b p-2">
               <div className="overflow-hidden rounded border border-gray-200">
                 <div className="flex">
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     title={t("Search for products.")}
                     onClick={() => setIsProductSearchOpen(true)}
-                    className="flex h-10 w-10 items-center justify-center border-r border-gray-200 hover:bg-gray-50"
+                    className="flex h-10 w-10 items-center justify-center border-r border-gray-200 hover:bg-gray-50 rounded-none"
                   >
                     <Search className="size-4" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     title={t("Toggle merging similar products.")}
                     onClick={() => setItemsMergeEnabled((current) => !current)}
                     className={[
-                      "flex h-10 w-10 items-center justify-center border-r border-gray-200 hover:bg-gray-50",
+                      "flex h-10 w-10 items-center justify-center border-r border-gray-200 hover:bg-gray-50 rounded-none",
                       itemsMergeEnabled ? "bg-blue-50 text-blue-700" : "",
                     ].join(" ")}
                   >
                     <ChevronsDownUp className="size-4" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     title={t("Toggle auto focus.")}
                     onClick={() => setForceAutoFocus((current) => !current)}
                     className={[
-                      "flex h-10 w-10 items-center justify-center border-r border-gray-200 hover:bg-gray-50",
+                      "flex h-10 w-10 items-center justify-center border-r border-gray-200 hover:bg-gray-50 rounded-none",
                       forceAutoFocus ? "bg-blue-50 text-blue-700" : "",
                     ].join(" ")}
                   >
                     <ScanBarcode className="size-4" />
-                  </button>
+                  </Button>
                   <input
                     ref={barcodeInputRef}
                     value={barcode}
@@ -1780,22 +1796,26 @@ export default function SalesPage() {
 
             {/* Breadcrumb navigation */}
             <div className="flex items-center gap-1 border-b border-gray-100 bg-gray-50 px-3 py-2 text-sm">
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => navigateBreadcrumb(-1)}
-                className="flex items-center gap-1 rounded px-2 py-1 text-blue-600 hover:bg-blue-50"
+                className="flex items-center gap-1 rounded px-2 py-1 text-blue-600 hover:bg-blue-50 h-auto font-medium"
               >
                 <Home className="size-3.5" />
                 <span>{t("Home")}</span>
-              </button>
+              </Button>
               {gridBreadcrumbs.map((crumb, i) => (
                 <span key={crumb.id} className="flex items-center gap-1">
                   <ChevronRight className="size-3 text-gray-400" />
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => navigateBreadcrumb(i)}
-                    className="rounded px-2 py-1 text-blue-600 hover:bg-blue-50"
+                    className="rounded px-2 py-1 text-blue-600 hover:bg-blue-50 h-auto font-medium"
                   >
                     {crumb.name}
-                  </button>
+                  </Button>
                 </span>
               ))}
               {gridLoading && <Spinner className="ml-2 size-3.5" />}
@@ -1918,28 +1938,40 @@ export default function SalesPage() {
           ].join(" ")}>
           <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded shadow bg-white">
             <div className="flex pl-2 lg:hidden">
-              <button type="button" onClick={() => setVisibleSection("cart")} className="cursor-pointer rounded-tl-lg rounded-tr-lg px-3 py-2 font-semibold">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setVisibleSection("cart")}
+                className="cursor-pointer rounded-none rounded-t-lg px-3 py-2 font-semibold h-auto"
+              >
                 <span>{t("Cart")}</span>
                 <span className="ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-sm text-white">{cartItems.length}</span>
-              </button>
-              <button type="button" onClick={() => setVisibleSection("grid")} className="cursor-pointer rounded-tl-lg rounded-tr-lg border-l border-r border-t px-3 py-2">
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setVisibleSection("grid")}
+                className="cursor-pointer rounded-none rounded-t-lg border-l border-r border-t px-3 py-2 h-auto"
+              >
                 {t("Products")}
-              </button>
+              </Button>
             </div>
             <div className="border-b border-gray-100 p-2">
               <div className="flex flex-wrap overflow-hidden rounded border border-gray-200 bg-white">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => setIsNoteDialogOpen(true)}
-                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-none h-auto"
                 >
                   <MessageSquare className="size-4" />
                   {t("Comments")}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => setIsCouponsDialogOpen(true)}
-                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-none h-auto"
                 >
                   <Tags className="size-4" />
                   {t("Coupons")}
@@ -1948,33 +1980,36 @@ export default function SalesPage() {
                       {couponCodes.length}
                     </span>
                   ) : null}
-                </button>
+                </Button>
                 {posOptions.quick_product_enabled ? (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => setIsQuickProductDialogOpen(true)}
-                    className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                    className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-none h-auto"
                   >
                     <PlusCircle className="size-4" />
                     {t("Product")}
-                  </button>
+                  </Button>
                 ) : null}
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={openOrderSettingsDialog}
-                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-none h-auto"
                 >
                   <Settings className="size-4" />
                   {t("Settings")}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => setIsTaxesDialogOpen(true)}
-                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  className="flex min-w-[92px] flex-1 items-center justify-center gap-2 px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-none h-auto"
                 >
                   <WalletCards className="size-4" />
                   {t("Taxes")}
-                </button>
+                </Button>
               </div>
             </div>
             {/* Cart items */}
@@ -1999,19 +2034,20 @@ export default function SalesPage() {
                         {item.unit_label ? ` · ${t("unit")}: ${item.unit_label}` : ""}
                       </p>
                       <div className="mt-1 flex items-center gap-1.5">
-                        <button
+                        <Button
                           type="button"
+                          variant="link"
                           onClick={() => openItemDiscountDialog(item)}
-                          className="text-xs text-blue-600 hover:text-blue-700 underline font-semibold flex items-center gap-0.5"
+                          className="h-auto p-0 text-xs text-blue-600 hover:text-blue-700 underline font-semibold flex items-center gap-0.5"
                         >
                           {item.discount_value && item.discount_value > 0 ? (
-                            <span className="text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5">
+                            <span className="text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 no-underline">
                               {t("Discount")}: {item.discount_type === "percentage" ? `${item.discount_value}%` : formatMoney(item.discount_value)} (-{formatMoney(getCartItemDiscount(item))})
                             </span>
                           ) : (
                             t("Discount")
                           )}
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -2060,16 +2096,18 @@ export default function SalesPage() {
                         <Plus className="size-4" />
                       </Button>
                     </div>
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
                       onClick={() => openPriceEditDialog(item)}
+                      disabled={!posOptions.unit_price_editable}
                       className={[
-                        "text-left font-semibold",
-                        posOptions.unit_price_editable ? "cursor-pointer border-b border-dashed border-blue-300 text-blue-700" : "cursor-default",
+                        "text-left font-semibold h-auto p-0 hover:bg-transparent rounded-none justify-start",
+                        posOptions.unit_price_editable ? "cursor-pointer border-b border-dashed border-blue-300 text-blue-700 hover:text-blue-800" : "cursor-default hover:text-current",
                       ].join(" ")}
                     >
                       {formatMoney(item.price)}
-                    </button>
+                    </Button>
                     <span>{formatMoney(item.qty * item.price - getCartItemDiscount(item))}</span>
                     <Button
                       type="button"
@@ -2278,40 +2316,41 @@ export default function SalesPage() {
             </div>
 
             <div className="mt-6 grid grid-cols-4 overflow-hidden rounded border border-gray-200 text-sm font-bold">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={openCartDiscountDialog}
-                className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-gray-50 px-2 py-2 text-gray-700 hover:bg-gray-100"
+                className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-gray-50 px-2 py-2 text-gray-700 hover:bg-gray-100 rounded-none h-auto"
               >
                 <Percent className="size-5" />
                 {t("Discount")}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 disabled={!cartItems.length || isHoldingSale}
                 onClick={() => setIsHoldReferenceDialogOpen(true)}
-                className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-blue-600 px-2 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-blue-600 px-2 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 rounded-none h-auto hover:text-white"
               >
                 <Pause className="size-5" />
                 {isHoldingSale ? t("Saving") : t("Hold")}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 disabled={!cartItems.length || isCreatingSale}
                 onClick={handleOpenPaymentDialog}
-                className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-green-600 px-2 py-2 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-green-600 px-2 py-2 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 rounded-none h-auto hover:text-white"
               >
                 <CreditCard className="size-5" />
                 {isCreatingSale ? t("Completing") : t("Pay")}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={handleVoidCart}
-                className="flex min-h-16 flex-col items-center justify-center gap-1 bg-red-600 px-2 py-2 text-white hover:bg-red-700"
+                className="flex min-h-16 flex-col items-center justify-center gap-1 bg-red-600 px-2 py-2 text-white hover:bg-red-700 rounded-none h-auto hover:text-white hover:bg-red-700/90"
               >
                 <Ban className="size-5" />
                 {t("Void")}
-              </button>
+              </Button>
             </div>
             </div>
           </div>
