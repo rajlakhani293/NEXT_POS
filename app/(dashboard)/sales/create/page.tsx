@@ -1597,55 +1597,64 @@ export default function SalesPage() {
 
   return (
     <DashboardPage padding="none">
-      <div className="flex h-full min-h-0 flex-col" id="pos-container">
-      <div className="flex shrink-0 overflow-hidden px-2 pt-2">
-        <div className="-mx-2 flex overflow-x-auto pb-1">
-          <div className="flex shrink-0 px-2">
-            <Button variant="outline" onClick={() => router.push("/dashboard")}>
+      <div className="flex h-full min-h-0 flex-col bg-slate-100" id="pos-container">
+      <div className="shrink-0 border-b border-slate-200 bg-white px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
               <Home className="size-4" />
               {t("Dashboard")}
             </Button>
-          </div>
-          <div className="flex shrink-0 px-2">
-            <Button variant="outline" onClick={handleOpenHeldSales}>
+            <Button variant="outline" size="sm" onClick={handleOpenHeldSales}>
               <ShoppingCart className="size-4" />
               {t("Pending Orders")}
             </Button>
-          </div>
-          <div className="flex shrink-0 px-2">
-            <Button variant="outline" onClick={() => setVisibleSection("cart")}>
-              {t("Cart")}
-            </Button>
-          </div>
-          <div className="flex shrink-0 px-2">
-            <Button variant="outline" onClick={() => setVisibleSection("grid")}>
-              {t("Products")}
-            </Button>
-          </div>
-          <div className="flex shrink-0 px-2">
-            <Button variant="outline" onClick={resetSaleForm}>
+            <div className="flex overflow-hidden rounded-md border border-slate-200 bg-slate-50">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setVisibleSection("cart")}
+                className={[
+                  "rounded-none border-r border-slate-200",
+                  visibleSection === "cart" ? "bg-slate-900 text-white hover:bg-slate-800 hover:text-white" : "",
+                ].join(" ")}
+              >
+                {t("Cart")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setVisibleSection("grid")}
+                className={[
+                  "rounded-none border-r border-slate-200",
+                  visibleSection === "grid" ? "bg-slate-900 text-white hover:bg-slate-800 hover:text-white" : "",
+                ].join(" ")}
+              >
+                {t("Products")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setVisibleSection("both")}
+                className={[
+                  "rounded-none",
+                  visibleSection === "both" ? "bg-slate-900 text-white hover:bg-slate-800 hover:text-white" : "",
+                ].join(" ")}
+              >
+                {t("Both")}
+              </Button>
+            </div>
+            <Button variant="outline" size="sm" onClick={resetSaleForm}>
               {t("Reset")}
             </Button>
           </div>
-          {cashRegistersEnabled && shift ? (
-            <>
-              <div className="flex shrink-0 px-2">
-                <Button variant="outline" onClick={() => setVisibleSection("both")}>
-                  {t("Both")}
-                </Button>
-              </div>
-              <div className="flex shrink-0 px-2">
-                <Button variant="outline" onClick={handleOpenHeldSales}>
-                  {t("held_carts")}
-                </Button>
-              </div>
-            </>
-          ) : null}
+          <div className="flex flex-wrap items-center gap-2">
           {cashRegistersEnabled && shift ? (
             <>
             {hasPermission(PERMISSIONS.cashRegister.cashIn) ? (
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => setShiftAction("cash_in")}
               >
                 <BanknoteArrowDown className="size-4" />
@@ -1655,6 +1664,7 @@ export default function SalesPage() {
             {hasPermission(PERMISSIONS.cashRegister.cashOut) ? (
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => setShiftAction("cash_out")}
               >
                 <BanknoteArrowUp className="size-4" />
@@ -1664,6 +1674,7 @@ export default function SalesPage() {
             {hasPermission(PERMISSIONS.cashRegister.close) ? (
               <Button
                 variant="destructive"
+                size="sm"
                 onClick={() => {
                   setDeclaredCash(String(shift.expected_cash || ""))
                   setShiftAction("close")
@@ -1676,27 +1687,28 @@ export default function SalesPage() {
             </>
         ) : cashRegistersEnabled ? (
           hasPermission(PERMISSIONS.cashRegister.open) ? (
-            <Button onClick={() => setIsOpenShiftDialogOpen(true)}>
+            <Button size="sm" onClick={() => setIsOpenShiftDialogOpen(true)}>
               {t("open_shift")}
             </Button>
           ) : null
         ) : (
-          <Button variant="outline" onClick={handleOpenHeldSales}>
+          <Button variant="outline" size="sm" onClick={handleOpenHeldSales}>
             {t("held_carts")}
           </Button>
         )}
+          </div>
         </div>
       </div>
 
       {!cashRegistersEnabled || shift ? (
-        <div className="flex-auto overflow-hidden p-2">
-          <div className="-m-2 flex h-full min-h-0 flex-auto overflow-hidden">
+        <div className="flex-auto overflow-hidden p-3">
+          <div className="flex h-full min-h-0 flex-auto gap-3 overflow-hidden">
           {/* ======== LEFT: Product Grid ======== */}
           <div className={[
-            "order-2 flex min-h-0 overflow-hidden p-2",
-            visibleSection === "both" ? "hidden lg:flex lg:w-1/2" : visibleSection === "grid" ? "flex w-full" : "hidden",
+            "order-2 flex min-h-0 overflow-hidden",
+            visibleSection === "both" ? "hidden lg:flex lg:w-[58%]" : visibleSection === "grid" ? "flex w-full" : "hidden",
           ].join(" ")}>
-          <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded shadow bg-white">
+          <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="flex pl-2 lg:hidden">
               <Button
                 type="button"
@@ -1933,10 +1945,10 @@ export default function SalesPage() {
 
           {/* ======== RIGHT: Cart + Checkout ======== */}
           <div className={[
-            "order-1 flex min-h-0 overflow-hidden p-2",
-            visibleSection === "both" ? "hidden lg:flex lg:w-1/2" : visibleSection === "cart" ? "flex w-full" : "hidden",
+            "order-1 flex min-h-0 overflow-hidden",
+            visibleSection === "both" ? "hidden lg:flex lg:w-[42%]" : visibleSection === "cart" ? "flex w-full" : "hidden",
           ].join(" ")}>
-          <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded shadow bg-white">
+          <div className="flex min-h-0 flex-auto flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="flex pl-2 lg:hidden">
               <Button
                 type="button"
