@@ -572,8 +572,15 @@ export default function SalesModals({
               <>
                 <Button
                   variant="outline"
-                  onClick={() => handleCompleteSale({ paymentStatus: "unpaid" })}
-                  disabled={isCreatingSale || (!ordersAllowUnpaid && !ordersAllowPartial)}
+                  onClick={() =>
+                    handleCompleteSale({
+                      paymentStatus: totalPaid > 0 ? "partially_paid" : "unpaid",
+                    })
+                  }
+                  disabled={
+                    isCreatingSale ||
+                    (totalPaid > 0 ? !ordersAllowPartial : !ordersAllowUnpaid)
+                  }
                 >
                   {totalPaid === 0
                     ? `${t("Layaway")} - ${formatMoney(subtotal)}`

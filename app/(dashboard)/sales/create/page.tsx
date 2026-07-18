@@ -14,6 +14,9 @@ import {
   ImageIcon,
   LogOut,
   MessageSquare,
+  History,
+  PlusCircle,
+  MinusCircle,
   Package,
   Pause,
   Percent,
@@ -235,10 +238,18 @@ export default function SalesPage() {
     (value: number | string | null | undefined) => formatBusinessMoney(value, posOptions),
     [posOptions]
   )
+  const playPosAudio = useCallback((audioUrl?: string) => {
+    if (!audioUrl || typeof window === "undefined") return
+    const audio = new Audio(audioUrl)
+    audio.play().catch(() => undefined)
+  }, [])
   const { hasPermission } = usePermissions()
 
   const [shift, setShift] = useState<any>(null)
   const [isOpenShiftDialogOpen, setIsOpenShiftDialogOpen] = useState(false)
+  const [isRegisterOptionsOpen, setIsRegisterOptionsOpen] = useState(false)
+  const [isRegisterHistoryOpen, setIsRegisterHistoryOpen] = useState(false)
+  const [registerHistory, setRegisterHistory] = useState<any>(null)
   const [shiftAction, setShiftAction] = useState<
     "cash_in" | "cash_out" | "close" | null
   >(null)
@@ -323,6 +334,9 @@ export default function SalesPage() {
   const [cashOut, { isLoading: isCashingOut }] = (
     registers as any
   ).useCashOutMutation()
+  const [getRegisterSessionHistory, registerHistoryState] = (
+    registers as any
+  ).useGetRegisterSessionHistoryMutation()
   const [
     getRegistersDropdown,
     { data: registersDropdownData, isLoading: isRegistersLoading },
@@ -577,6 +591,18 @@ export default function SalesPage() {
         .filter((amount) => Number.isFinite(amount) && amount > 0),
     [posOptions.pos_amount_shortcut]
   )
+  const registerHistoryEntries = registerHistory?.history || []
+  const registerHistorySummary = registerHistory?.summary || []
+  const registerTotalIn = registerHistoryEntries
+    .filter((history: any) =>
+      ["register-opening", "register-order-payment", "register-cash-in"].includes(history.action || history.entry_type)
+    )
+    .reduce((total: number, history: any) => total + money(history.value), 0)
+  const registerTotalOut = registerHistoryEntries
+    .filter((history: any) =>
+      ["register-order-change", "register-closing", "register-close", "register-refund", "register-cash-out"].includes(history.action || history.entry_type)
+    )
+    .reduce((total: number, history: any) => total + money(history.value), 0)
 
   const loadShift = async () => {
     if (!cashRegistersEnabled) {
@@ -726,6 +752,7 @@ export default function SalesPage() {
     setDeclaredCash("")
     setClosingNote("")
     setShiftAction(null)
+    setIsRegisterOptionsOpen(false)
     setCartItems([])
     setCouponInput("")
     setSaleNote("")
@@ -749,8 +776,19 @@ export default function SalesPage() {
     setMovementAmount("")
     setMovementNote("")
     setShiftAction(null)
+    setIsRegisterOptionsOpen(false)
     await loadShift()
     showToast.success(response?.message || t("Cash movement recorded."))
+  }
+
+  const openRegisterHistory = async () => {
+    if (!shift?.id) {
+      showToast.error(t("The register is not yet loaded."))
+      return
+    }
+    const response = await getRegisterSessionHistory({ id: shift.id }).unwrap()
+    setRegisterHistory(response?.data || null)
+    setIsRegisterHistoryOpen(true)
   }
 
   const getCartStockUsage = (productId: number | string, unitQuantityId?: number | string) =>
@@ -859,6 +897,7 @@ export default function SalesPage() {
         },
       ]
     })
+    playPosAudio(posOptions.pos_new_item_audio)
     return true
   }
 
@@ -1049,6 +1088,10 @@ export default function SalesPage() {
   const handleVoidCart = () => {
     if (!cartItems.length) {
       resetSaleForm()
+      return
+    }
+    if (totalPaid <= 0) {
+      showToast.error(t("Unable to void an unpaid order."))
       return
     }
     resetSaleForm()
@@ -1325,6 +1368,10 @@ export default function SalesPage() {
       showToast.error(t("Unpaid orders are not allowed."))
       return
     }
+    if (requestedPaymentStatus === "partially_paid" && !ordersAllowPartial) {
+      showToast.error(t("Partial orders are not allowed."))
+      return
+    }
     const validPayments = paymentsRows.filter((row) => money(row.amount) > 0)
     const payLoad = {
       draft_id: draftId ? Number(draftId) : null,
@@ -1367,6 +1414,7 @@ export default function SalesPage() {
     const response = await createSale(payLoad).unwrap()
     const sale = response?.data
     showToast.success(response?.message || t("Sale created successfully."))
+    playPosAudio(posOptions.pos_complete_sale_audio)
     resetSaleForm()
     setIsPaymentDialogOpen(false)
     await loadShift()
@@ -1459,6 +1507,8 @@ export default function SalesPage() {
       isPaymentDialogOpen ||
       isHeldCartDialogOpen ||
       isHoldReferenceDialogOpen ||
+      isRegisterOptionsOpen ||
+      isRegisterHistoryOpen ||
       isNoteDialogOpen ||
       isCouponsDialogOpen ||
       isOrderSettingsOpen ||
@@ -1511,6 +1561,8 @@ export default function SalesPage() {
     isHoldReferenceDialogOpen,
     isHoldingSale,
     isNoteDialogOpen,
+    isRegisterHistoryOpen,
+    isRegisterOptionsOpen,
     isOrderSettingsOpen,
     isPaymentDialogOpen,
     isTaxesDialogOpen,
@@ -1545,29 +1597,29 @@ export default function SalesPage() {
 
   return (
     <DashboardPage padding="none">
-      <div className="flex h-full min-h-0 flex-col bg-slate-100" id="pos-container">
+      <div className="flex h-full min-h-0 flex-col bg-[#f4f6f8]" id="pos-container">
 
         {!cashRegistersEnabled || shift ? (
-          <div className="flex flex-auto overflow-hidden">
-            <div className="flex h-full min-h-0 flex-auto flex-col overflow-hidden lg:flex-row">
+          <div className="flex flex-auto overflow-hidden p-2">
+            <div className="flex h-full min-h-0 flex-auto flex-col gap-2 overflow-hidden lg:flex-row">
 
               {/* ======== LEFT: Cart + Checkout ======== */}
               <div className={[
-                "order-1 flex min-h-0 w-full overflow-hidden border-r border-slate-200 lg:w-[50%]",
+                "order-1 flex min-h-0 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm lg:w-[48%]",
               ].join(" ")}>
                 <div className="flex min-h-0 flex-auto flex-col overflow-hidden bg-white">
-                  <div className="p-2 border-b">
-                    <ButtonGroup>
-                      <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
+                  <div className="border-b border-slate-200 bg-white px-3 py-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")} className="h-9 rounded-md">
                         <Home className="size-4" />
                         {t("Dashboard")}
                       </Button>
-                      <Button variant="outline" size="sm" onClick={handleOpenHeldSales}>
+                      <Button variant="outline" size="sm" onClick={handleOpenHeldSales} className="h-9 rounded-md">
                         <ShoppingCart className="size-4" />
                         {t("Pending Orders")}
                       </Button>
                       {enabledOrderTypes.length === 1 ? (
-                        <Button variant="outline" size="sm" disabled className="pointer-events-none cursor-default opacity-100">
+                        <Button variant="outline" size="sm" disabled className="h-9 rounded-md pointer-events-none cursor-default opacity-100">
                           {enabledOrderTypes[0].label}
                         </Button>
                       ) : (
@@ -1575,49 +1627,24 @@ export default function SalesPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => setIsOrderTypeOpen(true)}
+                          className="h-9 rounded-md"
                         >
                           {enabledOrderTypes.find((t) => t.value === activeOrderType)?.label || t("Type")}
                         </Button>
                       )}
-                      <Button variant="outline" size="sm" onClick={resetSaleForm}>
+                      <Button variant="outline" size="sm" onClick={resetSaleForm} className="h-9 rounded-md">
                         {t("Reset")}
                       </Button>
                       {cashRegistersEnabled && shift ? (
-                        <>
-                          {hasPermission(PERMISSIONS.cashRegister.cashIn) ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setShiftAction("cash_in")}
-                            >
-                              <BanknoteArrowDown className="size-4" />
-                              {t("cash_in")}
-                            </Button>
-                          ) : null}
-                          {hasPermission(PERMISSIONS.cashRegister.cashOut) ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setShiftAction("cash_out")}
-                            >
-                              <BanknoteArrowUp className="size-4" />
-                              {t("cash_out")}
-                            </Button>
-                          ) : null}
-                          {hasPermission(PERMISSIONS.cashRegister.close) ? (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => {
-                                setDeclaredCash(String(shift.expected_cash || ""))
-                                setShiftAction("close")
-                              }}
-                            >
-                              <LogOut className="size-4" />
-                              {t("close_shift")}
-                            </Button>
-                          ) : null}
-                        </>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsRegisterOptionsOpen(true)}
+                          className="h-9 rounded-md"
+                        >
+                          <BanknoteArrowDown className="size-4" />
+                          {t("Cash Register")}
+                        </Button>
                       ) : cashRegistersEnabled ? (
                         hasPermission(PERMISSIONS.cashRegister.open) ? (
                           <Button size="sm" onClick={() => setIsOpenShiftDialogOpen(true)}>
@@ -1625,34 +1652,34 @@ export default function SalesPage() {
                           </Button>
                         ) : null
                       ) : null}
-                    </ButtonGroup>
+                    </div>
                   </div>
 
-                  <div className="border-b border-gray-100 p-2">
-                    <ButtonGroup className="w-full">
+                  <div className="border-b border-slate-200 bg-slate-50/80 p-2">
+                    <ButtonGroup className="grid w-full grid-cols-5 overflow-hidden rounded-md border border-slate-200 bg-white">
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         onClick={() => setIsCustomerSelectOpen(true)}
-                        className="flex-1"
+                        className="h-11 min-w-0 justify-center rounded-none border-r border-slate-200 px-2"
                       >
                         <User className="size-4" />
                         <span className="truncate">{selectedCustomer ? selectedCustomer.name : t("Customer")}</span>
                       </Button>
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         onClick={() => setIsNoteDialogOpen(true)}
-                        className="flex-1"
+                        className="h-11 rounded-none border-r border-slate-200 px-2"
                       >
                         <MessageSquare className="size-4" />
                         <span>{t("Comments")}</span>
                       </Button>
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         onClick={() => setIsCouponsDialogOpen(true)}
-                        className="flex-1"
+                        className="h-11 rounded-none border-r border-slate-200 px-2"
                       >
                         <Tags className="size-4" />
                         <span>{t("Coupons")}</span>
@@ -1664,18 +1691,18 @@ export default function SalesPage() {
                       </Button>
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         onClick={openOrderSettingsDialog}
-                        className="flex-1"
+                        className="h-11 rounded-none border-r border-slate-200 px-2"
                       >
                         <Settings className="size-4" />
                         <span>{t("Settings")}</span>
                       </Button>
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         onClick={() => setIsTaxesDialogOpen(true)}
-                        className="flex-1"
+                        className="h-11 rounded-none px-2"
                       >
                         <WalletCards className="size-4" />
                         <span>{t("Taxes")}</span>
@@ -1683,27 +1710,30 @@ export default function SalesPage() {
                     </ButtonGroup>
                   </div>
                   {/* Cart items */}
-                  <div className="flex-1 overflow-y-auto bg-slate-50/40">
+                  <div className="flex-1 overflow-y-auto bg-white">
                     {cartItems.length ? (
                       <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="text-slate-700">{t("Product")}</TableHead>
-                            <TableHead className="w-56 text-center text-slate-700">{t("Quantity")}</TableHead>
-                            <TableHead className="w-28 text-right text-slate-700">{t("Total")}</TableHead>
+                        <TableHeader className="sticky top-0 z-10 bg-slate-50">
+                          <TableRow className="border-slate-200">
+                            <TableHead className="h-10 text-xs font-bold uppercase text-slate-500">{t("Product")}</TableHead>
+                            <TableHead className="h-10 w-56 text-center text-xs font-bold uppercase text-slate-500">{t("Quantity")}</TableHead>
+                            <TableHead className="h-10 w-28 text-right text-xs font-bold uppercase text-slate-500">{t("Total")}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {cartItems.map((item) => (
-                            <TableRow key={item.line_id}>
+                            <TableRow key={item.line_id} className="border-slate-100 hover:bg-slate-50/80">
                               {/* Product column */}
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   <div className="min-w-0 flex-1">
-                                    <p className="truncate font-semibold text-slate-950">{item.name}</p>
+                                    <p className="truncate text-[15px] font-semibold text-slate-950">{item.name}</p>
+                                    {item.unit_label ? (
+                                      <p className="mt-0.5 truncate text-xs font-medium text-slate-500">{item.unit_label}</p>
+                                    ) : null}
                                     <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                                       <span>
-                                        {t("Price")} : {posOptions.currency_symbol}{item.price}
+                                        {t("Price")} : {formatMoney(item.price)}
                                       </span>
                                       <Button
                                         type="button"
@@ -1716,7 +1746,7 @@ export default function SalesPage() {
                                             {t("Discount")} {item.discount_type === "percentage" ? `${item.discount_value}%` : "0%"} : -{formatMoney(getCartItemDiscount(item))}
                                           </span>
                                         ) : (
-                                          <span>{t("Discount")} 0% : {posOptions.currency_symbol}0.00</span>
+                                          <span>{t("Discount")} 0% : {formatMoney(0)}</span>
                                         )}
                                       </Button>
                                     </div>
@@ -1725,7 +1755,7 @@ export default function SalesPage() {
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    className="size-7 shrink-0 text-slate-400 hover:text-red-500"
+                                    className="size-8 shrink-0 rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"
                                     onClick={() => removeItem(item.line_id)}
                                   >
                                     <Trash2 className="size-3.5" />
@@ -1735,7 +1765,7 @@ export default function SalesPage() {
 
                               {/* Quantity column */}
                               <TableCell>
-                                <div className="flex items-end gap-2">
+                                <div className="flex items-end justify-center gap-2">
                                   <UniFieldInput
                                     type="number"
                                     step={allowDecimalQuantities ? "0.01" : "1"}
@@ -1789,29 +1819,31 @@ export default function SalesPage() {
                         </TableBody>
                       </Table>
                     ) : (
-                      <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
-                        <ShoppingCart className="size-10" />
+                      <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-400">
+                        <div className="flex size-14 items-center justify-center rounded-full border border-dashed border-slate-300 bg-slate-50">
+                          <ShoppingCart className="size-7" />
+                        </div>
                         <p className="text-sm font-semibold">{t("no_items_in_cart")}</p>
                       </div>
                     )}
                   </div>
 
                   {/* Bill summary + checkout */}
-                  <div className="border-t bg-slate-50/60">
-                    <div className="bg-white text-sm font-semibold">
-                      <div className="flex items-center justify-between border-b border-slate-100 px-3 py-1">
+                  <div className="border-t border-slate-200 bg-slate-50">
+                    <div className="bg-white px-4 py-2 text-sm font-semibold">
+                      <div className="flex items-center justify-between py-1 text-slate-600">
                         <span>{t("Sub Total")}</span>
                         <span>{formatMoney(itemsSubtotal)}</span>
                       </div>
                       {(couponCodes.length > 0 || selectedCouponId) ? (
-                        <div className="flex items-center justify-between border-b border-slate-100 px-3 py-1">
+                        <div className="flex items-center justify-between py-1 text-slate-600">
                           <span>{t("Coupons")}</span>
                           <Button type="button" variant="link" className="h-auto p-0" onClick={() => setIsCouponsDialogOpen(true)}>
                             {couponCodes.length || 1}
                           </Button>
                         </div>
                       ) : null}
-                      <div className="flex items-center justify-between border-b border-slate-100 px-3 py-1">
+                      <div className="flex items-center justify-between py-1 text-slate-600">
                         <span>
                           {t("Discount")}
                           {cartDiscountType === "percentage" ? ` (${cartDiscountVal || 0}%)` : cartDiscount > 0 ? ` (${t("Flat")})` : ""}
@@ -1821,21 +1853,21 @@ export default function SalesPage() {
                         </Button>
                       </div>
                       {posOptions.pos_vat !== "disabled" ? (
-                        <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+                        <div className="flex items-center justify-between py-1 text-slate-600">
                           <span>{selectedTaxGroup?.name || t("Tax")}</span>
                           <Button type="button" variant="link" className="h-auto p-0" onClick={() => setIsTaxesDialogOpen(true)}>
                             {formatMoney(0)}
                           </Button>
                         </div>
                       ) : null}
-                      <div className="flex items-center justify-between px-3 py-1 text-base font-bold">
+                      <div className="mt-1 flex items-center justify-between border-t border-slate-200 pt-2 text-xl font-bold text-slate-950">
                         <span>{t("Total")}</span>
                         <span>{formatMoney(subtotal)}</span>
                       </div>
                     </div>
 
                     {customerId ? (
-                      <div className="mt-3 flex items-center justify-between rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800">
+                      <div className="mx-3 mb-3 flex items-center justify-between rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800">
                         <span>
                           {rewardBalanceState.isLoading
                             ? t("loading_reward_balance")
@@ -1857,12 +1889,12 @@ export default function SalesPage() {
                     ) : null}
                   </div>
 
-                  <div className="grid h-16 shrink-0 grid-cols-4 overflow-hidden border-t border-gray-200 text-sm font-bold">
+                  <div className="grid h-16 shrink-0 grid-cols-4 overflow-hidden border-t border-slate-200 text-sm font-bold">
                     <Button
                       type="button"
                       variant="ghost"
                       onClick={openCartDiscountDialog}
-                      className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-gray-50 px-2 py-2 text-gray-700 hover:bg-gray-100 rounded-none h-auto"
+                      className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-none border-r bg-white px-2 py-2 text-slate-700 hover:bg-slate-100 h-auto"
                     >
                       <Percent className="size-5" />
                       {t("Discount")}
@@ -1871,7 +1903,7 @@ export default function SalesPage() {
                       type="button"
                       disabled={!cartItems.length || isHoldingSale}
                       onClick={() => setIsHoldReferenceDialogOpen(true)}
-                      className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-blue-600 px-2 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 rounded-none h-auto hover:text-white"
+                      className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-none border-r bg-blue-600 px-2 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 h-auto hover:text-white"
                     >
                       <Pause className="size-5" />
                       {isHoldingSale ? t("Saving") : t("Hold")}
@@ -1880,7 +1912,7 @@ export default function SalesPage() {
                       type="button"
                       disabled={!cartItems.length || isCreatingSale}
                       onClick={handleOpenPaymentDialog}
-                      className="flex min-h-16 flex-col items-center justify-center gap-1 border-r bg-green-600 px-2 py-2 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 rounded-none h-auto hover:text-white"
+                      className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-none border-r bg-emerald-600 px-2 py-2 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 h-auto hover:text-white"
                     >
                       <CreditCard className="size-5" />
                       {isCreatingSale ? t("Completing") : t("Pay")}
@@ -1888,7 +1920,7 @@ export default function SalesPage() {
                     <Button
                       type="button"
                       onClick={handleVoidCart}
-                      className="flex min-h-16 flex-col items-center justify-center gap-1 bg-red-600 px-2 py-2 text-white hover:bg-red-700 rounded-none h-auto hover:text-white hover:bg-red-700/90"
+                      className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-none bg-red-600 px-2 py-2 text-white hover:bg-red-700 h-auto hover:text-white"
                     >
                       <Ban className="size-5" />
                       {t("Void")}
@@ -1899,11 +1931,11 @@ export default function SalesPage() {
 
               {/* ======== RIGHT: Product Grid ======== */}
               <div className={[
-                "order-2 flex min-h-0 w-full overflow-hidden lg:w-[50%]",
+                "order-2 flex min-h-0 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm lg:w-[52%]",
               ].join(" ")}>
                 <div className="flex min-h-0 flex-auto flex-col overflow-hidden bg-white">
                   {/* Top bar: product tools + customer */}
-                  <div className="relative border-b border-slate-200 p-2">
+                  <div className="relative border-b border-slate-200 bg-white p-3">
                     <UniFieldInput
                       ref={barcodeInputRef}
                       value={barcode}
@@ -1937,7 +1969,7 @@ export default function SalesPage() {
                       }
                     />
                     {isSearchDropdownOpen ? (
-                      <div className="absolute left-2 right-2 top-[58px] z-30 max-h-80 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                      <div className="absolute left-3 right-3 top-[62px] z-30 max-h-80 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
                         {productSearchResults.length ? (
                           productSearchResults.map((product) => {
                             const unitCount = getProductUnitQuantities(product).length
@@ -1947,7 +1979,7 @@ export default function SalesPage() {
                                 type="button"
                                 onMouseDown={(event) => event.preventDefault()}
                                 onClick={() => handleProductSearchPick(product)}
-                                className="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-3 py-2 text-left text-sm hover:bg-slate-50"
+                                className="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-3 py-2.5 text-left text-sm hover:bg-slate-50"
                               >
                                 <span className="min-w-0">
                                   <span className="block truncate font-semibold text-slate-950">{product.name}</span>
@@ -1971,11 +2003,12 @@ export default function SalesPage() {
                   </div>
 
                   {/* Breadcrumb navigation */}
-                  <div className="flex items-center border-b border-gray-100 bg-gray-50 px-2 py-2 text-sm">
+                  <div className="flex min-h-11 items-center gap-1 border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => navigateBreadcrumb(-1)}
+                      className="h-8 rounded-md px-2 text-slate-700"
                     >
                       <Home className="size-3.5" />
                       <span>{t("Home")}</span>
@@ -1987,8 +2020,9 @@ export default function SalesPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => navigateBreadcrumb(i)}
+                          className="h-8 max-w-48 rounded-md px-2 text-slate-700"
                         >
-                          {crumb.name}
+                          <span className="truncate">{crumb.name}</span>
                         </Button>
                       </span>
                     ))}
@@ -1997,9 +2031,9 @@ export default function SalesPage() {
 
                   {/* Pinned products strip */}
                   {pinnedProductsForGrid.length > 0 && (
-                    <div className="border-b border-gray-100 bg-amber-50/60 px-3 py-2">
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-700">{t("Pinned")}</p>
-                      <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                    <div className="border-b border-slate-200 bg-amber-50/70 px-3 py-3">
+                      <p className="mb-2 text-xs font-bold uppercase text-amber-700">{t("Pinned")}</p>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                         {pinnedProductsForGrid.map((product) => {
                           const unitQuantities = getProductUnitQuantities(product)
                           const uq = unitQuantities[0]
@@ -2009,23 +2043,30 @@ export default function SalesPage() {
                               key={product.id}
                               onClick={() => handleGridProductClick(product)}
                               className={[
-                                "cell-item group relative flex flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400",
-                                pinnedPreviewEnabled ? "h-36" : "h-20",
+                                "group relative flex flex-col overflow-hidden rounded-md border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md",
+                                pinnedPreviewEnabled ? "h-32" : "h-20",
                               ].join(" ")}
                             >
                               {pinnedPreviewEnabled && featuredImage ? (
                                 <img
                                   src={featuredImage}
                                   alt={product.name}
-                                  className="absolute inset-0 h-full w-full object-cover opacity-80 transition group-hover:opacity-100"
+                                  className="absolute inset-0 h-full w-full object-cover transition group-hover:scale-105"
                                 />
                               ) : pinnedPreviewEnabled ? (
-                                <ImageIcon className="absolute top-4 size-10 text-gray-300" />
+                                <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
+                                  <ImageIcon className="size-9 text-slate-300" />
+                                </div>
                               ) : null}
-                              <div className="relative z-10 flex h-20 w-full flex-col items-center justify-center bg-gradient-to-t from-black/70 to-transparent p-2 text-white">
-                                <p className="w-full truncate text-center text-sm font-semibold">{product.name}</p>
+                              <div className={[
+                                "relative z-10 mt-auto w-full p-2",
+                                pinnedPreviewEnabled ? "bg-gradient-to-t from-black/75 to-black/0 text-white" : "text-slate-950",
+                              ].join(" ")}>
+                                <p className="w-full truncate text-sm font-semibold">{product.name}</p>
                                 {unitQuantities.length === 1 && uq ? (
-                                  <span className="text-sm">{formatMoney(getDisplayPrice(uq))}</span>
+                                  <span className={pinnedPreviewEnabled ? "text-sm text-blue-100" : "text-sm text-blue-700"}>
+                                    {formatMoney(getDisplayPrice(uq))}
+                                  </span>
                                 ) : null}
                               </div>
                             </button>
@@ -2036,34 +2077,38 @@ export default function SalesPage() {
                   )}
 
                   {/* Grid area: categories + products */}
-                  <div className="flex-1 overflow-y-auto p-3">
+                  <div className="flex-1 overflow-y-auto bg-white p-3">
                     {!gridLoading && categoriesForGrid.length === 0 && productsForGrid.length === 0 && pinnedProductsForGrid.length === 0 && (
-                      <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-400">
-                        <Package className="size-14 opacity-30" />
+                      <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-400">
+                        <div className="flex size-16 items-center justify-center rounded-full border border-dashed border-slate-300 bg-slate-50">
+                          <Package className="size-8 opacity-50" />
+                        </div>
                         <p className="text-sm font-medium">{t("Looks like there is either no products and no categories. How about creating those first to get started ?")}</p>
                       </div>
                     )}
 
                     {/* Category tiles */}
                     {categoriesForGrid.length > 0 && (
-                      <div className="mb-4 grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
                         {categoriesForGrid.map((category) => (
                           <button
                             key={category.id}
                             onClick={() => drillIntoCategory(category)}
-                            className="cell-item group relative flex h-36 flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400"
+                            className="group relative flex h-32 flex-col overflow-hidden rounded-md border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
                           >
                             {category.preview_url ? (
                               <img
                                 src={category.preview_url}
                                 alt={category.name}
-                                className="absolute inset-0 h-full w-full object-cover opacity-70 group-hover:opacity-90 transition"
+                                className="absolute inset-0 h-full w-full object-cover transition group-hover:scale-105"
                               />
                             ) : (
-                              <Folder className="absolute top-4 size-10 text-blue-200 group-hover:text-blue-400 transition" />
+                              <div className="absolute inset-0 flex items-center justify-center bg-blue-50">
+                                <Folder className="size-10 text-blue-300 transition group-hover:text-blue-500" />
+                              </div>
                             )}
-                            <div className="relative z-10 w-full bg-gradient-to-t from-black/60 to-transparent px-2 pb-2 pt-6">
-                              <p className="truncate text-center text-xs font-bold text-white">{category.name}</p>
+                            <div className="relative z-10 mt-auto w-full bg-gradient-to-t from-black/70 to-black/0 px-2 pb-2 pt-8 text-white">
+                              <p className="truncate text-sm font-bold">{category.name}</p>
                             </div>
                           </button>
                         ))}
@@ -2072,7 +2117,7 @@ export default function SalesPage() {
 
                     {/* Product tiles (shown when no sub-categories) */}
                     {categoriesForGrid.length === 0 && productsForGrid.length > 0 && (
-                      <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
                         {productsForGrid.map((product) => {
                           const unitQuantities = getProductUnitQuantities(product)
                           const uq = unitQuantities[0]
@@ -2081,21 +2126,23 @@ export default function SalesPage() {
                             <button
                               key={product.id}
                               onClick={() => handleGridProductClick(product)}
-                              className="cell-item group relative flex h-36 flex-col items-center justify-end overflow-hidden border bg-white transition hover:border-blue-400"
+                              className="group relative flex h-36 flex-col overflow-hidden rounded-md border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
                             >
                               {featuredImage ? (
                                 <img
                                   src={featuredImage}
                                   alt={product.name}
-                                  className="absolute inset-0 h-full w-full object-cover opacity-75 group-hover:opacity-100 transition"
+                                  className="absolute inset-0 h-full w-full object-cover transition group-hover:scale-105"
                                 />
                               ) : (
-                                <ImageIcon className="absolute top-4 size-10 text-gray-200 group-hover:text-gray-300 transition" />
+                                <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
+                                  <ImageIcon className="size-10 text-slate-300 transition group-hover:text-slate-400" />
+                                </div>
                               )}
-                              <div className="relative z-10 w-full bg-gradient-to-t from-black/65 to-transparent px-2 pb-2 pt-6">
-                                <p className="truncate text-center text-xs font-bold text-white">{product.name}</p>
+                              <div className="relative z-10 mt-auto w-full bg-gradient-to-t from-black/75 to-black/0 px-2 pb-2 pt-8 text-white">
+                                <p className="truncate text-sm font-bold">{product.name}</p>
                                 {unitQuantities.length === 1 && uq ? (
-                                  <span className="block text-center text-sm text-blue-200">{formatMoney(getDisplayPrice(uq))}</span>
+                                  <span className="block text-sm font-semibold text-blue-100">{formatMoney(getDisplayPrice(uq))}</span>
                                 ) : null}
                               </div>
                             </button>
@@ -2110,6 +2157,137 @@ export default function SalesPage() {
             </div>
           </div>
         ) : null}
+
+        <CustomModal
+          open={isRegisterOptionsOpen}
+          onOpenChange={setIsRegisterOptionsOpen}
+          title={t("Register Options")}
+          description={shift?.register_name || t("Cash Register")}
+          className="max-w-2xl"
+          showFooter={false}
+        >
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-md border border-blue-100 bg-blue-50 p-4">
+                <p className="text-xs font-bold uppercase text-blue-700">{t("Sales")}</p>
+                <p className="mt-1 text-2xl font-bold text-blue-950">
+                  {formatMoney(shift?.total_sale_amount || shift?.total_sales || 0)}
+                </p>
+              </div>
+              <div className="rounded-md border border-emerald-100 bg-emerald-50 p-4">
+                <p className="text-xs font-bold uppercase text-emerald-700">{t("Balance")}</p>
+                <p className="mt-1 text-2xl font-bold text-emerald-950">
+                  {formatMoney(shift?.balance || shift?.expected_cash || 0)}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 overflow-hidden rounded-md border border-slate-200 bg-white">
+              {hasPermission(PERMISSIONS.cashRegister.close) ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeclaredCash(String(shift?.balance || shift?.expected_cash || ""))
+                    setShiftAction("close")
+                  }}
+                  className="flex min-h-32 flex-col items-center justify-center gap-2 border-b border-r border-slate-200 p-4 text-center font-semibold text-slate-800 hover:bg-blue-50"
+                >
+                  <LogOut className="size-8 text-blue-700" />
+                  {t("Close")}
+                </button>
+              ) : null}
+              {hasPermission(PERMISSIONS.cashRegister.cashIn) ? (
+                <button
+                  type="button"
+                  onClick={() => setShiftAction("cash_in")}
+                  className="flex min-h-32 flex-col items-center justify-center gap-2 border-b border-slate-200 p-4 text-center font-semibold text-slate-800 hover:bg-emerald-50"
+                >
+                  <PlusCircle className="size-8 text-emerald-700" />
+                  {t("Cash In")}
+                </button>
+              ) : null}
+              {hasPermission(PERMISSIONS.cashRegister.cashOut) ? (
+                <button
+                  type="button"
+                  onClick={() => setShiftAction("cash_out")}
+                  className="flex min-h-32 flex-col items-center justify-center gap-2 border-r border-slate-200 p-4 text-center font-semibold text-slate-800 hover:bg-red-50"
+                >
+                  <MinusCircle className="size-8 text-red-700" />
+                  {t("Cash Out")}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={openRegisterHistory}
+                className="flex min-h-32 flex-col items-center justify-center gap-2 p-4 text-center font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                {registerHistoryState.isLoading ? <Spinner /> : <History className="size-8 text-slate-700" />}
+                {t("History")}
+              </button>
+            </div>
+          </div>
+        </CustomModal>
+
+        <CustomModal
+          open={isRegisterHistoryOpen}
+          onOpenChange={setIsRegisterHistoryOpen}
+          title={t("Register History")}
+          description={shift?.register_name || t("Cash Register")}
+          className="max-w-4xl"
+          showFooter={false}
+        >
+          <div className="overflow-hidden rounded-md border border-slate-200">
+            <div className="grid grid-cols-2">
+              <div className="bg-emerald-600 p-4 text-right text-2xl font-bold text-white">
+                {formatMoney(registerTotalIn)}
+              </div>
+              <div className="bg-red-600 p-4 text-right text-2xl font-bold text-white">
+                {formatMoney(registerTotalOut)}
+              </div>
+            </div>
+            <div className="max-h-80 overflow-y-auto bg-white">
+              {registerHistoryEntries.length ? (
+                registerHistoryEntries.map((history: any) => {
+                  const action = history.action || history.entry_type
+                  const isOut = ["register-order-change", "register-closing", "register-close", "register-refund", "register-cash-out"].includes(action)
+                  return (
+                    <div
+                      key={history.id}
+                      className={[
+                        "flex items-start justify-between gap-4 border-b border-slate-100 p-3 text-sm",
+                        isOut ? "bg-red-50/40" : "bg-emerald-50/40",
+                      ].join(" ")}
+                    >
+                      <div>
+                        <p className="font-semibold text-slate-950">
+                          {history.description || history.label || t("Not Provided")}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-muted-foreground">
+                          {t("Type")}: {history.label || action}
+                        </p>
+                      </div>
+                      <p className={["font-bold", isOut ? "text-red-700" : "text-emerald-700"].join(" ")}>
+                        {formatMoney(history.value)}
+                      </p>
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="p-8 text-center text-sm font-semibold text-muted-foreground">
+                  {t("Nothing to display...")}
+                </div>
+              )}
+            </div>
+            <div className="bg-slate-50">
+              {registerHistorySummary.map((summary: any, index: number) => (
+                <div key={`${summary.label}-${index}`} className="flex justify-between border-t border-slate-200 px-3 py-2 text-sm font-semibold">
+                  <span>{summary.label}</span>
+                  <span>{formatMoney(summary.value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CustomModal>
 
         <SalesModals
           t={t}

@@ -27,6 +27,8 @@ const endpointsConfig = {
   },
   cashIn: { query: postMutation("shifts/cash-in") },
   cashOut: { query: postMutation("shifts/cash-out") },
+  getRegisterSessionHistory: { query: ({ id }: { id: number | string }) => getMutation(`${id}/session-history`) },
+  getRegisterZReport: { query: ({ id }: { id: number | string }) => getMutation(`${id}/z-report`) },
   performRegisterAction: {
     query: ({ id, action, payLoad }: { id: number | string; action: string; payLoad: any }) =>
       postMutation(`${action}/${id}`)(payLoad),

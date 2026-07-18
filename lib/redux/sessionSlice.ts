@@ -115,6 +115,8 @@ interface BusinessSettings {
     pos_keyboard_quick_search?: string[]
     pos_keyboard_toggle_merge?: string[]
     pos_amount_shortcut?: string
+    pos_complete_sale_audio?: string
+    pos_new_item_audio?: string
     preferred_price?: string
     pos_preferred_price?: string
     currency_symbol?: string
