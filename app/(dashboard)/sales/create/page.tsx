@@ -36,6 +36,14 @@ import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import SalesModals from "./SalesModals"
 import { Spinner } from "@/components/ui/spinner"
 import { UniFieldInput } from "@/components/ui/unifield-input"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { catalog } from "@/lib/api/catalog"
 import { customers } from "@/lib/api/customers"
 import { payments } from "@/lib/api/payments"
@@ -1675,109 +1683,111 @@ export default function SalesPage() {
                     </ButtonGroup>
                   </div>
                   {/* Cart items */}
-                  <div className="flex-1 overflow-y-auto bg-slate-50/40 p-3">
+                  <div className="flex-1 overflow-y-auto bg-slate-50/40">
                     {cartItems.length ? (
-                      cartItems.map((item) => (
-                        <div
-                          key={item.line_id}
-                          className="mb-3 rounded-md border border-slate-200 bg-white p-3 text-sm shadow-sm"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="truncate font-semibold text-slate-950">{item.name}</p>
-                              <p className="text-xs font-medium text-muted-foreground">
-                                {t("sku")}: {item.sku || "-"}
-                              </p>
-                              <div className="mt-2 flex flex-wrap items-center gap-2">
-                                {item.unit_label ? (
-                                  <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs">
-                                    {item.unit_label}
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-slate-700">{t("Product")}</TableHead>
+                            <TableHead className="w-56 text-center text-slate-700">{t("Quantity")}</TableHead>
+                            <TableHead className="w-28 text-right text-slate-700">{t("Total")}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {cartItems.map((item) => (
+                            <TableRow key={item.line_id}>
+                              {/* Product column */}
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate font-semibold text-slate-950">{item.name}</p>
+                                    <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                                      <span>
+                                        {t("Price")} : {posOptions.currency_symbol}{item.price}
+                                      </span>
+                                      <Button
+                                        type="button"
+                                        variant="link"
+                                        onClick={() => openItemDiscountDialog(item)}
+                                        className="h-auto p-0 text-xs font-medium text-muted-foreground"
+                                      >
+                                        {item.discount_value && item.discount_value > 0 ? (
+                                          <span className="text-emerald-700">
+                                            {t("Discount")} {item.discount_type === "percentage" ? `${item.discount_value}%` : "0%"} : -{formatMoney(getCartItemDiscount(item))}
+                                          </span>
+                                        ) : (
+                                          <span>{t("Discount")} 0% : {posOptions.currency_symbol}0.00</span>
+                                        )}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7 shrink-0 text-slate-400 hover:text-red-500"
+                                    onClick={() => removeItem(item.line_id)}
+                                  >
+                                    <Trash2 className="size-3.5" />
                                   </Button>
-                                ) : item.product_type ? (
-                                  <span className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-muted-foreground">
-                                    {item.product_type}
-                                  </span>
-                                ) : null}
-                                <Button
-                                  type="button"
-                                  variant="link"
-                                  onClick={() => openItemDiscountDialog(item)}
-                                  className="h-auto p-0 text-xs font-semibold"
-                                >
-                                  {item.discount_value && item.discount_value > 0 ? (
-                                    <span className="rounded border border-emerald-100 bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-700 no-underline">
-                                      {t("Discount")}: {item.discount_type === "percentage" ? `${item.discount_value}%` : formatMoney(item.discount_value)} (-{formatMoney(getCartItemDiscount(item))})
-                                    </span>
-                                  ) : (
-                                    t("Discount")
-                                  )}
-                                </Button>
-                              </div>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="size-8 shrink-0 text-red-500 hover:text-red-600"
-                              onClick={() => removeItem(item.line_id)}
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </div>
+                                </div>
+                              </TableCell>
 
-                          <div className="mt-3 grid grid-cols-[120px_1fr_120px] items-end gap-3">
-                            <UniFieldInput
-                              label={t("qty")}
-                              type="number"
-                              step={allowDecimalQuantities ? "0.01" : "1"}
-                              min="0"
-                              value={item.qty}
-                              containerClassName="bg-transparent"
-                              onChange={(e) => {
-                                const val = Number(e.target.value)
-                                if (val >= 0) {
-                                  setCartItems((prev) =>
-                                    prev
-                                      .map((i) =>
-                                        i.line_id === item.line_id
-                                          ? { ...i, qty: val }
-                                          : i
-                                      )
-                                      .filter((i) => i.qty > 0)
-                                  )
-                                }
-                              }}
-                            />
-                            <UniFieldInput
-                              label={t("price")}
-                              type="number"
-                              min="0"
-                              value={item.price}
-                              prefix={posOptions.currency_symbol}
-                              disabled={!posOptions.unit_price_editable}
-                              containerClassName="bg-transparent"
-                              onChange={(event) => {
-                                const price = Number(event.target.value)
-                                if (price >= 0) {
-                                  setCartItems((prev) =>
-                                    prev.map((cartItem) =>
-                                      cartItem.line_id === item.line_id
-                                        ? { ...cartItem, price, mode: "custom" }
-                                        : cartItem
-                                    )
-                                  )
-                                }
-                              }}
-                            />
-                            <div className="pb-1 text-right">
-                              <p className="text-xs font-semibold text-muted-foreground">{t("total")}</p>
-                              <p className="text-base font-bold text-slate-950">
+                              {/* Quantity column */}
+                              <TableCell>
+                                <div className="flex items-end gap-2">
+                                  <UniFieldInput
+                                    type="number"
+                                    step={allowDecimalQuantities ? "0.01" : "1"}
+                                    min="0"
+                                    value={item.qty}
+                                    containerClassName="bg-transparent w-20"
+                                    onChange={(e) => {
+                                      const val = Number(e.target.value)
+                                      if (val >= 0) {
+                                        setCartItems((prev) =>
+                                          prev
+                                            .map((i) =>
+                                              i.line_id === item.line_id
+                                                ? { ...i, qty: val }
+                                                : i
+                                            )
+                                            .filter((i) => i.qty > 0)
+                                        )
+                                      }
+                                    }}
+                                  />
+                                  <UniFieldInput
+                                    type="number"
+                                    min="0"
+                                    value={item.price}
+                                    prefix={posOptions.currency_symbol}
+                                    disabled={!posOptions.unit_price_editable}
+                                    containerClassName="bg-transparent w-24"
+                                    onChange={(event) => {
+                                      const price = Number(event.target.value)
+                                      if (price >= 0) {
+                                        setCartItems((prev) =>
+                                          prev.map((cartItem) =>
+                                            cartItem.line_id === item.line_id
+                                              ? { ...cartItem, price, mode: "custom" }
+                                              : cartItem
+                                          )
+                                        )
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              </TableCell>
+
+                              {/* Total column */}
+                              <TableCell className="text-right font-semibold text-slate-950">
                                 {formatMoney(item.qty * item.price - getCartItemDiscount(item))}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     ) : (
                       <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
                         <ShoppingCart className="size-10" />
@@ -1787,21 +1797,21 @@ export default function SalesPage() {
                   </div>
 
                   {/* Bill summary + checkout */}
-                  <div className="border-t border-slate-200 bg-slate-50/60 p-3">
-                    <div className="rounded-md border border-slate-200 bg-white text-sm font-semibold">
-                      <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+                  <div className="border-t bg-slate-50/60">
+                    <div className="bg-white text-sm font-semibold">
+                      <div className="flex items-center justify-between border-b border-slate-100 px-3 py-1">
                         <span>{t("Sub Total")}</span>
                         <span>{formatMoney(itemsSubtotal)}</span>
                       </div>
                       {(couponCodes.length > 0 || selectedCouponId) ? (
-                        <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+                        <div className="flex items-center justify-between border-b border-slate-100 px-3 py-1">
                           <span>{t("Coupons")}</span>
                           <Button type="button" variant="link" className="h-auto p-0" onClick={() => setIsCouponsDialogOpen(true)}>
                             {couponCodes.length || 1}
                           </Button>
                         </div>
                       ) : null}
-                      <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+                      <div className="flex items-center justify-between border-b border-slate-100 px-3 py-1">
                         <span>
                           {t("Discount")}
                           {cartDiscountType === "percentage" ? ` (${cartDiscountVal || 0}%)` : cartDiscount > 0 ? ` (${t("Flat")})` : ""}
@@ -1818,7 +1828,7 @@ export default function SalesPage() {
                           </Button>
                         </div>
                       ) : null}
-                      <div className="flex items-center justify-between px-3 py-3 text-base font-bold">
+                      <div className="flex items-center justify-between px-3 py-1 text-base font-bold">
                         <span>{t("Total")}</span>
                         <span>{formatMoney(subtotal)}</span>
                       </div>

@@ -597,7 +597,11 @@ export default function SalesModals({
       <CustomModal
         open={isOpenShiftDialogOpen}
         onOpenChange={(open) => {
-          if (shift) setIsOpenShiftDialogOpen(open)
+          if (shift) {
+            setIsOpenShiftDialogOpen(open)
+          } else {
+            router.push("/sales")
+          }
         }}
         title={t("open_cashier_shift")}
         description={t("open_shift_description")}
@@ -1030,9 +1034,6 @@ export default function SalesModals({
         }
       >
         <div className="space-y-4">
-          <div className="flex h-24 items-center justify-center rounded bg-blue-50 text-3xl font-bold text-blue-950">
-            {quantityInput || "0"}
-          </div>
           <UniFieldInput
             label={t("Quantity")}
             value={quantityInput}
@@ -1264,7 +1265,7 @@ export default function SalesModals({
           </>
         }
       >
-        <div className="space-y-4 py-4">
+        <div className="space-y-2">
           <UniFieldSelect
             label={t("Discount Type")}
             value={cartDiscountType}
@@ -1310,7 +1311,7 @@ export default function SalesModals({
           </>
         }
       >
-        <div className="space-y-4 py-4">
+        <div className="space-y-2">
           <UniFieldSelect
             label={t("Discount Type")}
             value={itemDiscountType}
