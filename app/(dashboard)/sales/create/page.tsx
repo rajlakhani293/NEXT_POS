@@ -262,6 +262,7 @@ export default function SalesPage() {
   const [closingNote, setClosingNote] = useState("")
 
   const [customerId, setCustomerId] = useState("")
+  const [checkoutStep, setCheckoutStep] = useState<"idle" | "customer" | "order_type" | "shipping" | "payment">("idle")
   const [isCustomerSelectOpen, setIsCustomerSelectOpen] = useState(false)
   const [customerSearchTerm, setCustomerSearchTerm] = useState("")
   const [draftId, setDraftId] = useState("")
@@ -269,7 +270,35 @@ export default function SalesPage() {
   const [couponInput, setCouponInput] = useState("")
   const [selectedCouponId, setSelectedCouponId] = useState("")
   const [orderTitle, setOrderTitle] = useState("")
-  const [orderType, setOrderType] = useState("takeaway")
+  const [orderType, setOrderType] = useState("")
+  const [isShippingBillingOpen, setIsShippingBillingOpen] = useState(false)
+  const [shippingBillingTab, setShippingBillingTab] = useState<"general" | "shipping" | "billing">("general")
+  const [shippingInfo, setShippingInfo] = useState({
+    shipping: "",
+    shipping_type: "flat",
+    use_customer_shipping: false,
+    use_customer_billing: false,
+    shipping_first_name: "",
+    shipping_last_name: "",
+    shipping_phone: "",
+    shipping_address_1: "",
+    shipping_address_2: "",
+    shipping_country: "",
+    shipping_city: "",
+    shipping_pobox: "",
+    shipping_company: "",
+    shipping_email: "",
+    billing_first_name: "",
+    billing_last_name: "",
+    billing_phone: "",
+    billing_address_1: "",
+    billing_address_2: "",
+    billing_country: "",
+    billing_city: "",
+    billing_pobox: "",
+    billing_company: "",
+    billing_email: "",
+  })
   const [saleNote, setSaleNote] = useState("")
   const [cartTaxGroupId, setCartTaxGroupId] = useState("")
   const [cartTaxType, setCartTaxType] = useState("exclusive")
@@ -559,9 +588,11 @@ export default function SalesPage() {
       { value: "delivery", label: t("Delivery") },
     ].filter((item) => configured.includes(item.value))
   }, [posOptions.order_types, t])
-  const activeOrderType = enabledOrderTypes.some((type) => type.value === orderType)
-    ? orderType
-    : enabledOrderTypes[0]?.value || orderType
+  const activeOrderType = enabledOrderTypes.length === 1
+    ? enabledOrderTypes[0]?.value || ""
+    : enabledOrderTypes.some((type) => type.value === orderType)
+      ? orderType
+      : ""
 
   const couponCodes = useMemo(() => parseCouponCodes(couponInput), [couponInput])
   const totalPaid = useMemo(
@@ -1106,7 +1137,34 @@ export default function SalesPage() {
     setCouponInput("")
     setSelectedCouponId("")
     setOrderTitle("")
-    setOrderType("takeaway")
+    setOrderType("")
+    setCheckoutStep("idle")
+    setShippingInfo({
+      shipping: "",
+      shipping_type: "flat",
+      use_customer_shipping: false,
+      use_customer_billing: false,
+      shipping_first_name: "",
+      shipping_last_name: "",
+      shipping_phone: "",
+      shipping_address_1: "",
+      shipping_address_2: "",
+      shipping_country: "",
+      shipping_city: "",
+      shipping_pobox: "",
+      shipping_company: "",
+      shipping_email: "",
+      billing_first_name: "",
+      billing_last_name: "",
+      billing_phone: "",
+      billing_address_1: "",
+      billing_address_2: "",
+      billing_country: "",
+      billing_city: "",
+      billing_pobox: "",
+      billing_company: "",
+      billing_email: "",
+    })
     setCartTaxGroupId(posOptions.pos_tax_group ? String(posOptions.pos_tax_group) : "")
     setCartTaxType(posOptions.pos_tax_type ? String(posOptions.pos_tax_type) : "exclusive")
     setSaleNote("")
@@ -1354,6 +1412,22 @@ export default function SalesPage() {
       showToast.error(t("Add at least one product to cart."))
       return
     }
+    if (!customerId) {
+      setCheckoutStep("customer")
+      setIsCustomerSelectOpen(true)
+      return
+    }
+    if (!activeOrderType) {
+      setCheckoutStep("order_type")
+      setIsOrderTypeOpen(true)
+      return
+    }
+    if (activeOrderType === "delivery" && !shippingInfo.shipping_type) {
+      setCheckoutStep("shipping")
+      setShippingBillingTab("general")
+      setIsShippingBillingOpen(true)
+      return
+    }
     const requestedPaymentStatus = submitOptions.paymentStatus || estimatedPaymentStatus
     if (
       totalPaid < subtotal &&
@@ -1379,6 +1453,9 @@ export default function SalesPage() {
       customer_id: customerId ? Number(customerId) : null,
       shift_id: cashRegistersEnabled ? shift.id : null,
       order_type: activeOrderType,
+      shipping: activeOrderType === "delivery" ? String(money(shippingInfo.shipping || 0)) : "0",
+      shipping_rate: "0",
+      shipping_type: activeOrderType === "delivery" ? shippingInfo.shipping_type : "",
       note: saleNote,
       coupon_codes: couponCodes,
       payment_status: requestedPaymentStatus,
@@ -1489,12 +1566,122 @@ export default function SalesPage() {
     addPaymentFromPopup(remaining)
   }
 
+  const confirmFullPaymentFromPopup = async () => {
+    const proceed = await confirm({
+      title: t("Confirm Full Payment"),
+      description: t("A full payment will be made using {paymentType} for {total}")
+        .replace("{paymentType}", activePaymentLabel)
+        .replace("{total}", formatMoney(subtotal)),
+    })
+    if (!proceed) return
+    makeFullPaymentFromPopup()
+  }
+
+  const customerAddressValue = (type: "shipping" | "billing", field: string) => {
+    const nested = selectedCustomer?.[type]?.[field]
+    const prefixed = selectedCustomer?.[`${type}_${field}`]
+    return nested || prefixed || ""
+  }
+
+  const hasCustomerAddress = (type: "shipping" | "billing") =>
+    Boolean(
+      customerAddressValue(type, "address_1") ||
+      customerAddressValue(type, "city") ||
+      customerAddressValue(type, "country")
+    )
+
+  const fillCustomerAddress = (type: "shipping" | "billing") => {
+    if (!selectedCustomer) return false
+    if (!hasCustomerAddress(type)) {
+      showToast.error(
+        type === "shipping"
+          ? t("Customer shipping address is not available.")
+          : t("Customer billing address is not available.")
+      )
+      return false
+    }
+    const fields = [
+      "first_name",
+      "last_name",
+      "phone",
+      "address_1",
+      "address_2",
+      "country",
+      "city",
+      "pobox",
+      "company",
+      "email",
+    ]
+    setShippingInfo((current) => ({
+      ...current,
+      ...Object.fromEntries(
+        fields.map((field) => [`${type}_${field}`, customerAddressValue(type, field)])
+      ),
+    }))
+    return true
+  }
+
+  const continueCheckout = (nextOrderType = activeOrderType, nextCustomerId = customerId) => {
+    if (!cartItems.length) {
+      showToast.error(t("Add at least one product to cart."))
+      setCheckoutStep("idle")
+      return
+    }
+    if (!nextCustomerId) {
+      setCheckoutStep("customer")
+      setIsCustomerSelectOpen(true)
+      return
+    }
+    if (!nextOrderType) {
+      setCheckoutStep("order_type")
+      setIsOrderTypeOpen(true)
+      return
+    }
+    if (nextOrderType === "delivery") {
+      setCheckoutStep("shipping")
+      setShippingBillingTab("general")
+      setIsShippingBillingOpen(true)
+      return
+    }
+    setCheckoutStep("payment")
+    setIsPaymentDialogOpen(true)
+  }
+
+  const handleCustomerSelectedForCheckout = (selectedId: string) => {
+    if (checkoutStep !== "customer") return
+    window.setTimeout(() => continueCheckout(activeOrderType, selectedId), 0)
+  }
+
+  const handleOrderTypeSelectedForCheckout = (type: string) => {
+    if (checkoutStep !== "order_type") return
+    window.setTimeout(() => continueCheckout(type), 0)
+  }
+
+  const saveShippingBilling = () => {
+    if (!shippingInfo.shipping_type.trim()) {
+      showToast.error(t("Shipping Type is required."))
+      setShippingBillingTab("general")
+      return
+    }
+    if (shippingInfo.use_customer_shipping && !hasCustomerAddress("shipping")) {
+      showToast.error(t("Customer shipping address is not available."))
+      return
+    }
+    if (shippingInfo.use_customer_billing && !hasCustomerAddress("billing")) {
+      showToast.error(t("Customer billing address is not available."))
+      return
+    }
+    setIsShippingBillingOpen(false)
+    setCheckoutStep("payment")
+    setIsPaymentDialogOpen(true)
+  }
+
   const handleOpenPaymentDialog = () => {
     if (!cartItems.length) {
       showToast.error(t("Add at least one product to cart."))
       return
     }
-    setIsPaymentDialogOpen(true)
+    continueCheckout()
     const firstPayment = paymentTypeOptions[0]
     if (!activePaymentType && firstPayment) {
       setActivePaymentType(firstPayment.value || firstPayment.identifier || "cash-payment")
@@ -1629,7 +1816,7 @@ export default function SalesPage() {
                           onClick={() => setIsOrderTypeOpen(true)}
                           className="h-9 rounded-md"
                         >
-                          {enabledOrderTypes.find((t) => t.value === activeOrderType)?.label || t("Type")}
+                          {enabledOrderTypes.find((type) => type.value === activeOrderType)?.label || t("Type")}
                         </Button>
                       )}
                       <Button variant="outline" size="sm" onClick={resetSaleForm} className="h-9 rounded-md">
@@ -1919,8 +2106,9 @@ export default function SalesPage() {
                     </Button>
                     <Button
                       type="button"
+                      disabled={!cartItems.length}
                       onClick={handleVoidCart}
-                      className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-none bg-red-600 px-2 py-2 text-white hover:bg-red-700 h-auto hover:text-white"
+                      className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-none bg-red-600 px-2 py-2 text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 h-auto hover:text-white"
                     >
                       <Ban className="size-5" />
                       {t("Void")}
@@ -2299,6 +2487,7 @@ export default function SalesPage() {
           customerOptions={customerOptions}
           customerId={customerId}
           setCustomerId={setCustomerId}
+          onCustomerSelected={handleCustomerSelectedForCheckout}
           isPaymentDialogOpen={isPaymentDialogOpen}
           setIsPaymentDialogOpen={setIsPaymentDialogOpen}
           activePaymentLabel={activePaymentLabel}
@@ -2316,6 +2505,7 @@ export default function SalesPage() {
           addPaymentFromPopup={addPaymentFromPopup}
           paymentAmountShortcuts={paymentAmountShortcuts}
           makeFullPaymentFromPopup={makeFullPaymentFromPopup}
+          confirmFullPaymentFromPopup={confirmFullPaymentFromPopup}
           handleCompleteSale={handleCompleteSale}
           isCreatingSale={isCreatingSale}
           ordersAllowUnpaid={ordersAllowUnpaid}
@@ -2425,6 +2615,16 @@ export default function SalesPage() {
           handleApplyItemDiscount={handleApplyItemDiscount}
           isOrderTypeOpen={isOrderTypeOpen}
           setIsOrderTypeOpen={setIsOrderTypeOpen}
+          onOrderTypeSelected={handleOrderTypeSelectedForCheckout}
+          isShippingBillingOpen={isShippingBillingOpen}
+          setIsShippingBillingOpen={setIsShippingBillingOpen}
+          shippingBillingTab={shippingBillingTab}
+          setShippingBillingTab={setShippingBillingTab}
+          shippingInfo={shippingInfo}
+          setShippingInfo={setShippingInfo}
+          selectedCustomer={selectedCustomer}
+          fillCustomerAddress={fillCustomerAddress}
+          saveShippingBilling={saveShippingBilling}
         />
 
         {confirmDialog}

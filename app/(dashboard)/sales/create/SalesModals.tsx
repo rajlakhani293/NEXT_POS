@@ -38,6 +38,7 @@ interface SalesModalsProps {
   addPaymentFromPopup: (amount: number) => void
   paymentAmountShortcuts: number[]
   makeFullPaymentFromPopup: () => void
+  confirmFullPaymentFromPopup: () => void
   handleCompleteSale: (opts?: { paymentStatus?: string }) => void
   isCreatingSale: boolean
   ordersAllowUnpaid: boolean
@@ -183,10 +184,23 @@ interface SalesModalsProps {
   customerOptions: any[]
   customerId: string
   setCustomerId: (id: string) => void
+  onCustomerSelected?: (id: string) => void
 
   // Order Type Picker
   isOrderTypeOpen: boolean
   setIsOrderTypeOpen: (open: boolean) => void
+  onOrderTypeSelected?: (type: string) => void
+
+  // Shipping & Billing
+  isShippingBillingOpen: boolean
+  setIsShippingBillingOpen: (open: boolean) => void
+  shippingBillingTab: "general" | "shipping" | "billing"
+  setShippingBillingTab: (tab: "general" | "shipping" | "billing") => void
+  shippingInfo: Record<string, any>
+  setShippingInfo: React.Dispatch<React.SetStateAction<any>>
+  selectedCustomer: any
+  fillCustomerAddress: (type: "shipping" | "billing") => boolean
+  saveShippingBilling: () => void
 }
 
 export default function SalesModals({
@@ -200,6 +214,7 @@ export default function SalesModals({
   customerOptions,
   customerId,
   setCustomerId,
+  onCustomerSelected,
 
   isPaymentDialogOpen,
   setIsPaymentDialogOpen,
@@ -218,6 +233,7 @@ export default function SalesModals({
   addPaymentFromPopup,
   paymentAmountShortcuts,
   makeFullPaymentFromPopup,
+  confirmFullPaymentFromPopup,
   handleCompleteSale,
   isCreatingSale,
   ordersAllowUnpaid,
@@ -343,6 +359,17 @@ export default function SalesModals({
 
   isOrderTypeOpen,
   setIsOrderTypeOpen,
+  onOrderTypeSelected,
+
+  isShippingBillingOpen,
+  setIsShippingBillingOpen,
+  shippingBillingTab,
+  setShippingBillingTab,
+  shippingInfo,
+  setShippingInfo,
+  selectedCustomer,
+  fillCustomerAddress,
+  saveShippingBilling,
 }: SalesModalsProps) {
   const formatMoney = (value: number | string | null | undefined) =>
     formatBusinessMoney(value, posOptions)
@@ -359,18 +386,40 @@ export default function SalesModals({
     )
   }, [customerOptions, customerSearchTerm])
 
+  const addressFields = [
+    ["first_name", t("First Name")],
+    ["last_name", t("Last Name")],
+    ["phone", t("Phone")],
+    ["address_1", t("Address 1")],
+    ["address_2", t("Address 2")],
+    ["country", t("Country")],
+    ["city", t("City")],
+    ["pobox", t("PO.Box")],
+    ["company", t("Company")],
+    ["email", t("Email")],
+  ] as const
+
+  const customerDisplayName = (customer: any) =>
+    customer?.name ||
+    [customer?.first_name, customer?.last_name].filter(Boolean).join(" ") ||
+    customer?.username ||
+    t("Customer")
+
+  const customerGroupName = (customer: any) =>
+    customer?.group?.name || customer?.group_name || customer?.group || t("No Group")
+
   return (
     <>
       <CustomModal
         open={isPaymentDialogOpen}
         onOpenChange={setIsPaymentDialogOpen}
         title={t("Payment")}
-        className="max-w-6xl overflow-hidden p-0"
+        className="w-[96vw] !max-w-[96vw] overflow-hidden p-0 xl:!max-w-[1280px]"
         headerClassName="sr-only"
-        bodyClassName="-mx-0 px-0 py-0 max-h-[82vh] border-y-0"
+        bodyClassName="-mx-0 px-0 py-0 max-h-[86vh] border-y-0"
         showFooter={false}
       >
-        <div className="flex max-h-[82vh] flex-col overflow-hidden bg-slate-50">
+        <div className="flex max-h-[86vh] flex-col overflow-hidden bg-slate-50">
           <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
             <div>
               <h3 className="text-xl font-bold text-slate-950">{t("Payment")}</h3>
@@ -393,7 +442,7 @@ export default function SalesModals({
               </div>
             </div>
           ) : (
-            <div className="grid min-h-0 flex-auto gap-3 overflow-y-auto p-4 lg:grid-cols-[240px_minmax(0,1fr)_300px]">
+            <div className="grid min-h-0 flex-auto gap-3 overflow-y-auto p-4 lg:grid-cols-[240px_minmax(420px,1fr)_340px]">
               <div className="rounded-lg border border-slate-200 bg-white p-3">
                 <p className="mb-3 text-xs font-bold uppercase text-muted-foreground">{t("Payment Type")}</p>
                 <div className="grid gap-2">
@@ -486,7 +535,7 @@ export default function SalesModals({
                     <Button
                       type="button"
                       className="col-span-2 md:col-span-4"
-                      onClick={makeFullPaymentFromPopup}
+                      onClick={confirmFullPaymentFromPopup}
                     >
                       {t("Full Payment")}
                     </Button>
@@ -1342,13 +1391,110 @@ export default function SalesModals({
       </CustomModal>
 
       <CustomModal
+        open={isShippingBillingOpen}
+        onOpenChange={setIsShippingBillingOpen}
+        title={t("Shipping & Billing")}
+        description={customerDisplayName(selectedCustomer)}
+        className="w-[94vw] !max-w-[94vw] overflow-hidden p-0 lg:!max-w-[1120px]"
+        bodyClassName="max-h-[78vh] overflow-y-auto px-5 py-4"
+        showFooter={true}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setIsShippingBillingOpen(false)}>
+              {t("Cancel")}
+            </Button>
+            <Button onClick={saveShippingBilling}>{t("Save")}</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {!selectedCustomer ? (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">
+              {t("Please select a customer before proceeding")}
+            </div>
+          ) : null}
+
+          <Tabs
+            value={shippingBillingTab}
+            onValueChange={(value) => setShippingBillingTab(value as "general" | "shipping" | "billing")}
+          >
+            <TabsList variant="line" className="w-full justify-start border-b border-slate-200">
+              <TabsTrigger value="general">{t("General Shipping")}</TabsTrigger>
+              <TabsTrigger value="billing">{t("Billing Address")}</TabsTrigger>
+              <TabsTrigger value="shipping">{t("Shipping Address")}</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="general" className="mt-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <UniFieldSelect
+                  label={t("Shipping Type")}
+                  value={shippingInfo.shipping_type || "flat"}
+                  onValueChange={(value) => setShippingInfo((current: any) => ({ ...current, shipping_type: value }))}
+                  placeholder={t("Choose an option")}
+                  required
+                >
+                  <SelectItem value="flat">{t("Flat")}</SelectItem>
+                </UniFieldSelect>
+                <UniFieldInput
+                  label={t("Shipping Fees")}
+                  value={shippingInfo.shipping}
+                  onChange={(event) => setShippingInfo((current: any) => ({ ...current, shipping: event.target.value }))}
+                  type="number"
+                  min="0"
+                  prefix={posOptions.currency_symbol}
+                  placeholder={t("0")}
+                />
+              </div>
+            </TabsContent>
+
+            {(["billing", "shipping"] as const).map((type) => (
+              <TabsContent key={type} value={type} className="mt-5">
+                <div className="space-y-4">
+                  <label className="flex items-center gap-2 text-sm font-semibold">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(shippingInfo[`use_customer_${type}`])}
+                      onChange={(event) => {
+                        const checked = event.target.checked
+                        if (checked && !fillCustomerAddress(type)) return
+                        setShippingInfo((current: any) => ({
+                          ...current,
+                          [`use_customer_${type}`]: checked,
+                        }))
+                      }}
+                    />
+                    {type === "shipping" ? t("Use Customer Shipping") : t("Use Customer Billing")}
+                  </label>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {addressFields.map(([field, label]) => (
+                      <UniFieldInput
+                        key={`${type}-${field}`}
+                        label={label}
+                        value={shippingInfo[`${type}_${field}`] || ""}
+                        onChange={(event) =>
+                          setShippingInfo((current: any) => ({
+                            ...current,
+                            [`${type}_${field}`]: event.target.value,
+                          }))
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+      </CustomModal>
+
+      <CustomModal
         open={isCustomerSelectOpen}
         onOpenChange={setIsCustomerSelectOpen}
         title={t("Customer List")}
-        className="max-w-2xl"
+        className="w-[90vw] !max-w-[720px]"
         showFooter={false}
       >
-        <div className="flex min-h-[400px] flex-col p-2">
+        <div className="flex min-h-[460px] flex-col p-2">
           <div className="border-b pb-3">
             <UniFieldInput
               value={customerSearchTerm}
@@ -1364,16 +1510,29 @@ export default function SalesModals({
                     <button
                       type="button"
                       onClick={() => {
-                        setCustomerId(String(customer.id))
+                        const selectedId = String(customer.id)
+                        setCustomerId(selectedId)
                         setIsCustomerSelectOpen(false)
                         setCustomerSearchTerm("")
+                        onCustomerSelected?.(selectedId)
                       }}
-                      className={[
-                        "flex w-full cursor-pointer justify-between rounded-lg border p-3 py-2 text-left transition hover:bg-slate-50"
-                      ].join(" ")}
+                      className="flex w-full cursor-pointer items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3 text-left transition hover:border-slate-300 hover:bg-slate-50"
                     >
-                      <div>
-                        <h4 className="font-semibold text-slate-900">{customer.name}</h4>
+                      <div className="min-w-0">
+                        <h4 className="truncate font-semibold text-slate-900">
+                          {customerDisplayName(customer)}
+                        </h4>
+                        <p className="text-xs font-medium text-muted-foreground">
+                          {customerGroupName(customer)}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right text-sm font-semibold">
+                        <div className="text-slate-900">
+                          {formatMoney(customer.purchases_amount || customer.total_sales || 0)}
+                        </div>
+                        <div className={money(customer.owed_amount) > 0 ? "text-red-600" : "text-muted-foreground"}>
+                          {formatMoney(customer.owed_amount || customer.account_amount || 0)}
+                        </div>
                       </div>
                     </button>
                   </li>
@@ -1407,6 +1566,7 @@ export default function SalesModals({
                 onClick={() => {
                   setOrderType(type.value)
                   setIsOrderTypeOpen(false)
+                  onOrderTypeSelected?.(type.value)
                 }}
                 className={[
                   "group relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 px-4 py-8 text-center transition-all duration-150",
