@@ -339,6 +339,9 @@ export default function SalesPage() {
   const [isOrderSettingsOpen, setIsOrderSettingsOpen] = useState(false)
   const [isTaxesDialogOpen, setIsTaxesDialogOpen] = useState(false)
   const [isCartDiscountDialogOpen, setIsCartDiscountDialogOpen] = useState(false)
+  const [isLayawayDialogOpen, setIsLayawayDialogOpen] = useState(false)
+  const [layawayCount, setLayawayCount] = useState("0")
+  const [layawayLines, setLayawayLines] = useState<{ date: string; amount: string }[]>([])
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false)
   const [productSearchResults, setProductSearchResults] = useState<POSProduct[]>([])
   const [activeDiscountItem, setActiveDiscountItem] = useState<CartItem | null>(null)
@@ -1403,7 +1406,7 @@ export default function SalesPage() {
     return `/sales/${saleId}/receipt${queryString}`
   }
 
-  const handleCompleteSale = async (submitOptions: { paymentStatus?: string } = {}) => {
+  const handleCompleteSale = async (submitOptions: { paymentStatus?: string; layaway?: any } = {}) => {
     if (cashRegistersEnabled && !shift?.id) {
       showToast.error(t("Open shift is required before billing."))
       return
@@ -1456,6 +1459,10 @@ export default function SalesPage() {
       shipping: activeOrderType === "delivery" ? String(money(shippingInfo.shipping || 0)) : "0",
       shipping_rate: "0",
       shipping_type: activeOrderType === "delivery" ? shippingInfo.shipping_type : "",
+      support_instalments: submitOptions.layaway?.support_instalments ?? true,
+      total_instalments: submitOptions.layaway?.total_instalments ?? 0,
+      final_payment_date: submitOptions.layaway?.final_payment_date ?? null,
+      instalments: submitOptions.layaway?.instalments ?? [],
       note: saleNote,
       coupon_codes: couponCodes,
       payment_status: requestedPaymentStatus,
@@ -1501,13 +1508,82 @@ export default function SalesPage() {
     }
   }
 
-  const handleSaveAsUnpaid = async () => {
-    const proceed = await confirm({
-      title: t("Confirm"),
-      description: t("Are you sure you want to save this order as unpaid?"),
+  const minimumLayawayPayment = useMemo(() => {
+    const percent = money(selectedCustomer?.group?.minimal_credit_payment || selectedCustomer?.minimal_credit_payment || 0)
+    return money((subtotal * percent) / 100)
+  }, [selectedCustomer, subtotal])
+
+  const openLayawayDialog = () => {
+    setLayawayCount(String(layawayLines.length || 0))
+    setIsLayawayDialogOpen(true)
+  }
+
+  const handleSkipLayaway = () => {
+    const today = new Date().toISOString().slice(0, 10)
+    const instalments = minimumLayawayPayment > 0
+      ? [{ date: today, amount: String(minimumLayawayPayment) }]
+      : []
+    setIsLayawayDialogOpen(false)
+    handleCompleteSale({
+      paymentStatus: totalPaid > 0 ? "partially_paid" : "unpaid",
+      layaway: {
+        support_instalments: false,
+        total_instalments: instalments.length,
+        final_payment_date: today,
+        instalments,
+      },
     })
-    if (!proceed) return
-    handleCompleteSale({ paymentStatus: "unpaid" })
+  }
+
+  const handleSubmitLayaway = () => {
+    if (!layawayLines.length) {
+      showToast.error(t("Please provide instalments before proceeding."))
+      return
+    }
+    const today = new Date().toISOString().slice(0, 10)
+    const parsed = layawayLines.map((line) => ({
+      date: line.date,
+      amount: money(line.amount),
+    }))
+    if (parsed.some((line) => !line.date)) {
+      showToast.error(t("One or more instalments has an invalid date."))
+      return
+    }
+    if (parsed.some((line) => !(line.amount > 0))) {
+      showToast.error(t("One or more instalments has an invalid amount."))
+      return
+    }
+    if (parsed.some((line) => line.date < today)) {
+      showToast.error(t("One or more instalments has a date prior to the current date."))
+      return
+    }
+    const todayPayment = parsed
+      .filter((line) => line.date === today)
+      .reduce((sum, line) => sum + line.amount, 0)
+    if (todayPayment < minimumLayawayPayment) {
+      showToast.error(t("The payment to be made today is less than what is expected."))
+      return
+    }
+    const totalInstalments = parsed.reduce((sum, line) => sum + line.amount, 0)
+    if (money(totalInstalments) < money(subtotal)) {
+      showToast.error(t("Total instalments must be equal to the order total."))
+      return
+    }
+    const sorted = [...parsed].sort((a, b) => a.date.localeCompare(b.date))
+    setIsLayawayDialogOpen(false)
+    handleCompleteSale({
+      paymentStatus: totalPaid > 0 ? "partially_paid" : "unpaid",
+      layaway: {
+        support_instalments: true,
+        total_instalments: sorted.length,
+        final_payment_date: sorted[sorted.length - 1]?.date || today,
+        instalments: sorted,
+      },
+    })
+  }
+
+  const handleSaveAsUnpaid = async () => {
+    openLayawayDialog()
   }
 
   const isInitialLoading =
@@ -1578,8 +1654,11 @@ export default function SalesPage() {
   }
 
   const customerAddressValue = (type: "shipping" | "billing", field: string) => {
-    const nested = selectedCustomer?.[type]?.[field]
+    const nested = selectedCustomer?.[type]?.[field] ?? selectedCustomer?.addresses?.[type]?.[field]
     const prefixed = selectedCustomer?.[`${type}_${field}`]
+    if (field === "company") {
+      return nested || prefixed || selectedCustomer?.[type]?.company_name || selectedCustomer?.addresses?.[type]?.company_name || selectedCustomer?.[`${type}_company_name`] || ""
+    }
     return nested || prefixed || ""
   }
 
@@ -2511,6 +2590,16 @@ export default function SalesPage() {
           ordersAllowUnpaid={ordersAllowUnpaid}
           ordersAllowPartial={ordersAllowPartial}
           handleSaveAsUnpaid={handleSaveAsUnpaid}
+          openLayawayDialog={openLayawayDialog}
+          isLayawayDialogOpen={isLayawayDialogOpen}
+          setIsLayawayDialogOpen={setIsLayawayDialogOpen}
+          layawayCount={layawayCount}
+          setLayawayCount={setLayawayCount}
+          layawayLines={layawayLines}
+          setLayawayLines={setLayawayLines}
+          minimumLayawayPayment={minimumLayawayPayment}
+          handleSkipLayaway={handleSkipLayaway}
+          handleSubmitLayaway={handleSubmitLayaway}
           openCartDiscountDialog={openCartDiscountDialog}
           isOpenShiftDialogOpen={isOpenShiftDialogOpen}
           setIsOpenShiftDialogOpen={setIsOpenShiftDialogOpen}

@@ -44,6 +44,16 @@ interface SalesModalsProps {
   ordersAllowUnpaid: boolean
   ordersAllowPartial: boolean
   handleSaveAsUnpaid: () => void
+  openLayawayDialog: () => void
+  isLayawayDialogOpen: boolean
+  setIsLayawayDialogOpen: (open: boolean) => void
+  layawayCount: string
+  setLayawayCount: (value: string) => void
+  layawayLines: { date: string; amount: string }[]
+  setLayawayLines: React.Dispatch<React.SetStateAction<{ date: string; amount: string }[]>>
+  minimumLayawayPayment: number
+  handleSkipLayaway: () => void
+  handleSubmitLayaway: () => void
   openCartDiscountDialog: () => void
 
   // Cashier Shift
@@ -239,6 +249,16 @@ export default function SalesModals({
   ordersAllowUnpaid,
   ordersAllowPartial,
   handleSaveAsUnpaid,
+  openLayawayDialog,
+  isLayawayDialogOpen,
+  setIsLayawayDialogOpen,
+  layawayCount,
+  setLayawayCount,
+  layawayLines,
+  setLayawayLines,
+  minimumLayawayPayment,
+  handleSkipLayaway,
+  handleSubmitLayaway,
   openCartDiscountDialog,
 
   isOpenShiftDialogOpen,
@@ -387,16 +407,16 @@ export default function SalesModals({
   }, [customerOptions, customerSearchTerm])
 
   const addressFields = [
-    ["first_name", t("First Name")],
-    ["last_name", t("Last Name")],
-    ["phone", t("Phone")],
-    ["address_1", t("Address 1")],
-    ["address_2", t("Address 2")],
-    ["country", t("Country")],
-    ["city", t("City")],
-    ["pobox", t("PO.Box")],
-    ["company", t("Company")],
-    ["email", t("Email")],
+    ["first_name", t("First Name"), t("Provide the billing first name.")],
+    ["last_name", t("Last Name"), t("Provide the billing last name.")],
+    ["phone", t("Phone"), t("Billing phone number.")],
+    ["address_1", t("Address 1"), t("Billing First Address.")],
+    ["address_2", t("Address 2"), t("Billing Second Address.")],
+    ["country", t("Country"), t("Billing Country.")],
+    ["city", t("City"), t("City")],
+    ["pobox", t("PO.Box"), t("Postal Address")],
+    ["company", t("Company"), t("Company")],
+    ["email", t("Email"), t("Email")],
   ] as const
 
   const customerDisplayName = (customer: any) =>
@@ -407,6 +427,17 @@ export default function SalesModals({
 
   const customerGroupName = (customer: any) =>
     customer?.group?.name || customer?.group_name || customer?.group || t("No Group")
+
+  const generateLayawayLines = (countValue: string) => {
+    const count = Math.max(Number.parseInt(countValue || "0", 10) || 0, 0)
+    const today = new Date().toISOString().slice(0, 10)
+    setLayawayLines(
+      Array.from({ length: count }).map((_, index) => ({
+        date: index === 0 ? today : "",
+        amount: index === 0 && minimumLayawayPayment > 0 ? String(minimumLayawayPayment) : "0",
+      }))
+    )
+  }
 
   return (
     <>
@@ -621,11 +652,7 @@ export default function SalesModals({
               <>
                 <Button
                   variant="outline"
-                  onClick={() =>
-                    handleCompleteSale({
-                      paymentStatus: totalPaid > 0 ? "partially_paid" : "unpaid",
-                    })
-                  }
+                  onClick={openLayawayDialog}
                   disabled={
                     isCreatingSale ||
                     (totalPaid > 0 ? !ordersAllowPartial : !ordersAllowUnpaid)
@@ -1141,10 +1168,130 @@ export default function SalesModals({
       </CustomModal>
 
       <CustomModal
+        open={isLayawayDialogOpen}
+        onOpenChange={setIsLayawayDialogOpen}
+        title={t("Layaway Parameters")}
+        className="w-[94vw] !max-w-[94vw] md:!max-w-[760px]"
+        bodyClassName="max-h-[72vh] overflow-y-auto"
+        showFooter={true}
+        footer={
+          <div className="flex w-full flex-wrap justify-between gap-2">
+            <Button variant="outline" onClick={handleSkipLayaway}>
+              {t("Skip Instalments")}
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="destructive" onClick={() => setIsLayawayDialogOpen(false)}>
+                {t("Cancel")}
+              </Button>
+              <Button onClick={handleSubmitLayaway}>{t("Proceed")}</Button>
+            </div>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between rounded-md border border-blue-100 bg-blue-50 p-3 text-lg font-bold text-blue-950">
+            <span>{t("Minimum Payment")}</span>
+            <span>{formatMoney(minimumLayawayPayment)}</span>
+          </div>
+          <UniFieldInput
+            label={t("Installments")}
+            value={layawayCount}
+            onChange={(event) => {
+              setLayawayCount(event.target.value)
+              generateLayawayLines(event.target.value)
+            }}
+            type="number"
+            min="0"
+            placeholder={t("Define the installments for the current order.")}
+          />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <h3 className="text-lg font-bold">{t("Instalments & Payments")}</h3>
+              <div className="text-sm font-semibold">
+                <span>{formatMoney(layawayLines.reduce((sum, line) => sum + money(line.amount), 0))}</span>
+                <span className="mx-1 text-muted-foreground">/</span>
+                <span>{formatMoney(subtotal)}</span>
+              </div>
+            </div>
+            <div className="rounded-md bg-green-50 p-2 text-center text-sm font-semibold text-green-700">
+              {t("The final payment date must be the last within the instalments.")}
+            </div>
+            {layawayLines.length ? (
+              <div className="space-y-2">
+                {layawayLines.map((line, index) => (
+                  <div key={index} className="grid gap-2 rounded-md border border-slate-200 p-2 md:grid-cols-[1fr_1fr_auto]">
+                    <UniFieldInput
+                      label={t("Date")}
+                      type="date"
+                      value={line.date}
+                      onChange={(event) =>
+                        setLayawayLines((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, date: event.target.value } : item
+                          )
+                        )
+                      }
+                    />
+                    <UniFieldInput
+                      label={t("Amount")}
+                      type="number"
+                      min="0"
+                      prefix={posOptions.currency_symbol}
+                      value={line.amount}
+                      onChange={(event) =>
+                        setLayawayLines((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, amount: event.target.value } : item
+                          )
+                        )
+                      }
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="self-end text-red-500 hover:text-red-600"
+                      onClick={() => setLayawayLines((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-md border border-dashed border-slate-200 p-3 text-center text-sm font-semibold text-muted-foreground">
+                {t("There is no instalment defined. Please set how many instalments are allowed for this order")}
+              </div>
+            )}
+          </div>
+        </div>
+      </CustomModal>
+
+      <CustomModal
         open={isCouponsDialogOpen}
         onOpenChange={setIsCouponsDialogOpen}
         title={t("Load Coupon")}
-        showFooter={false}
+        className="w-[95vw] !max-w-[560px]"
+        showFooter={Boolean(couponInput.trim())}
+        footer={
+          couponInput.trim() ? (
+            <div className="grid w-full grid-cols-2 gap-2">
+              <Button type="button" onClick={() => setIsCouponsDialogOpen(false)}>
+                {t("Apply")}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  setCouponInput("")
+                  setSelectedCouponId("")
+                }}
+              >
+                {t("Cancel")}
+              </Button>
+            </div>
+          ) : null
+        }
         bodyClassName="pt-0 px-4 pb-4"
       >
         <Tabs defaultValue={(couponInput || selectedCouponId) ? "active-coupons" : "apply-coupon"}>
@@ -1154,7 +1301,6 @@ export default function SalesModals({
           </TabsList>
           <TabsContent value="apply-coupon" className="space-y-4 pt-4">
             <UniFieldInput
-              label={t("Coupon Code")}
               value={couponInput}
               onChange={(event) => setCouponInput(event.target.value)}
               placeholder={t("Coupon Code")}
@@ -1164,22 +1310,18 @@ export default function SalesModals({
                 </Button>
               }
             />
-            {/* <div className="rounded-md border border-blue-100 bg-blue-50 p-3 text-sm font-medium text-blue-900">
+            <div className="rounded-md border border-blue-100 bg-blue-50 p-3 text-sm font-medium text-blue-900">
               {t("Input the coupon code that should apply to the POS. If a coupon is issued for a customer, that customer must be selected priorly.")}
-            </div> */}
-            <UniFieldSelect
-              label={t("Name")}
-              value={selectedCouponId}
-              onValueChange={setSelectedCouponId}
-              placeholder={t("choose_coupon")}
-              allowClear
-            >
-              {couponOptions.map((coupon: { id: number | string; name?: string; code?: string }) => (
-                <SelectItem key={coupon.id} value={String(coupon.id)}>
-                  {coupon.name || coupon.code || coupon.id}
-                </SelectItem>
-              ))}
-            </UniFieldSelect>
+            </div>
+            {customerId ? (
+              <div className="rounded-md border border-green-100 bg-green-50 p-3 text-sm font-medium text-green-900">
+                {t("Loading Coupon For : ")} {customerDisplayName(selectedCustomer)}
+              </div>
+            ) : (
+              <Button type="button" variant="outline" className="w-full" onClick={() => setIsCustomerSelectOpen(true)}>
+                {t("Click here to choose a customer.")}
+              </Button>
+            )}
           </TabsContent>
           <TabsContent value="active-coupons" className="pt-4">
             <div className="space-y-2">
@@ -1466,10 +1608,11 @@ export default function SalesModals({
                     {type === "shipping" ? t("Use Customer Shipping") : t("Use Customer Billing")}
                   </label>
                   <div className="grid gap-4 md:grid-cols-2">
-                    {addressFields.map(([field, label]) => (
+                    {addressFields.map(([field, label, placeholder]) => (
                       <UniFieldInput
                         key={`${type}-${field}`}
                         label={label}
+                        placeholder={placeholder}
                         value={shippingInfo[`${type}_${field}`] || ""}
                         onChange={(event) =>
                           setShippingInfo((current: any) => ({
