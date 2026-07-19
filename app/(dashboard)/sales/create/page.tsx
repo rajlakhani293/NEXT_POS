@@ -1482,6 +1482,7 @@ export default function SalesPage() {
     submitOptions: {
       paymentStatus?: string
       layaway?: any
+      omitPayments?: boolean
       additionalPayments?: Array<{
         payment_type: string
         amount: string
@@ -1533,7 +1534,7 @@ export default function SalesPage() {
       showToast.error(t("Partial orders are not allowed."))
       return
     }
-    const validPayments = paymentsRows.filter((row) => money(row.amount) > 0)
+    const validPayments = submitOptions.omitPayments ? [] : paymentsRows.filter((row) => money(row.amount) > 0)
     const additionalPayments = submitOptions.additionalPayments || []
     const payLoad = {
       draft_id: draftId ? Number(draftId) : null,
@@ -1747,7 +1748,30 @@ export default function SalesPage() {
   }
 
   const handleSaveAsUnpaid = async () => {
-    openLayawayDialog()
+    if (!ordersAllowUnpaid) {
+      showToast.error(t("Unpaid orders are not allowed."))
+      return
+    }
+    const proceed = await confirm({
+      title: t("Save As Unpaid"),
+      description: t("Are you sure you want to save this order as unpaid?"),
+      confirmLabel: t("Proceed"),
+      cancelLabel: t("Cancel"),
+    })
+    if (!proceed) return
+
+    setPaymentsRows([emptyPaymentRow()])
+    setPaymentAmountInput("")
+    await handleCompleteSale({
+      paymentStatus: "unpaid",
+      layaway: {
+        support_instalments: false,
+        total_instalments: 0,
+        final_payment_date: null,
+        instalments: [],
+      },
+      omitPayments: true,
+    })
   }
 
   const isInitialLoading =
@@ -1795,6 +1819,32 @@ export default function SalesPage() {
       ]
     })
     setPaymentAmountInput("")
+  }
+
+  const resetPaymentModalState = () => {
+    setPaymentAmountInput("")
+    setPaymentsRows([emptyPaymentRow()])
+    const firstPayment = paymentTypeOptions[0]
+    setActivePaymentType(firstPayment?.value || firstPayment?.identifier || "cash-payment")
+  }
+
+  const handlePaymentDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      resetPaymentModalState()
+    }
+    setIsPaymentDialogOpen(open)
+  }
+
+  const resetLayawayModalState = () => {
+    setLayawayCount("0")
+    setLayawayLines([])
+  }
+
+  const handleLayawayDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      resetLayawayModalState()
+    }
+    setIsLayawayDialogOpen(open)
   }
 
   const makeFullPaymentFromPopup = () => {
@@ -2579,7 +2629,7 @@ export default function SalesPage() {
           setCustomerId={setCustomerId}
           onCustomerSelected={handleCustomerSelectedForCheckout}
           isPaymentDialogOpen={isPaymentDialogOpen}
-          setIsPaymentDialogOpen={setIsPaymentDialogOpen}
+          setIsPaymentDialogOpen={handlePaymentDialogOpenChange}
           activePaymentLabel={activePaymentLabel}
           paymentTypeOptions={paymentTypeOptions}
           activePaymentType={activePaymentType}
@@ -2603,7 +2653,7 @@ export default function SalesPage() {
           handleSaveAsUnpaid={handleSaveAsUnpaid}
           openLayawayDialog={openLayawayDialog}
           isLayawayDialogOpen={isLayawayDialogOpen}
-          setIsLayawayDialogOpen={setIsLayawayDialogOpen}
+          setIsLayawayDialogOpen={handleLayawayDialogOpenChange}
           layawayCount={layawayCount}
           setLayawayCount={setLayawayCount}
           layawayLines={layawayLines}

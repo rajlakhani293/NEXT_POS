@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { ButtonGroup } from "@/components/ui/button-group"
 import CustomModal from "@/components/ui/customModal"
 import { SelectItem } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
@@ -70,6 +71,7 @@ interface SalesModalsProps {
   handleCompleteSale: (opts?: {
     paymentStatus?: string
     layaway?: any
+    omitPayments?: boolean
     additionalPayments?: Array<{
       payment_type: string
       amount: string
@@ -551,29 +553,25 @@ export default function SalesModals({
             <div className="grid min-h-0 flex-auto gap-3 overflow-y-auto p-4 lg:grid-cols-[240px_minmax(420px,1fr)_340px]">
               <div className="rounded-lg border border-slate-200 bg-white p-3">
                 <p className="mb-3 text-xs font-bold uppercase text-muted-foreground">{t("Payment Type")}</p>
-                <div className="grid gap-2">
+                <ButtonGroup orientation="vertical" className="w-full">
                   {paymentTypeOptions.map((payment: any) => {
                     const identifier = payment.value || payment.identifier
+                    const isActive = activePaymentType === identifier
                     return (
                       <Button
                         key={identifier}
                         type="button"
-                        variant="outline"
+                        variant={isActive ? "blue" : "outline"}
                         onClick={() => {
                           setActivePaymentType(identifier)
                         }}
-                        className={[
-                          "justify-start border text-left font-semibold",
-                          activePaymentType === identifier
-                            ? "border-slate-950 bg-slate-950 text-white"
-                            : "border-slate-200 bg-white text-slate-800 hover:border-slate-400",
-                        ].join(" ")}
+                        className="justify-start text-left font-semibold w-full"
                       >
                         <span>{payment.label}</span>
                       </Button>
                     )
                   })}
-                </div>
+                </ButtonGroup>
               </div>
 
               <div className="rounded-lg border border-slate-200 bg-white p-4">
@@ -626,18 +624,6 @@ export default function SalesModals({
                     </Button>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-                    {(paymentAmountShortcuts.length ? paymentAmountShortcuts : [5, 10, 20, 50]).map((amount) => (
-                      <Button
-                        key={amount}
-                        type="button"
-                        variant="outline"
-                        onClick={() =>
-                          setPaymentAmountInput(String(money(paymentAmountInput) + amount))
-                        }
-                      >
-                        {formatMoney(amount)}
-                      </Button>
-                    ))}
                     <Button
                       type="button"
                       className="col-span-2 md:col-span-4"
