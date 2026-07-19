@@ -2971,5 +2971,9 @@
   "Password is required.": "Mật khẩu là bắt buộc.",
   "Passwords do not match": "Mật khẩu không khớp",
   "Enter a valid email address.": "Nhập một địa chỉ email hợp lệ.",
-  "Password confirmation does not match.": "Xác nhận mật khẩu không khớp."
+  "Password confirmation does not match.": "Xác nhận mật khẩu không khớp.",
+  "Please provide a valid quantity.": "Vui lòng nhập số lượng hợp lệ.",
+  "Quantity is required.": "Số lượng là bắt buộc.",
+  "Please provide a valid price.": "Vui lòng nhập giá hợp lệ.",
+  "Enter price": "Nhập giá"
 }

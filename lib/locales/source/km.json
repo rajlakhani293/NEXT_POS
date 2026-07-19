@@ -2972,5 +2972,9 @@
   "Password is required.": "លេខសម្ងាត់ត្រូវបានទាមទារ។",
   "Passwords do not match": "លេខសម្ងាត់មិនត្រូវគ្នាទេ។",
   "Enter a valid email address.": "សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលត្រឹមត្រូវ។",
-  "Password confirmation does not match.": "ការបញ្ជាក់លេខសម្ងាត់មិនត្រូវគ្នាទេ។"
+  "Password confirmation does not match.": "ការបញ្ជាក់លេខសម្ងាត់មិនត្រូវគ្នាទេ។",
+  "Please provide a valid quantity.": "សូមបញ្ចូលបរិមាណត្រឹមត្រូវ។",
+  "Quantity is required.": "ត្រូវការបរិមាណ។",
+  "Please provide a valid price.": "សូមបញ្ចូលតម្លៃត្រឹមត្រូវ។",
+  "Enter price": "បញ្ចូលតម្លៃ"
 }

@@ -2974,5 +2974,9 @@
   "Password is required.": "Kata sandi wajib diisi.",
   "Passwords do not match": "Kata sandi tidak cocok",
   "Enter a valid email address.": "Masukkan alamat email yang valid.",
-  "Password confirmation does not match.": "Konfirmasi kata sandi tidak cocok."
+  "Password confirmation does not match.": "Konfirmasi kata sandi tidak cocok.",
+  "Please provide a valid quantity.": "Masukkan jumlah yang valid.",
+  "Quantity is required.": "Jumlah wajib diisi.",
+  "Please provide a valid price.": "Masukkan harga yang valid.",
+  "Enter price": "Masukkan harga"
 }

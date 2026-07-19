@@ -2972,5 +2972,9 @@
   "Password is required.": "La password è richiesta.",
   "Passwords do not match": "Le password non corrispondono",
   "Enter a valid email address.": "Inserisci un indirizzo email valido.",
-  "Password confirmation does not match.": "La conferma della password non corrisponde."
+  "Password confirmation does not match.": "La conferma della password non corrisponde.",
+  "Please provide a valid quantity.": "Inserisci una quantità valida.",
+  "Quantity is required.": "La quantità è obbligatoria.",
+  "Please provide a valid price.": "Inserisci un prezzo valido.",
+  "Enter price": "Inserisci prezzo"
 }

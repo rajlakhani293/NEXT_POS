@@ -2972,5 +2972,9 @@
   "Password is required.": "Fjalëkalimi kërkohet.",
   "Passwords do not match": "Fjalëkalimet nuk përputhen",
   "Enter a valid email address.": "Vendosni një adresë email të vlefshme.",
-  "Password confirmation does not match.": "Konfirmimi i fjalëkalimit nuk përputhet."
+  "Password confirmation does not match.": "Konfirmimi i fjalëkalimit nuk përputhet.",
+  "Please provide a valid quantity.": "Jepni një sasi të vlefshme.",
+  "Quantity is required.": "Sasia është e detyrueshme.",
+  "Please provide a valid price.": "Jepni një çmim të vlefshëm.",
+  "Enter price": "Shkruani çmimin"
 }

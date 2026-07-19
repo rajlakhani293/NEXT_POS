@@ -2972,5 +2972,9 @@
   "Password is required.": "Şifre gereklidir.",
   "Passwords do not match": "Şifreler uyuşmuyor",
   "Enter a valid email address.": "Geçerli bir e-posta adresi girin.",
-  "Password confirmation does not match.": "Şifre onayı uyuşmuyor."
+  "Password confirmation does not match.": "Şifre onayı uyuşmuyor.",
+  "Please provide a valid quantity.": "Lütfen geçerli bir miktar girin.",
+  "Quantity is required.": "Miktar gereklidir.",
+  "Please provide a valid price.": "Lütfen geçerli bir fiyat girin.",
+  "Enter price": "Fiyat girin"
 }

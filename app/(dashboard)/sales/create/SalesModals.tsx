@@ -1,7 +1,18 @@
 "use client"
 
 import React from "react"
-import { CheckCircle2, ShoppingBag, Trash2, Truck } from "lucide-react"
+import {
+  BanknoteArrowDown,
+  BanknoteArrowUp,
+  History,
+  LogOut,
+  MinusCircle,
+  PlusCircle,
+  CheckCircle2,
+  ShoppingBag,
+  Trash2,
+  Truck,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import CustomModal from "@/components/ui/customModal"
@@ -11,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { formatBusinessDateTime, formatBusinessMoney } from "@/lib/format"
+import { PERMISSIONS } from "@/lib/permissions"
 
 const money = (value: string | number | null | undefined) =>
   Number(value || 0) || 0
@@ -56,6 +68,13 @@ interface SalesModalsProps {
   handleSubmitLayaway: () => void
   openCartDiscountDialog: () => void
 
+  // Cart Item Price
+  activePriceItem: any
+  setActivePriceItem: (item: any) => void
+  priceInput: string
+  setPriceInput: (value: string) => void
+  handleApplyItemPrice: () => void
+
   // Cashier Shift
   isOpenShiftDialogOpen: boolean
   setIsOpenShiftDialogOpen: (open: boolean) => void
@@ -71,6 +90,19 @@ interface SalesModalsProps {
   openingNote: string
   setOpeningNote: (val: string) => void
   router: any
+  hasPermission: (permission: string) => boolean
+
+  // Register Options / History
+  isRegisterOptionsOpen: boolean
+  setIsRegisterOptionsOpen: (open: boolean) => void
+  isRegisterHistoryOpen: boolean
+  setIsRegisterHistoryOpen: (open: boolean) => void
+  openRegisterHistory: () => void
+  registerHistoryState: any
+  registerHistoryEntries: any[]
+  registerHistorySummary: any[]
+  registerTotalIn: number
+  registerTotalOut: number
 
   // Cash Movement
   shiftAction: "cash_in" | "cash_out" | "close" | null
@@ -261,6 +293,12 @@ export default function SalesModals({
   handleSubmitLayaway,
   openCartDiscountDialog,
 
+  activePriceItem,
+  setActivePriceItem,
+  priceInput,
+  setPriceInput,
+  handleApplyItemPrice,
+
   isOpenShiftDialogOpen,
   setIsOpenShiftDialogOpen,
   shift,
@@ -275,6 +313,18 @@ export default function SalesModals({
   openingNote,
   setOpeningNote,
   router,
+  hasPermission,
+
+  isRegisterOptionsOpen,
+  setIsRegisterOptionsOpen,
+  isRegisterHistoryOpen,
+  setIsRegisterHistoryOpen,
+  openRegisterHistory,
+  registerHistoryState,
+  registerHistoryEntries,
+  registerHistorySummary,
+  registerTotalIn,
+  registerTotalOut,
 
   shiftAction,
   setShiftAction,
@@ -745,6 +795,137 @@ export default function SalesModals({
             onChange={(event) => setOpeningNote(event.target.value)}
             placeholder={t("opening_note")}
           />
+        </div>
+      </CustomModal>
+
+      <CustomModal
+        open={isRegisterOptionsOpen}
+        onOpenChange={setIsRegisterOptionsOpen}
+        title={t("Register Options")}
+        description={shift?.register_name || t("Cash Register")}
+        className="max-w-2xl"
+        showFooter={false}
+      >
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-md border border-blue-100 bg-blue-50 p-4">
+              <p className="text-xs font-bold uppercase text-blue-700">{t("Sales")}</p>
+              <p className="mt-1 text-2xl font-bold text-blue-950">
+                {formatMoney(shift?.total_sale_amount || shift?.total_sales || 0)}
+              </p>
+            </div>
+            <div className="rounded-md border border-emerald-100 bg-emerald-50 p-4">
+              <p className="text-xs font-bold uppercase text-emerald-700">{t("Balance")}</p>
+              <p className="mt-1 text-2xl font-bold text-emerald-950">
+                {formatMoney(shift?.balance || shift?.expected_cash || 0)}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 overflow-hidden rounded-md border border-slate-200 bg-white">
+            {hasPermission(PERMISSIONS.cashRegister.close) ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setDeclaredCash(String(shift?.balance || shift?.expected_cash || ""))
+                  setShiftAction("close")
+                }}
+                className="flex min-h-32 flex-col items-center justify-center gap-2 border-b border-r border-slate-200 p-4 text-center font-semibold text-slate-800 hover:bg-blue-50"
+              >
+                <LogOut className="size-8 text-blue-700" />
+                {t("Close")}
+              </button>
+            ) : null}
+            {hasPermission(PERMISSIONS.cashRegister.cashIn) ? (
+              <button
+                type="button"
+                onClick={() => setShiftAction("cash_in")}
+                className="flex min-h-32 flex-col items-center justify-center gap-2 border-b border-slate-200 p-4 text-center font-semibold text-slate-800 hover:bg-emerald-50"
+              >
+                <PlusCircle className="size-8 text-emerald-700" />
+                {t("Cash In")}
+              </button>
+            ) : null}
+            {hasPermission(PERMISSIONS.cashRegister.cashOut) ? (
+              <button
+                type="button"
+                onClick={() => setShiftAction("cash_out")}
+                className="flex min-h-32 flex-col items-center justify-center gap-2 border-r border-slate-200 p-4 text-center font-semibold text-slate-800 hover:bg-red-50"
+              >
+                <MinusCircle className="size-8 text-red-700" />
+                {t("Cash Out")}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={openRegisterHistory}
+              className="flex min-h-32 flex-col items-center justify-center gap-2 p-4 text-center font-semibold text-slate-800 hover:bg-slate-50"
+            >
+              {registerHistoryState.isLoading ? <Spinner /> : <History className="size-8 text-slate-700" />}
+              {t("History")}
+            </button>
+          </div>
+        </div>
+      </CustomModal>
+
+      <CustomModal
+        open={isRegisterHistoryOpen}
+        onOpenChange={setIsRegisterHistoryOpen}
+        title={t("Register History")}
+        description={shift?.register_name || t("Cash Register")}
+        className="max-w-4xl"
+        showFooter={false}
+      >
+        <div className="overflow-hidden rounded-md border border-slate-200">
+          <div className="grid grid-cols-2">
+            <div className="bg-emerald-600 p-4 text-right text-2xl font-bold text-white">
+              {formatMoney(registerTotalIn)}
+            </div>
+            <div className="bg-red-600 p-4 text-right text-2xl font-bold text-white">
+              {formatMoney(registerTotalOut)}
+            </div>
+          </div>
+          <div className="max-h-80 overflow-y-auto bg-white">
+            {registerHistoryEntries.length ? (
+              registerHistoryEntries.map((history: any) => {
+                const action = history.action || history.entry_type
+                const isOut = ["register-order-change", "register-closing", "register-close", "register-refund", "register-cash-out"].includes(action)
+                return (
+                  <div
+                    key={history.id}
+                    className={[
+                      "flex items-start justify-between gap-4 border-b border-slate-100 p-3 text-sm",
+                      isOut ? "bg-red-50/40" : "bg-emerald-50/40",
+                    ].join(" ")}
+                  >
+                    <div>
+                      <p className="font-semibold text-slate-950">
+                        {history.description || history.label || t("Not Provided")}
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-muted-foreground">
+                        {t("Type")}: {history.label || action}
+                      </p>
+                    </div>
+                    <p className={["font-bold", isOut ? "text-red-700" : "text-emerald-700"].join(" ")}>
+                      {formatMoney(history.value)}
+                    </p>
+                  </div>
+                )
+              })
+            ) : (
+              <div className="p-8 text-center text-sm font-semibold text-muted-foreground">
+                {t("Nothing to display...")}
+              </div>
+            )}
+          </div>
+          <div className="bg-slate-50">
+            {registerHistorySummary.map((summary: any, index: number) => (
+              <div key={`${summary.label}-${index}`} className="flex justify-between border-t border-slate-200 px-3 py-2 text-sm font-semibold">
+                <span>{summary.label}</span>
+                <span>{formatMoney(summary.value)}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </CustomModal>
 
@@ -1483,6 +1664,43 @@ export default function SalesModals({
             prefix={cartDiscountType === "flat" ? posOptions.currency_symbol : "%"}
           />
         </div>
+      </CustomModal>
+
+      <CustomModal
+        open={activePriceItem !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActivePriceItem(null)
+            setPriceInput("")
+          }
+        }}
+        title={t("Price")}
+        description={activePriceItem?.name || ""}
+        showFooter
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setActivePriceItem(null)
+                setPriceInput("")
+              }}
+            >
+              {t("Cancel")}
+            </Button>
+            <Button onClick={handleApplyItemPrice}>{t("Save")}</Button>
+          </>
+        }
+      >
+        <UniFieldInput
+          label={t("Price")}
+          value={priceInput}
+          onChange={(event) => setPriceInput(event.target.value)}
+          placeholder={t("Enter price")}
+          prefix={posOptions.currency_symbol}
+          type="number"
+          min="0"
+        />
       </CustomModal>
 
       <CustomModal

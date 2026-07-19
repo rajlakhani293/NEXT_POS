@@ -2972,5 +2972,9 @@
   "Password is required.": "كلمة المرور مطلوبة.",
   "Passwords do not match": "كلمات المرور غير متطابقة",
   "Enter a valid email address.": "أدخل عنوان بريد إلكتروني صالح.",
-  "Password confirmation does not match.": "تأكيد كلمة المرور غير مطابق."
+  "Password confirmation does not match.": "تأكيد كلمة المرور غير مطابق.",
+  "Please provide a valid quantity.": "يرجى إدخال كمية صالحة.",
+  "Quantity is required.": "الكمية مطلوبة.",
+  "Please provide a valid price.": "يرجى إدخال سعر صالح.",
+  "Enter price": "أدخل السعر"
 }

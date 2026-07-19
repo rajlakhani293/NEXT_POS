@@ -942,5 +942,9 @@
   "Valid From": "Valid From",
   "Valid Till": "Valid Till",
   "Usage": "Usage",
-  "Not applicable": "Not applicable"
+  "Not applicable": "Not applicable",
+  "Please provide a valid quantity.": "Please provide a valid quantity.",
+  "Quantity is required.": "Quantity is required.",
+  "Please provide a valid price.": "Please provide a valid price.",
+  "Enter price": "Enter price"
 }

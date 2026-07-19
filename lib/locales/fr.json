@@ -742,5 +742,9 @@
   "Valid From": "Valide à partir de",
   "Valid Till": "Valide jusqu’à",
   "Usage": "Utilisation",
-  "Not applicable": "Non applicable"
+  "Not applicable": "Non applicable",
+  "Please provide a valid quantity.": "Veuillez fournir une quantité valide.",
+  "Quantity is required.": "La quantité est obligatoire.",
+  "Please provide a valid price.": "Veuillez fournir un prix valide.",
+  "Enter price": "Saisir le prix"
 }

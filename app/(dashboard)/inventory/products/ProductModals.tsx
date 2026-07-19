@@ -222,12 +222,9 @@ export function ProductModals({
             : t("Display all product unit quantities.")
         }
         className="sm:max-w-3xl"
-        bodyClassName="p-0"
+        bodyClassName=""
         showFooter={false}
       >
-        <div className="border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-900">
-          {quantitiesProduct?.name || t("Product")}
-        </div>
         <div className="max-h-[50vh] overflow-auto">
           <Table className="w-full text-sm">
             <TableHeader className="sticky top-0 bg-gray-50 text-left text-xs font-bold uppercase text-gray-500">
@@ -397,7 +394,7 @@ export function ProductModals({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-full rounded-none px-3 text-xs font-bold"
+                  className="h-10 rounded-lg border text-xs font-bold"
                   onClick={() => updateConversionQuantity(getConversionState().source?.quantity || 0)}
                 >
                   {t("Convert {quantity} available").replace(

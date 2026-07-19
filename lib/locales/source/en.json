@@ -2972,5 +2972,9 @@
   "Password is required.": "Password is required.",
   "Passwords do not match": "Passwords do not match",
   "Enter a valid email address.": "Enter a valid email address.",
-  "Password confirmation does not match.": "Password confirmation does not match."
+  "Password confirmation does not match.": "Password confirmation does not match.",
+  "Please provide a valid quantity.": "Please provide a valid quantity.",
+  "Quantity is required.": "Quantity is required.",
+  "Please provide a valid price.": "Please provide a valid price.",
+  "Enter price": "Enter price"
 }

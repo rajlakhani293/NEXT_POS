@@ -4,28 +4,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   BanknoteArrowDown,
-  BanknoteArrowUp,
   Ban,
-  CheckCircle2,
   ChevronRight,
   CreditCard,
   Folder,
   Home,
   ImageIcon,
-  LogOut,
   MessageSquare,
-  History,
-  PlusCircle,
-  MinusCircle,
   Package,
   Pause,
   Percent,
   Settings,
-  ShoppingBag,
   ShoppingCart,
   Tags,
   Trash2,
-  Truck,
   User,
   WalletCards,
   Search,
@@ -34,7 +26,6 @@ import {
 import { useConfirmDialog } from "@/components/confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
-import CustomModal from "@/components/ui/customModal"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import SalesModals from "./SalesModals"
 import { Spinner } from "@/components/ui/spinner"
@@ -53,7 +44,7 @@ import { payments } from "@/lib/api/payments"
 import { promotions } from "@/lib/api/promotions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
-import { formatBusinessDateTime, formatBusinessMoney } from "@/lib/format"
+import { formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { registers } from "@/lib/api/registers"
@@ -320,6 +311,10 @@ export default function SalesPage() {
   const [quantityInput, setQuantityInput] = useState("1")
   const barcodeInputRef = useRef<HTMLInputElement>(null)
   const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [cartQuantityDrafts, setCartQuantityDrafts] = useState<Record<string, string>>({})
+  const [invalidQuantityLineId, setInvalidQuantityLineId] = useState<string | null>(null)
+  const [activePriceItem, setActivePriceItem] = useState<CartItem | null>(null)
+  const [priceInput, setPriceInput] = useState("")
   const [paymentsRows, setPaymentsRows] = useState<PaymentRow[]>([
     emptyPaymentRow(),
   ])
@@ -788,6 +783,8 @@ export default function SalesPage() {
     setShiftAction(null)
     setIsRegisterOptionsOpen(false)
     setCartItems([])
+    setCartQuantityDrafts({})
+    setInvalidQuantityLineId(null)
     setCouponInput("")
     setSaleNote("")
     setIsOpenShiftDialogOpen(true)
@@ -1051,18 +1048,85 @@ export default function SalesPage() {
 
   const updateQuantity = (lineId: string, delta: number) => {
     setCartItems((items) =>
-      items
-        .map((item) =>
-          item.line_id === lineId
-            ? { ...item, qty: Math.max(item.qty + delta, 0) }
-            : item
-        )
-        .filter((item) => item.qty > 0)
+      items.map((item) =>
+        item.line_id === lineId
+          ? { ...item, qty: Math.max(item.qty + delta, 0) }
+          : item
+      )
     )
+    setCartQuantityDrafts((current) => {
+      const next = { ...current }
+      delete next[lineId]
+      return next
+    })
+    setInvalidQuantityLineId((current) => (current === lineId ? null : current))
   }
 
   const removeItem = (lineId: string) => {
     setCartItems((items) => items.filter((item) => item.line_id !== lineId))
+    setCartQuantityDrafts((current) => {
+      const next = { ...current }
+      delete next[lineId]
+      return next
+    })
+    setInvalidQuantityLineId((current) => (current === lineId ? null : current))
+  }
+
+  const updateItemQuantityInput = (lineId: string, rawValue: string) => {
+    setCartQuantityDrafts((current) => ({ ...current, [lineId]: rawValue }))
+    if (rawValue.trim() === "") {
+      setInvalidQuantityLineId(lineId)
+      return
+    }
+    const nextQuantity = Number(rawValue)
+    if (!Number.isFinite(nextQuantity) || nextQuantity <= 0) {
+      setInvalidQuantityLineId(lineId)
+      return
+    }
+    setInvalidQuantityLineId((current) => (current === lineId ? null : current))
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.line_id === lineId ? { ...item, qty: nextQuantity } : item
+      )
+    )
+  }
+
+  const validateCartQuantities = () => {
+    const invalidItem = cartItems.find((item) => {
+      const draft = cartQuantityDrafts[item.line_id]
+      const draftQuantity = Number(draft)
+      return draft !== undefined
+        ? draft.trim() === "" || !Number.isFinite(draftQuantity) || draftQuantity <= 0
+        : !Number.isFinite(Number(item.qty)) || Number(item.qty) <= 0
+    })
+    if (!invalidItem) return true
+    setInvalidQuantityLineId(invalidItem.line_id)
+    showToast.error(t("Please provide a valid quantity."))
+    return false
+  }
+
+  const openItemPriceDialog = (item: CartItem) => {
+    if (!posOptions.unit_price_editable) return
+    setActivePriceItem(item)
+    setPriceInput(String(item.price))
+  }
+
+  const handleApplyItemPrice = () => {
+    if (!activePriceItem) return
+    const nextPrice = Number(priceInput)
+    if (!Number.isFinite(nextPrice) || nextPrice < 0) {
+      showToast.error(t("Please provide a valid price."))
+      return
+    }
+    setCartItems((prev) =>
+      prev.map((cartItem) =>
+        cartItem.line_id === activePriceItem.line_id
+          ? { ...cartItem, price: nextPrice, mode: "custom" }
+          : cartItem
+      )
+    )
+    setActivePriceItem(null)
+    setPriceInput("")
   }
 
   const openItemDiscountDialog = (item: CartItem) => {
@@ -1174,6 +1238,10 @@ export default function SalesPage() {
     setCartDiscountVal("")
     setCartDiscountType("flat")
     setCartItems([])
+    setCartQuantityDrafts({})
+    setInvalidQuantityLineId(null)
+    setActivePriceItem(null)
+    setPriceInput("")
     setPaymentsRows([emptyPaymentRow()])
   }
 
@@ -1337,6 +1405,7 @@ export default function SalesPage() {
       showToast.error(t("Add at least one product before holding cart."))
       return
     }
+    if (!validateCartQuantities()) return
     if (paymentsRows.some((row) => money(row.amount) > 0)) {
       showToast.error(t("Unable to hold an order which payment status has been updated already."))
       return
@@ -1415,6 +1484,7 @@ export default function SalesPage() {
       showToast.error(t("Add at least one product to cart."))
       return
     }
+    if (!validateCartQuantities()) return
     if (!customerId) {
       setCheckoutStep("customer")
       setIsCustomerSelectOpen(true)
@@ -1780,7 +1850,8 @@ export default function SalesPage() {
       isOrderSettingsOpen ||
       isTaxesDialogOpen ||
       isCartDiscountDialogOpen ||
-      Boolean(activeDiscountItem)
+      Boolean(activeDiscountItem) ||
+      Boolean(activePriceItem)
 
     const handleShortcut = (event: KeyboardEvent) => {
       if (hasOpenDialog || shouldIgnorePosShortcut(event)) return
@@ -1818,6 +1889,7 @@ export default function SalesPage() {
     return () => window.removeEventListener("keydown", handleShortcut)
   }, [
     activeDiscountItem,
+    activePriceItem,
     cartItems.length,
     handleOpenPaymentDialog,
     handleVoidCart,
@@ -1982,7 +2054,7 @@ export default function SalesPage() {
                         <TableHeader className="sticky top-0 z-10 bg-slate-50">
                           <TableRow className="border-slate-200">
                             <TableHead className="h-10 text-xs font-bold uppercase text-slate-500">{t("Product")}</TableHead>
-                            <TableHead className="h-10 w-56 text-center text-xs font-bold uppercase text-slate-500">{t("Quantity")}</TableHead>
+                            <TableHead className="h-10 w-28 text-center text-xs font-bold uppercase text-slate-500">{t("Quantity")}</TableHead>
                             <TableHead className="h-10 w-28 text-right text-xs font-bold uppercase text-slate-500">{t("Total")}</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -1998,9 +2070,14 @@ export default function SalesPage() {
                                       <p className="mt-0.5 truncate text-xs font-medium text-slate-500">{item.unit_label}</p>
                                     ) : null}
                                     <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                                      <span>
+                                      <button
+                                        type="button"
+                                        onClick={() => openItemPriceDialog(item)}
+                                        disabled={!posOptions.unit_price_editable}
+                                        className="font-medium text-muted-foreground underline-offset-2 hover:text-slate-950 hover:underline disabled:cursor-default disabled:no-underline"
+                                      >
                                         {t("Price")} : {formatMoney(item.price)}
-                                      </span>
+                                      </button>
                                       <Button
                                         type="button"
                                         variant="link"
@@ -2031,46 +2108,17 @@ export default function SalesPage() {
 
                               {/* Quantity column */}
                               <TableCell>
-                                <div className="flex items-end justify-center gap-2">
+                                <div className="flex items-end justify-center">
                                   <UniFieldInput
                                     type="number"
                                     step={allowDecimalQuantities ? "0.01" : "1"}
-                                    min="0"
-                                    value={item.qty}
-                                    containerClassName="bg-transparent w-20"
-                                    onChange={(e) => {
-                                      const val = Number(e.target.value)
-                                      if (val >= 0) {
-                                        setCartItems((prev) =>
-                                          prev
-                                            .map((i) =>
-                                              i.line_id === item.line_id
-                                                ? { ...i, qty: val }
-                                                : i
-                                            )
-                                            .filter((i) => i.qty > 0)
-                                        )
-                                      }
-                                    }}
-                                  />
-                                  <UniFieldInput
-                                    type="number"
-                                    min="0"
-                                    value={item.price}
-                                    prefix={posOptions.currency_symbol}
-                                    disabled={!posOptions.unit_price_editable}
+                                    min="0.01"
+                                    value={cartQuantityDrafts[item.line_id] ?? String(item.qty)}
+                                    error={invalidQuantityLineId === item.line_id ? t("Quantity is required.") : undefined}
                                     containerClassName="bg-transparent w-24"
-                                    onChange={(event) => {
-                                      const price = Number(event.target.value)
-                                      if (price >= 0) {
-                                        setCartItems((prev) =>
-                                          prev.map((cartItem) =>
-                                            cartItem.line_id === item.line_id
-                                              ? { ...cartItem, price, mode: "custom" }
-                                              : cartItem
-                                          )
-                                        )
-                                      }
+                                    className="h-8"
+                                    onChange={(e) => {
+                                      updateItemQuantityInput(item.line_id, e.target.value)
                                     }}
                                   />
                                 </div>
@@ -2425,137 +2473,6 @@ export default function SalesPage() {
           </div>
         ) : null}
 
-        <CustomModal
-          open={isRegisterOptionsOpen}
-          onOpenChange={setIsRegisterOptionsOpen}
-          title={t("Register Options")}
-          description={shift?.register_name || t("Cash Register")}
-          className="max-w-2xl"
-          showFooter={false}
-        >
-          <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-md border border-blue-100 bg-blue-50 p-4">
-                <p className="text-xs font-bold uppercase text-blue-700">{t("Sales")}</p>
-                <p className="mt-1 text-2xl font-bold text-blue-950">
-                  {formatMoney(shift?.total_sale_amount || shift?.total_sales || 0)}
-                </p>
-              </div>
-              <div className="rounded-md border border-emerald-100 bg-emerald-50 p-4">
-                <p className="text-xs font-bold uppercase text-emerald-700">{t("Balance")}</p>
-                <p className="mt-1 text-2xl font-bold text-emerald-950">
-                  {formatMoney(shift?.balance || shift?.expected_cash || 0)}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 overflow-hidden rounded-md border border-slate-200 bg-white">
-              {hasPermission(PERMISSIONS.cashRegister.close) ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDeclaredCash(String(shift?.balance || shift?.expected_cash || ""))
-                    setShiftAction("close")
-                  }}
-                  className="flex min-h-32 flex-col items-center justify-center gap-2 border-b border-r border-slate-200 p-4 text-center font-semibold text-slate-800 hover:bg-blue-50"
-                >
-                  <LogOut className="size-8 text-blue-700" />
-                  {t("Close")}
-                </button>
-              ) : null}
-              {hasPermission(PERMISSIONS.cashRegister.cashIn) ? (
-                <button
-                  type="button"
-                  onClick={() => setShiftAction("cash_in")}
-                  className="flex min-h-32 flex-col items-center justify-center gap-2 border-b border-slate-200 p-4 text-center font-semibold text-slate-800 hover:bg-emerald-50"
-                >
-                  <PlusCircle className="size-8 text-emerald-700" />
-                  {t("Cash In")}
-                </button>
-              ) : null}
-              {hasPermission(PERMISSIONS.cashRegister.cashOut) ? (
-                <button
-                  type="button"
-                  onClick={() => setShiftAction("cash_out")}
-                  className="flex min-h-32 flex-col items-center justify-center gap-2 border-r border-slate-200 p-4 text-center font-semibold text-slate-800 hover:bg-red-50"
-                >
-                  <MinusCircle className="size-8 text-red-700" />
-                  {t("Cash Out")}
-                </button>
-              ) : null}
-              <button
-                type="button"
-                onClick={openRegisterHistory}
-                className="flex min-h-32 flex-col items-center justify-center gap-2 p-4 text-center font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                {registerHistoryState.isLoading ? <Spinner /> : <History className="size-8 text-slate-700" />}
-                {t("History")}
-              </button>
-            </div>
-          </div>
-        </CustomModal>
-
-        <CustomModal
-          open={isRegisterHistoryOpen}
-          onOpenChange={setIsRegisterHistoryOpen}
-          title={t("Register History")}
-          description={shift?.register_name || t("Cash Register")}
-          className="max-w-4xl"
-          showFooter={false}
-        >
-          <div className="overflow-hidden rounded-md border border-slate-200">
-            <div className="grid grid-cols-2">
-              <div className="bg-emerald-600 p-4 text-right text-2xl font-bold text-white">
-                {formatMoney(registerTotalIn)}
-              </div>
-              <div className="bg-red-600 p-4 text-right text-2xl font-bold text-white">
-                {formatMoney(registerTotalOut)}
-              </div>
-            </div>
-            <div className="max-h-80 overflow-y-auto bg-white">
-              {registerHistoryEntries.length ? (
-                registerHistoryEntries.map((history: any) => {
-                  const action = history.action || history.entry_type
-                  const isOut = ["register-order-change", "register-closing", "register-close", "register-refund", "register-cash-out"].includes(action)
-                  return (
-                    <div
-                      key={history.id}
-                      className={[
-                        "flex items-start justify-between gap-4 border-b border-slate-100 p-3 text-sm",
-                        isOut ? "bg-red-50/40" : "bg-emerald-50/40",
-                      ].join(" ")}
-                    >
-                      <div>
-                        <p className="font-semibold text-slate-950">
-                          {history.description || history.label || t("Not Provided")}
-                        </p>
-                        <p className="mt-1 text-xs font-medium text-muted-foreground">
-                          {t("Type")}: {history.label || action}
-                        </p>
-                      </div>
-                      <p className={["font-bold", isOut ? "text-red-700" : "text-emerald-700"].join(" ")}>
-                        {formatMoney(history.value)}
-                      </p>
-                    </div>
-                  )
-                })
-              ) : (
-                <div className="p-8 text-center text-sm font-semibold text-muted-foreground">
-                  {t("Nothing to display...")}
-                </div>
-              )}
-            </div>
-            <div className="bg-slate-50">
-              {registerHistorySummary.map((summary: any, index: number) => (
-                <div key={`${summary.label}-${index}`} className="flex justify-between border-t border-slate-200 px-3 py-2 text-sm font-semibold">
-                  <span>{summary.label}</span>
-                  <span>{formatMoney(summary.value)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </CustomModal>
-
         <SalesModals
           t={t}
           posOptions={posOptions}
@@ -2601,6 +2518,11 @@ export default function SalesPage() {
           handleSkipLayaway={handleSkipLayaway}
           handleSubmitLayaway={handleSubmitLayaway}
           openCartDiscountDialog={openCartDiscountDialog}
+          activePriceItem={activePriceItem}
+          setActivePriceItem={setActivePriceItem}
+          priceInput={priceInput}
+          setPriceInput={setPriceInput}
+          handleApplyItemPrice={handleApplyItemPrice}
           isOpenShiftDialogOpen={isOpenShiftDialogOpen}
           setIsOpenShiftDialogOpen={setIsOpenShiftDialogOpen}
           shift={shift}
@@ -2615,6 +2537,17 @@ export default function SalesPage() {
           openingNote={openingNote}
           setOpeningNote={setOpeningNote}
           router={router}
+          hasPermission={hasPermission}
+          isRegisterOptionsOpen={isRegisterOptionsOpen}
+          setIsRegisterOptionsOpen={setIsRegisterOptionsOpen}
+          isRegisterHistoryOpen={isRegisterHistoryOpen}
+          setIsRegisterHistoryOpen={setIsRegisterHistoryOpen}
+          openRegisterHistory={openRegisterHistory}
+          registerHistoryState={registerHistoryState}
+          registerHistoryEntries={registerHistoryEntries}
+          registerHistorySummary={registerHistorySummary}
+          registerTotalIn={registerTotalIn}
+          registerTotalOut={registerTotalOut}
           shiftAction={shiftAction}
           setShiftAction={setShiftAction}
           movementAmount={movementAmount}

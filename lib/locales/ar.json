@@ -742,5 +742,9 @@
   "Valid From": "صالح من",
   "Valid Till": "صالح حتى",
   "Usage": "الاستخدام",
-  "Not applicable": "غير قابل للتطبيق"
+  "Not applicable": "غير قابل للتطبيق",
+  "Please provide a valid quantity.": "يرجى إدخال كمية صالحة.",
+  "Quantity is required.": "الكمية مطلوبة.",
+  "Please provide a valid price.": "يرجى إدخال سعر صالح.",
+  "Enter price": "أدخل السعر"
 }
