@@ -21,11 +21,27 @@ import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
+import { DatePicker } from "@/components/date-picker"
 import { formatBusinessDateTime, formatBusinessMoney } from "@/lib/format"
 import { PERMISSIONS } from "@/lib/permissions"
 
 const money = (value: string | number | null | undefined) =>
   Number(value || 0) || 0
+
+const parseLocalDate = (dateStr: string) => {
+  if (!dateStr) return undefined
+  const [year, month, day] = dateStr.split("-").map(Number)
+  if (!year || !month || !day) return undefined
+  return new Date(year, month - 1, day)
+}
+
+const formatLocalDate = (date?: Date) => {
+  if (!date) return ""
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, "0")
+  const d = String(date.getDate()).padStart(2, "0")
+  return `${y}-${m}-${d}`
+}
 
 interface SalesModalsProps {
   // Localization & Options
@@ -1401,14 +1417,13 @@ export default function SalesModals({
               <div className="space-y-2">
                 {layawayLines.map((line, index) => (
                   <div key={index} className="grid gap-2 rounded-md border border-slate-200 p-2 md:grid-cols-[1fr_1fr_auto]">
-                    <UniFieldInput
+                    <DatePicker
                       label={t("Date")}
-                      type="date"
-                      value={line.date}
-                      onChange={(event) =>
+                      value={parseLocalDate(line.date)}
+                      onChange={(date) =>
                         setLayawayLines((current) =>
                           current.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, date: event.target.value } : item
+                            itemIndex === index ? { ...item, date: formatLocalDate(date) } : item
                           )
                         )
                       }
