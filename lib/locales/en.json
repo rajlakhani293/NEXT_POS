@@ -946,5 +946,7 @@
   "Please provide a valid quantity.": "Please provide a valid quantity.",
   "Quantity is required.": "Quantity is required.",
   "Please provide a valid price.": "Please provide a valid price.",
-  "Enter price": "Enter price"
+  "Enter price": "Enter price",
+  "Minimum Credit Payment (%)": "Minimum Credit Payment (%)",
+  "Minimum credit payment must be between 0 and 100.": "Minimum credit payment must be between 0 and 100."
 }

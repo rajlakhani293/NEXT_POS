@@ -2976,5 +2976,7 @@
   "Please provide a valid quantity.": "Jepni një sasi të vlefshme.",
   "Quantity is required.": "Sasia është e detyrueshme.",
   "Please provide a valid price.": "Jepni një çmim të vlefshëm.",
-  "Enter price": "Shkruani çmimin"
+  "Enter price": "Shkruani çmimin",
+  "Minimum Credit Payment (%)": "Pagesa minimale e kreditit (%)",
+  "Minimum credit payment must be between 0 and 100.": "Pagesa minimale e kreditit duhet të jetë midis 0 dhe 100."
 }

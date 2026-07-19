@@ -39,11 +39,19 @@ const buildFields = (rewardSystems: any[], t: (key: string) => string) => [
   },
   {
     name: "minimal_credit_payment",
-    label: t("Minimum Credit Amount"),
+    label: t("Minimum Credit Payment (%)"),
     type: "number",
     placeholder: t('Determine in percentage, what is the first minimum credit payment made by all customers on the group, in case of credit order. If left to "0", no minimal credit amount is required.'),
     suffix: "%",
     min: 0,
+    max: 100,
+    validate: (value: any) => {
+      const amount = Number(value || 0)
+      if (!Number.isFinite(amount) || amount < 0 || amount > 100) {
+        return t("Minimum credit payment must be between 0 and 100.")
+      }
+      return ""
+    },
   },
   {
     name: "reward_system_id",
@@ -107,10 +115,16 @@ export function CustomerGroupForm({
       : initialValues
 
   const handleSubmit = async (values: CustomerGroupFormValues) => {
+    const minimalCreditPayment = Number(values.minimal_credit_payment || 0)
+    if (!Number.isFinite(minimalCreditPayment) || minimalCreditPayment < 0 || minimalCreditPayment > 100) {
+      showToast.error(t("Minimum credit payment must be between 0 and 100."))
+      return
+    }
+
     const payLoad = {
       name: values.name,
       description: values.description || "",
-      minimal_credit_payment: values.minimal_credit_payment || "0",
+      minimal_credit_payment: String(minimalCreditPayment),
       reward_system_id: values.reward_system_id
         ? Number(values.reward_system_id)
         : undefined,

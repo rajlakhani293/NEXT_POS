@@ -2975,5 +2975,7 @@
   "Please provide a valid quantity.": "Vui lòng nhập số lượng hợp lệ.",
   "Quantity is required.": "Số lượng là bắt buộc.",
   "Please provide a valid price.": "Vui lòng nhập giá hợp lệ.",
-  "Enter price": "Nhập giá"
+  "Enter price": "Nhập giá",
+  "Minimum Credit Payment (%)": "Thanh toán tín dụng tối thiểu (%)",
+  "Minimum credit payment must be between 0 and 100.": "Thanh toán tín dụng tối thiểu phải từ 0 đến 100."
 }

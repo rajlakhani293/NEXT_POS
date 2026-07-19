@@ -67,7 +67,16 @@ interface SalesModalsProps {
   paymentAmountShortcuts: number[]
   makeFullPaymentFromPopup: () => void
   confirmFullPaymentFromPopup: () => void
-  handleCompleteSale: (opts?: { paymentStatus?: string }) => void
+  handleCompleteSale: (opts?: {
+    paymentStatus?: string
+    layaway?: any
+    additionalPayments?: Array<{
+      payment_type: string
+      amount: string
+      reference_number?: string
+      note?: string
+    }>
+  }) => void
   isCreatingSale: boolean
   ordersAllowUnpaid: boolean
   ordersAllowPartial: boolean
@@ -725,7 +734,7 @@ export default function SalesModals({
                   }
                 >
                   {totalPaid === 0
-                    ? `${t("Layaway")} - ${formatMoney(subtotal)}`
+                    ? `${t("Layaway")} - ${formatMoney(minimumLayawayPayment)}`
                     : t("Update")}
                 </Button>
                 {totalPaid === 0 ? (

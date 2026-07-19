@@ -2978,5 +2978,7 @@
   "Please provide a valid quantity.": "Masukkan jumlah yang valid.",
   "Quantity is required.": "Jumlah wajib diisi.",
   "Please provide a valid price.": "Masukkan harga yang valid.",
-  "Enter price": "Masukkan harga"
+  "Enter price": "Masukkan harga",
+  "Minimum Credit Payment (%)": "Pembayaran Kredit Minimum (%)",
+  "Minimum credit payment must be between 0 and 100.": "Pembayaran kredit minimum harus antara 0 dan 100."
 }

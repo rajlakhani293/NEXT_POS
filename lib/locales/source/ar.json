@@ -2976,5 +2976,7 @@
   "Please provide a valid quantity.": "يرجى إدخال كمية صالحة.",
   "Quantity is required.": "الكمية مطلوبة.",
   "Please provide a valid price.": "يرجى إدخال سعر صالح.",
-  "Enter price": "أدخل السعر"
+  "Enter price": "أدخل السعر",
+  "Minimum Credit Payment (%)": "الحد الأدنى للدفع الائتماني (%)",
+  "Minimum credit payment must be between 0 and 100.": "يجب أن يكون الحد الأدنى للدفع الائتماني بين 0 و100."
 }

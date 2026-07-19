@@ -2976,5 +2976,7 @@
   "Please provide a valid quantity.": "Lütfen geçerli bir miktar girin.",
   "Quantity is required.": "Miktar gereklidir.",
   "Please provide a valid price.": "Lütfen geçerli bir fiyat girin.",
-  "Enter price": "Fiyat girin"
+  "Enter price": "Fiyat girin",
+  "Minimum Credit Payment (%)": "Minimum Kredi Ödemesi (%)",
+  "Minimum credit payment must be between 0 and 100.": "Minimum kredi ödemesi 0 ile 100 arasında olmalıdır."
 }

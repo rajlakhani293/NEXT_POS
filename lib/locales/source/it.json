@@ -2976,5 +2976,7 @@
   "Please provide a valid quantity.": "Inserisci una quantità valida.",
   "Quantity is required.": "La quantità è obbligatoria.",
   "Please provide a valid price.": "Inserisci un prezzo valido.",
-  "Enter price": "Inserisci prezzo"
+  "Enter price": "Inserisci prezzo",
+  "Minimum Credit Payment (%)": "Pagamento minimo a credito (%)",
+  "Minimum credit payment must be between 0 and 100.": "Il pagamento minimo a credito deve essere compreso tra 0 e 100."
 }

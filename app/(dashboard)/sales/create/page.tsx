@@ -1243,6 +1243,9 @@ export default function SalesPage() {
     setActivePriceItem(null)
     setPriceInput("")
     setPaymentsRows([emptyPaymentRow()])
+    setLayawayCount("0")
+    setLayawayLines([])
+    setIsLayawayDialogOpen(false)
   }
 
   const refreshPendingOrders = async (
@@ -1475,7 +1478,18 @@ export default function SalesPage() {
     return `/sales/${saleId}/receipt${queryString}`
   }
 
-  const handleCompleteSale = async (submitOptions: { paymentStatus?: string; layaway?: any } = {}) => {
+  const handleCompleteSale = async (
+    submitOptions: {
+      paymentStatus?: string
+      layaway?: any
+      additionalPayments?: Array<{
+        payment_type: string
+        amount: string
+        reference_number?: string
+        note?: string
+      }>
+    } = {}
+  ) => {
     if (cashRegistersEnabled && !shift?.id) {
       showToast.error(t("Open shift is required before billing."))
       return
@@ -1520,6 +1534,7 @@ export default function SalesPage() {
       return
     }
     const validPayments = paymentsRows.filter((row) => money(row.amount) > 0)
+    const additionalPayments = submitOptions.additionalPayments || []
     const payLoad = {
       draft_id: draftId ? Number(draftId) : null,
       title: orderTitle,
@@ -1557,12 +1572,15 @@ export default function SalesPage() {
         tax_amount: "0",
       })),
 
-      payments: validPayments.map((row) => ({
-        payment_type: row.payment_type,
-        amount: String(money(row.amount)),
-        reference_number: row.reference_number,
-        note: row.note || saleNote,
-      })),
+      payments: [
+        ...validPayments.map((row) => ({
+          payment_type: row.payment_type,
+          amount: String(money(row.amount)),
+          reference_number: row.reference_number,
+          note: row.note || saleNote,
+        })),
+        ...additionalPayments,
+      ],
     }
 
     const response = await createSale(payLoad).unwrap()
@@ -1588,24 +1606,89 @@ export default function SalesPage() {
     setIsLayawayDialogOpen(true)
   }
 
-  const handleSkipLayaway = () => {
+  const prepareInitialLayawayPayment = async (
+    instalments: Array<{ date: string; amount: string; paid?: boolean }>
+  ) => {
+    const today = new Date().toISOString().slice(0, 10)
+    const expectedSliceIndex = instalments.findIndex(
+      (line) => line.date === today && money(line.amount) >= minimumLayawayPayment
+    )
+    const expectedSlice = expectedSliceIndex >= 0 ? instalments[expectedSliceIndex] : null
+    const additionalPayments: Array<{
+      payment_type: string
+      amount: string
+      reference_number?: string
+      note?: string
+    }> = []
+
+    if (!expectedSlice || !(money(expectedSlice.amount) > 0)) {
+      return { instalments, additionalPayments, addedAmount: 0, cancelled: false }
+    }
+
+    const firstPayment = paymentTypeOptions.find(
+      (payment: any) => (payment.value || payment.identifier) === activePaymentType
+    ) || paymentTypeOptions[0]
+    const paymentType = firstPayment?.value || firstPayment?.identifier || activePaymentType
+    const paymentLabel = firstPayment?.label || activePaymentLabel || paymentType || t("Payment")
+
+    if (!paymentType) {
+      showToast.error(t("Your system doesn't have any valid Payment Type. Consider creating one and try again."))
+      return { instalments, additionalPayments, addedAmount: 0, cancelled: true }
+    }
+
+    const proceed = await confirm({
+      title: t("Initial Payment"),
+      description: t('In order to proceed, an initial payment of {amount} is required for the selected payment type "{paymentType}". Would you like to proceed ?')
+        .replace("{amount}", formatMoney(money(expectedSlice.amount)))
+        .replace("{paymentType}", paymentLabel),
+      confirmLabel: t("Proceed"),
+      cancelLabel: t("Cancel"),
+    })
+
+    if (!proceed) {
+      showToast.error(t("The request was canceled"))
+      return { instalments, additionalPayments, addedAmount: 0, cancelled: true }
+    }
+
+    const amount = money(expectedSlice.amount)
+    additionalPayments.push({
+      payment_type: String(paymentType),
+      amount: String(amount),
+      reference_number: "",
+      note: saleNote,
+    })
+
+    return {
+      instalments: instalments.map((line, index) =>
+        index === expectedSliceIndex ? { ...line, paid: true } : line
+      ),
+      additionalPayments,
+      addedAmount: amount,
+      cancelled: false,
+    }
+  }
+
+  const handleSkipLayaway = async () => {
     const today = new Date().toISOString().slice(0, 10)
     const instalments = minimumLayawayPayment > 0
-      ? [{ date: today, amount: String(minimumLayawayPayment) }]
+      ? [{ date: today, amount: String(minimumLayawayPayment), paid: false }]
       : []
+    const initialPayment = await prepareInitialLayawayPayment(instalments)
+    if (initialPayment.cancelled) return
     setIsLayawayDialogOpen(false)
     handleCompleteSale({
-      paymentStatus: totalPaid > 0 ? "partially_paid" : "unpaid",
+      paymentStatus: totalPaid + initialPayment.addedAmount > 0 ? "partially_paid" : "unpaid",
       layaway: {
         support_instalments: false,
-        total_instalments: instalments.length,
+        total_instalments: initialPayment.instalments.length,
         final_payment_date: today,
-        instalments,
+        instalments: initialPayment.instalments,
       },
+      additionalPayments: initialPayment.additionalPayments,
     })
   }
 
-  const handleSubmitLayaway = () => {
+  const handleSubmitLayaway = async () => {
     if (!layawayLines.length) {
       showToast.error(t("Please provide instalments before proceeding."))
       return
@@ -1640,15 +1723,26 @@ export default function SalesPage() {
       return
     }
     const sorted = [...parsed].sort((a, b) => a.date.localeCompare(b.date))
+    const layawayInstalments = sorted.map((line) => ({
+      date: line.date,
+      amount: String(line.amount),
+      paid: false,
+    }))
+    const initialPayment = await prepareInitialLayawayPayment(layawayInstalments)
+    if (initialPayment.cancelled) return
+
     setIsLayawayDialogOpen(false)
-    handleCompleteSale({
-      paymentStatus: totalPaid > 0 ? "partially_paid" : "unpaid",
+    await handleCompleteSale({
+      paymentStatus: totalPaid + initialPayment.addedAmount > 0
+        ? "partially_paid"
+        : "unpaid",
       layaway: {
         support_instalments: true,
         total_instalments: sorted.length,
         final_payment_date: sorted[sorted.length - 1]?.date || today,
-        instalments: sorted,
+        instalments: initialPayment.instalments,
       },
+      additionalPayments: initialPayment.additionalPayments,
     })
   }
 

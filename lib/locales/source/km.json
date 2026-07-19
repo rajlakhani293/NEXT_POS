@@ -2976,5 +2976,7 @@
   "Please provide a valid quantity.": "សូមបញ្ចូលបរិមាណត្រឹមត្រូវ។",
   "Quantity is required.": "ត្រូវការបរិមាណ។",
   "Please provide a valid price.": "សូមបញ្ចូលតម្លៃត្រឹមត្រូវ។",
-  "Enter price": "បញ្ចូលតម្លៃ"
+  "Enter price": "បញ្ចូលតម្លៃ",
+  "Minimum Credit Payment (%)": "ការទូទាត់ឥណទានអប្បបរមា (%)",
+  "Minimum credit payment must be between 0 and 100.": "ការទូទាត់ឥណទានអប្បបរមាត្រូវតែស្ថិតនៅចន្លោះ 0 និង 100។"
 }
