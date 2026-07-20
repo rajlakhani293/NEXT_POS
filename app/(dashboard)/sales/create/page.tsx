@@ -1484,10 +1484,32 @@ export default function SalesPage() {
         discount_value: Number(item.discount_amount || 0) || undefined,
       }))
     )
+    const savedAddresses = sale.addresses || {}
+    const orderAddressValue = (type: "billing" | "shipping", field: string) => {
+      const address = savedAddresses[type] || {}
+      if (field === "company") return address.company || address.company_name || ""
+      return address[field] || ""
+    }
     setShippingInfo((current) => ({
       ...current,
       shipping: String(sale.shipping || ""),
       shipping_type: sale.shipping_type || current.shipping_type || "flat",
+      ...Object.fromEntries(
+        (["billing", "shipping"] as const).flatMap((type) =>
+          [
+            "first_name",
+            "last_name",
+            "phone",
+            "address_1",
+            "address_2",
+            "country",
+            "city",
+            "pobox",
+            "company",
+            "email",
+          ].map((field) => [`${type}_${field}`, orderAddressValue(type, field)])
+        )
+      ),
     }))
     setIsHeldCartDialogOpen(false)
     showToast.success(t("Order loaded successfully."))

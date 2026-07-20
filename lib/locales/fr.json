@@ -757,5 +757,6 @@
   "The coupon has been loaded.": "Le coupon a été chargé.",
   "The coupon has applied to the cart.": "Le coupon a été appliqué au panier.",
   "Order loaded successfully.": "Commande chargée avec succès.",
-  "Sale updated successfully.": "Vente mise à jour avec succès."
+  "Sale updated successfully.": "Vente mise à jour avec succès.",
+  "Owed": "Dû"
 }

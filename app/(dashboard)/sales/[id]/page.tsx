@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Printer, ReceiptText } from "lucide-react"
+import { ArrowLeft, Printer, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { useConfirmDialog } from "@/components/confirm-dialog"
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { usePermissions } from "@/hooks/use-permissions"
@@ -136,6 +138,7 @@ export default function SaleDetailPage() {
   const id = params.id as string
   const loadKeyRef = useRef("")
   const { t } = useTranslation()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const posOptions = usePosOptions()
   const currencyIndicator =
     posOptions.currency_preferred === "iso"
@@ -152,6 +155,7 @@ export default function SaleDetailPage() {
   const { hasPermission } = usePermissions()
   const canRefundOrder = hasPermission(PERMISSIONS.special.refundOrder)
   const canVoidSale = hasPermission(PERMISSIONS.sales.void)
+  const canDeleteSale = hasPermission(PERMISSIONS.sales.delete)
   const canCollectDue = hasPermission(PERMISSIONS.payments.collectDue)
   const canUpdateSale = hasPermission(PERMISSIONS.sales.update)
   const canCreatePayment = hasPermission(PERMISSIONS.payments.create)
@@ -199,6 +203,7 @@ export default function SaleDetailPage() {
     sales as any
   ).useCollectSaleDueMutation()
   const [voidSale, voidSaleState] = (sales as any).useVoidSaleMutation()
+  const [deleteSales, deleteSalesState] = (sales as any).useDeleteSalesMutation()
   const [getPaymentTypesDropdown, paymentTypesState] = (
     payments as any
   ).useGetPaymentTypesDropdownMutation()
@@ -345,12 +350,32 @@ export default function SaleDetailPage() {
   }
 
   const handleVoidSale = async () => {
+    const ok = await confirm({
+      title: t("Confirm Your Action"),
+      description: t("The current order will be void. This action will be recorded. Consider providing a reason for this operation"),
+      confirmLabel: t("Void"),
+      cancelLabel: t("Cancel"),
+    })
+    if (!ok) return
     const response = await voidSale({
       id,
       payLoad: { note: "Voided from sale details." },
     }).unwrap()
     showToast.success(response?.message || t("Sale voided successfully."))
     await getSaleById({ id })
+  }
+
+  const handleDeleteSale = async () => {
+    const ok = await confirm({
+      title: t("Confirm Your Action"),
+      description: t("Would you like to delete this order"),
+      confirmLabel: t("Delete"),
+      cancelLabel: t("Cancel"),
+    })
+    if (!ok) return
+    const response = await deleteSales({ ids: [id] }).unwrap()
+    showToast.success(response?.message || t("The order has been deleted."))
+    router.push("/sales")
   }
 
   const updateDuePaymentRow = (
@@ -530,6 +555,31 @@ export default function SaleDetailPage() {
     )
   }
 
+  const paymentStatus = String(sale.payment_status || "")
+  const canShowPaymentsTab = ![
+    "order_void",
+    "void",
+    "hold",
+    "refunded",
+    "partially_refunded",
+  ].includes(paymentStatus)
+  const canShowRefundTab = ![
+    "order_void",
+    "void",
+    "hold",
+    "refunded",
+  ].includes(paymentStatus)
+  const canShowInstallmentsTab =
+    ["partially_paid", "unpaid"].includes(paymentStatus) &&
+    Boolean(sale.support_instalments)
+  const canShowVoidAction =
+    canVoidSale && ["paid", "partially_paid", "unpaid"].includes(paymentStatus)
+  const canShowDeleteAction = canDeleteSale && paymentStatus === "hold"
+  const canShowCollectDueAction =
+    canCollectDue && canShowPaymentsTab && Number(sale.due_amount || 0) > 0
+  const canShowRefundAction =
+    canRefundOrder && canShowRefundTab && refundableItems.length > 0
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-auto">
       <div className="rounded-3xl border border-gray-200 bg-white shadow-sm">
@@ -554,13 +604,6 @@ export default function SaleDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {canCollectDue &&
-            Number(sale.due_amount || 0) > 0 &&
-            !["void", "order_void", "refunded"].includes(sale.payment_status) ? (
-              <Button variant="outline" onClick={openCollectDueDialog}>
-                {t("Collect Due")}
-              </Button>
-            ) : null}
             <Button
               variant="outline"
               onClick={() => router.push(getPrintedDocumentUrl(sale.id))}
@@ -568,17 +611,7 @@ export default function SaleDetailPage() {
               <Printer className="size-4" />
               {t("Print")}
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => router.push(`/sales/${sale.id}/receipt`)}
-            >
-              <ReceiptText className="size-4" />
-              {t("Receipt")}
-            </Button>
-            {canVoidSale &&
-            !["void", "order_void", "refunded", "partially_refunded"].includes(
-              sale.payment_status
-            ) ? (
+            {canShowVoidAction ? (
               <Button
                 variant="outline"
                 onClick={handleVoidSale}
@@ -587,8 +620,15 @@ export default function SaleDetailPage() {
                 {voidSaleState.isLoading ? t("Voiding...") : t("Void")}
               </Button>
             ) : null}
-            {canRefundOrder && refundableItems.length ? (
-              <Button onClick={openReturnDialog}>{t("Refund & Return")}</Button>
+            {canShowDeleteAction ? (
+              <Button
+                variant="destructive"
+                onClick={handleDeleteSale}
+                disabled={deleteSalesState.isLoading}
+              >
+                <Trash2 className="size-4" />
+                {deleteSalesState.isLoading ? t("Deleting...") : t("Delete")}
+              </Button>
             ) : null}
             <span
               className={cn(
@@ -601,304 +641,347 @@ export default function SaleDetailPage() {
           </div>
         </div>
 
-      <div className="grid gap-4 px-6 py-6 lg:grid-cols-4">
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              {t("Customer")}
-            </p>
-            <p className="mt-2 text-base font-bold text-slate-900">
-              {sale.customer?.name || t("Walk-in Customer")}
-            </p>
-            <p className="text-sm text-slate-500">{sale.customer?.phone || "-"}</p>
+        <Tabs defaultValue="details" className="gap-0">
+          <div className="border-b border-gray-100 px-6 pt-4">
+            <TabsList variant="line" className="w-full justify-start overflow-x-auto">
+              <TabsTrigger value="details">{t("Details")}</TabsTrigger>
+              {canShowPaymentsTab ? (
+                <TabsTrigger value="payments">{t("Payments")}</TabsTrigger>
+              ) : null}
+              {canShowRefundTab ? (
+                <TabsTrigger value="refund">{t("Refund & Return")}</TabsTrigger>
+              ) : null}
+              {canShowInstallmentsTab ? (
+                <TabsTrigger value="installments">{t("Instalments")}</TabsTrigger>
+              ) : null}
+            </TabsList>
           </div>
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              {t("Total")}
-            </p>
-            <p className="mt-2 text-base font-bold text-slate-900">
-              {formatMoney(sale.total)}
-            </p>
-            <p className="text-sm text-slate-500">
-              {t("Paid")} {formatMoney(sale.totals_summary?.paid_amount)}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              {t("Due Amount")}
-            </p>
-            <p className="mt-2 text-base font-bold text-slate-900">
-              {formatMoney(sale.due_amount)}
-            </p>
-            <p className="text-sm text-slate-500">
-              {t("Change")} {formatMoney(sale.change_amount)}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              {t("Refunded")}
-            </p>
-            <p className="mt-2 text-base font-bold text-slate-900">
-              {formatMoney(sale.totals_summary?.refunded_amount)}
-            </p>
-            <p className="text-sm text-slate-500">
-              {String(t("{count} return(s)")).replace("{count}", String(sale.refunds?.length || 0))}
-            </p>
-          </div>
-        </div>
 
-        <div className="grid gap-4 border-t border-gray-100 px-6 py-6 lg:grid-cols-2">
-          <UniFieldSelect
-            label={t("Processing Status")}
-            value={processingStatus || "none"}
-            onValueChange={(value) =>
-              handleUpdateProcessing(value === "none" ? "" : value)
-            }
-            disabled={!canUpdateSale || updateProcessingState.isLoading}
-          >
-            <SelectItem value="none">{t("Not Set")}</SelectItem>
-            <SelectItem value="pending">{t("Pending")}</SelectItem>
-            <SelectItem value="processing">{t("Processing")}</SelectItem>
-            <SelectItem value="ready">{t("Ready")}</SelectItem>
-            <SelectItem value="completed">{t("Completed")}</SelectItem>
-          </UniFieldSelect>
+          <TabsContent value="details" className="space-y-6 px-6 py-6">
+            <div className="grid gap-4 lg:grid-cols-4">
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {t("Customer")}
+                </p>
+                <p className="mt-2 text-base font-bold text-slate-900">
+                  {sale.customer?.name || t("Walk-in Customer")}
+                </p>
+                <p className="text-sm text-slate-500">{sale.customer?.phone || "-"}</p>
+              </div>
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {t("Total")}
+                </p>
+                <p className="mt-2 text-base font-bold text-slate-900">
+                  {formatMoney(sale.total)}
+                </p>
+                <p className="text-sm text-slate-500">
+                  {t("Paid")} {formatMoney(sale.totals_summary?.paid_amount)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {t("Due Amount")}
+                </p>
+                <p className="mt-2 text-base font-bold text-slate-900">
+                  {formatMoney(sale.due_amount)}
+                </p>
+                <p className="text-sm text-slate-500">
+                  {t("Change")} {formatMoney(sale.change_amount)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {t("Refunded")}
+                </p>
+                <p className="mt-2 text-base font-bold text-slate-900">
+                  {formatMoney(sale.totals_summary?.refunded_amount)}
+                </p>
+                <p className="text-sm text-slate-500">
+                  {String(t("{count} return(s)")).replace("{count}", String(sale.refunds?.length || 0))}
+                </p>
+              </div>
+            </div>
 
-          <UniFieldSelect
-            label={t("Delivery Status")}
-            value={deliveryStatus || "none"}
-            onValueChange={(value) =>
-              handleUpdateDelivery(value === "none" ? "" : value)
-            }
-            disabled={!canUpdateSale || updateDeliveryState.isLoading}
-          >
-            <SelectItem value="none">{t("Not Set")}</SelectItem>
-            <SelectItem value="pending">{t("Pending")}</SelectItem>
-            <SelectItem value="packed">{t("Packed")}</SelectItem>
-            <SelectItem value="shipped">{t("Shipped")}</SelectItem>
-            <SelectItem value="delivered">{t("Delivered")}</SelectItem>
-          </UniFieldSelect>
-        </div>
-      </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <UniFieldSelect
+                label={t("Processing Status")}
+                value={processingStatus || "none"}
+                onValueChange={(value) =>
+                  handleUpdateProcessing(value === "none" ? "" : value)
+                }
+                disabled={!canUpdateSale || updateProcessingState.isLoading}
+              >
+                <SelectItem value="none">{t("Not Set")}</SelectItem>
+                <SelectItem value="pending">{t("Pending")}</SelectItem>
+                <SelectItem value="processing">{t("Processing")}</SelectItem>
+                <SelectItem value="ready">{t("Ready")}</SelectItem>
+                <SelectItem value="completed">{t("Completed")}</SelectItem>
+              </UniFieldSelect>
 
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
-        <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-100 px-6 py-4">
-            <h2 className="text-lg font-bold text-slate-900">{t("Products")}</h2>
-          </div>
-          <div className="overflow-x-auto px-4 py-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("Product")}</TableHead>
-                  <TableHead>{t("Qty")}</TableHead>
-                  <TableHead>{t("Refunded")}</TableHead>
-                  <TableHead>{t("Remaining")}</TableHead>
-                  <TableHead>{t("Rate")}</TableHead>
-                  <TableHead>{t("Total")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(sale.items || []).map((item: any) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-semibold text-slate-900">
-                          {item.product__name}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {t("SKU")}: {item.product__sku || "-"}
+              <UniFieldSelect
+                label={t("Delivery Status")}
+                value={deliveryStatus || "none"}
+                onValueChange={(value) =>
+                  handleUpdateDelivery(value === "none" ? "" : value)
+                }
+                disabled={!canUpdateSale || updateDeliveryState.isLoading}
+              >
+                <SelectItem value="none">{t("Not Set")}</SelectItem>
+                <SelectItem value="pending">{t("Pending")}</SelectItem>
+                <SelectItem value="packed">{t("Packed")}</SelectItem>
+                <SelectItem value="shipped">{t("Shipped")}</SelectItem>
+                <SelectItem value="delivered">{t("Delivered")}</SelectItem>
+              </UniFieldSelect>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
+              <section className="rounded-2xl border border-gray-200 bg-white">
+                <div className="border-b border-gray-100 px-6 py-4">
+                  <h2 className="text-lg font-bold text-slate-900">{t("Products")}</h2>
+                </div>
+                <div className="overflow-x-auto px-4 py-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("Product")}</TableHead>
+                        <TableHead>{t("Qty")}</TableHead>
+                        <TableHead>{t("Refunded")}</TableHead>
+                        <TableHead>{t("Remaining")}</TableHead>
+                        <TableHead>{t("Rate")}</TableHead>
+                        <TableHead>{t("Total")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(sale.items || []).map((item: any) => (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-semibold text-slate-900">
+                                {item.product__name}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {t("SKU")}: {item.product__sku || "-"}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>{item.refunded_quantity}</TableCell>
+                          <TableCell>{item.refundable_quantity}</TableCell>
+                          <TableCell>{formatMoney(item.unit_price)}</TableCell>
+                          <TableCell>{formatMoney(item.total)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-gray-200 bg-white">
+                <div className="border-b border-gray-100 px-6 py-4">
+                  <h2 className="text-lg font-bold text-slate-900">{t("Applied Coupons")}</h2>
+                </div>
+                <div className="space-y-3 px-6 py-5">
+                  {(sale.applied_coupons || []).length ? (
+                    sale.applied_coupons.map((coupon: any) => (
+                      <div
+                        key={coupon.id}
+                        className="rounded-2xl border border-gray-100 bg-gray-50 p-4"
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold text-slate-900">{coupon.code}</p>
+                          <p className="font-bold text-slate-900">
+                            {formatMoney(coupon.discount_amount)}
+                          </p>
+                        </div>
+                        <p className="mt-1 text-xs capitalize text-slate-500">
+                          {getStatusLabel(coupon.type, t)}
                         </p>
                       </div>
-                    </TableCell>
-                    <TableCell>{item.quantity}</TableCell>
-                    <TableCell>{item.refunded_quantity}</TableCell>
-                    <TableCell>{item.refundable_quantity}</TableCell>
-                    <TableCell>{formatMoney(item.unit_price)}</TableCell>
-                    <TableCell>{formatMoney(item.total)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </section>
+                    ))
+                  ) : (
+                    <p className="text-sm text-slate-500">{t("No coupon used on this sale.")}</p>
+                  )}
+                </div>
+              </section>
+            </div>
+          </TabsContent>
 
-        <div className="space-y-4">
-          <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-100 px-6 py-4">
-              <h2 className="text-lg font-bold text-slate-900">{t("Payments")}</h2>
-            </div>
-            <div className="space-y-3 px-6 py-5">
-              {(sale.payments || []).length ? (
-                sale.payments.map((payment: any) => (
-                  <div
-                    key={payment.id}
-                    className="rounded-2xl border border-gray-100 bg-gray-50 p-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="font-semibold capitalize text-slate-900">
-                        {String(payment.payment_type || "-").replaceAll("-", " ")}
-                      </p>
-                      <p className="font-bold text-slate-900">
-                        {formatMoney(payment.amount)}
-                      </p>
-                    </div>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {t("Reference")}: {payment.reference_number || "-"}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-500">{t("No payments recorded.")}</p>
-              )}
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-100 px-6 py-4">
-              <h2 className="text-lg font-bold text-slate-900">{t("Applied Coupons")}</h2>
-            </div>
-            <div className="space-y-3 px-6 py-5">
-              {(sale.applied_coupons || []).length ? (
-                sale.applied_coupons.map((coupon: any) => (
-                  <div
-                    key={coupon.id}
-                    className="rounded-2xl border border-gray-100 bg-gray-50 p-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="font-semibold text-slate-900">{coupon.code}</p>
-                      <p className="font-bold text-slate-900">
-                        {formatMoney(coupon.discount_amount)}
+          {canShowPaymentsTab ? (
+            <TabsContent value="payments" className="space-y-4 px-6 py-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">{t("Payments")}</h2>
+                  <p className="text-sm text-slate-500">
+                    {t("Payments recorded for this order.")}
+                  </p>
+                </div>
+                {canShowCollectDueAction ? (
+                  <Button variant="outline" onClick={openCollectDueDialog}>
+                    {t("Collect Due")}
+                  </Button>
+                ) : null}
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {(sale.payments || []).length ? (
+                  sale.payments.map((payment: any) => (
+                    <div
+                      key={payment.id}
+                      className="rounded-2xl border border-gray-100 bg-gray-50 p-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="font-semibold capitalize text-slate-900">
+                          {String(payment.payment_type || "-").replaceAll("-", " ")}
+                        </p>
+                        <p className="font-bold text-slate-900">
+                          {formatMoney(payment.amount)}
+                        </p>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {t("Reference")}: {payment.reference_number || "-"}
                       </p>
                     </div>
-                    <p className="mt-1 text-xs capitalize text-slate-500">
-                      {getStatusLabel(coupon.type, t)}
-                    </p>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-gray-200 p-8 text-center text-sm text-slate-500 md:col-span-2 xl:col-span-3">
+                    {t("No payments recorded.")}
                   </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-500">{t("No coupon used on this sale.")}</p>
-              )}
-            </div>
-          </section>
-        </div>
-      </div>
-
-      <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">{t("Instalments")}</h2>
-            <p className="text-sm text-slate-500">
-              {t("Payment schedule and installment collections for this sale.")}
-            </p>
-          </div>
-          {canUpdateSale && Number(sale.due_amount || 0) > 0 ? (
-            <Button type="button" variant="outline" onClick={openInstallmentDialog}>
-              {installmentPlan ? t("Update Instalments") : t("Create Instalments")}
-            </Button>
+                )}
+              </div>
+            </TabsContent>
           ) : null}
-        </div>
-        <div className="overflow-x-auto px-4 py-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("Due Date")}</TableHead>
-                <TableHead>{t("Amount")}</TableHead>
-                <TableHead>{t("Paid")}</TableHead>
-                <TableHead>{t("Remaining")}</TableHead>
-                <TableHead>{t("Status")}</TableHead>
-                <TableHead>{t("Action")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {installmentPlan?.lines?.length ? (
-                installmentPlan.lines.map((line: any) => (
-                  <TableRow key={line.id}>
-                    <TableCell>{line.due_date}</TableCell>
-                    <TableCell>{formatMoney(line.amount)}</TableCell>
-                    <TableCell>{formatMoney(line.paid_amount)}</TableCell>
-                    <TableCell>
-                      {formatMoney(money(line.amount) - money(line.paid_amount))}
-                    </TableCell>
-                    <TableCell className="capitalize">
-                      {getStatusLabel(line.installment_status, t)}
-                    </TableCell>
-                    <TableCell>
-                      {canCreatePayment &&
-                      money(line.amount) > money(line.paid_amount) ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openInstallmentPayDialog(line)}
-                        >
-                          {t("Pay")}
-                        </Button>
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="py-10 text-center text-sm text-slate-500"
-                  >
-                    {t("No installments created for this sale.")}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </section>
 
-      <section className="rounded-3xl border border-gray-200 bg-white shadow-sm">
-        <div className="border-b border-gray-100 px-6 py-4">
-          <h2 className="text-lg font-bold text-slate-900">{t("Return History")}</h2>
-        </div>
-        <div className="overflow-x-auto px-4 py-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("Return ID")}</TableHead>
-                <TableHead>{t("Type")}</TableHead>
-                <TableHead>{t("Status")}</TableHead>
-                <TableHead>{t("Cashier")}</TableHead>
-                <TableHead>{t("Total")}</TableHead>
-                <TableHead>{t("Note")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(sale.refunds || []).length ? (
-                sale.refunds.map((refund: any) => (
-                  <TableRow key={refund.id}>
-                    <TableCell>#{refund.id}</TableCell>
-                    <TableCell className="capitalize">
-                      {getStatusLabel(refund.return_type, t)}
-                    </TableCell>
-                    <TableCell className="capitalize">
-                      {getStatusLabel(refund.return_status, t)}
-                    </TableCell>
-                    <TableCell>{refund.cashier__full_name || "-"}</TableCell>
-                    <TableCell>{formatMoney(refund.total)}</TableCell>
-                    <TableCell>{refund.note || "-"}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="py-10 text-center text-sm text-slate-500"
-                  >
-                    {t("No returns recorded for this sale.")}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </section>
+          {canShowRefundTab ? (
+            <TabsContent value="refund" className="space-y-4 px-6 py-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">{t("Refund & Return")}</h2>
+                  <p className="text-sm text-slate-500">
+                    {t("Refundable items and return history for this order.")}
+                  </p>
+                </div>
+                {canShowRefundAction ? (
+                  <Button onClick={openReturnDialog}>{t("Refund & Return")}</Button>
+                ) : null}
+              </div>
+              <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("Return ID")}</TableHead>
+                      <TableHead>{t("Type")}</TableHead>
+                      <TableHead>{t("Status")}</TableHead>
+                      <TableHead>{t("Cashier")}</TableHead>
+                      <TableHead>{t("Total")}</TableHead>
+                      <TableHead>{t("Note")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(sale.refunds || []).length ? (
+                      sale.refunds.map((refund: any) => (
+                        <TableRow key={refund.id}>
+                          <TableCell>#{refund.id}</TableCell>
+                          <TableCell className="capitalize">
+                            {getStatusLabel(refund.return_type, t)}
+                          </TableCell>
+                          <TableCell className="capitalize">
+                            {getStatusLabel(refund.return_status, t)}
+                          </TableCell>
+                          <TableCell>{refund.cashier__full_name || "-"}</TableCell>
+                          <TableCell>{formatMoney(refund.total)}</TableCell>
+                          <TableCell>{refund.note || "-"}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className="py-10 text-center text-sm text-slate-500"
+                        >
+                          {t("No returns recorded for this sale.")}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+          ) : null}
+
+          {canShowInstallmentsTab ? (
+            <TabsContent value="installments" className="space-y-4 px-6 py-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">{t("Instalments")}</h2>
+                  <p className="text-sm text-slate-500">
+                    {t("Payment schedule and installment collections for this sale.")}
+                  </p>
+                </div>
+                {canUpdateSale && Number(sale.due_amount || 0) > 0 ? (
+                  <Button type="button" variant="outline" onClick={openInstallmentDialog}>
+                    {installmentPlan ? t("Update Instalments") : t("Create Instalments")}
+                  </Button>
+                ) : null}
+              </div>
+              <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("Due Date")}</TableHead>
+                      <TableHead>{t("Amount")}</TableHead>
+                      <TableHead>{t("Paid")}</TableHead>
+                      <TableHead>{t("Remaining")}</TableHead>
+                      <TableHead>{t("Status")}</TableHead>
+                      <TableHead>{t("Action")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {installmentPlan?.lines?.length ? (
+                      installmentPlan.lines.map((line: any) => (
+                        <TableRow key={line.id}>
+                          <TableCell>{line.due_date}</TableCell>
+                          <TableCell>{formatMoney(line.amount)}</TableCell>
+                          <TableCell>{formatMoney(line.paid_amount)}</TableCell>
+                          <TableCell>
+                            {formatMoney(money(line.amount) - money(line.paid_amount))}
+                          </TableCell>
+                          <TableCell className="capitalize">
+                            {getStatusLabel(line.installment_status, t)}
+                          </TableCell>
+                          <TableCell>
+                            {canCreatePayment &&
+                            money(line.amount) > money(line.paid_amount) ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openInstallmentPayDialog(line)}
+                              >
+                                {t("Pay")}
+                              </Button>
+                            ) : (
+                              "-"
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className="py-10 text-center text-sm text-slate-500"
+                        >
+                          {t("No installments created for this sale.")}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+          ) : null}
+        </Tabs>
+      </div>
 
       <Dialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}>
         <DialogContent className="max-w-5xl">
@@ -1377,6 +1460,7 @@ export default function SaleDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {confirmDialog}
     </div>
   )
 }

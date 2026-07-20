@@ -757,5 +757,6 @@
   "The coupon has been loaded.": "تم تحميل القسيمة.",
   "The coupon has applied to the cart.": "تم تطبيق القسيمة على السلة.",
   "Order loaded successfully.": "تم تحميل الطلب بنجاح.",
-  "Sale updated successfully.": "تم تحديث البيع بنجاح."
+  "Sale updated successfully.": "تم تحديث البيع بنجاح.",
+  "Owed": "المستحق"
 }

@@ -1,8 +1,9 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { FileText, ReceiptText, Settings } from "lucide-react"
+import { FileText, ReceiptText, Settings, Trash2 } from "lucide-react"
 
+import { useConfirmDialog } from "@/components/confirm-dialog"
 import DynamicTable from "@/components/DynamicTable"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
@@ -11,6 +12,7 @@ import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
+import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 
 const paymentStatusColors: Record<string, string> = {
@@ -111,6 +113,7 @@ export default function SalesHistoryPage() {
   const router = useRouter()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
+  const { confirm, confirmDialog } = useConfirmDialog()
   const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
   const formatDate = (value: any) => formatBusinessDate(value, posOptions)
   const columns = buildColumns(t, formatMoney, formatDate)
@@ -138,6 +141,21 @@ export default function SalesHistoryPage() {
 
   })
 
+  const handleDeleteOrder = async (record: any) => {
+    const ok = await confirm({
+      title: t("Confirm Your Action"),
+      description: t("Would you like to delete this order"),
+      confirmLabel: t("Delete"),
+      cancelLabel: t("Cancel"),
+    })
+    if (!ok) return
+    const result = await deleteSales({ ids: [record.id] })
+    if ("data" in result && result.data?.success) {
+      showToast.success(result.data.message || t("The order has been deleted."))
+      triggerRefresh?.()
+    }
+  }
+
   return (
     <div className="h-full space-y-4">
       <DynamicTable
@@ -160,14 +178,10 @@ export default function SalesHistoryPage() {
         setAddEntityOpen={
           canCreateSale ? () => router.push("/sales/create") : undefined
         }
-        showEdit={canUpdateSale}
-        showDelete={canDeleteSale}
+        showEdit={false}
+        showDelete={false}
         deleteMutation={deleteSales}
         triggerRefresh={triggerRefresh}
-        canDeleteRow={(record: any) =>
-          !["refunded", "partially_refunded"].includes(record?.payment_status)
-        }
-        onEdit={canUpdateSale ? (record: any) => router.push(`/sales/${record.id}`) : undefined}
         rowActions={(_, record) => [
           {
             key: "options",
@@ -201,8 +215,21 @@ export default function SalesHistoryPage() {
             icon: <ReceiptText className="size-4" />,
             onClick: () => router.push(`/sales/${record.id}/receipt`),
           },
+          ...(canDeleteSale
+            ? [
+              {
+                key: "delete",
+                label: t("Delete"),
+                labelText: t("Delete"),
+                icon: <Trash2 className="size-4 text-red-500" />,
+                onClick: () => handleDeleteOrder(record),
+                priority: 20,
+              },
+            ]
+            : []),
         ]}
       />
+      {confirmDialog}
     </div>
   )
 }

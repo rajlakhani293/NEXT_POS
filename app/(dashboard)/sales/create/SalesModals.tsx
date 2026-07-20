@@ -1955,7 +1955,7 @@ export default function SalesModals({
         open={isCustomerSelectOpen}
         onOpenChange={setIsCustomerSelectOpen}
         title={t("Customer List")}
-        className="w-[90vw] !max-w-[720px]"
+        className="w-[94vw] !max-w-[860px]"
         showFooter={false}
       >
         <div className="flex min-h-[460px] flex-col p-2">
@@ -1990,10 +1990,12 @@ export default function SalesModals({
                           {customerGroupName(customer)}
                         </p>
                       </div>
-                      <div className="shrink-0 text-right text-sm font-semibold">
-                        <div className="text-slate-900">
+                      <div className="shrink-0 text-right text-xs font-semibold">
+                        <div className="text-muted-foreground">{t("purchases")}</div>
+                        <div className="text-sm text-slate-900">
                           {formatMoney(customer.purchases_amount || customer.total_sales || 0)}
                         </div>
+                        <div className="mt-1 text-muted-foreground">{t("Owed")}</div>
                         <div className={money(customer.owed_amount) > 0 ? "text-red-600" : "text-muted-foreground"}>
                           {formatMoney(customer.owed_amount || customer.account_amount || 0)}
                         </div>
