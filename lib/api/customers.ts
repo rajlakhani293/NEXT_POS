@@ -24,6 +24,10 @@ const endpointsConfig = {
   getCustomerAddresses: { query: ({ id }: { id: any }) => getMutation(`${id}/addresses`) },
   getCustomerGroup: { query: ({ id }: { id: any }) => getMutation(`${id}/group`) },
   getCustomerCoupons: { query: ({ id }: { id: any }) => getMutation(`${id}/coupons`) },
+  loadCustomerCouponForPos: {
+    query: ({ code, payLoad }: { code: string; payLoad: any }) =>
+      postMutation(`coupons/${encodeURIComponent(code)}`)(payLoad),
+  },
   getCustomerRewards: { query: ({ id }: { id: any }) => getMutation(`${id}/rewards`) },
   adjustCustomerCredit: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`${id}/credit-adjustment`)(payLoad) },
   getCustomerCreditLedger: { query: ({ id, payLoad }: { id: any; payLoad: any }) => postMutation(`${id}/credit-ledger`)(payLoad) },

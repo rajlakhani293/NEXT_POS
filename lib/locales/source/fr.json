@@ -2978,5 +2978,14 @@
   "Please provide a valid price.": "Veuillez fournir un prix valide.",
   "Enter price": "Saisir le prix",
   "Minimum Credit Payment (%)": "Paiement de crédit minimum (%)",
-  "Minimum credit payment must be between 0 and 100.": "Le paiement de crédit minimum doit être compris entre 0 et 100."
+  "Minimum credit payment must be between 0 and 100.": "Le paiement de crédit minimum doit être compris entre 0 et 100.",
+  "Percentage cannot be greater than 100.": "Le pourcentage ne peut pas être supérieur à 100.",
+  "Decimal quantities are not allowed.": "Les quantités décimales ne sont pas autorisées.",
+  "Order Deletion": "Suppression de commande",
+  "Would you like to delete this order?": "Voulez-vous supprimer cette commande ?",
+  "Coupon Code is required.": "Le code du coupon est obligatoire.",
+  "The coupon has been loaded.": "Le coupon a été chargé.",
+  "The coupon has applied to the cart.": "Le coupon a été appliqué au panier.",
+  "Order loaded successfully.": "Commande chargée avec succès.",
+  "Sale updated successfully.": "Vente mise à jour avec succès."
 }

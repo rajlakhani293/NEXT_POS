@@ -124,6 +124,7 @@ type POSGridData = {
 
 type PaymentRow = {
   id: string
+  existing_payment_id?: number | string
   payment_type: string
   amount: string
   reference_number: string
@@ -253,13 +254,16 @@ export default function SalesPage() {
   const [closingNote, setClosingNote] = useState("")
 
   const [customerId, setCustomerId] = useState("")
+  const [selectedCustomerDetails, setSelectedCustomerDetails] = useState<any | null>(null)
   const [checkoutStep, setCheckoutStep] = useState<"idle" | "customer" | "order_type" | "shipping" | "payment">("idle")
   const [isCustomerSelectOpen, setIsCustomerSelectOpen] = useState(false)
   const [customerSearchTerm, setCustomerSearchTerm] = useState("")
   const [draftId, setDraftId] = useState("")
+  const [activeSaleId, setActiveSaleId] = useState("")
   const [barcode, setBarcode] = useState("")
   const [couponInput, setCouponInput] = useState("")
   const [selectedCouponId, setSelectedCouponId] = useState("")
+  const [loadedCoupon, setLoadedCoupon] = useState<any | null>(null)
   const [orderTitle, setOrderTitle] = useState("")
   const [orderType, setOrderType] = useState("")
   const [isShippingBillingOpen, setIsShippingBillingOpen] = useState(false)
@@ -370,6 +374,10 @@ export default function SalesPage() {
   ] = (registers as any).useGetRegistersDropdownMutation()
   const [getCustomersDropdown, { data: customersData, isLoading: isCustomersLoading }] =
     (customers as any).useGetCustomersDropdownMutation()
+  const [getCustomerDetailsById] = (customers as any).useGetCustomerByIdMutation()
+  const [loadCustomerCouponForPos, loadCustomerCouponState] = (
+    customers as any
+  ).useLoadCustomerCouponForPosMutation()
   const [getPaymentTypesDropdown, { data: paymentTypesData, isLoading: isPaymentTypesLoading }] =
     (payments as any).useGetPaymentTypesDropdownMutation()
   const [getCouponsDropdown, { data: couponsData, isLoading: isCouponsLoading }] =
@@ -389,8 +397,10 @@ export default function SalesPage() {
   const [createSale, { isLoading: isCreatingSale }] = (
     sales as any
   ).useCreateSaleMutation()
+  const [editSale] = (sales as any).useEditSaleMutation()
   const [getSalesData] = (sales as any).useGetSalesDataMutation()
   const [getSaleById] = (sales as any).useGetSaleByIdMutation()
+  const [voidSale] = (sales as any).useVoidSaleMutation()
   const [holdSale, { isLoading: isHoldingSale }] = (
     sales as any
   ).useHoldSaleMutation()
@@ -405,10 +415,21 @@ export default function SalesPage() {
   const couponOptions = couponsData?.data || []
   const registerOptions = registersDropdownData?.data || []
   const taxGroupOptions = taxGroupsData?.data || []
-  const selectedCustomer = useMemo(
-    () => customerOptions.find((customer: any) => String(customer.id) === String(customerId)),
-    [customerOptions, customerId]
-  )
+  const selectedCustomer = useMemo(() => {
+    const dropdownCustomer = customerOptions.find((customer: any) => String(customer.id) === String(customerId))
+    if (!selectedCustomerDetails || String(selectedCustomerDetails.id) !== String(customerId)) {
+      return dropdownCustomer
+    }
+    return {
+      ...dropdownCustomer,
+      ...selectedCustomerDetails,
+      group: selectedCustomerDetails.group || dropdownCustomer?.group,
+      group_name: selectedCustomerDetails.group_name || dropdownCustomer?.group_name,
+      billing: selectedCustomerDetails.billing || dropdownCustomer?.billing,
+      shipping: selectedCustomerDetails.shipping || dropdownCustomer?.shipping,
+      addresses: selectedCustomerDetails.addresses || dropdownCustomer?.addresses,
+    }
+  }, [customerOptions, customerId, selectedCustomerDetails])
   const selectedTaxGroup = useMemo(
     () => taxGroupOptions.find((taxGroup: any) => String(taxGroup.id) === String(cartTaxGroupId)),
     [taxGroupOptions, cartTaxGroupId]
@@ -578,7 +599,21 @@ export default function SalesPage() {
     }
     return Math.min(value, itemsSubtotal)
   }, [cartDiscountType, cartDiscountVal, itemsSubtotal])
-  const subtotal = Math.max(itemsSubtotal - cartDiscount, 0)
+  const taxableSubtotal = Math.max(itemsSubtotal - cartDiscount, 0)
+  const orderTaxBreakdown = useMemo(() => {
+    if (String(posOptions.pos_vat) === "disabled" || !selectedTaxGroup?.taxes?.length) return []
+    return selectedTaxGroup.taxes
+      .filter((tax: any) => Number(tax.rate || 0) > 0)
+      .map((tax: any) => ({
+        ...tax,
+        tax_value: (taxableSubtotal * Number(tax.rate || 0)) / 100,
+      }))
+  }, [posOptions.pos_vat, selectedTaxGroup, taxableSubtotal])
+  const orderTaxAmount = useMemo(
+    () => orderTaxBreakdown.reduce((sum: number, tax: any) => sum + Number(tax.tax_value || 0), 0),
+    [orderTaxBreakdown]
+  )
+  const subtotal = taxableSubtotal + (cartTaxType === "exclusive" ? orderTaxAmount : 0)
   const enabledOrderTypes = useMemo(() => {
     const configured = posOptions.order_types.length ? posOptions.order_types : ["takeaway", "delivery"]
     return [
@@ -682,6 +717,29 @@ export default function SalesPage() {
     setItemsMergeEnabled(Boolean(posOptions.items_merge))
     setForceAutoFocus(Boolean(posOptions.force_autofocus))
   }, [posOptions.force_autofocus, posOptions.items_merge])
+
+  useEffect(() => {
+    if (!customerId) {
+      setSelectedCustomerDetails(null)
+      return
+    }
+    let isCurrent = true
+    getCustomerDetailsById({ id: Number(customerId) })
+      .unwrap()
+      .then((response: any) => {
+        if (isCurrent) {
+          setSelectedCustomerDetails(response?.data || null)
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setSelectedCustomerDetails(null)
+        }
+      })
+    return () => {
+      isCurrent = false
+    }
+  }, [customerId, getCustomerDetailsById])
 
   useEffect(() => {
     setCartTaxGroupId(posOptions.pos_tax_group ? String(posOptions.pos_tax_group) : "")
@@ -840,6 +898,10 @@ export default function SalesPage() {
   ) => {
     if (!quantity || quantity <= 0) {
       showToast.error(t("Please provide a quantity"))
+      return false
+    }
+    if (!allowDecimalQuantities && !Number.isInteger(quantity)) {
+      showToast.error(t("Decimal quantities are not allowed."))
       return false
     }
 
@@ -1083,6 +1145,10 @@ export default function SalesPage() {
       setInvalidQuantityLineId(lineId)
       return
     }
+    if (!allowDecimalQuantities && !Number.isInteger(nextQuantity)) {
+      setInvalidQuantityLineId(lineId)
+      return
+    }
     setInvalidQuantityLineId((current) => (current === lineId ? null : current))
     setCartItems((prev) =>
       prev.map((item) =>
@@ -1097,7 +1163,9 @@ export default function SalesPage() {
       const draftQuantity = Number(draft)
       return draft !== undefined
         ? draft.trim() === "" || !Number.isFinite(draftQuantity) || draftQuantity <= 0
+        || (!allowDecimalQuantities && !Number.isInteger(draftQuantity))
         : !Number.isFinite(Number(item.qty)) || Number(item.qty) <= 0
+        || (!allowDecimalQuantities && !Number.isInteger(Number(item.qty)))
     })
     if (!invalidItem) return true
     setInvalidQuantityLineId(invalidItem.line_id)
@@ -1142,6 +1210,10 @@ export default function SalesPage() {
   const handleApplyItemDiscount = () => {
     if (!activeDiscountItem) return
     const value = Math.max(Number(itemDiscountVal || 0), 0)
+    if (itemDiscountType === "percentage" && value > 100) {
+      showToast.error(t("Percentage cannot be greater than 100."))
+      return
+    }
     setCartItems((prev) =>
       prev.map((item) => {
         if (
@@ -1170,7 +1242,12 @@ export default function SalesPage() {
   }
 
   const handleApplyCartDiscount = () => {
-    setCartDiscountVal(String(Math.max(Number(cartDiscountVal || 0), 0)))
+    const value = Math.max(Number(cartDiscountVal || 0), 0)
+    if (cartDiscountType === "percentage" && value > 100) {
+      showToast.error(t("Percentage cannot be greater than 100."))
+      return
+    }
+    setCartDiscountVal(String(value))
     setIsCartDiscountDialogOpen(false)
     showToast.success(t("The discount has been set to the cart subtotal."))
   }
@@ -1183,26 +1260,52 @@ export default function SalesPage() {
     setIsOrderSettingsOpen(true)
   }
 
-  const handleVoidCart = () => {
-    if (!cartItems.length) {
+  const handleVoidCart = async () => {
+    if (activeSaleId) {
+      const proceed = await confirm({
+        title: t("Confirm Your Action"),
+        description: t("The current order will be void. This action will be recorded. Consider providing a reason for this operation"),
+        confirmLabel: t("Confirm"),
+        cancelLabel: t("Cancel"),
+        variant: "destructive",
+      })
+      if (!proceed) return
+      const response = await voidSale({ id: activeSaleId, payLoad: { reason: saleNote || "Void from POS" } }).unwrap()
       resetSaleForm()
+      showToast.success(response?.message || t("The order has been correctly voided."))
       return
     }
-    if (totalPaid <= 0) {
+
+    if (!draftId) {
       showToast.error(t("Unable to void an unpaid order."))
       return
     }
+
+    const proceed = await confirm({
+      title: t("Order Deletion"),
+      description: t("Would you like to delete this order?"),
+      confirmLabel: t("Delete"),
+      cancelLabel: t("Cancel"),
+      variant: "destructive",
+    })
+    if (!proceed) return
+
+    const response = await deleteHeldSale({ id: draftId }).unwrap()
     resetSaleForm()
-    showToast.success(t("The cart has been cleared."))
+    await refreshPendingOrders("hold", pendingOrderSearch)
+    showToast.success(response?.message || t("Held cart deleted successfully."))
   }
 
   const resetSaleForm = () => {
 
     setDraftId("")
+    setActiveSaleId("")
     setCustomerId("")
+    setSelectedCustomerDetails(null)
     setBarcode("")
     setCouponInput("")
     setSelectedCouponId("")
+    setLoadedCoupon(null)
     setOrderTitle("")
     setOrderType("")
     setCheckoutStep("idle")
@@ -1301,6 +1404,7 @@ export default function SalesPage() {
     if (!heldSale) return
 
     setDraftId(String(heldSale.id))
+    setActiveSaleId("")
     setOrderTitle(heldSale.title || "")
     setCustomerId(heldSale.customer_id ? String(heldSale.customer_id) : "")
     setCouponInput((heldSale.coupon_codes || []).join(", "))
@@ -1339,6 +1443,56 @@ export default function SalesPage() {
     showToast.success(t("Held cart loaded successfully."))
   }
 
+  const loadSaleIntoPos = (sale: any) => {
+    setDraftId("")
+    setActiveSaleId(String(sale.id))
+    setOrderTitle(sale.title || "")
+    setCustomerId(sale.customer_id ? String(sale.customer_id) : "")
+    setOrderType(sale.order_type || "")
+    setCouponInput((sale.applied_coupons || []).map((coupon: any) => coupon.code).filter(Boolean).join(", "))
+    setCartTaxGroupId(sale.tax_group_id ? String(sale.tax_group_id) : "")
+    setCartTaxType(sale.tax_type || posOptions.pos_tax_type || "exclusive")
+    setSaleNote(sale.note || "")
+    setPaymentsRows(
+      (sale.payments || []).length
+        ? (sale.payments || []).map((payment: any) => ({
+          id: crypto.randomUUID(),
+          existing_payment_id: payment.id,
+          payment_type: payment.identifier || payment.payment_type || "cash-payment",
+          amount: String(payment.value || payment.amount || ""),
+          reference_number: payment.reference_number || "",
+          note: payment.note || "",
+        }))
+        : [emptyPaymentRow()]
+    )
+    setCartItems(
+      (sale.items || []).map((item: any) => ({
+        product_id: String(item.product_id),
+        line_id: crypto.randomUUID(),
+        unit_quantity_id: item.unit_quantity_id ? String(item.unit_quantity_id) : undefined,
+        unit_id: item.unit_id ? String(item.unit_id) : undefined,
+        unit_label: item.unit__name || item.unit_name || "",
+        mode: item.mode || "normal",
+        product_type: item.product_type || "product",
+        rate: Number(item.rate || 0),
+        name: item.product__name || item.product_name || item.name,
+        qty: Number(item.quantity || 0),
+        price: Number(item.unit_price || 0),
+        available_stock: 0,
+        sku: item.product__sku || item.sku,
+        discount_type: Number(item.discount_amount || 0) > 0 ? "flat" : undefined,
+        discount_value: Number(item.discount_amount || 0) || undefined,
+      }))
+    )
+    setShippingInfo((current) => ({
+      ...current,
+      shipping: String(sale.shipping || ""),
+      shipping_type: sale.shipping_type || current.shipping_type || "flat",
+    }))
+    setIsHeldCartDialogOpen(false)
+    showToast.success(t("Order loaded successfully."))
+  }
+
   const handleOpenPendingOrder = async (order: any) => {
     if (pendingOrdersTab === "hold") {
       await handleResumeHeldSale(order.id)
@@ -1351,8 +1505,8 @@ export default function SalesPage() {
       })
       if (!proceed) return
     }
-    setIsHeldCartDialogOpen(false)
-    router.push(`/sales/${order.id}`)
+    const response = await getSaleById({ id: order.id }).unwrap()
+    loadSaleIntoPos(response?.data || order)
   }
 
   const handlePreviewPendingOrder = async (order: any) => {
@@ -1366,12 +1520,6 @@ export default function SalesPage() {
   const handlePrintPendingOrder = (order: any) => {
     setIsHeldCartDialogOpen(false)
     router.push(getPrintedDocumentUrl(order.id))
-  }
-
-  const handleDeleteHeldSale = async (heldSaleId: number | string) => {
-    const response = await deleteHeldSale({ id: heldSaleId }).unwrap()
-    showToast.success(response?.message || t("Held cart deleted successfully."))
-    await refreshPendingOrders("hold", pendingOrderSearch)
   }
 
   const handleRedeemReward = async () => {
@@ -1401,6 +1549,52 @@ export default function SalesPage() {
       showToast.success(response?.message || t("Reward redeemed successfully."))
     }
     await getCustomerRewardBalance({ id: customerId })
+  }
+
+  const handleLoadCouponForPos = async () => {
+    const code = couponInput.trim()
+    if (!customerId) {
+      showToast.error(t("You must select a customer before applying a coupon."))
+      setIsCustomerSelectOpen(true)
+      return
+    }
+    if (!code) {
+      showToast.error(t("Coupon Code is required."))
+      return
+    }
+    const response = await loadCustomerCouponForPos({
+      code,
+      payLoad: { customer_id: Number(customerId) },
+    }).unwrap()
+    setLoadedCoupon(response?.data || null)
+    showToast.success(response?.message || t("The coupon has been loaded."))
+  }
+
+  const handleApplyLoadedCoupon = () => {
+    const code = String(loadedCoupon?.code || couponInput || "").trim()
+    if (!code) {
+      showToast.error(t("Coupon Code is required."))
+      return
+    }
+    setCouponInput((current) => {
+      const existing = parseCouponCodes(current)
+      if (existing.includes(code)) return current
+      return [...existing, code].join(", ")
+    })
+    setSelectedCouponId(loadedCoupon?.id ? String(loadedCoupon.id) : "")
+    setLoadedCoupon(null)
+    showToast.success(t("The coupon has applied to the cart."))
+  }
+
+  const handleRemoveCouponCode = (code?: string) => {
+    if (!code) {
+      setCouponInput("")
+      setSelectedCouponId("")
+      setLoadedCoupon(null)
+      return
+    }
+    setCouponInput((current) => parseCouponCodes(current).filter((item) => item !== code).join(", "))
+    if (String(loadedCoupon?.code || "") === code) setLoadedCoupon(null)
   }
 
   const handleHoldSale = async () => {
@@ -1536,6 +1730,20 @@ export default function SalesPage() {
     }
     const validPayments = submitOptions.omitPayments ? [] : paymentsRows.filter((row) => money(row.amount) > 0)
     const additionalPayments = submitOptions.additionalPayments || []
+    const shippingAddressState = shippingInfo as Record<string, string | boolean>
+    const shippingAddressValue = (key: string) => String(shippingAddressState[key] || "")
+    const buildOrderAddress = (type: "billing" | "shipping") => ({
+      first_name: shippingAddressValue(`${type}_first_name`),
+      last_name: shippingAddressValue(`${type}_last_name`),
+      phone: shippingAddressValue(`${type}_phone`),
+      address_1: shippingAddressValue(`${type}_address_1`),
+      address_2: shippingAddressValue(`${type}_address_2`),
+      country: shippingAddressValue(`${type}_country`),
+      city: shippingAddressValue(`${type}_city`),
+      pobox: shippingAddressValue(`${type}_pobox`),
+      company: shippingAddressValue(`${type}_company`),
+      email: shippingAddressValue(`${type}_email`),
+    })
     const payLoad = {
       draft_id: draftId ? Number(draftId) : null,
       title: orderTitle,
@@ -1545,6 +1753,8 @@ export default function SalesPage() {
       shipping: activeOrderType === "delivery" ? String(money(shippingInfo.shipping || 0)) : "0",
       shipping_rate: "0",
       shipping_type: activeOrderType === "delivery" ? shippingInfo.shipping_type : "",
+      billing: activeOrderType === "delivery" ? buildOrderAddress("billing") : null,
+      shipping_address: activeOrderType === "delivery" ? buildOrderAddress("shipping") : null,
       support_instalments: submitOptions.layaway?.support_instalments ?? true,
       total_instalments: submitOptions.layaway?.total_instalments ?? 0,
       final_payment_date: submitOptions.layaway?.final_payment_date ?? null,
@@ -1575,6 +1785,7 @@ export default function SalesPage() {
 
       payments: [
         ...validPayments.map((row) => ({
+          id: row.existing_payment_id || undefined,
           payment_type: row.payment_type,
           amount: String(money(row.amount)),
           reference_number: row.reference_number,
@@ -1584,9 +1795,11 @@ export default function SalesPage() {
       ],
     }
 
-    const response = await createSale(payLoad).unwrap()
+    const response = activeSaleId
+      ? await editSale({ id: activeSaleId, payLoad }).unwrap()
+      : await createSale(payLoad).unwrap()
     const sale = response?.data
-    showToast.success(response?.message || t("Sale created successfully."))
+    showToast.success(response?.message || (activeSaleId ? t("Sale updated successfully.") : t("Sale created successfully.")))
     playPosAudio(posOptions.pos_complete_sale_audio)
     resetSaleForm()
     setIsPaymentDialogOpen(false)
@@ -2314,7 +2527,7 @@ export default function SalesPage() {
                         <div className="flex items-center justify-between py-1 text-slate-600">
                           <span>{selectedTaxGroup?.name || t("Tax")}</span>
                           <Button type="button" variant="link" className="h-auto p-0" onClick={() => setIsTaxesDialogOpen(true)}>
-                            {formatMoney(0)}
+                            {formatMoney(orderTaxAmount)}
                           </Button>
                         </div>
                       ) : null}
@@ -2527,6 +2740,11 @@ export default function SalesPage() {
                                     {formatMoney(getDisplayPrice(uq))}
                                   </span>
                                 ) : null}
+                                {showQuantity && uq ? (
+                                  <span className={pinnedPreviewEnabled ? "block text-xs text-white/80" : "block text-xs text-slate-500"}>
+                                    {t("Quantity")}: {Number(uq.quantity || 0)}
+                                  </span>
+                                ) : null}
                               </div>
                             </button>
                           )
@@ -2602,6 +2820,11 @@ export default function SalesPage() {
                                 <p className="truncate text-sm font-bold">{product.name}</p>
                                 {unitQuantities.length === 1 && uq ? (
                                   <span className="block text-sm font-semibold text-blue-100">{formatMoney(getDisplayPrice(uq))}</span>
+                                ) : null}
+                                {showQuantity && uq ? (
+                                  <span className="block text-xs font-medium text-white/80">
+                                    {t("Quantity")}: {Number(uq.quantity || 0)}
+                                  </span>
                                 ) : null}
                               </div>
                             </button>
@@ -2718,7 +2941,6 @@ export default function SalesPage() {
           handleOpenPendingOrder={handleOpenPendingOrder}
           handlePreviewPendingOrder={handlePreviewPendingOrder}
           handlePrintPendingOrder={handlePrintPendingOrder}
-          handleDeleteHeldSale={handleDeleteHeldSale}
           isHoldReferenceDialogOpen={isHoldReferenceDialogOpen}
           setIsHoldReferenceDialogOpen={setIsHoldReferenceDialogOpen}
           holdReference={holdReference}
@@ -2751,7 +2973,14 @@ export default function SalesPage() {
           couponOptions={couponOptions}
           couponInput={couponInput}
           setCouponInput={setCouponInput}
+          loadedCoupon={loadedCoupon}
+          isLoadingCoupon={loadCustomerCouponState.isLoading}
+          handleLoadCouponForPos={handleLoadCouponForPos}
+          handleApplyLoadedCoupon={handleApplyLoadedCoupon}
+          handleRemoveCouponCode={handleRemoveCouponCode}
           taxGroupOptions={taxGroupOptions}
+          orderTaxBreakdown={orderTaxBreakdown}
+          orderTaxAmount={orderTaxAmount}
           isOrderSettingsOpen={isOrderSettingsOpen}
           setIsOrderSettingsOpen={setIsOrderSettingsOpen}
           orderTitle={orderTitle}

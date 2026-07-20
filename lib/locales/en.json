@@ -948,5 +948,14 @@
   "Please provide a valid price.": "Please provide a valid price.",
   "Enter price": "Enter price",
   "Minimum Credit Payment (%)": "Minimum Credit Payment (%)",
-  "Minimum credit payment must be between 0 and 100.": "Minimum credit payment must be between 0 and 100."
+  "Minimum credit payment must be between 0 and 100.": "Minimum credit payment must be between 0 and 100.",
+  "Percentage cannot be greater than 100.": "Percentage cannot be greater than 100.",
+  "Decimal quantities are not allowed.": "Decimal quantities are not allowed.",
+  "Order Deletion": "Order Deletion",
+  "Would you like to delete this order?": "Would you like to delete this order?",
+  "Coupon Code is required.": "Coupon Code is required.",
+  "The coupon has been loaded.": "The coupon has been loaded.",
+  "The coupon has applied to the cart.": "The coupon has applied to the cart.",
+  "Order loaded successfully.": "Order loaded successfully.",
+  "Sale updated successfully.": "Sale updated successfully."
 }

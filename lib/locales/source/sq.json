@@ -2978,5 +2978,14 @@
   "Please provide a valid price.": "Jepni një çmim të vlefshëm.",
   "Enter price": "Shkruani çmimin",
   "Minimum Credit Payment (%)": "Pagesa minimale e kreditit (%)",
-  "Minimum credit payment must be between 0 and 100.": "Pagesa minimale e kreditit duhet të jetë midis 0 dhe 100."
+  "Minimum credit payment must be between 0 and 100.": "Pagesa minimale e kreditit duhet të jetë midis 0 dhe 100.",
+  "Percentage cannot be greater than 100.": "Përqindja nuk mund të jetë më e madhe se 100.",
+  "Decimal quantities are not allowed.": "Sasitë dhjetore nuk lejohen.",
+  "Order Deletion": "Fshirja e porosisë",
+  "Would you like to delete this order?": "Dëshironi ta fshini këtë porosi?",
+  "Coupon Code is required.": "Kodi i kuponit është i detyrueshëm.",
+  "The coupon has been loaded.": "Kuponi u ngarkua.",
+  "The coupon has applied to the cart.": "Kuponi u aplikua në shportë.",
+  "Order loaded successfully.": "Porosia u ngarkua me sukses.",
+  "Sale updated successfully.": "Shitja u përditësua me sukses."
 }

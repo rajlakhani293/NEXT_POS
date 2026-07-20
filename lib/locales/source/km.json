@@ -2978,5 +2978,14 @@
   "Please provide a valid price.": "សូមបញ្ចូលតម្លៃត្រឹមត្រូវ។",
   "Enter price": "បញ្ចូលតម្លៃ",
   "Minimum Credit Payment (%)": "ការទូទាត់ឥណទានអប្បបរមា (%)",
-  "Minimum credit payment must be between 0 and 100.": "ការទូទាត់ឥណទានអប្បបរមាត្រូវតែស្ថិតនៅចន្លោះ 0 និង 100។"
+  "Minimum credit payment must be between 0 and 100.": "ការទូទាត់ឥណទានអប្បបរមាត្រូវតែស្ថិតនៅចន្លោះ 0 និង 100។",
+  "Percentage cannot be greater than 100.": "ភាគរយមិនអាចធំជាង 100 បានទេ។",
+  "Decimal quantities are not allowed.": "បរិមាណទសភាគមិនត្រូវបានអនុញ្ញាតទេ។",
+  "Order Deletion": "លុបការបញ្ជាទិញ",
+  "Would you like to delete this order?": "តើអ្នកចង់លុបការបញ្ជាទិញនេះទេ?",
+  "Coupon Code is required.": "ត្រូវការកូដគូប៉ុង។",
+  "The coupon has been loaded.": "គូប៉ុងត្រូវបានផ្ទុក។",
+  "The coupon has applied to the cart.": "គូប៉ុងត្រូវបានអនុវត្តទៅកន្ត្រក។",
+  "Order loaded successfully.": "បានផ្ទុកការបញ្ជាទិញដោយជោគជ័យ។",
+  "Sale updated successfully.": "បានធ្វើបច្ចុប្បន្នភាពការលក់ដោយជោគជ័យ។"
 }

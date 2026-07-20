@@ -162,7 +162,6 @@ interface SalesModalsProps {
   handleOpenPendingOrder: (order: any) => void
   handlePreviewPendingOrder: (order: any) => void
   handlePrintPendingOrder: (order: any) => void
-  handleDeleteHeldSale: (id: any) => void
 
   // Hold Reference
   isHoldReferenceDialogOpen: boolean
@@ -207,8 +206,15 @@ interface SalesModalsProps {
   couponOptions: any[]
   couponInput: string
   setCouponInput: (val: string) => void
+  loadedCoupon: any
+  isLoadingCoupon: boolean
+  handleLoadCouponForPos: () => void
+  handleApplyLoadedCoupon: () => void
+  handleRemoveCouponCode: (code?: string) => void
 
   taxGroupOptions: any[]
+  orderTaxBreakdown: any[]
+  orderTaxAmount: number
 
   // Order Settings
   isOrderSettingsOpen: boolean
@@ -381,7 +387,6 @@ export default function SalesModals({
   handleOpenPendingOrder,
   handlePreviewPendingOrder,
   handlePrintPendingOrder,
-  handleDeleteHeldSale,
 
   isHoldReferenceDialogOpen,
   setIsHoldReferenceDialogOpen,
@@ -420,8 +425,15 @@ export default function SalesModals({
   couponOptions,
   couponInput,
   setCouponInput,
+  loadedCoupon,
+  isLoadingCoupon,
+  handleLoadCouponForPos,
+  handleApplyLoadedCoupon,
+  handleRemoveCouponCode,
 
   taxGroupOptions,
+  orderTaxBreakdown,
+  orderTaxAmount,
 
   isOrderSettingsOpen,
   setIsOrderSettingsOpen,
@@ -504,6 +516,24 @@ export default function SalesModals({
 
   const customerGroupName = (customer: any) =>
     customer?.group?.name || customer?.group_name || customer?.group || t("No Group")
+
+  const activeCouponCodes = String(couponInput || "")
+    .split(",")
+    .map((code) => code.trim())
+    .filter(Boolean)
+
+  const couponTypeLabel = (type: string) => {
+    if (type === "percentage_discount") return t("Percentage")
+    if (type === "flat_discount") return t("Flat")
+    return t("Unknown Type")
+  }
+
+  const couponDiscountLabel = (coupon: any) => {
+    if (!coupon) return ""
+    if (coupon.type === "percentage_discount") return `${money(coupon.discount_value)}%`
+    if (coupon.type === "flat_discount") return formatMoney(coupon.discount_value || 0)
+    return "-"
+  }
 
   const generateLayawayLines = (countValue: string) => {
     const count = Math.max(Number.parseInt(countValue || "0", 10) || 0, 0)
@@ -716,7 +746,7 @@ export default function SalesModals({
                   onClick={openLayawayDialog}
                   disabled={
                     isCreatingSale ||
-                    (totalPaid > 0 ? !ordersAllowPartial : !ordersAllowUnpaid)
+                    !ordersAllowPartial
                   }
                 >
                   {totalPaid === 0
@@ -1125,15 +1155,6 @@ export default function SalesModals({
                       >
                         {t("Print")}
                       </button>
-                      {pendingOrdersTab === "hold" ? (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteHeldSale(order.id)}
-                          className="bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700"
-                        >
-                          {t("delete")}
-                        </button>
-                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -1463,19 +1484,18 @@ export default function SalesModals({
         onOpenChange={setIsCouponsDialogOpen}
         title={t("Load Coupon")}
         className="w-[95vw] !max-w-[560px]"
-        showFooter={Boolean(couponInput.trim())}
+        showFooter={Boolean(loadedCoupon)}
         footer={
-          couponInput.trim() ? (
+          loadedCoupon ? (
             <div className="grid w-full grid-cols-2 gap-2">
-              <Button type="button" onClick={() => setIsCouponsDialogOpen(false)}>
+              <Button type="button" onClick={handleApplyLoadedCoupon}>
                 {t("Apply")}
               </Button>
               <Button
                 type="button"
                 variant="destructive"
                 onClick={() => {
-                  setCouponInput("")
-                  setSelectedCouponId("")
+                  handleRemoveCouponCode()
                 }}
               >
                 {t("Cancel")}
@@ -1496,8 +1516,8 @@ export default function SalesModals({
               onChange={(event) => setCouponInput(event.target.value)}
               placeholder={t("Coupon Code")}
               addonAfter={
-                <Button type="button" variant="outline" className="h-10 border-2 rounded-l-none" onClick={() => setIsCouponsDialogOpen(false)}>
-                  {t("Load")}
+                <Button type="button" variant="outline" className="h-10 border-2 rounded-l-none" onClick={handleLoadCouponForPos} disabled={isLoadingCoupon}>
+                  {isLoadingCoupon ? <Spinner /> : t("Load")}
                 </Button>
               }
             />
@@ -1513,36 +1533,100 @@ export default function SalesModals({
                 {t("Click here to choose a customer.")}
               </Button>
             )}
+            {loadedCoupon ? (
+              <div className="overflow-hidden rounded-md border border-slate-200">
+                <table className="w-full text-sm">
+                  <tbody>
+                    <tr className="border-b">
+                      <td className="w-1/2 bg-slate-50 p-2 font-semibold">{t("Coupon Name")}</td>
+                      <td className="p-2">{loadedCoupon.name}</td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="bg-slate-50 p-2 font-semibold">
+                        {t("Discount")} ({couponTypeLabel(loadedCoupon.type)})
+                      </td>
+                      <td className="p-2">{couponDiscountLabel(loadedCoupon)}</td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="bg-slate-50 p-2 font-semibold">{t("Usage")}</td>
+                      <td className="p-2">
+                        {`${loadedCoupon.customer_coupon?.[0]?.usage || 0}/${loadedCoupon.limit_usage || t("Unlimited")}`}
+                      </td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="bg-slate-50 p-2 font-semibold">{t("Valid From")}</td>
+                      <td className="p-2">{loadedCoupon.valid_hours_start || t("N/A")}</td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="bg-slate-50 p-2 font-semibold">{t("Valid Till")}</td>
+                      <td className="p-2">{loadedCoupon.valid_hours_end || t("N/A")}</td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="bg-slate-50 p-2 font-semibold">{t("Categories")}</td>
+                      <td className="p-2">
+                        {loadedCoupon.categories?.length ? (
+                          <div className="flex flex-wrap gap-1">
+                            {loadedCoupon.categories.map((category: any) => (
+                              <span key={category.id || category.category_id} className="rounded-full border px-2 py-1 text-xs font-semibold">
+                                {category.category?.name || category.name || category.category_id}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          t("Not applicable")
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="bg-slate-50 p-2 font-semibold">{t("Products")}</td>
+                      <td className="p-2">
+                        {loadedCoupon.products?.length ? (
+                          <div className="flex flex-wrap gap-1">
+                            {loadedCoupon.products.map((product: any) => (
+                              <span key={product.id || product.product_id} className="rounded-full border px-2 py-1 text-xs font-semibold">
+                                {product.product?.name || product.name || product.product_id}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          t("Not applicable")
+                        )}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
           </TabsContent>
           <TabsContent value="active-coupons" className="pt-4">
             <div className="space-y-2">
-              {selectedCouponId || couponInput ? (
-                <div className="rounded-md border border-slate-200 bg-white p-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-slate-900">
-                        {couponOptions.find((coupon: any) => String(coupon.id) === selectedCouponId)?.name ||
-                          couponInput ||
-                          t("Coupon")}
-                      </p>
-                      {couponInput ? (
-                        <p className="text-xs font-medium text-muted-foreground">{couponInput}</p>
-                      ) : null}
+              {activeCouponCodes.length ? (
+                activeCouponCodes.map((code) => {
+                  const coupon = couponOptions.find((item: any) => item.code === code || String(item.id) === selectedCouponId)
+                  return (
+                    <div key={code} className="rounded-md border border-slate-200 bg-white p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-slate-900">
+                            {coupon?.name || code || t("Coupon")}
+                          </p>
+                          <p className="text-xs font-medium text-muted-foreground">
+                            {coupon?.type ? `${couponDiscountLabel(coupon)} · ${code}` : code}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-500 hover:text-red-600"
+                          onClick={() => handleRemoveCouponCode(code)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-500 hover:text-red-600"
-                      onClick={() => {
-                        setSelectedCouponId("")
-                        setCouponInput("")
-                      }}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                </div>
+                  )
+                })
               ) : (
                 <div className="rounded-md border border-dashed border-slate-200 p-4 text-center text-sm font-semibold text-muted-foreground">
                   {t("No coupons applies to the cart.")}
@@ -1589,7 +1673,7 @@ export default function SalesModals({
           <TabsList variant="line" className="w-full justify-start">
             <TabsTrigger value="settings">{t("Settings")}</TabsTrigger>
             <TabsTrigger value="summary">{t("Summary")}</TabsTrigger>
-            {["products_vat", "products_variable_vat"].includes(String(posOptions.pos_vat)) ? (
+            {String(posOptions.pos_vat) === "products_vat" ? (
               <TabsTrigger value="product-taxes">{t("Product Taxes")}</TabsTrigger>
             ) : null}
           </TabsList>
@@ -1624,14 +1708,23 @@ export default function SalesModals({
             </div>
           </TabsContent>
           <TabsContent value="summary" className="space-y-2 pt-4">
-            <div className="rounded-md border border-dashed border-slate-200 p-4 text-center text-sm font-semibold text-muted-foreground">
-              {t("No tax is active")}
-            </div>
+            {orderTaxBreakdown.length ? (
+              orderTaxBreakdown.map((tax: any) => (
+                <div key={tax.id} className="flex items-center justify-between rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold">
+                  <span>{tax.name}</span>
+                  <span>{formatMoney(tax.tax_value || 0)}</span>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-md border border-dashed border-slate-200 p-4 text-center text-sm font-semibold text-muted-foreground">
+                {t("No tax is active")}
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="product-taxes" className="pt-4">
             <div className="flex items-center justify-between rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold">
               <span>{t("Product Taxes")}</span>
-              <span>{formatMoney(0)}</span>
+              <span>{formatMoney(orderTaxAmount)}</span>
             </div>
           </TabsContent>
         </Tabs>

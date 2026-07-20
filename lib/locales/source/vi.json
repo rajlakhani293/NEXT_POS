@@ -2977,5 +2977,14 @@
   "Please provide a valid price.": "Vui lòng nhập giá hợp lệ.",
   "Enter price": "Nhập giá",
   "Minimum Credit Payment (%)": "Thanh toán tín dụng tối thiểu (%)",
-  "Minimum credit payment must be between 0 and 100.": "Thanh toán tín dụng tối thiểu phải từ 0 đến 100."
+  "Minimum credit payment must be between 0 and 100.": "Thanh toán tín dụng tối thiểu phải từ 0 đến 100.",
+  "Percentage cannot be greater than 100.": "Phần trăm không được lớn hơn 100.",
+  "Decimal quantities are not allowed.": "Không cho phép số lượng thập phân.",
+  "Order Deletion": "Xóa đơn hàng",
+  "Would you like to delete this order?": "Bạn có muốn xóa đơn hàng này không?",
+  "Coupon Code is required.": "Mã phiếu giảm giá là bắt buộc.",
+  "The coupon has been loaded.": "Phiếu giảm giá đã được tải.",
+  "The coupon has applied to the cart.": "Phiếu giảm giá đã được áp dụng vào giỏ hàng.",
+  "Order loaded successfully.": "Đơn hàng đã được tải thành công.",
+  "Sale updated successfully.": "Bán hàng đã được cập nhật thành công."
 }

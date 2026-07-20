@@ -748,5 +748,14 @@
   "Please provide a valid price.": "يرجى إدخال سعر صالح.",
   "Enter price": "أدخل السعر",
   "Minimum Credit Payment (%)": "الحد الأدنى للدفع الائتماني (%)",
-  "Minimum credit payment must be between 0 and 100.": "يجب أن يكون الحد الأدنى للدفع الائتماني بين 0 و100."
+  "Minimum credit payment must be between 0 and 100.": "يجب أن يكون الحد الأدنى للدفع الائتماني بين 0 و100.",
+  "Percentage cannot be greater than 100.": "لا يمكن أن تكون النسبة أكبر من 100.",
+  "Decimal quantities are not allowed.": "الكميات العشرية غير مسموح بها.",
+  "Order Deletion": "حذف الطلب",
+  "Would you like to delete this order?": "هل تريد حذف هذا الطلب؟",
+  "Coupon Code is required.": "رمز القسيمة مطلوب.",
+  "The coupon has been loaded.": "تم تحميل القسيمة.",
+  "The coupon has applied to the cart.": "تم تطبيق القسيمة على السلة.",
+  "Order loaded successfully.": "تم تحميل الطلب بنجاح.",
+  "Sale updated successfully.": "تم تحديث البيع بنجاح."
 }

@@ -6,6 +6,7 @@ import {
   deleteMutation,
   getMutation,
   postMutation,
+  putMutation,
 } from "@/lib/api/apiUtils"
 
 const endpointsConfig = {
@@ -13,6 +14,10 @@ const endpointsConfig = {
   getAssignedOrdersData: { query: postMutation("assigned/get-transactions") },
   getInstallmentsData: { query: postMutation("instalments/get-transactions") },
   createSale: { query: createMutation("") },
+  editSale: {
+    query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
+      putMutation(`${id}`, payLoad),
+  },
   holdSale: { query: createMutation("hold") },
   getHeldSalesData: { query: postMutation("drafts/get-transactions") },
   getHeldSaleById: {
