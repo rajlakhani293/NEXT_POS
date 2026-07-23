@@ -1967,7 +1967,7 @@ export default function SalesModals({
         className="w-[94vw] !max-w-[520px]"
         showFooter={false}
       >
-        <div className="flex h-[460px] flex-col p-2">
+        <div className="flex h-[460px] flex-col">
           <div className="border-b pb-3">
             <UniFieldInput
               value={customerSearchTerm}
@@ -1975,7 +1975,7 @@ export default function SalesModals({
               placeholder={t("Search Customer")}
             />
           </div>
-          <div className="flex-auto overflow-y-auto pt-3">
+          <div className="flex-auto overflow-y-auto pt-3 no-scrollbar">
             {filteredCustomers.length ? (
               <div className="flex flex-col gap-1.5">
                 {filteredCustomers.map((customer: any) => (

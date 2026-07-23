@@ -2640,7 +2640,7 @@ export default function SalesPage() {
                       type="button"
                       variant="ghost"
                       onClick={openCartDiscountDialog}
-                      className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-none border-r bg-orange-600 px-2 py-2 text-white hover:bg-orange-700 h-auto"
+                      className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-none border-r bg-orange-600 px-2 py-2 text-white hover:bg-orange-700 h-auto hover:text-white"
                     >
                       <Percent className="size-5" />
                       {t("Discount")}
