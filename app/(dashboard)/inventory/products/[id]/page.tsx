@@ -455,7 +455,7 @@ export default function ProductFormPage() {
   // Media endpoints managed via @/components/media-manager
 
   useEffect(() => {
-    const loadKey = `${id}:${isEdit ? "edit" : "create"}:${posOptions.quick_product_default_unit || ""}`
+    const loadKey = `${id}:${isEdit ? "edit" : "create"}:${posOptions.pos_quick_product_default_unit || ""}`
     if (loadKeyRef.current === loadKey) return
     loadKeyRef.current = loadKey
 
@@ -468,7 +468,7 @@ export default function ProductFormPage() {
       ])
 
       if (!isEdit) {
-        const defaultUnitId = String(posOptions.quick_product_default_unit || "")
+        const defaultUnitId = String(posOptions.pos_quick_product_default_unit || "")
         const defaultUnit = (unitsResponse?.data?.data || []).find(
           (unit: any) => String(unit.id) === defaultUnitId
         )
@@ -549,7 +549,7 @@ export default function ProductFormPage() {
     getUnitGroupsDropdown,
     id,
     isEdit,
-    posOptions.quick_product_default_unit,
+    posOptions.pos_quick_product_default_unit,
   ])
 
   const isStockProduct = formData.product_type === "product"

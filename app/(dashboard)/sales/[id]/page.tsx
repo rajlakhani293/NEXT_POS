@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Printer, ReceiptText, Save, Trash2, X } from "lucide-react"
+import { ArrowLeft, Banknote, Printer, ReceiptText, Save, Trash2, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { useConfirmDialog } from "@/components/confirm-dialog"
@@ -108,6 +108,27 @@ const formatDateToString = (date?: Date) => {
   return `${yyyy}-${mm}-${dd}`
 }
 
+const resolvePaidAmount = (sale: any) => {
+  const directValue =
+    sale?.tendered_amount ??
+    sale?.tendered ??
+    sale?.totals_summary?.paid_amount
+  if (directValue !== undefined && directValue !== null) return money(directValue)
+  return (sale?.payments || []).reduce(
+    (sum: number, payment: any) => sum + money(payment.value || payment.amount),
+    0
+  )
+}
+
+const resolveUnpaidAmount = (sale: any, paidAmount: number) => {
+  if (sale?.payment_status === "paid") return 0
+  const directDue = sale?.due_amount ?? sale?.totals_summary?.due_amount
+  if (directDue !== undefined && directDue !== null) {
+    return Math.max(money(directDue), 0)
+  }
+  return Math.max(money(sale?.total) - paidAmount, 0)
+}
+
 const emptyInstallmentLine = (): InstallmentLineForm => ({
   id: crypto.randomUUID(),
   due_date: "",
@@ -128,7 +149,7 @@ export default function SaleDetailPage() {
       : posOptions.currency_symbol
   const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
   const getPrintedDocumentUrl = (saleId: number | string) => {
-    const documentType = posOptions.printing_document === "invoice" ? "invoice" : "receipt"
+    const documentType = posOptions.pos_printing_document === "invoice" ? "invoice" : "receipt"
     return documentType === "invoice"
       ? `/sales/${saleId}/receipt?doc=invoice`
       : `/sales/${saleId}/receipt`
@@ -157,7 +178,7 @@ export default function SaleDetailPage() {
   const [showDeliverySelect, setShowDeliverySelect] = useState(false)
   const [installmentLines, setInstallmentLines] = useState<InstallmentLineForm[]>([])
   const [installmentTarget, setInstallmentTarget] = useState<any>(null)
-  const [installmentPaymentType, setInstallmentPaymentType] = useState("cash-payment")
+  const [installmentPaymentType, setInstallmentPaymentType] = useState("")
   const [installmentPaymentAmount, setInstallmentPaymentAmount] = useState("")
   const [installmentPaymentNote, setInstallmentPaymentNote] = useState("")
   const [installmentDrafts, setInstallmentDrafts] = useState<Record<string, { due_date: string; amount: string }>>({})
@@ -233,20 +254,8 @@ export default function SaleDetailPage() {
       ),
     [selectedReturnItems]
   )
-  const paidAmount = money(
-    sale?.tendered_amount ??
-    sale?.tendered ??
-    sale?.totals_summary?.paid_amount ??
-    (sale?.payments || []).reduce(
-      (sum: number, payment: any) => sum + money(payment.value || payment.amount),
-      0
-    )
-  )
-  const unpaidAmount = Math.max(
-    money(sale?.due_amount ?? sale?.totals_summary?.due_amount) ||
-    money(sale?.total) - paidAmount,
-    0
-  )
+  const paidAmount = resolvePaidAmount(sale)
+  const unpaidAmount = resolveUnpaidAmount(sale, paidAmount)
   const paymentLabels = useMemo(() => {
     const labels: Record<string, string> = {}
     paymentTypeOptions.forEach((payment: any) => {
@@ -546,7 +555,7 @@ export default function SaleDetailPage() {
     )
     setInstallmentPaymentAmount(remaining ? String(remaining) : "")
     setInstallmentPaymentNote("")
-    setInstallmentPaymentType("cash-payment")
+    setInstallmentPaymentType("")
     setIsInstallmentPayDialogOpen(true)
   }
 
@@ -619,6 +628,10 @@ export default function SaleDetailPage() {
 
   const handlePayInstallment = async () => {
     if (!installmentTarget) return
+    if (!installmentPaymentType) {
+      showToast.error(t("Please select a payment gateway before proceeding."))
+      return
+    }
     if (money(installmentPaymentAmount) <= 0) {
       showToast.error(t("Enter installment payment amount."))
       return
@@ -680,7 +693,8 @@ export default function SaleDetailPage() {
     "refunded",
   ].includes(paymentStatus)
   const canShowInstallmentsTab =
-    ["partially_paid", "unpaid"].includes(paymentStatus)
+    ["partially_paid", "unpaid"].includes(paymentStatus) &&
+    sale.support_instalments !== false
   const canShowVoidAction =
     canVoidSale && ["paid", "partially_paid", "unpaid"].includes(paymentStatus)
   const canShowDeleteAction = canDeleteSale && paymentStatus === "hold"
@@ -737,7 +751,7 @@ export default function SaleDetailPage() {
               </TabsList>
             </div>
 
-            <TabsContent value="details" className="px-6 py-6">
+            <TabsContent value="details" className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
               <div className="grid gap-6 lg:grid-cols-2">
                 <section className="space-y-3">
                   <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
@@ -967,7 +981,7 @@ export default function SaleDetailPage() {
             </TabsContent>
 
             {canShowPaymentsTab ? (
-              <TabsContent value="payments" className="space-y-6 px-6 py-6">
+              <TabsContent value="payments" className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6">
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="flex h-12 items-center justify-between border border-blue-200 bg-blue-50 px-3 text-lg font-bold text-blue-900">
                     <span>{t("Total")}</span>
@@ -1088,7 +1102,7 @@ export default function SaleDetailPage() {
             ) : null}
 
             {canShowRefundTab ? (
-              <TabsContent value="refund" className="px-6 py-6">
+              <TabsContent value="refund" className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
                 <div className="grid gap-6 lg:grid-cols-2">
                   <section className="space-y-3">
                     <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
@@ -1235,31 +1249,20 @@ export default function SaleDetailPage() {
             ) : null}
 
             {canShowInstallmentsTab ? (
-              <TabsContent value="installments" className="space-y-4 px-6 py-6">
+              <TabsContent value="installments" className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-6">
                 <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
                   {t("Instalments")}
                 </h2>
-                <div className="flex items-center justify-between border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
-                  <span>
-                    {t("Total")} : {formatMoney(sale.total)} ({t("Remaining")} :{" "}
-                    {formatMoney(installmentRemaining)})
-                  </span>
-                  <span>
-                    {t("Instalments")}: {formatMoney(installmentTotal)}
-                  </span>
-                  {canUpdateSale ? (
-                    <Button type="button" size="sm" onClick={addInstallmentLine}>
-                      {t("Add Instalment")}
-                    </Button>
-                  ) : null}
-                </div>
                 <div className="space-y-3">
                   {installmentRows.map((line: any) => {
                     const isPaid = Boolean(line.paid) || money(line.paid_amount) >= money(line.amount)
                     return (
                       <div
                         key={line.id}
-                        className="grid gap-3 border border-gray-200 bg-white p-3 md:grid-cols-[1fr_1fr_auto]"
+                        className={cn(
+                          "grid gap-3 border bg-white p-3 md:grid-cols-[1fr_1fr_auto]",
+                          isPaid ? "border-green-200 bg-green-50/40" : "border-blue-200 bg-blue-50/30"
+                        )}
                       >
                         <DatePicker
                           label={t("Date")}
@@ -1299,6 +1302,7 @@ export default function SaleDetailPage() {
                         <div className="flex items-end gap-2">
                           {!isPaid && canCreatePayment ? (
                             <Button type="button" variant="outline" onClick={() => openInstallmentPayDialog(line)}>
+                              <Banknote className="size-4" />
                               {t("Pay")}
                             </Button>
                           ) : (
@@ -1313,6 +1317,7 @@ export default function SaleDetailPage() {
                                 router.push(`/sales/${sale.id}/receipt?payment=${line.payment_id}`)
                               }}
                             >
+                              <Printer className="size-4" />
                               {t("Receipt")}
                             </Button>
                           )}
@@ -1345,7 +1350,7 @@ export default function SaleDetailPage() {
                   {installmentLines.map((line) => (
                     <div
                       key={line.id}
-                      className="grid gap-3 border border-gray-200 bg-white p-3 md:grid-cols-[1fr_1fr_auto]"
+                      className="grid gap-3 border border-blue-200 bg-blue-50/30 p-3 md:grid-cols-[1fr_1fr_auto]"
                     >
                       <DatePicker
                         label={t("Date")}
@@ -1388,12 +1393,28 @@ export default function SaleDetailPage() {
                       {t("No installments created for this sale.")}
                     </div>
                   ) : null}
+                  <div className="flex items-center justify-between border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
+                    <span>
+                      {t("Total")} : {formatMoney(sale.total)} ({t("Remaining")} :{" "}
+                      {formatMoney(installmentRemaining)})
+                    </span>
+                    <div className="flex items-center gap-4">
+                      <span>
+                        {t("Instalments")}: {formatMoney(installmentTotal)}
+                      </span>
+                      {canUpdateSale ? (
+                        <Button type="button" size="sm" onClick={addInstallmentLine}>
+                          {t("Add Instalment")}
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
             ) : null}
           </Tabs>
 
-          <div className="flex items-center justify-between border-t border-gray-100 px-6 py-3">
+          <div className="mt-auto flex items-center justify-between border-t border-gray-100 px-6 py-3">
             <div className="flex items-center gap-2">
               {canShowVoidAction ? (
                 <Button
@@ -1565,9 +1586,12 @@ export default function SaleDetailPage() {
             <div className="grid gap-4">
               <UniFieldSelect
                 label={t("Payment Type")}
-                value={installmentPaymentType}
-                onValueChange={setInstallmentPaymentType}
+                value={installmentPaymentType || "none"}
+                onValueChange={(value) =>
+                  setInstallmentPaymentType(value === "none" ? "" : value)
+                }
               >
+                <SelectItem value="none">{t("Choose option")}</SelectItem>
                 {paymentTypeOptions.map((payment: any) => (
                   <SelectItem
                     key={payment.value || payment.identifier}

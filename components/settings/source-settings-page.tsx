@@ -390,10 +390,18 @@ export function SourceSettingsPage({ identifier }: { identifier: string }) {
       [
         "accounting_expenses_accounts",
         "accounting_default_paid_expense_offset_account",
+        "accounting_orders_revenues_account",
+        "accounting_orders_cash_account",
+        "accounting_orders_unpaid_account",
+        "accounting_orders_cogs_account",
       ].includes(field.name)
     const accountingCategoryByField: Record<string, string> = {
       accounting_expenses_accounts: "expenses",
       accounting_default_paid_expense_offset_account: "assets",
+      accounting_orders_revenues_account: "revenues",
+      accounting_orders_cash_account: "assets",
+      accounting_orders_unpaid_account: "assets",
+      accounting_orders_cogs_account: "expenses",
     }
 
     if (field.type === "switch" || field.type === "checkbox") {

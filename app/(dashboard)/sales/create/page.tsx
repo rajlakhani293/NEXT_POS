@@ -215,19 +215,18 @@ export default function SalesPage() {
   const loadedShiftRef = useRef("")
   const loadedRewardCustomerRef = useRef("")
   const posOptions = usePosOptions()
-  const cashRegistersEnabled = posOptions.enable_cash_registers
+  const cashRegistersEnabled = posOptions.pos_registers_enabled
   const ordersAllowUnpaid = posOptions.orders_allow_unpaid
   const ordersAllowPartial = posOptions.orders_allow_partial
-  console.log("posOptions------------------------", posOptions);
 
-  const allowDecimalQuantities = posOptions.allow_decimal_quantities
-  const showQuantity = posOptions.show_quantity
-  const hideEmptyCategories = posOptions.hide_empty_categories
-  const hideExhaustedProducts = posOptions.hide_exhausted_products
-  const pinnedProductsEnabled = posOptions.enable_pinned_products
-  const pinnedPreviewEnabled = posOptions.show_preview_pinned_products
-  const [itemsMergeEnabled, setItemsMergeEnabled] = useState(Boolean(posOptions.items_merge))
-  const [forceAutoFocus, setForceAutoFocus] = useState(Boolean(posOptions.force_autofocus))
+  const allowDecimalQuantities = posOptions.pos_allow_decimal_quantities
+  const showQuantity = posOptions.pos_show_quantity
+  const hideEmptyCategories = posOptions.pos_hide_empty_categories
+  const hideExhaustedProducts = posOptions.pos_hide_exhausted_products
+  const pinnedProductsEnabled = posOptions.pos_enable_pinned_products
+  const pinnedPreviewEnabled = posOptions.pos_show_preview_pinned_products
+  const [itemsMergeEnabled, setItemsMergeEnabled] = useState(Boolean(posOptions.pos_items_merge))
+  const [forceAutoFocus, setForceAutoFocus] = useState(Boolean(posOptions.pos_force_autofocus))
   const formatMoney = useCallback(
     (value: number | string | null | undefined) => formatBusinessMoney(value, posOptions),
     [posOptions]
@@ -476,7 +475,7 @@ export default function SalesPage() {
   const getDisplayPrice = (unitQuantity?: POSUnitQuantity) => {
     if (!unitQuantity) return 0
     if (posOptions.pos_vat === "disabled") return Number(unitQuantity.sale_price || 0)
-    if (posOptions.preferred_price === "gross_prices") {
+    if (posOptions.pos_preferred_price === "gross_prices") {
       return Number(unitQuantity.sale_price_gross ?? unitQuantity.sale_price ?? 0)
     }
     return Number(unitQuantity.sale_price_net ?? unitQuantity.sale_price ?? 0)
@@ -722,9 +721,9 @@ export default function SalesPage() {
   ])
 
   useEffect(() => {
-    setItemsMergeEnabled(Boolean(posOptions.items_merge))
-    setForceAutoFocus(Boolean(posOptions.force_autofocus))
-  }, [posOptions.force_autofocus, posOptions.items_merge])
+    setItemsMergeEnabled(Boolean(posOptions.pos_items_merge))
+    setForceAutoFocus(Boolean(posOptions.pos_force_autofocus))
+  }, [posOptions.pos_force_autofocus, posOptions.pos_items_merge])
 
   useEffect(() => {
     if (!customerId) {
@@ -1182,7 +1181,7 @@ export default function SalesPage() {
   }
 
   const openItemPriceDialog = (item: CartItem) => {
-    if (!posOptions.unit_price_editable) return
+    if (!posOptions.pos_unit_price_editable) return
     setActivePriceItem(item)
     setPriceInput(String(item.price))
   }
@@ -1685,19 +1684,19 @@ export default function SalesPage() {
   }
 
   const shouldOpenReceipt = (paymentStatus: string) => {
-    if (posOptions.printing_enabled_for === "disabled") return false
-    if (posOptions.printing_enabled_for === "all_orders") return true
+    if (posOptions.pos_printing_enabled_for === "disabled") return false
+    if (posOptions.pos_printing_enabled_for === "all_orders") return true
     if (
-      posOptions.printing_enabled_for === "partially_paid_orders" &&
+      posOptions.pos_printing_enabled_for === "partially_paid_orders" &&
       ["paid", "partially_paid"].includes(paymentStatus)
     ) {
       return true
     }
-    return posOptions.printing_enabled_for === "only_paid_orders" && paymentStatus === "paid"
+    return posOptions.pos_printing_enabled_for === "only_paid_orders" && paymentStatus === "paid"
   }
 
   const getPrintedDocumentUrl = (saleId: number | string) => {
-    const documentType = posOptions.printing_document === "invoice" ? "invoice" : "receipt"
+    const documentType = posOptions.pos_printing_document === "invoice" ? "invoice" : "receipt"
     const queryString = documentType === "invoice" ? "?doc=invoice" : ""
     return `/sales/${saleId}/receipt${queryString}`
   }
@@ -2478,7 +2477,7 @@ export default function SalesPage() {
                                       <button
                                         type="button"
                                         onClick={() => openItemPriceDialog(item)}
-                                        disabled={!posOptions.unit_price_editable}
+                                        disabled={!posOptions.pos_unit_price_editable}
                                         className="font-medium text-muted-foreground underline-offset-2 hover:text-slate-950 hover:underline disabled:cursor-default disabled:no-underline"
                                       >
                                         {t("Price")} : {formatMoney(item.price)}

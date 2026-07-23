@@ -413,7 +413,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
 
   const filterNavItems = (sections: DashboardNavSection[]) =>
     sections.reduce<DashboardNavSection[]>((visibleItems, item) => {
-      if (item.url === "/registers" && !posOptions.enable_cash_registers) {
+      if (item.url === "/registers" && !posOptions.pos_registers_enabled) {
         return visibleItems
       }
 

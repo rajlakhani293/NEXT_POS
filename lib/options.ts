@@ -7,23 +7,26 @@ import { useAppSelector } from "@/lib/redux/hooks"
 type OptionMap = Record<string, unknown>
 
 const defaultOptions: OptionMap = {
-  allow_partial_orders: false,
   enable_customer_rewards: true,
   enable_credit_account: true,
   enable_cash_registers: true,
   allow_decimal_quantities: true,
   quick_product_enabled: true,
-  quick_product_default_unit: "",
+  pos_quick_product: true,
+  pos_quick_product_default_unit: "",
   cart_discount: true,
   products_discount: true,
   edit_settings: true,
   show_quantity: true,
   items_merge: true,
+  pos_items_merge: true,
   force_autofocus: false,
   enable_pinned_products: false,
   show_preview_pinned_products: false,
   hide_exhausted_products: false,
   allow_wholesale_price: false,
+  pos_layout: "grocery_shop",
+  pos_sound_enabled: true,
   pos_numpad: "default",
   pos_idle_counter: "disabled",
   pos_disbursement: false,
@@ -44,7 +47,7 @@ const defaultOptions: OptionMap = {
   pos_amount_shortcut: "",
   pos_complete_sale_audio: "",
   pos_new_item_audio: "",
-  preferred_price: "net_prices",
+  pos_order_sms: false,
   pos_preferred_price: "net_prices",
   pos_vat: "disabled",
   currency_symbol: "₹",
@@ -55,9 +58,11 @@ const defaultOptions: OptionMap = {
   currency_decimal_separator: ".",
   currency_precision: 2,
   hide_empty_categories: true,
-  unit_price_editable: true,
-  default_change_payment_type: "cash-payment",
+  pos_unit_price_editable: true,
+  pos_registers_default_change_payment_type: "",
   order_types: ["takeaway", "delivery"],
+  customers_default: "",
+  customers_default_group: "",
   store_language: "en",
   registration_enabled: false,
   registration_role: "",
@@ -76,14 +81,26 @@ const defaultOptions: OptionMap = {
   orders_allow_partial: false,
   orders_strict_instalments: false,
   orders_quotation_expiration: "never",
-  printing_document: "receipt",
-  printing_enabled_for: "only_paid_orders",
-  printing_gateway: "default",
+  pos_printing_document: "receipt",
+  pos_printing_enabled_for: "only_paid_orders",
+  pos_printing_gateway: "default",
+  invoice_receipt_template: "default",
+  invoice_receipt_logo: "",
+  invoice_merge_similar_products: false,
+  invoice_display_tax_breakdown: false,
+  invoice_receipt_footer: "",
+  invoice_receipt_column_a: "",
+  invoice_receipt_column_b: "",
   pos_tax_group: "",
   pos_tax_type: "exclusive",
   reports_email: false,
+  pos_enable_reordering: false,
   accounting_expenses_accounts: [],
   accounting_default_paid_expense_offset_account: "",
+  accounting_orders_revenues_account: "",
+  accounting_orders_cash_account: "",
+  accounting_orders_unpaid_account: "",
+  accounting_orders_cogs_account: "",
 }
 
 export function normalizeBoolOption(value: unknown, fallback = false) {
@@ -132,39 +149,37 @@ export function usePosOptions() {
     const optionMap = options as OptionMap
     const allowPartialOrders = normalizeBoolAlias(
       false,
-      optionMap.orders_allow_partial,
-      optionMap.allow_partial_orders,
-      optionMap.ns_orders_allow_partial
+      optionMap.orders_allow_partial
     )
     const allowUnpaidOrders = normalizeBoolAlias(
       false,
-      optionMap.orders_allow_unpaid,
-      optionMap.allow_unpaid_orders,
-      optionMap.ns_orders_allow_unpaid
+      optionMap.orders_allow_unpaid
     )
-    return {
+    const normalized = {
       ...options,
-      allow_partial_orders: allowPartialOrders,
       enable_customer_rewards: normalizeBoolOption(options.enable_customer_rewards, true),
       enable_credit_account: normalizeBoolOption(options.enable_credit_account, true),
-      enable_cash_registers: normalizeBoolOption(options.enable_cash_registers, true),
-      allow_decimal_quantities: normalizeBoolOption(options.allow_decimal_quantities, true),
-      quick_product_enabled: normalizeBoolOption(options.quick_product_enabled, true),
-      quick_product_default_unit: String(
-        optionMap.quick_product_default_unit ||
-          optionMap.pos_quick_product_default_unit ||
+      pos_registers_enabled: normalizeBoolAlias(true, optionMap.pos_registers_enabled, optionMap.enable_cash_registers),
+      pos_allow_decimal_quantities: normalizeBoolAlias(true, optionMap.pos_allow_decimal_quantities, optionMap.allow_decimal_quantities),
+      pos_quick_product: normalizeBoolAlias(true, optionMap.pos_quick_product, optionMap.quick_product_enabled),
+      pos_quick_product_default_unit: String(
+        optionMap.pos_quick_product_default_unit ||
+          optionMap.quick_product_default_unit ||
           ""
       ),
       cart_discount: normalizeBoolOption(options.cart_discount, true),
       products_discount: normalizeBoolOption(options.products_discount, true),
       edit_settings: normalizeBoolOption(options.edit_settings, true),
-      show_quantity: normalizeBoolOption(options.show_quantity, true),
-      items_merge: normalizeBoolOption(options.items_merge, true),
-      force_autofocus: normalizeBoolOption(options.force_autofocus),
-      enable_pinned_products: normalizeBoolOption(options.enable_pinned_products),
-      show_preview_pinned_products: normalizeBoolOption(options.show_preview_pinned_products),
-      hide_exhausted_products: normalizeBoolOption(options.hide_exhausted_products),
-      allow_wholesale_price: normalizeBoolOption(options.allow_wholesale_price),
+      pos_show_quantity: normalizeBoolAlias(true, optionMap.pos_show_quantity, optionMap.show_quantity),
+      pos_items_merge: normalizeBoolAlias(true, optionMap.pos_items_merge, optionMap.items_merge),
+      pos_force_autofocus: normalizeBoolAlias(false, optionMap.pos_force_autofocus, optionMap.force_autofocus),
+      pos_enable_pinned_products: normalizeBoolAlias(false, optionMap.pos_enable_pinned_products, optionMap.enable_pinned_products),
+      pos_show_preview_pinned_products: normalizeBoolAlias(false, optionMap.pos_show_preview_pinned_products, optionMap.show_preview_pinned_products),
+      pos_hide_exhausted_products: normalizeBoolAlias(false, optionMap.pos_hide_exhausted_products, optionMap.hide_exhausted_products),
+      pos_hide_empty_categories: normalizeBoolAlias(true, optionMap.pos_hide_empty_categories, optionMap.hide_empty_categories),
+      pos_allow_wholesale_price: normalizeBoolAlias(false, optionMap.pos_allow_wholesale_price, optionMap.allow_wholesale_price),
+      pos_layout: String(optionMap.pos_layout || "grocery_shop"),
+      pos_sound_enabled: normalizeBoolOption(optionMap.pos_sound_enabled, true),
       pos_disbursement: normalizeBoolOption(options.pos_disbursement),
       pos_action_permission_enabled: normalizeBoolOption(options.pos_action_permission_enabled),
       pos_action_permission_duration: String(options.pos_action_permission_duration || "5"),
@@ -187,8 +202,8 @@ export function usePosOptions() {
       pos_amount_shortcut: String(options.pos_amount_shortcut || ""),
       pos_complete_sale_audio: String(options.pos_complete_sale_audio || ""),
       pos_new_item_audio: String(options.pos_new_item_audio || ""),
-      hide_empty_categories: normalizeBoolOption(options.hide_empty_categories, true),
-      unit_price_editable: normalizeBoolOption(options.unit_price_editable, true),
+      pos_order_sms: normalizeBoolOption(optionMap.pos_order_sms),
+      pos_unit_price_editable: normalizeBoolAlias(true, optionMap.pos_unit_price_editable, optionMap.unit_price_editable),
       scale_barcode_enabled: normalizeBoolOption(options.scale_barcode_enabled),
       registration_enabled: normalizeBoolOption(options.registration_enabled),
       registration_role: String(options.registration_role || ""),
@@ -198,8 +213,7 @@ export function usePosOptions() {
       orders_allow_partial: allowPartialOrders,
       orders_strict_instalments: normalizeBoolAlias(
         false,
-        optionMap.orders_strict_instalments,
-        optionMap.ns_orders_strict_instalments
+        optionMap.orders_strict_instalments
       ),
       currency_symbol: String(options.currency_symbol || "₹"),
       currency_iso: String(options.currency_iso || "INR"),
@@ -215,23 +229,66 @@ export function usePosOptions() {
       scale_barcode_value_length: Number(options.scale_barcode_value_length ?? 5),
       scale_barcode_type: String(options.scale_barcode_type || "weight"),
       order_types: Array.isArray(options.order_types) ? options.order_types : ["takeaway", "delivery"],
-      preferred_price: String(options.preferred_price || options.pos_preferred_price || "net_prices"),
-      pos_preferred_price: String(options.pos_preferred_price || options.preferred_price || "net_prices"),
+      pos_preferred_price: String(optionMap.pos_preferred_price || optionMap.preferred_price || "net_prices"),
       pos_numpad: String(options.pos_numpad || "default"),
       pos_idle_counter: String(options.pos_idle_counter || "disabled"),
       pos_vat: String(options.pos_vat || "disabled"),
-      printing_document: String(options.printing_document || "receipt"),
-      printing_enabled_for: String(options.printing_enabled_for || "only_paid_orders"),
-      printing_gateway: String(options.printing_gateway || "default"),
+      pos_printing_document: String(optionMap.pos_printing_document || optionMap.printing_document || "receipt"),
+      pos_printing_enabled_for: String(optionMap.pos_printing_enabled_for || optionMap.printing_enabled_for || "only_paid_orders"),
+      pos_printing_gateway: String(optionMap.pos_printing_gateway || optionMap.printing_gateway || "default"),
+      invoice_receipt_template: String(optionMap.invoice_receipt_template || "default"),
+      invoice_receipt_logo: String(optionMap.invoice_receipt_logo || ""),
+      invoice_merge_similar_products: normalizeBoolOption(optionMap.invoice_merge_similar_products),
+      invoice_display_tax_breakdown: normalizeBoolOption(optionMap.invoice_display_tax_breakdown),
+      invoice_receipt_footer: String(optionMap.invoice_receipt_footer || ""),
+      invoice_receipt_column_a: String(optionMap.invoice_receipt_column_a || ""),
+      invoice_receipt_column_b: String(optionMap.invoice_receipt_column_b || ""),
       pos_tax_group: String(options.pos_tax_group || ""),
       pos_tax_type: String(options.pos_tax_type || "exclusive"),
       reports_email: normalizeBoolOption(options.reports_email),
+      pos_enable_reordering: normalizeBoolOption(optionMap.pos_enable_reordering),
+      customers_default: String(optionMap.customers_default || ""),
+      customers_default_group: String(optionMap.customers_default_group || ""),
+      pos_registers_default_change_payment_type: String(
+        optionMap.pos_registers_default_change_payment_type ||
+          optionMap.default_change_payment_type ||
+          ""
+      ),
       accounting_expenses_accounts: normalizeListOption(
         optionMap.accounting_expenses_accounts || optionMap.accounting_expense_accounts
       ),
       accounting_default_paid_expense_offset_account: String(
         optionMap.accounting_default_paid_expense_offset_account || ""
       ),
+      accounting_orders_revenues_account: String(optionMap.accounting_orders_revenues_account || ""),
+      accounting_orders_cash_account: String(optionMap.accounting_orders_cash_account || ""),
+      accounting_orders_unpaid_account: String(optionMap.accounting_orders_unpaid_account || ""),
+      accounting_orders_cogs_account: String(optionMap.accounting_orders_cogs_account || ""),
     }
+    const rawAliasKeys = [
+      "enable_cash_registers",
+      "allow_decimal_quantities",
+      "quick_product_enabled",
+      "quick_product_default_unit",
+      "show_quantity",
+      "items_merge",
+      "force_autofocus",
+      "enable_pinned_products",
+      "show_preview_pinned_products",
+      "hide_exhausted_products",
+      "hide_empty_categories",
+      "allow_wholesale_price",
+      "preferred_price",
+      "unit_price_editable",
+      "default_change_payment_type",
+      "printing_document",
+      "printing_enabled_for",
+      "printing_gateway",
+      "allow_partial_orders",
+    ]
+    rawAliasKeys.forEach((key) => {
+      delete (normalized as OptionMap)[key]
+    })
+    return normalized
   }, [settings])
 }

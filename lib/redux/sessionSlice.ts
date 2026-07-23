@@ -81,22 +81,25 @@ interface BranchListItem {
 
 interface BusinessSettings {
   settings: {
-    allow_partial_orders: boolean
     enable_customer_rewards: boolean
     enable_credit_account: boolean
-    enable_cash_registers: boolean
-    allow_decimal_quantities: boolean
-    quick_product_enabled: boolean
+    pos_quick_product?: boolean | string
+    pos_quick_product_default_unit?: string
     cart_discount?: boolean
     products_discount?: boolean
     edit_settings?: boolean
-    show_quantity: boolean
-    items_merge?: boolean
-    force_autofocus?: boolean
-    enable_pinned_products?: boolean
-    show_preview_pinned_products?: boolean
-    hide_exhausted_products?: boolean
-    allow_wholesale_price?: boolean
+    pos_items_merge?: boolean
+    pos_show_quantity?: boolean | string
+    pos_allow_decimal_quantities?: boolean | string
+    pos_hide_empty_categories?: boolean | string
+    pos_hide_exhausted_products?: boolean | string
+    pos_allow_wholesale_price?: boolean | string
+    pos_force_autofocus?: boolean | string
+    pos_enable_pinned_products?: boolean | string
+    pos_show_preview_pinned_products?: boolean | string
+    pos_registers_enabled?: boolean | string
+    pos_layout?: string
+    pos_sound_enabled?: boolean | string
     pos_numpad?: string
     pos_idle_counter?: string
     pos_disbursement?: boolean
@@ -117,7 +120,7 @@ interface BusinessSettings {
     pos_amount_shortcut?: string
     pos_complete_sale_audio?: string
     pos_new_item_audio?: string
-    preferred_price?: string
+    pos_order_sms?: boolean | string
     pos_preferred_price?: string
     currency_symbol?: string
     currency_iso?: string
@@ -126,10 +129,11 @@ interface BusinessSettings {
     currency_thousand_separator?: string
     currency_decimal_separator?: string
     currency_precision: number
-    hide_empty_categories: boolean
-    unit_price_editable: boolean
-    default_change_payment_type: string
+    pos_unit_price_editable?: boolean | string
+    pos_registers_default_change_payment_type?: string
     order_types: string[]
+    customers_default?: string | number
+    customers_default_group?: string | number
     store_language?: string
     registration_enabled?: boolean | string
     registration_role?: string
@@ -145,16 +149,30 @@ interface BusinessSettings {
     scale_barcode_type?: string
     orders_code_type?: string
     orders_allow_unpaid?: boolean
-    orders_allow_partial?: boolean
+    orders_allow_partial: boolean
     orders_strict_instalments?: boolean
     orders_quotation_expiration?: string
-    printing_document?: string
-    printing_enabled_for?: string
-    printing_gateway?: string
+    pos_printing_document?: string
+    pos_printing_enabled_for?: string
+    pos_printing_gateway?: string
+    invoice_receipt_template?: string
+    invoice_receipt_logo?: string
+    invoice_merge_similar_products?: boolean | string
+    invoice_display_tax_breakdown?: boolean | string
+    invoice_receipt_footer?: string
+    invoice_receipt_column_a?: string
+    invoice_receipt_column_b?: string
     pos_tax_group?: string
     pos_tax_type?: string
     pos_vat?: string
     reports_email?: boolean
+    pos_enable_reordering?: boolean | string
+    accounting_expenses_accounts?: string[] | number[]
+    accounting_default_paid_expense_offset_account?: string | number
+    accounting_orders_revenues_account?: string | number
+    accounting_orders_cash_account?: string | number
+    accounting_orders_unpaid_account?: string | number
+    accounting_orders_cogs_account?: string | number
   }
   order_types: {
     value: string
