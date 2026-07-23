@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   Trash2,
   Truck,
+  Lock,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -701,9 +702,15 @@ export default function SalesModals({
                               variant="ghost"
                               size="icon"
                               className="size-8 text-red-500 hover:text-red-600"
+                              disabled={Boolean(row.existing_payment_id)}
                               onClick={() => removePaymentRow(row.id)}
+                              title={
+                                row.existing_payment_id
+                                  ? t("Unable to delete a payment attached to the order.")
+                                  : t("Delete")
+                              }
                             >
-                              <Trash2 className="size-4" />
+                              {row.existing_payment_id ? <Lock className="size-4" /> : <Trash2 className="size-4" />}
                             </Button>
                           </div>
                           <p className="mt-1 text-xl font-bold">{formatMoney(row.amount)}</p>
@@ -749,8 +756,7 @@ export default function SalesModals({
                       : openLayawayDialog
                   }
                   disabled={
-                    isCreatingSale ||
-                    !ordersAllowPartial
+                    isCreatingSale
                   }
                 >
                   {totalPaid === 0

@@ -2064,9 +2064,10 @@ export default function SalesPage() {
 
   const resetPaymentModalState = () => {
     setPaymentAmountInput("")
-    setPaymentsRows([emptyPaymentRow()])
     const firstPayment = paymentTypeOptions[0]
-    setActivePaymentType(firstPayment?.value || firstPayment?.identifier || "cash-payment")
+    if (firstPayment) {
+      setActivePaymentType(firstPayment.value || firstPayment.identifier || "cash-payment")
+    }
   }
 
   const handlePaymentDialogOpenChange = (open: boolean) => {
@@ -2317,7 +2318,9 @@ export default function SalesPage() {
 
   const removePaymentRow = (rowId: string) => {
     setPaymentsRows((current) => {
-      const nextRows = current.filter((row) => row.id !== rowId)
+      const nextRows = current.filter(
+        (row) => String(row.id) !== String(rowId) && String(row.existing_payment_id || "") !== String(rowId)
+      )
       return nextRows.length ? nextRows : [emptyPaymentRow()]
     })
   }
