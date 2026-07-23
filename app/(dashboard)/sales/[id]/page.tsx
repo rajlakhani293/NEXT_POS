@@ -19,6 +19,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { UniFieldInput } from "@/components/ui/unifield-input"
+import { DatePicker } from "@/components/date-picker"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { usePermissions } from "@/hooks/use-permissions"
 import { payments } from "@/lib/api/payments"
@@ -92,6 +93,20 @@ const getStatusLabel = (value: any, t: (key: string) => string) => {
 
 const money = (value: string | number | null | undefined) =>
   Number(value || 0) || 0
+
+const parseStringToDate = (str?: string) => {
+  if (!str) return undefined
+  const [yyyy, mm, dd] = str.split("-").map(Number)
+  return new Date(yyyy, mm - 1, dd)
+}
+
+const formatDateToString = (date?: Date) => {
+  if (!date) return ""
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, "0")
+  const dd = String(date.getDate()).padStart(2, "0")
+  return `${yyyy}-${mm}-${dd}`
+}
 
 const emptyInstallmentLine = (): InstallmentLineForm => ({
   id: crypto.randomUUID(),
@@ -990,11 +1005,11 @@ export default function SaleDetailPage() {
                         <p className="-mt-2 text-xs font-medium text-slate-500">
                           {t("choose the payment type.")}
                         </p>
-                        <div className="flex h-12 items-center justify-end border border-gray-200 bg-white px-3">
+                        {/* <div className="flex h-12 items-center justify-end border border-gray-200 bg-white px-3">
                           <span className="font-semibold text-slate-700">
                             {formatMoney(quickPaymentAmount)}
                           </span>
-                        </div>
+                        </div> */}
                         <UniFieldInput
                           label={t("Amount")}
                           value={quickPaymentAmount}
@@ -1233,15 +1248,14 @@ export default function SaleDetailPage() {
                         key={line.id}
                         className="grid gap-3 border border-gray-200 bg-white p-3 md:grid-cols-[1fr_1fr_auto]"
                       >
-                        <UniFieldInput
+                        <DatePicker
                           label={t("Date")}
-                          type="date"
-                          value={installmentDrafts[String(line.id)]?.due_date || ""}
-                          onChange={(event) =>
+                          value={parseStringToDate(installmentDrafts[String(line.id)]?.due_date)}
+                          onChange={(date) =>
                             setInstallmentDrafts((current) => ({
                               ...current,
                               [String(line.id)]: {
-                                due_date: event.target.value,
+                                due_date: formatDateToString(date),
                                 amount:
                                   current[String(line.id)]?.amount || String(line.amount || ""),
                               },
@@ -1320,12 +1334,11 @@ export default function SaleDetailPage() {
                       key={line.id}
                       className="grid gap-3 border border-gray-200 bg-white p-3 md:grid-cols-[1fr_1fr_auto]"
                     >
-                      <UniFieldInput
+                      <DatePicker
                         label={t("Date")}
-                        type="date"
-                        value={line.due_date}
-                        onChange={(event) =>
-                          updateInstallmentLine(line.id, "due_date", event.target.value)
+                        value={parseStringToDate(line.due_date)}
+                        onChange={(date) =>
+                          updateInstallmentLine(line.id, "due_date", formatDateToString(date))
                         }
                       />
                       <UniFieldInput

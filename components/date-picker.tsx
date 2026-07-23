@@ -211,6 +211,7 @@ interface DatePickerProps {
   label?: string
   required?: boolean
   error?: string
+  disabled?: boolean
 }
 
 export function DatePicker({
@@ -221,6 +222,7 @@ export function DatePicker({
   label,
   required,
   error,
+  disabled,
 }: DatePickerProps) {
   const inputId = label?.toLowerCase().replace(/\s+/g, "-")
 
@@ -244,6 +246,7 @@ export function DatePicker({
             variant="outline"
             data-empty={!value}
             id={inputId}
+            disabled={disabled}
             className={cn(
               "h-10 w-full justify-start text-left border-2 bg-white text-sm font-semibold text-gray-500",
               error && "border-red-500 focus:border-red-500 focus:ring-red-500",
