@@ -1,4 +1,5 @@
 {
+  "Select an option": "Select an option",
   "displaying {perPage} of {items} items": "displaying {perPage} of {items} items",
   "The document has been generated.": "The document has been generated.",
   "Unexpected error occurred.": "Unexpected error occurred.",
@@ -2981,11 +2982,8 @@
   "Minimum credit payment must be between 0 and 100.": "Minimum credit payment must be between 0 and 100.",
   "Percentage cannot be greater than 100.": "Percentage cannot be greater than 100.",
   "Decimal quantities are not allowed.": "Decimal quantities are not allowed.",
-  "Order Deletion": "Order Deletion",
   "Would you like to delete this order?": "Would you like to delete this order?",
   "Coupon Code is required.": "Coupon Code is required.",
-  "The coupon has been loaded.": "The coupon has been loaded.",
-  "The coupon has applied to the cart.": "The coupon has applied to the cart.",
   "Order loaded successfully.": "Order loaded successfully.",
   "Sale updated successfully.": "Sale updated successfully."
 }

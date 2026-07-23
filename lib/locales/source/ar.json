@@ -1,4 +1,5 @@
 {
+  "Select an option": "حدد خيارًا",
   "\"%s\" Record History": "\"%s\" سجل السجل",
   "\"%s\" is a reserved class name": "\"%s\" هو اسم فئة محجوز",
   "\"%s\" is not an instance of \"FieldsService\"": "\"%s\" ليس مثيلاً لـ \"FieldsService \"",
@@ -1339,7 +1340,7 @@
   "Order Cash Account": "حساب النقد",
   "Order Code": "رمز الطلب",
   "Order Code Type": "نوع رمز الطلب",
-  "Order Deletion": "طلب حذف",
+  "Order Deletion": "حذف الطلب",
   "Order From Unpaid To Paid": "اطلب من غير المدفوع إلى المدفوع",
   "Order Id": "رقم التعريف الخاص بالطلب",
   "Order Instalments List": "قائمة أقساط النظام",
@@ -2032,7 +2033,7 @@
   "The controller has been created for the module \"%s\"!": "تم إنشاء وحدة التحكم للوحدة النمطية \"%s\"!",
   "The conversion from \"%s\" will cause a decimal value less than one count of the destination unit \"%s\".": "سيؤدي التحويل من \"%s\" إلى قيمة عشرية أقل من عدد واحد من وحدة الوجهة \"%s\".",
   "The conversion of %s(%s) to %s(%s) was successful": "تم تحويل %s(%s) إلى %s(%s) بنجاح",
-  "The coupon has applied to the cart.": "تم تطبيق القسيمة على سلة التسوق.",
+  "The coupon has applied to the cart.": "تم تطبيق القسيمة على السلة.",
   "The coupon has been loaded.": "تم تحميل القسيمة.",
   "The coupon has been updated.": "تم تحديث القسيمة.",
   "The coupon is out from validity date range.": "القسيمة خارج نطاق تاريخ الصلاحية.",
@@ -2981,11 +2982,8 @@
   "Minimum credit payment must be between 0 and 100.": "يجب أن يكون الحد الأدنى للدفع الائتماني بين 0 و100.",
   "Percentage cannot be greater than 100.": "لا يمكن أن تكون النسبة أكبر من 100.",
   "Decimal quantities are not allowed.": "الكميات العشرية غير مسموح بها.",
-  "Order Deletion": "حذف الطلب",
   "Would you like to delete this order?": "هل تريد حذف هذا الطلب؟",
   "Coupon Code is required.": "رمز القسيمة مطلوب.",
-  "The coupon has been loaded.": "تم تحميل القسيمة.",
-  "The coupon has applied to the cart.": "تم تطبيق القسيمة على السلة.",
   "Order loaded successfully.": "تم تحميل الطلب بنجاح.",
   "Sale updated successfully.": "تم تحديث البيع بنجاح."
 }

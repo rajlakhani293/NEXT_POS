@@ -1,4 +1,5 @@
 {
+  "Select an option": "សូមជ្រើសរើសជម្រើសមួយ",
   "\"%s\" Record History": "\"%s\" ប្រវត្តិកំណត់ត្រា",
   "\"%s\" is a reserved class name": "\"%s\" គឺជាឈ្មោះ reserved class",
   "\"%s\" is not an instance of \"FieldsService\"": "\"%s\" មិនមែនជាឧទាហរណ៍នៃ \"FieldsService\" ទេ",
@@ -1339,7 +1340,7 @@
   "Order Cash Account": "គណគាប់ប្រាក់កញ្ចប់",
   "Order Code": "កូដបញ្ជារទិញ",
   "Order Code Type": "ប្រភេទលេខកូដបញ្ជាទិញ",
-  "Order Deletion": "ការលុបការបញ្ជាទិញ",
+  "Order Deletion": "លុបការបញ្ជាទិញ",
   "Order From Unpaid To Paid": "វិញ្ញ័យពីមិនទាន់ទូទាត់ទៅទូទាត់",
   "Order Id": "Id ការបញ្ជាទិញ",
   "Order Instalments List": "បញ្ជាទិញបញ្ជីបង់រំលោះ",
@@ -2032,8 +2033,8 @@
   "The controller has been created for the module \"%s\"!": "The controller ត្រូវបានបង្កើតសម្រាប់ module \"%s\"!",
   "The conversion from \"%s\" will cause a decimal value less than one count of the destination unit \"%s\".": "ការបម្លែងពី \"%s\" នឹងបណ្តាលឱ្យតម្លៃទសភាគតិចជាងចំនួនមួយនៃឯកតាទិសដៅ \"%s\" ។",
   "The conversion of %s(%s) to %s(%s) was successful": "ការបំប្លែង %s(%s) ទៅ %s(%s) បានជោគជ័យ",
-  "The coupon has applied to the cart.": "គូប៉ុងនេះត្រូវបានអនុវត្តទៅការលក់។",
-  "The coupon has been loaded.": "គូប៉ុង​ត្រូវ​បាន​ទាញយក។",
+  "The coupon has applied to the cart.": "គូប៉ុងត្រូវបានអនុវត្តទៅកន្ត្រក។",
+  "The coupon has been loaded.": "គូប៉ុងត្រូវបានផ្ទុក។",
   "The coupon has been updated.": "គូប៉ុង​ត្រូវ​បាន​ធ្វើ​បច្ចុប្បន្នភាព។",
   "The coupon is out from validity date range.": "គូប៉ុងមិនស្ថិតនៅក្នុងកាលបរិច្ឆេទដែលមានសុពលភាព។",
   "The coupons \"%s\" has been removed from the cart, as it's required conditions are no more meet.": "កញ្ចប់ \"%s\" ត្រូវបានលុបចេញពីវក Purchases, ព្រោះเงื่อนไขរបស់វាមិនត្រូវបានបំពេញទៀតទេ។",
@@ -2981,11 +2982,8 @@
   "Minimum credit payment must be between 0 and 100.": "ការទូទាត់ឥណទានអប្បបរមាត្រូវតែស្ថិតនៅចន្លោះ 0 និង 100។",
   "Percentage cannot be greater than 100.": "ភាគរយមិនអាចធំជាង 100 បានទេ។",
   "Decimal quantities are not allowed.": "បរិមាណទសភាគមិនត្រូវបានអនុញ្ញាតទេ។",
-  "Order Deletion": "លុបការបញ្ជាទិញ",
   "Would you like to delete this order?": "តើអ្នកចង់លុបការបញ្ជាទិញនេះទេ?",
   "Coupon Code is required.": "ត្រូវការកូដគូប៉ុង។",
-  "The coupon has been loaded.": "គូប៉ុងត្រូវបានផ្ទុក។",
-  "The coupon has applied to the cart.": "គូប៉ុងត្រូវបានអនុវត្តទៅកន្ត្រក។",
   "Order loaded successfully.": "បានផ្ទុកការបញ្ជាទិញដោយជោគជ័យ។",
   "Sale updated successfully.": "បានធ្វើបច្ចុប្បន្នភាពការលក់ដោយជោគជ័យ។"
 }

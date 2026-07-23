@@ -1,4 +1,5 @@
 {
+  "Select an option": "Bir seçenek belirleyin",
   "\"%s\" Record History": "\"%s\" Kayıt Geçmişi",
   "\"%s\" is a reserved class name": "\"%s\" ayrılmış bir sınıf adıdır",
   "\"%s\" is not an instance of \"FieldsService\"": "\"%s\" örneği değil \"Alan hizmeti\"",
@@ -2981,11 +2982,8 @@
   "Minimum credit payment must be between 0 and 100.": "Minimum kredi ödemesi 0 ile 100 arasında olmalıdır.",
   "Percentage cannot be greater than 100.": "Yüzde 100'den büyük olamaz.",
   "Decimal quantities are not allowed.": "Ondalıklı miktarlara izin verilmez.",
-  "Order Deletion": "Sipariş Silme",
   "Would you like to delete this order?": "Bu siparişi silmek ister misiniz?",
   "Coupon Code is required.": "Kupon kodu gereklidir.",
-  "The coupon has been loaded.": "Kupon yüklendi.",
-  "The coupon has applied to the cart.": "Kupon sepete uygulandı.",
   "Order loaded successfully.": "Sipariş başarıyla yüklendi.",
   "Sale updated successfully.": "Satış başarıyla güncellendi."
 }

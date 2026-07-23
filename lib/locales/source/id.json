@@ -1,4 +1,5 @@
 {
+  "Select an option": "Pilih opsi",
   "\"%s\" Record History": "Riwayat Catatan \"%s\"",
   "\"%s\" is a reserved class name": "\"%s\" adalah nama kelas yang sudah dipesan",
   "\"%s\" is not an instance of \"FieldsService\"": "\"%s\" bukan instance dari \"FieldsService\"",
@@ -2983,11 +2984,8 @@
   "Minimum credit payment must be between 0 and 100.": "Pembayaran kredit minimum harus antara 0 dan 100.",
   "Percentage cannot be greater than 100.": "Persentase tidak boleh lebih dari 100.",
   "Decimal quantities are not allowed.": "Jumlah desimal tidak diizinkan.",
-  "Order Deletion": "Penghapusan Pesanan",
   "Would you like to delete this order?": "Apakah Anda ingin menghapus pesanan ini?",
   "Coupon Code is required.": "Kode kupon wajib diisi.",
-  "The coupon has been loaded.": "Kupon telah dimuat.",
-  "The coupon has applied to the cart.": "Kupon telah diterapkan ke keranjang.",
   "Order loaded successfully.": "Pesanan berhasil dimuat.",
   "Sale updated successfully.": "Penjualan berhasil diperbarui."
 }

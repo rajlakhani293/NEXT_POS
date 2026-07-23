@@ -97,7 +97,7 @@ export const UniFieldSelect = ({
                 "[&_svg]:transition-opacity group-focus-within/select:[&_svg]:opacity-0 group-hover/select:[&_svg]:opacity-0"
             )}
           >
-            <SelectValue placeholder={placeholder || "Select an option"} />
+            <SelectValue placeholder={placeholder ? t(placeholder) : t("Select an option")} />
           </SelectTrigger>
           {allowClear && value && !disabled ? (
             <button
@@ -185,7 +185,7 @@ export const UniFieldMultiSelect = ({
   }, [value])
 
   const displayLabel = useMemo(() => {
-    if (selectedValues.length === 0) return placeholder || t("Select options")
+    if (selectedValues.length === 0) return placeholder ? t(placeholder) : t("Select options")
     const selectedLabels = options
       .filter((opt) => selectedValues.map(String).includes(String(opt.value)))
       .map((opt) => opt.label)

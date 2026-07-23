@@ -1,4 +1,5 @@
 {
+  "Select an option": "Chọn một tùy chọn",
   "\"%s\" Record History": "\"%s\" Lịch sử bản ghi",
   "\"%s\" is a reserved class name": "\"%s\" ayrılmış bir sınıf adıdır",
   "\"%s\" is not an instance of \"FieldsService\"": "\"%s\" không phải là trường hợp của \"FieldsService\"",
@@ -2031,8 +2032,8 @@
   "The controller has been created for the module \"%s\"!": "Bộ điều khiển đã được tạo cho mô-đun \"%s\"!",
   "The conversion from \"%s\" will cause a decimal value less than one count of the destination unit \"%s\".": "Việc chuyển đổi từ \"%s\" sẽ gây ra giá trị thập phân nhỏ hơn một lần đếm của đơn vị đích \"%s\".",
   "The conversion of %s(%s) to %s(%s) was successful": "Việc chuyển đổi %s(%s) sang %s(%s) đã thành công",
-  "The coupon has applied to the cart.": "Phiếu giảm giá đã được áp dụng.",
-  "The coupon has been loaded.": "Phiếu giảm giá đã được áp dụng.",
+  "The coupon has applied to the cart.": "Phiếu giảm giá đã được áp dụng vào giỏ hàng.",
+  "The coupon has been loaded.": "Phiếu giảm giá đã được tải.",
   "The coupon has been updated.": "Phiếu giảm giá đã được cập nhật.",
   "The coupon is out from validity date range.": "Phiếu giảm giá hết hiệu lực.",
   "The coupons \"%s\" has been removed from the cart, as it's required conditions are no more meet.": "Các mã giảm giá \"%s\" đã bị xóa khỏi giỏ hàng, vì các điều kiện cần thiết không còn đáp ứng.",
@@ -2980,11 +2981,8 @@
   "Minimum credit payment must be between 0 and 100.": "Thanh toán tín dụng tối thiểu phải từ 0 đến 100.",
   "Percentage cannot be greater than 100.": "Phần trăm không được lớn hơn 100.",
   "Decimal quantities are not allowed.": "Không cho phép số lượng thập phân.",
-  "Order Deletion": "Xóa đơn hàng",
   "Would you like to delete this order?": "Bạn có muốn xóa đơn hàng này không?",
   "Coupon Code is required.": "Mã phiếu giảm giá là bắt buộc.",
-  "The coupon has been loaded.": "Phiếu giảm giá đã được tải.",
-  "The coupon has applied to the cart.": "Phiếu giảm giá đã được áp dụng vào giỏ hàng.",
   "Order loaded successfully.": "Đơn hàng đã được tải thành công.",
   "Sale updated successfully.": "Bán hàng đã được cập nhật thành công."
 }

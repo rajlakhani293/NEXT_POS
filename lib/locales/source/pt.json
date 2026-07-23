@@ -1,4 +1,5 @@
 {
+  "Select an option": "Selecione uma opção",
   "\"%s\" Record History": "\"%s\" Histórico de registros",
   "\"%s\" is a reserved class name": "\"%s\" é um nome de classe reservado",
   "\"%s\" is not an instance of \"FieldsService\"": "\"%s\" não é uma instância de \"FieldsService\"",
@@ -1339,7 +1340,7 @@
   "Order Cash Account": "Conta de Pagamento em Dinheiro",
   "Order Code": "Código de encomenda",
   "Order Code Type": "Tipo de código de pedido",
-  "Order Deletion": "Exclusão de pedido",
+  "Order Deletion": "Exclusão do pedido",
   "Order From Unpaid To Paid": "Pedido de Não Paga para Paga",
   "Order Id": "Código do pedido",
   "Order Instalments List": "Lista de Parcelas de Pedidos",
@@ -2981,11 +2982,8 @@
   "Minimum credit payment must be between 0 and 100.": "O pagamento mínimo de crédito deve estar entre 0 e 100.",
   "Percentage cannot be greater than 100.": "A porcentagem não pode ser maior que 100.",
   "Decimal quantities are not allowed.": "Quantidades decimais não são permitidas.",
-  "Order Deletion": "Exclusão do pedido",
   "Would you like to delete this order?": "Deseja excluir este pedido?",
   "Coupon Code is required.": "O código do cupom é obrigatório.",
-  "The coupon has been loaded.": "O cupom foi carregado.",
-  "The coupon has applied to the cart.": "O cupom foi aplicado ao carrinho.",
   "Order loaded successfully.": "Pedido carregado com sucesso.",
   "Sale updated successfully.": "Venda atualizada com sucesso."
 }

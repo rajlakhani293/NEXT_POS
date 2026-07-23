@@ -1,4 +1,5 @@
 {
+  "Select an option": "Option auswählen",
   "displaying {perPage} of {items} items": "{perPage} von {items} Elementen",
   "The document has been generated.": "Das Dokument wurde erstellt.",
   "Unexpected error occurred.": "Unerwarteter Fehler aufgetreten.",
@@ -1696,7 +1697,7 @@
   "No tax is active": "Keine Steuer aktiv",
   "Unable to delete a payment attached to the order.": "Eine mit der Bestellung verbundene Zahlung kann nicht gelöscht werden.",
   "The discount has been set to the cart subtotal.": "Der Rabatt wurde auf die Zwischensumme des Warenkorbs festgelegt.",
-  "Order Deletion": "Löschen der Bestellung",
+  "Order Deletion": "Bestellung löschen",
   "The current order will be deleted as no payment has been made so far.": "Die aktuelle Bestellung wird gelöscht, da noch keine Zahlung erfolgt ist.",
   "Void The Order": "Die Bestellung stornieren",
   "Unable to void an unpaid order.": "Eine unbezahlte Bestellung kann nicht storniert werden.",
@@ -2981,11 +2982,8 @@
   "Minimum credit payment must be between 0 and 100.": "Die Mindest-Kreditzahlung muss zwischen 0 und 100 liegen.",
   "Percentage cannot be greater than 100.": "Der Prozentsatz darf nicht größer als 100 sein.",
   "Decimal quantities are not allowed.": "Dezimale Mengen sind nicht erlaubt.",
-  "Order Deletion": "Bestellung löschen",
   "Would you like to delete this order?": "Möchten Sie diese Bestellung löschen?",
   "Coupon Code is required.": "Gutscheincode ist erforderlich.",
-  "The coupon has been loaded.": "Der Gutschein wurde geladen.",
-  "The coupon has applied to the cart.": "Der Gutschein wurde auf den Warenkorb angewendet.",
   "Order loaded successfully.": "Bestellung erfolgreich geladen.",
   "Sale updated successfully.": "Verkauf erfolgreich aktualisiert."
 }

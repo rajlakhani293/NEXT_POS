@@ -1,4 +1,5 @@
 {
+  "Select an option": "Zgjidhni një opsion",
   "\"%s\" Record History": "\"%s\" Historia e regjistrimit",
   "\"%s\" is a reserved class name": "\"%s\" është një emër i rezervuar",
   "\"%s\" is not an instance of \"FieldsService\"": "\"%s\" nuk është një instancë e \"FieldsService\"",
@@ -1339,7 +1340,7 @@
   "Order Cash Account": "Llogarja për pagesat gotë",
   "Order Code": "Kodi i Urdhrit",
   "Order Code Type": "Tipi i Kodit te Porosive",
-  "Order Deletion": "Fshirje e Ordinimit",
+  "Order Deletion": "Fshirja e porosisë",
   "Order From Unpaid To Paid": "Porosë nga i Pagur në të Paguar",
   "Order Id": "ID i Mbledhjes",
   "Order Instalments List": "Lista e Pagjimit të Urdhërimit",
@@ -2032,8 +2033,8 @@
   "The controller has been created for the module \"%s\"!": "U është krijuar kontrollori për modulën \"%s\"!",
   "The conversion from \"%s\" will cause a decimal value less than one count of the destination unit \"%s\".": "Konvertimi nga \"%s\" do të shkaktojë një vlerë me dhjeta, më të vogël se një numër i unitetit destinacion \"%s\".",
   "The conversion of %s(%s) to %s(%s) was successful": "Konvertimi i %s(%s) në %s(%s) ishte sukses",
-  "The coupon has applied to the cart.": "Kuponi është zëvendosur në karretë.",
-  "The coupon has been loaded.": "Kuponi është ngarkuar.",
+  "The coupon has applied to the cart.": "Kuponi u aplikua në shportë.",
+  "The coupon has been loaded.": "Kuponi u ngarkua.",
   "The coupon has been updated.": "Kuponi është përditësuar.",
   "The coupon is out from validity date range.": "Kuponi është larg datës së skadimit.",
   "The coupons \"%s\" has been removed from the cart, as it's required conditions are no more meet.": "Kuponet \"%s\" janë hequr nga karretja, sepse kushtet e tyre nuk janë më të përmbushura.",
@@ -2981,11 +2982,8 @@
   "Minimum credit payment must be between 0 and 100.": "Pagesa minimale e kreditit duhet të jetë midis 0 dhe 100.",
   "Percentage cannot be greater than 100.": "Përqindja nuk mund të jetë më e madhe se 100.",
   "Decimal quantities are not allowed.": "Sasitë dhjetore nuk lejohen.",
-  "Order Deletion": "Fshirja e porosisë",
   "Would you like to delete this order?": "Dëshironi ta fshini këtë porosi?",
   "Coupon Code is required.": "Kodi i kuponit është i detyrueshëm.",
-  "The coupon has been loaded.": "Kuponi u ngarkua.",
-  "The coupon has applied to the cart.": "Kuponi u aplikua në shportë.",
   "Order loaded successfully.": "Porosia u ngarkua me sukses.",
   "Sale updated successfully.": "Shitja u përditësua me sukses."
 }

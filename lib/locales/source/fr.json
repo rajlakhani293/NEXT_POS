@@ -1,4 +1,5 @@
 {
+  "Select an option": "Sélectionnez une option",
   "\"%s\" Record History": "\"%s\" Historique des enregistrements",
   "\"%s\" is a reserved class name": "\"%s\" est un nom de classe réservé",
   "\"%s\" is not an instance of \"FieldsService\"": "\"%s\" n'est pas une instance de \"FieldsService\"",
@@ -1339,7 +1340,7 @@
   "Order Cash Account": "Compte Trésorerie",
   "Order Code": "Code de commande",
   "Order Code Type": "Type de code de commande",
-  "Order Deletion": "Suppression de la commande",
+  "Order Deletion": "Suppression de commande",
   "Order From Unpaid To Paid": "Passer de Non Payé à Payé",
   "Order Id": "Numéro de commande",
   "Order Instalments List": "Liste des versements de commande",
@@ -2032,7 +2033,7 @@
   "The controller has been created for the module \"%s\"!": "Le contrôleur a été créé pour le module \"%s\"!",
   "The conversion from \"%s\" will cause a decimal value less than one count of the destination unit \"%s\".": "La conversion de \"%s\" entraînera une valeur décimale inférieure à un compte de l'unité de destination \"%s\".",
   "The conversion of %s(%s) to %s(%s) was successful": "La conversion de %s(%s) en %s(%s) a réussi",
-  "The coupon has applied to the cart.": "Le coupon s'est appliqué au panier.",
+  "The coupon has applied to the cart.": "Le coupon a été appliqué au panier.",
   "The coupon has been loaded.": "Le coupon a été chargé.",
   "The coupon has been updated.": "Le coupon a été mis à jour.",
   "The coupon is out from validity date range.": "Le coupon est hors plage de dates de validité.",
@@ -2981,11 +2982,8 @@
   "Minimum credit payment must be between 0 and 100.": "Le paiement de crédit minimum doit être compris entre 0 et 100.",
   "Percentage cannot be greater than 100.": "Le pourcentage ne peut pas être supérieur à 100.",
   "Decimal quantities are not allowed.": "Les quantités décimales ne sont pas autorisées.",
-  "Order Deletion": "Suppression de commande",
   "Would you like to delete this order?": "Voulez-vous supprimer cette commande ?",
   "Coupon Code is required.": "Le code du coupon est obligatoire.",
-  "The coupon has been loaded.": "Le coupon a été chargé.",
-  "The coupon has applied to the cart.": "Le coupon a été appliqué au panier.",
   "Order loaded successfully.": "Commande chargée avec succès.",
   "Sale updated successfully.": "Vente mise à jour avec succès."
 }

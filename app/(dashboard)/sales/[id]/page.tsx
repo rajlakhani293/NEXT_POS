@@ -259,12 +259,12 @@ export default function SaleDetailPage() {
 
   useEffect(() => {
     const drafts: Record<string, { due_date: string; amount: string }> = {}
-    ;(sale?.installment_plan?.lines || []).forEach((line: any) => {
-      drafts[String(line.id)] = {
-        due_date: line.due_date || line.date || "",
-        amount: String(line.amount || ""),
-      }
-    })
+      ; (sale?.installment_plan?.lines || []).forEach((line: any) => {
+        drafts[String(line.id)] = {
+          due_date: line.due_date || line.date || "",
+          amount: String(line.amount || ""),
+        }
+      })
     setInstallmentDrafts(drafts)
   }, [sale?.installment_plan?.lines])
 
@@ -833,12 +833,11 @@ export default function SaleDetailPage() {
                     {[
                       [t("Sub Total"), sale.subtotal],
                       [
-                        `${t("Discount")}${
-                          sale.discount_type === "percentage"
-                            ? ` (${sale.discount_percentage}%)`
-                            : sale.discount_type === "flat"
-                              ? ` (${t("Flat")})`
-                              : ""
+                        `${t("Discount")}${sale.discount_type === "percentage"
+                          ? ` (${sale.discount_percentage}%)`
+                          : sale.discount_type === "flat"
+                            ? ` (${t("Flat")})`
+                            : ""
                         }`,
                         sale.discount,
                       ],
@@ -897,7 +896,7 @@ export default function SaleDetailPage() {
                           <UniFieldSelect
                             value={deliveryStatus || "pending"}
                             onValueChange={setDeliveryStatus}
-                            className="min-w-40"
+                            containerClassName="w-40"
                           >
                             <SelectItem value="pending">{t("Pending")}</SelectItem>
                             <SelectItem value="packed">{t("Packed")}</SelectItem>
@@ -942,7 +941,7 @@ export default function SaleDetailPage() {
                           <UniFieldSelect
                             value={processingStatus || "pending"}
                             onValueChange={setProcessingStatus}
-                            className="min-w-40"
+                            containerClassName="w-40"
                           >
                             <SelectItem value="pending">{t("Pending")}</SelectItem>
                             <SelectItem value="processing">{t("Processing")}</SelectItem>
@@ -1395,64 +1394,64 @@ export default function SaleDetailPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {installmentPlan?.lines?.length ? (
-                      installmentPlan.lines.map((line: any) => (
-                        <TableRow key={line.id}>
-                          <TableCell className="min-w-40">
-                            {line.paid ? (
-                              line.due_date || line.date
-                            ) : (
-                              <UniFieldInput
-                                type="date"
-                                value={installmentDrafts[String(line.id)]?.due_date || ""}
-                                onChange={(event) =>
-                                  setInstallmentDrafts((current) => ({
-                                    ...current,
-                                    [String(line.id)]: {
-                                      due_date: event.target.value,
-                                      amount:
-                                        current[String(line.id)]?.amount ||
-                                        String(line.amount || ""),
-                                    },
-                                  }))
-                                }
-                              />
-                            )}
-                          </TableCell>
-                          <TableCell className="min-w-36">
-                            {line.paid ? (
-                              formatMoney(line.amount)
-                            ) : (
-                              <UniFieldInput
-                                value={installmentDrafts[String(line.id)]?.amount || ""}
-                                onChange={(event) =>
-                                  setInstallmentDrafts((current) => ({
-                                    ...current,
-                                    [String(line.id)]: {
-                                      due_date:
-                                        current[String(line.id)]?.due_date ||
-                                        line.due_date ||
-                                        line.date ||
-                                        "",
-                                      amount: event.target.value,
-                                    },
-                                  }))
-                                }
-                                type="number"
-                                prefix={currencyIndicator}
-                              />
-                            )}
-                          </TableCell>
-                          <TableCell>{formatMoney(line.paid_amount)}</TableCell>
-                          <TableCell>
-                            {formatMoney(money(line.amount) - money(line.paid_amount))}
+                      {installmentPlan?.lines?.length ? (
+                        installmentPlan.lines.map((line: any) => (
+                          <TableRow key={line.id}>
+                            <TableCell className="min-w-40">
+                              {line.paid ? (
+                                line.due_date || line.date
+                              ) : (
+                                <UniFieldInput
+                                  type="date"
+                                  value={installmentDrafts[String(line.id)]?.due_date || ""}
+                                  onChange={(event) =>
+                                    setInstallmentDrafts((current) => ({
+                                      ...current,
+                                      [String(line.id)]: {
+                                        due_date: event.target.value,
+                                        amount:
+                                          current[String(line.id)]?.amount ||
+                                          String(line.amount || ""),
+                                      },
+                                    }))
+                                  }
+                                />
+                              )}
+                            </TableCell>
+                            <TableCell className="min-w-36">
+                              {line.paid ? (
+                                formatMoney(line.amount)
+                              ) : (
+                                <UniFieldInput
+                                  value={installmentDrafts[String(line.id)]?.amount || ""}
+                                  onChange={(event) =>
+                                    setInstallmentDrafts((current) => ({
+                                      ...current,
+                                      [String(line.id)]: {
+                                        due_date:
+                                          current[String(line.id)]?.due_date ||
+                                          line.due_date ||
+                                          line.date ||
+                                          "",
+                                        amount: event.target.value,
+                                      },
+                                    }))
+                                  }
+                                  type="number"
+                                  prefix={currencyIndicator}
+                                />
+                              )}
+                            </TableCell>
+                            <TableCell>{formatMoney(line.paid_amount)}</TableCell>
+                            <TableCell>
+                              {formatMoney(money(line.amount) - money(line.paid_amount))}
                             </TableCell>
                             <TableCell className="capitalize">
                               {getStatusLabel(line.installment_status, t)}
                             </TableCell>
                             <TableCell>
-                            {canCreatePayment &&
-                              money(line.amount) > money(line.paid_amount) ? (
+                              {canCreatePayment &&
+                                money(line.amount) > money(line.paid_amount) ? (
                                 <div className="flex items-center gap-2">
                                   <Button
                                     type="button"
@@ -1497,8 +1496,8 @@ export default function SaleDetailPage() {
                                   {t("Receipt")}
                                 </Button>
                               )}
-                          </TableCell>
-                        </TableRow>
+                            </TableCell>
+                          </TableRow>
                         ))
                       ) : (
                         <TableRow>
