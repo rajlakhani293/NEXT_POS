@@ -108,7 +108,7 @@ export default function SaleReceiptPage() {
             variant="outline"
             size="icon"
             className="size-11 rounded-2xl"
-            onClick={() => router.push(`/sales/${order.id}`)}
+            onClick={() => router.push(`/sales`)}
           >
             <ArrowLeft className="size-5" />
           </Button>
@@ -132,7 +132,7 @@ export default function SaleReceiptPage() {
             {documentSubtitle}
           </p>
           <p className="mt-1 text-sm font-bold text-slate-800">
-          {t("Receipt Code")}: {order.code}
+            {t("Receipt Code")}: {order.code}
           </p>
           <p className="mt-1 text-xs text-slate-500">
             {formatBusinessDateTime(receipt.created_at || order.created_at, posOptions)}
@@ -209,7 +209,7 @@ export default function SaleReceiptPage() {
             <span className="font-semibold text-slate-900">
               {formatMoney(
                 Number(receipt.discount_amount ?? order.discount_amount ?? 0) +
-                  Number(receipt.coupon_discount_amount ?? order.coupon_discount_amount ?? 0)
+                Number(receipt.coupon_discount_amount ?? order.coupon_discount_amount ?? 0)
               )}
             </span>
           </div>

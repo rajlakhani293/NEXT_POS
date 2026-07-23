@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Printer, Trash2 } from "lucide-react"
+import { ArrowLeft, Printer, ReceiptText, Save, Trash2, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { useConfirmDialog } from "@/components/confirm-dialog"
@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { usePermissions } from "@/hooks/use-permissions"
@@ -93,6 +94,7 @@ const statusLabelKeys: Record<string, string> = {
   delivered: "Delivered",
   good: "Good",
   damaged: "Damaged",
+  unspoiled: "Unspoiled",
   refund: "Refund",
   credit_note: "Credit Note",
   exchange: "Exchange",
@@ -129,7 +131,7 @@ const buildReturnLines = (items: any[] = []): ReturnLine[] =>
       refundable_quantity: Number(item.refundable_quantity || 0),
       quantity: "",
       unit_price: String(item.unit_price || 0),
-      condition: "good",
+      condition: "unspoiled",
       note: "",
     }))
 
@@ -165,17 +167,27 @@ export default function SaleDetailPage() {
   const [isCollectDueDialogOpen, setIsCollectDueDialogOpen] = useState(false)
   const [isInstallmentDialogOpen, setIsInstallmentDialogOpen] = useState(false)
   const [isInstallmentPayDialogOpen, setIsInstallmentPayDialogOpen] = useState(false)
+  const [isVoidDialogOpen, setIsVoidDialogOpen] = useState(false)
+  const [voidReason, setVoidReason] = useState("")
   const [returnType, setReturnType] = useState("refund")
   const [refundPaymentType, setRefundPaymentType] = useState("cash-payment")
   const [exchangeSaleId, setExchangeSaleId] = useState("")
   const [returnNote, setReturnNote] = useState("")
   const [returnLines, setReturnLines] = useState<ReturnLine[]>([])
+  const [selectedRefundProductId, setSelectedRefundProductId] = useState("")
+  const [refundScreenAmount, setRefundScreenAmount] = useState("")
   const [dueNote, setDueNote] = useState("")
   const [duePayments, setDuePayments] = useState<DuePaymentRow[]>([
     emptyDuePaymentRow(),
   ])
+  const [quickPaymentType, setQuickPaymentType] = useState("cash-payment")
+  const [quickPaymentAmount, setQuickPaymentAmount] = useState("")
+  const [quickPaymentReference, setQuickPaymentReference] = useState("")
+  const [quickPaymentNote, setQuickPaymentNote] = useState("")
   const [processingStatus, setProcessingStatus] = useState("")
   const [deliveryStatus, setDeliveryStatus] = useState("")
+  const [showProcessingSelect, setShowProcessingSelect] = useState(false)
+  const [showDeliverySelect, setShowDeliverySelect] = useState(false)
   const [installmentLines, setInstallmentLines] = useState<InstallmentLineForm[]>([
     emptyInstallmentLine(),
   ])
@@ -183,6 +195,7 @@ export default function SaleDetailPage() {
   const [installmentPaymentType, setInstallmentPaymentType] = useState("cash-payment")
   const [installmentPaymentAmount, setInstallmentPaymentAmount] = useState("")
   const [installmentPaymentNote, setInstallmentPaymentNote] = useState("")
+  const [installmentDrafts, setInstallmentDrafts] = useState<Record<string, { due_date: string; amount: string }>>({})
 
   const [getSaleById, saleState] = (sales as any).useGetSaleByIdMutation()
   const [createSaleReturn, createReturnState] = (
@@ -197,6 +210,12 @@ export default function SaleDetailPage() {
   const [createSaleInstallments, createInstallmentsState] = (
     sales as any
   ).useCreateSaleInstallmentsMutation()
+  const [updateSaleInstallment, updateInstallmentState] = (
+    sales as any
+  ).useUpdateSaleInstallmentMutation()
+  const [deleteSaleInstallment, deleteInstallmentState] = (
+    sales as any
+  ).useDeleteSaleInstallmentMutation()
   const [paySaleInstallment, payInstallmentState] = (
     sales as any
   ).usePaySaleInstallmentMutation()
@@ -214,7 +233,8 @@ export default function SaleDetailPage() {
     if (loadKeyRef.current === id) return
     loadKeyRef.current = id
     getSaleById({ id })
-  }, [getSaleById, id])
+    getPaymentTypesDropdown()
+  }, [getPaymentTypesDropdown, getSaleById, id])
 
   const sale = saleState.data?.data
   const paymentTypeOptions = paymentTypesState.data?.data || []
@@ -229,14 +249,24 @@ export default function SaleDetailPage() {
 
   useEffect(() => {
     if (!isReturnDialogOpen) return
-    getPaymentTypesDropdown()
     setReturnLines(buildReturnLines(sale?.items || []))
-  }, [getPaymentTypesDropdown, isReturnDialogOpen, sale?.items])
+  }, [isReturnDialogOpen, sale?.items])
 
   useEffect(() => {
     setProcessingStatus(sale?.process_status || "")
     setDeliveryStatus(sale?.delivery_status || "")
   }, [sale?.process_status, sale?.delivery_status])
+
+  useEffect(() => {
+    const drafts: Record<string, { due_date: string; amount: string }> = {}
+    ;(sale?.installment_plan?.lines || []).forEach((line: any) => {
+      drafts[String(line.id)] = {
+        due_date: line.due_date || line.date || "",
+        amount: String(line.amount || ""),
+      }
+    })
+    setInstallmentDrafts(drafts)
+  }, [sale?.installment_plan?.lines])
 
   const selectedReturnItems = useMemo(
     () => returnLines.filter((line) => money(line.quantity) > 0),
@@ -255,13 +285,24 @@ export default function SaleDetailPage() {
     () => duePayments.reduce((sum, row) => sum + money(row.amount), 0),
     [duePayments]
   )
+  const unpaidAmount = Math.max(money(sale?.total) - money(sale?.tendered), 0)
+  const paymentLabels = useMemo(() => {
+    const labels: Record<string, string> = {}
+    paymentTypeOptions.forEach((payment: any) => {
+      const key = payment.value || payment.identifier
+      if (key) labels[key] = payment.label
+    })
+    return labels
+  }, [paymentTypeOptions])
 
   const resetReturnForm = () => {
     setReturnType("refund")
     setRefundPaymentType("cash-payment")
     setExchangeSaleId("")
     setReturnNote("")
-    setReturnLines(buildReturnLines(sale?.items || []))
+    setSelectedRefundProductId("")
+    setRefundScreenAmount("")
+    setReturnLines([])
   }
 
   const resetCollectDueForm = () => {
@@ -277,6 +318,45 @@ export default function SaleDetailPage() {
   const openReturnDialog = () => {
     resetReturnForm()
     setIsReturnDialogOpen(true)
+  }
+
+  const addRefundProduct = () => {
+    if (!selectedRefundProductId) {
+      showToast.error(t("Please select a product before proceeding."))
+      return
+    }
+    const item = (sale?.items || []).find(
+      (product: any) => String(product.id) === String(selectedRefundProductId)
+    )
+    if (!item || Number(item.refundable_quantity || 0) <= 0) {
+      showToast.error(t("Not enough quantity to proceed."))
+      return
+    }
+    const usedQuantity = returnLines
+      .filter((line) => String(line.sale_item_id) === String(item.id))
+      .reduce((sum, line) => sum + money(line.quantity), 0)
+    const remaining = Number(item.refundable_quantity || 0) - usedQuantity
+    if (remaining <= 0) {
+      showToast.error(t("Not enough quantity to proceed."))
+      return
+    }
+    setReturnLines((current) => [
+      ...current,
+      {
+        sale_item_id: Number(item.id),
+        product_name: item.product__name || `Item #${item.id}`,
+        refundable_quantity: remaining,
+        quantity: String(remaining),
+        unit_price: String(item.unit_price || 0),
+        condition: "unspoiled",
+        note: "",
+      },
+    ])
+    setSelectedRefundProductId("")
+  }
+
+  const removeRefundProduct = (index: number) => {
+    setReturnLines((current) => current.filter((_, lineIndex) => lineIndex !== index))
   }
 
   const openCollectDueDialog = () => {
@@ -335,6 +415,7 @@ export default function SaleDetailPage() {
           ? Number(exchangeSaleId)
           : undefined,
       note: returnNote,
+      total: String(money(refundScreenAmount) || estimatedReturnTotal),
       items: selectedReturnItems.map((line) => ({
         sale_item_id: line.sale_item_id,
         quantity: String(line.quantity),
@@ -351,18 +432,17 @@ export default function SaleDetailPage() {
   }
 
   const handleVoidSale = async () => {
-    const ok = await confirm({
-      title: t("Confirm Your Action"),
-      description: t("The current order will be void. This action will be recorded. Consider providing a reason for this operation"),
-      confirmLabel: t("Void"),
-      cancelLabel: t("Cancel"),
-    })
-    if (!ok) return
+    setVoidReason("")
+    setIsVoidDialogOpen(true)
+  }
+
+  const submitVoidSale = async () => {
     const response = await voidSale({
       id,
-      payLoad: { note: "Voided from sale details." },
+      payLoad: { reason: voidReason, note: voidReason },
     }).unwrap()
     showToast.success(response?.message || t("Sale voided successfully."))
+    setIsVoidDialogOpen(false)
     await getSaleById({ id })
   }
 
@@ -427,22 +507,89 @@ export default function SaleDetailPage() {
   }
 
   const handleUpdateProcessing = async (value: string) => {
+    const previous = sale?.process_status || ""
+    const ok = await confirm({
+      title: t("Would you proceed ?"),
+      description: t("The processing status of the order will be changed. Please confirm your action."),
+      confirmLabel: t("Save"),
+      cancelLabel: t("Cancel"),
+    })
+    if (!ok) {
+      setProcessingStatus(previous)
+      setShowProcessingSelect(false)
+      return
+    }
     setProcessingStatus(value)
     const response = await updateSaleProcessing({
       id,
       payLoad: { status: value },
     }).unwrap()
     showToast.success(response?.message || t("Processing status updated."))
+    setShowProcessingSelect(false)
     await getSaleById({ id })
   }
 
   const handleUpdateDelivery = async (value: string) => {
+    const previous = sale?.delivery_status || ""
+    const ok = await confirm({
+      title: t("Would you proceed ?"),
+      description: t("The delivery status of the order will be changed. Please confirm your action."),
+      confirmLabel: t("Save"),
+      cancelLabel: t("Cancel"),
+    })
+    if (!ok) {
+      setDeliveryStatus(previous)
+      setShowDeliverySelect(false)
+      return
+    }
     setDeliveryStatus(value)
     const response = await updateSaleDelivery({
       id,
       payLoad: { status: value },
     }).unwrap()
     showToast.success(response?.message || t("Delivery status updated."))
+    setShowDeliverySelect(false)
+    await getSaleById({ id })
+  }
+
+  const handleQuickPayment = async () => {
+    const value = money(quickPaymentAmount)
+    if (!quickPaymentType) {
+      showToast.error(t("Please select a payment gateway before proceeding."))
+      return
+    }
+    if (value <= 0) {
+      showToast.error(t("Please provide a valid value"))
+      return
+    }
+    const ok = await confirm({
+      title: t("Confirm Your Action"),
+      description: t("You make a payment for {amount}. A payment can't be canceled. Would you like to proceed ?").replace(
+        "{amount}",
+        formatMoney(value)
+      ),
+      confirmLabel: t("Proceed"),
+      cancelLabel: t("Cancel"),
+    })
+    if (!ok) return
+    const response = await collectSaleDue({
+      id,
+      payLoad: {
+        payments: [
+          {
+            payment_type: quickPaymentType,
+            amount: String(value),
+            reference_number: quickPaymentReference,
+            note: quickPaymentNote,
+          },
+        ],
+        note: quickPaymentNote,
+      },
+    }).unwrap()
+    showToast.success(response?.message || t("Payment saved successfully."))
+    setQuickPaymentAmount("")
+    setQuickPaymentReference("")
+    setQuickPaymentNote("")
     await getSaleById({ id })
   }
 
@@ -505,6 +652,48 @@ export default function SaleDetailPage() {
     }).unwrap()
     showToast.success(response?.message || t("Installments saved successfully."))
     setIsInstallmentDialogOpen(false)
+    await getSaleById({ id })
+  }
+
+  const handleUpdateInstallment = async (line: any) => {
+    const draft = installmentDrafts[String(line.id)] || {
+      due_date: line.due_date || line.date,
+      amount: String(line.amount || ""),
+    }
+    const ok = await confirm({
+      title: t("Confirm Your Action"),
+      description: t("Would you like to update that instalment ?"),
+      confirmLabel: t("Save"),
+      cancelLabel: t("Cancel"),
+    })
+    if (!ok) return
+    const response = await updateSaleInstallment({
+      id,
+      installmentId: line.id,
+      payLoad: {
+        due_date: draft.due_date,
+        date: draft.due_date,
+        amount: String(money(draft.amount)),
+      },
+    }).unwrap()
+    showToast.success(response?.message || t("Instalment updated successfully."))
+    await getSaleById({ id })
+  }
+
+  const handleDeleteInstallment = async (line: any) => {
+    const ok = await confirm({
+      title: t("Confirm Your Action"),
+      description: t("Would you like to delete this instalment ?"),
+      confirmLabel: t("Delete"),
+      cancelLabel: t("Cancel"),
+      variant: "destructive",
+    })
+    if (!ok) return
+    const response = await deleteSaleInstallment({
+      id,
+      installmentId: line.id,
+    }).unwrap()
+    showToast.success(response?.message || t("Instalment deleted successfully."))
     await getSaleById({ id })
   }
 
@@ -607,32 +796,6 @@ export default function SaleDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={() => router.push(getPrintedDocumentUrl(sale.id))}
-              >
-                <Printer className="size-4" />
-                {t("Print")}
-              </Button>
-              {canShowVoidAction ? (
-                <Button
-                  variant="outline"
-                  onClick={handleVoidSale}
-                  disabled={voidSaleState.isLoading}
-                >
-                  {voidSaleState.isLoading ? t("Voiding...") : t("Void")}
-                </Button>
-              ) : null}
-              {canShowDeleteAction ? (
-                <Button
-                  variant="destructive"
-                  onClick={handleDeleteSale}
-                  disabled={deleteSalesState.isLoading}
-                >
-                  <Trash2 className="size-4" />
-                  {deleteSalesState.isLoading ? t("Deleting...") : t("Delete")}
-                </Button>
-              ) : null}
               <span
                 className={cn(
                   "rounded-full px-3 py-1 text-xs font-semibold capitalize",
@@ -660,150 +823,228 @@ export default function SaleDetailPage() {
               </TabsList>
             </div>
 
-            <TabsContent value="details" className="space-y-6 px-6 py-6">
-              <div className="grid gap-4 lg:grid-cols-4">
-                <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    {t("Customer")}
-                  </p>
-                  <p className="mt-2 text-base font-bold text-slate-900">
-                    {sale.customer?.name || t("Walk-in Customer")}
-                  </p>
-                  <p className="text-sm text-slate-500">{sale.customer?.phone || "-"}</p>
-                </div>
-                <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    {t("Total")}
-                  </p>
-                  <p className="mt-2 text-base font-bold text-slate-900">
-                    {formatMoney(sale.total)}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {t("Paid")} {formatMoney(sale.totals_summary?.paid_amount)}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    {t("Due Amount")}
-                  </p>
-                  <p className="mt-2 text-base font-bold text-slate-900">
-                    {formatMoney(sale.due_amount)}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {t("Change")} {formatMoney(sale.change_amount)}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    {t("Refunded")}
-                  </p>
-                  <p className="mt-2 text-base font-bold text-slate-900">
-                    {formatMoney(sale.totals_summary?.refunded_amount)}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {String(t("{count} return(s)")).replace("{count}", String(sale.refunds?.length || 0))}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-4 lg:grid-cols-2">
-                <UniFieldSelect
-                  label={t("Processing Status")}
-                  value={processingStatus || "none"}
-                  onValueChange={(value) =>
-                    handleUpdateProcessing(value === "none" ? "" : value)
-                  }
-                  disabled={!canUpdateSale || updateProcessingState.isLoading}
-                >
-                  <SelectItem value="none">{t("Not Set")}</SelectItem>
-                  <SelectItem value="pending">{t("Pending")}</SelectItem>
-                  <SelectItem value="processing">{t("Processing")}</SelectItem>
-                  <SelectItem value="ready">{t("Ready")}</SelectItem>
-                  <SelectItem value="completed">{t("Completed")}</SelectItem>
-                </UniFieldSelect>
-
-                <UniFieldSelect
-                  label={t("Delivery Status")}
-                  value={deliveryStatus || "none"}
-                  onValueChange={(value) =>
-                    handleUpdateDelivery(value === "none" ? "" : value)
-                  }
-                  disabled={!canUpdateSale || updateDeliveryState.isLoading}
-                >
-                  <SelectItem value="none">{t("Not Set")}</SelectItem>
-                  <SelectItem value="pending">{t("Pending")}</SelectItem>
-                  <SelectItem value="packed">{t("Packed")}</SelectItem>
-                  <SelectItem value="shipped">{t("Shipped")}</SelectItem>
-                  <SelectItem value="delivered">{t("Delivered")}</SelectItem>
-                </UniFieldSelect>
-              </div>
-
-              <div className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
-                <section className="rounded-2xl border border-gray-200 bg-white">
-                  <div className="border-b border-gray-100 px-6 py-4">
-                    <h2 className="text-lg font-bold text-slate-900">{t("Products")}</h2>
-                  </div>
-                  <div className="overflow-x-auto px-4 py-4">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>{t("Product")}</TableHead>
-                          <TableHead>{t("Qty")}</TableHead>
-                          <TableHead>{t("Refunded")}</TableHead>
-                          <TableHead>{t("Remaining")}</TableHead>
-                          <TableHead>{t("Rate")}</TableHead>
-                          <TableHead>{t("Total")}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {(sale.items || []).map((item: any) => (
-                          <TableRow key={item.id}>
-                            <TableCell>
-                              <div>
-                                <p className="font-semibold text-slate-900">
-                                  {item.product__name}
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                  {t("SKU")}: {item.product__sku || "-"}
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell>{item.quantity}</TableCell>
-                            <TableCell>{item.refunded_quantity}</TableCell>
-                            <TableCell>{item.refundable_quantity}</TableCell>
-                            <TableCell>{formatMoney(item.unit_price)}</TableCell>
-                            <TableCell>{formatMoney(item.total)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+            <TabsContent value="details" className="px-6 py-6">
+              <div className="grid gap-6 lg:grid-cols-2">
+                <section className="space-y-3">
+                  <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
+                    {t("Payment Summary")}
+                  </h2>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {[
+                      [t("Sub Total"), sale.subtotal],
+                      [
+                        `${t("Discount")}${
+                          sale.discount_type === "percentage"
+                            ? ` (${sale.discount_percentage}%)`
+                            : sale.discount_type === "flat"
+                              ? ` (${t("Flat")})`
+                              : ""
+                        }`,
+                        sale.discount,
+                      ],
+                      [t("Shipping"), sale.shipping],
+                      [t("Coupons"), sale.total_coupons],
+                      [t("Total"), sale.total],
+                      [t("Taxes"), sale.tax_value || sale.tax_amount],
+                      [t("Change"), sale.change],
+                      [t("Paid"), sale.tendered || sale.totals_summary?.paid_amount],
+                    ].map(([label, value]) => (
+                      <div
+                        key={String(label)}
+                        className="flex items-center justify-between border border-gray-200 bg-white px-3 py-2"
+                      >
+                        <span className="font-semibold text-slate-800">{label}</span>
+                        <span className="font-semibold text-slate-600">
+                          {formatMoney(value)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </section>
 
-                <section className="rounded-2xl border border-gray-200 bg-white">
-                  <div className="border-b border-gray-100 px-6 py-4">
-                    <h2 className="text-lg font-bold text-slate-900">{t("Applied Coupons")}</h2>
-                  </div>
-                  <div className="space-y-3 px-6 py-5">
-                    {(sale.applied_coupons || []).length ? (
-                      sale.applied_coupons.map((coupon: any) => (
-                        <div
-                          key={coupon.id}
-                          className="rounded-2xl border border-gray-100 bg-gray-50 p-4"
+                <section className="space-y-3">
+                  <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
+                    {t("Order Status")}
+                  </h2>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between border border-gray-200 bg-white px-3 py-2">
+                      <span className="font-semibold text-slate-800">{t("Customer")}</span>
+                      <span className="font-semibold text-slate-600">
+                        {sale.customer?.name ||
+                          `${sale.customer?.first_name || ""} ${sale.customer?.last_name || ""}`.trim() ||
+                          t("Walk-in Customer")}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between border border-gray-200 bg-white px-3 py-2">
+                      <span className="font-semibold text-slate-800">{t("Type")}</span>
+                      <span className="font-semibold capitalize text-slate-600">
+                        {getStatusLabel(sale.type || sale.order_type, t)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 border border-gray-200 bg-white px-3 py-2">
+                      <span className="font-semibold text-slate-800">{t("Delivery Status")}</span>
+                      {!showDeliverySelect ? (
+                        <button
+                          type="button"
+                          className="border-b border-dashed border-gray-900 font-semibold capitalize text-slate-600"
+                          onClick={() => setShowDeliverySelect(true)}
+                          disabled={!canUpdateSale}
                         >
-                          <div className="flex items-center justify-between">
-                            <p className="font-semibold text-slate-900">{coupon.code}</p>
-                            <p className="font-bold text-slate-900">
-                              {formatMoney(coupon.discount_amount)}
+                          {getStatusLabel(deliveryStatus || sale.delivery_status, t)}
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <UniFieldSelect
+                            value={deliveryStatus || "pending"}
+                            onValueChange={setDeliveryStatus}
+                            className="min-w-40"
+                          >
+                            <SelectItem value="pending">{t("Pending")}</SelectItem>
+                            <SelectItem value="packed">{t("Packed")}</SelectItem>
+                            <SelectItem value="shipped">{t("Shipped")}</SelectItem>
+                            <SelectItem value="delivered">{t("Delivered")}</SelectItem>
+                          </UniFieldSelect>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              setDeliveryStatus(sale.delivery_status || "")
+                              setShowDeliverySelect(false)
+                            }}
+                          >
+                            <X className="size-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            onClick={() => handleUpdateDelivery(deliveryStatus)}
+                            disabled={updateDeliveryState.isLoading}
+                          >
+                            <Save className="size-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between gap-3 border border-gray-200 bg-white px-3 py-2">
+                      <span className="font-semibold text-slate-800">{t("Processing Status")}</span>
+                      {!showProcessingSelect ? (
+                        <button
+                          type="button"
+                          className="border-b border-dashed border-gray-900 font-semibold capitalize text-slate-600"
+                          onClick={() => setShowProcessingSelect(true)}
+                          disabled={!canUpdateSale}
+                        >
+                          {getStatusLabel(processingStatus || sale.process_status, t)}
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <UniFieldSelect
+                            value={processingStatus || "pending"}
+                            onValueChange={setProcessingStatus}
+                            className="min-w-40"
+                          >
+                            <SelectItem value="pending">{t("Pending")}</SelectItem>
+                            <SelectItem value="processing">{t("Processing")}</SelectItem>
+                            <SelectItem value="ready">{t("Ready")}</SelectItem>
+                            <SelectItem value="completed">{t("Completed")}</SelectItem>
+                          </UniFieldSelect>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              setProcessingStatus(sale.process_status || "")
+                              setShowProcessingSelect(false)
+                            }}
+                          >
+                            <X className="size-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            onClick={() => handleUpdateProcessing(processingStatus)}
+                            disabled={updateProcessingState.isLoading}
+                          >
+                            <Save className="size-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between border border-gray-200 bg-white px-3 py-2">
+                      <span className="font-semibold text-slate-800">{t("Payment Status")}</span>
+                      <span className="font-semibold capitalize text-slate-600">
+                        {getStatusLabel(sale.payment_status, t)}
+                      </span>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="space-y-3">
+                  <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
+                    {t("Products")}
+                  </h2>
+                  <div className="space-y-3">
+                    {(sale.items || []).map((item: any) => (
+                      <div
+                        key={item.id}
+                        className="flex items-start justify-between border border-gray-200 bg-white p-3"
+                      >
+                        <div>
+                          <p className="font-semibold text-slate-900">
+                            {item.product__name || item.name} (x{item.quantity})
+                          </p>
+                          <p className="text-sm text-slate-500">
+                            {item.unit__name || item.unit_name || item.unit?.name || "N/A"}
+                          </p>
+                        </div>
+                        <p className="font-semibold text-slate-600">
+                          {formatMoney(item.total || item.total_price)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-gray-900 pb-2">
+                    <h2 className="text-base font-semibold text-slate-700">
+                      {t("Refunded Products")}
+                    </h2>
+                    <button
+                      type="button"
+                      className="border-b border-dashed border-gray-900 text-sm font-semibold text-slate-700"
+                    >
+                      {t("All Refunds")}
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {(sale.refunded_products || []).length ? (
+                      sale.refunded_products.map((product: any, index: number) => (
+                        <div
+                          key={product.id || index}
+                          className="flex items-start justify-between border border-gray-200 bg-white p-3"
+                        >
+                          <div>
+                            <p className="font-semibold text-slate-900">
+                              {product.order_product?.name || product.name} (x{product.quantity})
+                            </p>
+                            <p className="text-sm text-slate-500">
+                              {product.unit?.name || product.unit_name || "N/A"} |{" "}
+                              <span className="capitalize">
+                                {getStatusLabel(product.condition, t)}
+                              </span>
                             </p>
                           </div>
-                          <p className="mt-1 text-xs capitalize text-slate-500">
-                            {getStatusLabel(coupon.type, t)}
+                          <p className="font-semibold text-slate-600">
+                            {formatMoney(product.total_price || product.total)}
                           </p>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-slate-500">{t("No coupon used on this sale.")}</p>
+                      <div className="border border-dashed border-gray-200 p-6 text-center text-sm text-slate-500">
+                        {t("No refunded products.")}
+                      </div>
                     )}
                   </div>
                 </section>
@@ -811,102 +1052,317 @@ export default function SaleDetailPage() {
             </TabsContent>
 
             {canShowPaymentsTab ? (
-              <TabsContent value="payments" className="space-y-4 px-6 py-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900">{t("Payments")}</h2>
-                    <p className="text-sm text-slate-500">
-                      {t("Payments recorded for this order.")}
-                    </p>
+              <TabsContent value="payments" className="space-y-6 px-6 py-6">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="flex h-12 items-center justify-between border border-blue-200 bg-blue-50 px-3 text-lg font-bold text-blue-900">
+                    <span>{t("Total")}</span>
+                    <span>{formatMoney(sale.total)}</span>
                   </div>
-                  {canShowCollectDueAction ? (
-                    <Button variant="outline" onClick={openCollectDueDialog}>
-                      {t("Collect Due")}
-                    </Button>
-                  ) : null}
+                  <div className="flex h-12 items-center justify-between border border-green-200 bg-green-50 px-3 text-lg font-bold text-green-900">
+                    <span>{t("Paid")}</span>
+                    <span>{formatMoney(sale.tendered || sale.totals_summary?.paid_amount)}</span>
+                  </div>
+                  <div className="flex h-12 items-center justify-between border border-red-200 bg-red-50 px-3 text-lg font-bold text-red-900">
+                    <span>{t("Unpaid")}</span>
+                    <span>{formatMoney(unpaidAmount)}</span>
+                  </div>
+                  <div className="flex h-12 items-center justify-between border border-amber-200 bg-amber-50 px-3 text-lg font-bold text-amber-900">
+                    <span>{t("Customer Account")}</span>
+                    <span>{formatMoney(sale.customer?.account_amount)}</span>
+                  </div>
                 </div>
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {(sale.payments || []).length ? (
-                    sale.payments.map((payment: any) => (
-                      <div
-                        key={payment.id}
-                        className="rounded-2xl border border-gray-100 bg-gray-50 p-4"
-                      >
-                        <div className="flex items-center justify-between">
-                          <p className="font-semibold capitalize text-slate-900">
-                            {String(payment.payment_type || "-").replaceAll("-", " ")}
-                          </p>
-                          <p className="font-bold text-slate-900">
-                            {formatMoney(payment.amount)}
-                          </p>
-                        </div>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {t("Reference")}: {payment.reference_number || "-"}
-                        </p>
+
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <section className="space-y-3">
+                    <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
+                      {t("Payment")}
+                    </h2>
+                    {sale.payment_status === "paid" ? (
+                      <div className="flex min-h-48 items-center justify-center border border-dashed border-gray-200 text-sm font-semibold text-slate-500">
+                        {t("No payment possible for paid order.")}
                       </div>
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-gray-200 p-8 text-center text-sm text-slate-500 md:col-span-2 xl:col-span-3">
-                      {t("No payments recorded.")}
-                    </div>
-                  )}
+                    ) : (
+                      <div className="space-y-3">
+                        <UniFieldSelect
+                          label={t("Payment Type")}
+                          value={quickPaymentType}
+                          onValueChange={setQuickPaymentType}
+                        >
+                          {paymentTypeOptions.map((payment: any) => (
+                            <SelectItem
+                              key={payment.value || payment.identifier}
+                              value={payment.value || payment.identifier}
+                            >
+                              {payment.label}
+                            </SelectItem>
+                          ))}
+                        </UniFieldSelect>
+                        <UniFieldInput
+                          label={t("Amount")}
+                          value={quickPaymentAmount}
+                          onChange={(event) => setQuickPaymentAmount(event.target.value)}
+                          placeholder="0.00"
+                          prefix={currencyIndicator}
+                          type="number"
+                        />
+                        <UniFieldInput
+                          label={t("Reference number")}
+                          value={quickPaymentReference}
+                          onChange={(event) => setQuickPaymentReference(event.target.value)}
+                          placeholder={t("Reference number")}
+                        />
+                        <UniFieldInput
+                          label={t("Payment note")}
+                          value={quickPaymentNote}
+                          onChange={(event) => setQuickPaymentNote(event.target.value)}
+                          placeholder={t("Payment note")}
+                        />
+                        <div className="flex items-center justify-between border border-gray-200 bg-white px-3 py-2">
+                          <span className="font-semibold text-slate-700">{t("Screen")}</span>
+                          <span className="font-semibold text-slate-700">
+                            {formatMoney(quickPaymentAmount)}
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={handleQuickPayment}
+                          disabled={collectDueState.isLoading}
+                          className="w-full"
+                        >
+                          {collectDueState.isLoading ? t("Saving...") : t("Submit Payment")}
+                        </Button>
+                      </div>
+                    )}
+                  </section>
+
+                  <section className="space-y-3">
+                    <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
+                      {t("Payment History")}
+                    </h2>
+                    {(sale.payments || []).length ? (
+                      <div className="space-y-2">
+                        {sale.payments.map((payment: any) => {
+                          const identifier = payment.identifier || payment.payment_type
+                          return (
+                            <div
+                              key={payment.id}
+                              className="flex items-center justify-between border border-gray-200 bg-white p-3"
+                            >
+                              <span className="flex items-center gap-2 font-semibold text-slate-700">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() =>
+                                    router.push(`/sales/${sale.id}/receipt?payment=${payment.id}`)
+                                  }
+                                >
+                                  <ReceiptText className="size-4" />
+                                </Button>
+                                {paymentLabels[identifier] ||
+                                  String(identifier || t("Unknown")).replaceAll("-", " ")}
+                              </span>
+                              <span className="font-semibold text-slate-700">
+                                {formatMoney(payment.value || payment.amount)}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <div className="border border-dashed border-gray-200 p-8 text-center text-sm text-slate-500">
+                        {t("No payments recorded.")}
+                      </div>
+                    )}
+                  </section>
                 </div>
+
+                {canShowCollectDueAction ? (
+                  <div className="flex justify-end">
+                    <Button variant="outline" onClick={openCollectDueDialog}>
+                      {t("Advanced Payment")}
+                    </Button>
+                  </div>
+                ) : null}
               </TabsContent>
             ) : null}
 
             {canShowRefundTab ? (
-              <TabsContent value="refund" className="space-y-4 px-6 py-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900">{t("Refund & Return")}</h2>
-                    <p className="text-sm text-slate-500">
-                      {t("Refundable items and return history for this order.")}
-                    </p>
-                  </div>
-                  {canShowRefundAction ? (
-                    <Button onClick={openReturnDialog}>{t("Refund & Return")}</Button>
-                  ) : null}
-                </div>
-                <div className="overflow-x-auto rounded-2xl border border-gray-200">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("Return ID")}</TableHead>
-                        <TableHead>{t("Type")}</TableHead>
-                        <TableHead>{t("Status")}</TableHead>
-                        <TableHead>{t("Cashier")}</TableHead>
-                        <TableHead>{t("Total")}</TableHead>
-                        <TableHead>{t("Note")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {(sale.refunds || []).length ? (
-                        sale.refunds.map((refund: any) => (
-                          <TableRow key={refund.id}>
-                            <TableCell>#{refund.id}</TableCell>
-                            <TableCell className="capitalize">
-                              {getStatusLabel(refund.return_type, t)}
-                            </TableCell>
-                            <TableCell className="capitalize">
-                              {getStatusLabel(refund.return_status, t)}
-                            </TableCell>
-                            <TableCell>{refund.cashier__full_name || "-"}</TableCell>
-                            <TableCell>{formatMoney(refund.total)}</TableCell>
-                            <TableCell>{refund.note || "-"}</TableCell>
-                          </TableRow>
+              <TabsContent value="refund" className="px-6 py-6">
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <section className="space-y-3">
+                    <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
+                      {t("Refund With Products")}
+                    </h2>
+                    <div className="border border-gray-200 bg-white p-3">
+                      <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+                        <UniFieldSelect
+                          label={t("Product")}
+                          value={selectedRefundProductId || "none"}
+                          onValueChange={(value) =>
+                            setSelectedRefundProductId(value === "none" ? "" : value)
+                          }
+                          placeholder={t("Select the product to perform a refund.")}
+                        >
+                          <SelectItem value="none">{t("Choose option")}</SelectItem>
+                          {(sale.items || [])
+                            .filter((item: any) => Number(item.refundable_quantity || 0) > 0)
+                            .map((item: any) => (
+                              <SelectItem key={item.id} value={String(item.id)}>
+                                {item.product__name || item.name} -{" "}
+                                {item.unit__name || item.unit_name || item.unit?.name || "N/A"}{" "}
+                                (x{item.refundable_quantity || item.quantity})
+                              </SelectItem>
+                            ))}
+                        </UniFieldSelect>
+                        <div className="flex items-end">
+                          <Button type="button" variant="outline" onClick={addRefundProduct}>
+                            {t("Add Product")}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <h3 className="border-b border-gray-900 py-1 text-base font-semibold text-slate-700">
+                      {t("Products")}
+                    </h3>
+                    <div className="space-y-2">
+                      {returnLines.length ? (
+                        returnLines.map((line, index) => (
+                          <div
+                            key={`${line.sale_item_id}-${index}`}
+                            className="grid gap-3 border border-gray-200 bg-white p-3 md:grid-cols-[1fr_120px_150px_44px]"
+                          >
+                            <div>
+                              <p className="font-semibold text-slate-900">
+                                {line.product_name}
+                              </p>
+                              <p className="text-sm text-slate-500">
+                                {t("Available")}: {line.refundable_quantity}
+                              </p>
+                            </div>
+                            <UniFieldInput
+                              value={line.quantity}
+                              onChange={(event) =>
+                                updateReturnLine(
+                                  line.sale_item_id,
+                                  "quantity",
+                                  event.target.value
+                                )
+                              }
+                              placeholder="0"
+                              type="number"
+                              min={0}
+                              max={line.refundable_quantity}
+                            />
+                            <UniFieldSelect
+                              value={line.condition}
+                              onValueChange={(value) =>
+                                updateReturnLine(line.sale_item_id, "condition", value)
+                              }
+                            >
+                              <SelectItem value="unspoiled">{t("Unspoiled")}</SelectItem>
+                              <SelectItem value="damaged">{t("Damaged")}</SelectItem>
+                            </UniFieldSelect>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeRefundProduct(index)}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                            <div className="md:col-span-4 grid gap-3 md:grid-cols-2">
+                              <UniFieldInput
+                                value={line.unit_price}
+                                onChange={(event) =>
+                                  updateReturnLine(
+                                    line.sale_item_id,
+                                    "unit_price",
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="0"
+                                type="number"
+                                prefix={currencyIndicator}
+                              />
+                              <UniFieldInput
+                                value={line.note}
+                                onChange={(event) =>
+                                  updateReturnLine(
+                                    line.sale_item_id,
+                                    "note",
+                                    event.target.value
+                                  )
+                                }
+                                placeholder={t("Item note")}
+                              />
+                            </div>
+                          </div>
                         ))
                       ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={6}
-                            className="py-10 text-center text-sm text-slate-500"
-                          >
-                            {t("No returns recorded for this sale.")}
-                          </TableCell>
-                        </TableRow>
+                        <div className="border border-dashed border-gray-200 p-8 text-center text-sm text-slate-500">
+                          {t("Please select a product before proceeding.")}
+                        </div>
                       )}
-                    </TableBody>
-                  </Table>
+                    </div>
+                  </section>
+
+                  <section className="space-y-3">
+                    <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
+                      {t("Summary")}
+                    </h2>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between border border-gray-200 bg-white p-3 font-semibold">
+                        <span>{t("Total")}</span>
+                        <span>{formatMoney(estimatedReturnTotal)}</span>
+                      </div>
+                      <div className="flex items-center justify-between border border-green-200 bg-green-50 p-3 font-semibold text-green-900">
+                        <span>{t("Paid")}</span>
+                        <span>{formatMoney(sale.tendered)}</span>
+                      </div>
+                      <UniFieldSelect
+                        label={t("Payment Gateway")}
+                        value={refundPaymentType}
+                        onValueChange={setRefundPaymentType}
+                      >
+                        {paymentTypeOptions.map((payment: any) => (
+                          <SelectItem
+                            key={payment.value || payment.identifier}
+                            value={payment.value || payment.identifier}
+                          >
+                            {payment.label}
+                          </SelectItem>
+                        ))}
+                      </UniFieldSelect>
+                      <div className="flex items-center justify-between border border-gray-200 bg-white p-3 font-semibold">
+                        <span>{t("Screen")}</span>
+                        <span>{formatMoney(refundScreenAmount || estimatedReturnTotal)}</span>
+                      </div>
+                      <UniFieldInput
+                        label={t("Amount")}
+                        value={refundScreenAmount}
+                        onChange={(event) => setRefundScreenAmount(event.target.value)}
+                        placeholder="0.00"
+                        prefix={currencyIndicator}
+                        type="number"
+                      />
+                      <UniFieldInput
+                        label={t("Note")}
+                        value={returnNote}
+                        onChange={(event) => setReturnNote(event.target.value)}
+                        placeholder={t("Return note")}
+                      />
+                      <Button
+                        type="button"
+                        onClick={handleSubmitReturn}
+                        disabled={createReturnState.isLoading || !returnLines.length}
+                        className="w-full"
+                      >
+                        {createReturnState.isLoading ? t("Processing...") : t("Proceed")}
+                      </Button>
+                    </div>
+                  </section>
                 </div>
               </TabsContent>
             ) : null}
@@ -939,34 +1395,110 @@ export default function SaleDetailPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {installmentPlan?.lines?.length ? (
-                        installmentPlan.lines.map((line: any) => (
-                          <TableRow key={line.id}>
-                            <TableCell>{line.due_date}</TableCell>
-                            <TableCell>{formatMoney(line.amount)}</TableCell>
-                            <TableCell>{formatMoney(line.paid_amount)}</TableCell>
-                            <TableCell>
-                              {formatMoney(money(line.amount) - money(line.paid_amount))}
+                    {installmentPlan?.lines?.length ? (
+                      installmentPlan.lines.map((line: any) => (
+                        <TableRow key={line.id}>
+                          <TableCell className="min-w-40">
+                            {line.paid ? (
+                              line.due_date || line.date
+                            ) : (
+                              <UniFieldInput
+                                type="date"
+                                value={installmentDrafts[String(line.id)]?.due_date || ""}
+                                onChange={(event) =>
+                                  setInstallmentDrafts((current) => ({
+                                    ...current,
+                                    [String(line.id)]: {
+                                      due_date: event.target.value,
+                                      amount:
+                                        current[String(line.id)]?.amount ||
+                                        String(line.amount || ""),
+                                    },
+                                  }))
+                                }
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell className="min-w-36">
+                            {line.paid ? (
+                              formatMoney(line.amount)
+                            ) : (
+                              <UniFieldInput
+                                value={installmentDrafts[String(line.id)]?.amount || ""}
+                                onChange={(event) =>
+                                  setInstallmentDrafts((current) => ({
+                                    ...current,
+                                    [String(line.id)]: {
+                                      due_date:
+                                        current[String(line.id)]?.due_date ||
+                                        line.due_date ||
+                                        line.date ||
+                                        "",
+                                      amount: event.target.value,
+                                    },
+                                  }))
+                                }
+                                type="number"
+                                prefix={currencyIndicator}
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell>{formatMoney(line.paid_amount)}</TableCell>
+                          <TableCell>
+                            {formatMoney(money(line.amount) - money(line.paid_amount))}
                             </TableCell>
                             <TableCell className="capitalize">
                               {getStatusLabel(line.installment_status, t)}
                             </TableCell>
                             <TableCell>
-                              {canCreatePayment &&
-                                money(line.amount) > money(line.paid_amount) ? (
+                            {canCreatePayment &&
+                              money(line.amount) > money(line.paid_amount) ? (
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => openInstallmentPayDialog(line)}
+                                  >
+                                    {t("Pay")}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="outline"
+                                    onClick={() => handleUpdateInstallment(line)}
+                                    disabled={updateInstallmentState.isLoading}
+                                  >
+                                    <Save className="size-4" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="outline"
+                                    onClick={() => handleDeleteInstallment(line)}
+                                    disabled={deleteInstallmentState.isLoading}
+                                  >
+                                    <Trash2 className="size-4" />
+                                  </Button>
+                                </div>
+                              ) : (
                                 <Button
                                   type="button"
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => openInstallmentPayDialog(line)}
+                                  onClick={() => {
+                                    if (!line.payment_id) {
+                                      showToast.error(t("This instalment doesn't have any payment attached."))
+                                      return
+                                    }
+                                    router.push(`/sales/${sale.id}/receipt?payment=${line.payment_id}`)
+                                  }}
                                 >
-                                  {t("Pay")}
+                                  {t("Receipt")}
                                 </Button>
-                              ) : (
-                                "-"
                               )}
-                            </TableCell>
-                          </TableRow>
+                          </TableCell>
+                        </TableRow>
                         ))
                       ) : (
                         <TableRow>
@@ -984,7 +1516,72 @@ export default function SaleDetailPage() {
               </TabsContent>
             ) : null}
           </Tabs>
+
+          <div className="flex items-center justify-between border-t border-gray-100 px-6 py-3">
+            <div className="flex items-center gap-2">
+              {canShowVoidAction ? (
+                <Button
+                  variant="destructive"
+                  onClick={handleVoidSale}
+                  disabled={voidSaleState.isLoading}
+                >
+                  {voidSaleState.isLoading ? t("Voiding...") : t("Void")}
+                </Button>
+              ) : null}
+              {canShowDeleteAction ? (
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteSale}
+                  disabled={deleteSalesState.isLoading}
+                >
+                  <Trash2 className="size-4" />
+                  {deleteSalesState.isLoading ? t("Deleting...") : t("Delete")}
+                </Button>
+              ) : null}
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => router.push(getPrintedDocumentUrl(sale.id))}
+            >
+              <Printer className="size-4" />
+              {t("Print")}
+            </Button>
+          </div>
         </div>
+
+        <Dialog open={isVoidDialogOpen} onOpenChange={setIsVoidDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{t("Confirm Your Action")}</DialogTitle>
+              <DialogDescription>
+                {t("The current order will be void. This action will be recorded. Consider providing a reason for this operation")}
+              </DialogDescription>
+            </DialogHeader>
+            <Textarea
+              value={voidReason}
+              onChange={(event) => setVoidReason(event.target.value)}
+              placeholder={t("Reason")}
+              rows={4}
+            />
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsVoidDialogOpen(false)}
+              >
+                {t("Cancel")}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={submitVoidSale}
+                disabled={voidSaleState.isLoading}
+              >
+                {voidSaleState.isLoading ? t("Voiding...") : t("Void")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}>
           <DialogContent className="max-w-5xl">
@@ -1116,7 +1713,7 @@ export default function SaleDetailPage() {
                               updateReturnLine(line.sale_item_id, "condition", value)
                             }
                           >
-                            <SelectItem value="good">{t("Good")}</SelectItem>
+                            <SelectItem value="unspoiled">{t("Unspoiled")}</SelectItem>
                             <SelectItem value="damaged">{t("Damaged")}</SelectItem>
                           </UniFieldSelect>
                         </TableCell>
