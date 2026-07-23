@@ -115,15 +115,36 @@ function normalizeListOption(value: unknown) {
   return [value]
 }
 
+function normalizeBoolAlias(fallback: boolean, ...values: unknown[]) {
+  for (const value of values) {
+    if (value !== undefined && value !== null && value !== "") {
+      return normalizeBoolOption(value, fallback)
+    }
+  }
+  return fallback
+}
+
 export function usePosOptions() {
   const settings = useAppSelector((state) => state.session.businessSettings?.settings)
 
   return useMemo(() => {
     const options = { ...defaultOptions, ...(settings || {}) }
     const optionMap = options as OptionMap
+    const allowPartialOrders = normalizeBoolAlias(
+      false,
+      optionMap.orders_allow_partial,
+      optionMap.allow_partial_orders,
+      optionMap.ns_orders_allow_partial
+    )
+    const allowUnpaidOrders = normalizeBoolAlias(
+      false,
+      optionMap.orders_allow_unpaid,
+      optionMap.allow_unpaid_orders,
+      optionMap.ns_orders_allow_unpaid
+    )
     return {
       ...options,
-      allow_partial_orders: normalizeBoolOption(options.allow_partial_orders),
+      allow_partial_orders: allowPartialOrders,
       enable_customer_rewards: normalizeBoolOption(options.enable_customer_rewards, true),
       enable_credit_account: normalizeBoolOption(options.enable_credit_account, true),
       enable_cash_registers: normalizeBoolOption(options.enable_cash_registers, true),
@@ -173,9 +194,13 @@ export function usePosOptions() {
       registration_role: String(options.registration_role || ""),
       registration_validated: normalizeBoolOption(options.registration_validated),
       recovery_enabled: normalizeBoolOption(options.recovery_enabled, true),
-      orders_allow_unpaid: normalizeBoolOption(options.orders_allow_unpaid),
-      orders_allow_partial: normalizeBoolOption(options.orders_allow_partial),
-      orders_strict_instalments: normalizeBoolOption(options.orders_strict_instalments),
+      orders_allow_unpaid: allowUnpaidOrders,
+      orders_allow_partial: allowPartialOrders,
+      orders_strict_instalments: normalizeBoolAlias(
+        false,
+        optionMap.orders_strict_instalments,
+        optionMap.ns_orders_strict_instalments
+      ),
       currency_symbol: String(options.currency_symbol || "₹"),
       currency_iso: String(options.currency_iso || "INR"),
       currency_position: String(options.currency_position || "before"),

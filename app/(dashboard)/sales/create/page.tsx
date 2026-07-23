@@ -641,6 +641,12 @@ export default function SalesPage() {
       : totalPaid > 0
         ? "partially_paid"
         : "unpaid"
+  const hasUnsavedSaleChanges =
+    cartItems.length > 0 ||
+    Boolean(saleNote.trim()) ||
+    paymentsRows.some((row) => money(row.amount) > 0) ||
+    money(cartDiscountVal) > 0 ||
+    Boolean(couponInput.trim())
   const activePaymentLabel = useMemo(() => {
     const payment = paymentTypeOptions.find(
       (item: any) => (item.value || item.identifier) === activePaymentType
@@ -2216,6 +2222,20 @@ export default function SalesPage() {
     }
   }
 
+  const handleDashboardNavigation = async () => {
+    if (hasUnsavedSaleChanges) {
+      const proceed = await confirm({
+        title: t("Confirm Your Action"),
+        description: t("Changes that you made may not be saved."),
+        confirmLabel: t("Leave"),
+        cancelLabel: t("Cancel"),
+        variant: "destructive",
+      })
+      if (!proceed) return
+    }
+    router.push("/dashboard")
+  }
+
   useEffect(() => {
     const hasOpenDialog =
       isUnitPickerOpen ||
@@ -2296,9 +2316,10 @@ export default function SalesPage() {
   ])
 
   const removePaymentRow = (rowId: string) => {
-    setPaymentsRows((current) =>
-      current.length === 1 ? current : current.filter((row) => row.id !== rowId)
-    )
+    setPaymentsRows((current) => {
+      const nextRows = current.filter((row) => row.id !== rowId)
+      return nextRows.length ? nextRows : [emptyPaymentRow()]
+    })
   }
 
   if (isInitialLoading && !shift) {
@@ -2327,7 +2348,7 @@ export default function SalesPage() {
                 <div className="flex min-h-0 flex-auto flex-col overflow-hidden bg-white">
                   <div className="border-b border-slate-200 bg-white px-3 py-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")} className="h-9 rounded-md">
+                      <Button variant="outline" size="sm" onClick={handleDashboardNavigation} className="h-9 rounded-md">
                         <Home className="size-4" />
                         {t("Dashboard")}
                       </Button>

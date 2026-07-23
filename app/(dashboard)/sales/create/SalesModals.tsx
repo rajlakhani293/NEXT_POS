@@ -743,7 +743,11 @@ export default function SalesModals({
               <>
                 <Button
                   variant="outline"
-                  onClick={openLayawayDialog}
+                  onClick={
+                    totalPaid > 0
+                      ? () => handleCompleteSale()
+                      : openLayawayDialog
+                  }
                   disabled={
                     isCreatingSale ||
                     !ordersAllowPartial

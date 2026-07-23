@@ -958,5 +958,7 @@
   "The coupon has applied to the cart.": "The coupon has applied to the cart.",
   "Order loaded successfully.": "Order loaded successfully.",
   "Sale updated successfully.": "Sale updated successfully.",
-  "Owed": "Owed"
+  "Owed": "Owed",
+  "Changes that you made may not be saved.": "Changes that you made may not be saved.",
+  "Leave": "Leave"
 }

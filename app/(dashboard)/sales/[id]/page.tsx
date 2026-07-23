@@ -233,7 +233,20 @@ export default function SaleDetailPage() {
       ),
     [selectedReturnItems]
   )
-  const unpaidAmount = Math.max(money(sale?.total) - money(sale?.tendered), 0)
+  const paidAmount = money(
+    sale?.tendered_amount ??
+    sale?.tendered ??
+    sale?.totals_summary?.paid_amount ??
+    (sale?.payments || []).reduce(
+      (sum: number, payment: any) => sum + money(payment.value || payment.amount),
+      0
+    )
+  )
+  const unpaidAmount = Math.max(
+    money(sale?.due_amount ?? sale?.totals_summary?.due_amount) ||
+    money(sale?.total) - paidAmount,
+    0
+  )
   const paymentLabels = useMemo(() => {
     const labels: Record<string, string> = {}
     paymentTypeOptions.forEach((payment: any) => {
@@ -673,8 +686,8 @@ export default function SaleDetailPage() {
   const canShowDeleteAction = canDeleteSale && paymentStatus === "hold"
   return (
     <DashboardPage padding="none">
-      <div className="flex h-full min-h-0 flex-col gap-4 overflow-auto">
-        <div className="bg-white">
+      <div className="flex h-[calc(100vh-84px)] min-h-0 flex-col overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col bg-white">
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-2">
             <div className="flex items-center gap-4">
 
@@ -708,7 +721,7 @@ export default function SaleDetailPage() {
             </div>
           </div>
 
-          <Tabs defaultValue="details" className="gap-0">
+          <Tabs defaultValue="details" className="flex min-h-0 flex-1 flex-col gap-0">
             <div className="border-b border-gray-100 px-6 pt-4">
               <TabsList variant="line" className="w-full justify-start">
                 <TabsTrigger value="details">{t("Details")}</TabsTrigger>
@@ -747,7 +760,7 @@ export default function SaleDetailPage() {
                       [t("Total"), sale.total],
                       [t("Taxes"), sale.tax_value || sale.tax_amount],
                       [t("Change"), sale.change],
-                      [t("Paid"), sale.tendered || sale.totals_summary?.paid_amount],
+                      [t("Paid"), paidAmount],
                     ].map(([label, value]) => (
                       <div
                         key={String(label)}
@@ -962,7 +975,7 @@ export default function SaleDetailPage() {
                   </div>
                   <div className="flex h-12 items-center justify-between border border-green-200 bg-green-50 px-3 text-lg font-bold text-green-900">
                     <span>{t("Paid")}</span>
-                    <span>{formatMoney(sale.tendered || sale.totals_summary?.paid_amount)}</span>
+                    <span>{formatMoney(paidAmount)}</span>
                   </div>
                   <div className="flex h-12 items-center justify-between border border-red-200 bg-red-50 px-3 text-lg font-bold text-red-900">
                     <span>{t("Unpaid")}</span>
@@ -1184,7 +1197,7 @@ export default function SaleDetailPage() {
                       </div>
                       <div className="flex items-center justify-between border border-green-200 bg-green-50 p-3 font-semibold text-green-900">
                         <span>{t("Paid")}</span>
-                        <span>{formatMoney(sale.tendered)}</span>
+                        <span>{formatMoney(paidAmount)}</span>
                       </div>
                       <UniFieldSelect
                         label={t("Payment Gateway")}
