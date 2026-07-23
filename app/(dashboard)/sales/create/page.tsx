@@ -218,6 +218,8 @@ export default function SalesPage() {
   const cashRegistersEnabled = posOptions.enable_cash_registers
   const ordersAllowUnpaid = posOptions.orders_allow_unpaid
   const ordersAllowPartial = posOptions.orders_allow_partial
+  console.log("posOptions------------------------", posOptions);
+
   const allowDecimalQuantities = posOptions.allow_decimal_quantities
   const showQuantity = posOptions.show_quantity
   const hideEmptyCategories = posOptions.hide_empty_categories

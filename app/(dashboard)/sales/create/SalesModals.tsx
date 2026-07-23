@@ -752,7 +752,7 @@ export default function SalesModals({
                   variant="outline"
                   onClick={
                     totalPaid > 0
-                      ? () => handleCompleteSale()
+                      ? () => handleCompleteSale({ paymentStatus: "unpaid" })
                       : openLayawayDialog
                   }
                   disabled={
