@@ -761,5 +761,9 @@
   "Owed": "Dû",
   "Changes that you made may not be saved.": "Les modifications que vous avez apportées risquent de ne pas être enregistrées.",
   "Leave": "Quitter",
-  "Unable to delete a payment attached to the order.": "Impossible de supprimer un paiement joint à la commande."
+  "Unable to delete a payment attached to the order.": "Impossible de supprimer un paiement joint à la commande.",
+  "Payment Method": "Mode de paiement",
+  "Before submitting the payment, choose the payment type used for that order.": "Avant de soumettre le paiement, choisissez le type de paiement utilisé pour cette commande.",
+  "Due Date": "Date d'échéance",
+  "Pay Instalment": "Payer le versement"
 }

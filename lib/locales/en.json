@@ -961,5 +961,9 @@
   "Owed": "Owed",
   "Changes that you made may not be saved.": "Changes that you made may not be saved.",
   "Leave": "Leave",
-  "Unable to delete a payment attached to the order.": "Unable to delete a payment attached to the order."
+  "Unable to delete a payment attached to the order.": "Unable to delete a payment attached to the order.",
+  "Payment Method": "Payment Method",
+  "Before submitting the payment, choose the payment type used for that order.": "Before submitting the payment, choose the payment type used for that order.",
+  "Due Date": "Due Date",
+  "Pay Instalment": "Pay Instalment"
 }

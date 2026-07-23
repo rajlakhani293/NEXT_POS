@@ -113,11 +113,15 @@ const resolvePaidAmount = (sale: any) => {
     sale?.tendered_amount ??
     sale?.tendered ??
     sale?.totals_summary?.paid_amount
-  if (directValue !== undefined && directValue !== null) return money(directValue)
-  return (sale?.payments || []).reduce(
+  const paymentsTotal = (sale?.payments || []).reduce(
     (sum: number, payment: any) => sum + money(payment.value || payment.amount),
     0
   )
+  const directAmount = money(directValue)
+  if (directValue !== undefined && directValue !== null && directAmount > 0) {
+    return directAmount
+  }
+  return paymentsTotal
 }
 
 const resolveUnpaidAmount = (sale: any, paidAmount: number) => {
@@ -179,8 +183,6 @@ export default function SaleDetailPage() {
   const [installmentLines, setInstallmentLines] = useState<InstallmentLineForm[]>([])
   const [installmentTarget, setInstallmentTarget] = useState<any>(null)
   const [installmentPaymentType, setInstallmentPaymentType] = useState("")
-  const [installmentPaymentAmount, setInstallmentPaymentAmount] = useState("")
-  const [installmentPaymentNote, setInstallmentPaymentNote] = useState("")
   const [installmentDrafts, setInstallmentDrafts] = useState<Record<string, { due_date: string; amount: string }>>({})
 
   const [getSaleById, saleState] = (sales as any).useGetSaleByIdMutation()
@@ -549,12 +551,6 @@ export default function SaleDetailPage() {
 
   const openInstallmentPayDialog = (line: any) => {
     setInstallmentTarget(line)
-    const remaining = Math.max(
-      money(line.amount) - money(line.paid_amount),
-      0
-    )
-    setInstallmentPaymentAmount(remaining ? String(remaining) : "")
-    setInstallmentPaymentNote("")
     setInstallmentPaymentType("")
     setIsInstallmentPayDialogOpen(true)
   }
@@ -632,18 +628,12 @@ export default function SaleDetailPage() {
       showToast.error(t("Please select a payment gateway before proceeding."))
       return
     }
-    if (money(installmentPaymentAmount) <= 0) {
-      showToast.error(t("Enter installment payment amount."))
-      return
-    }
 
     const response = await paySaleInstallment({
       id,
       installmentId: installmentTarget.id,
       payLoad: {
-        amount: String(money(installmentPaymentAmount)),
         payment_type: installmentPaymentType,
-        note: installmentPaymentNote,
       },
     }).unwrap()
     showToast.success(response?.message || t("Installment paid successfully."))
@@ -1560,13 +1550,17 @@ export default function SaleDetailPage() {
         >
           <DialogContent className="max-w-xl">
             <DialogHeader>
-              <DialogTitle>{t("Pay Instalment")}</DialogTitle>
+              <DialogTitle>{t("Payment Method")}</DialogTitle>
               <DialogDescription>
-                {t("Record payment against the selected installment line.")}
+                {t("Before submitting the payment, choose the payment type used for that order.")}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm">
+            <div className="rounded-md border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+              {t("Before submitting the payment, choose the payment type used for that order.")}
+            </div>
+
+            <div className="rounded-md border border-gray-100 bg-gray-50 px-4 py-3 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">{t("Due Date")}</span>
                 <span className="font-semibold text-slate-900">
@@ -1574,11 +1568,9 @@ export default function SaleDetailPage() {
                 </span>
               </div>
               <div className="mt-2 flex items-center justify-between">
-                <span className="text-slate-500">{t("Remaining")}</span>
+                <span className="text-slate-500">{t("Amount")}</span>
                 <span className="font-semibold text-slate-900">
-                  {formatMoney(
-                    money(installmentTarget?.amount) - money(installmentTarget?.paid_amount)
-                  )}
+                  {formatMoney(installmentTarget?.amount)}
                 </span>
               </div>
             </div>
@@ -1601,20 +1593,6 @@ export default function SaleDetailPage() {
                   </SelectItem>
                 ))}
               </UniFieldSelect>
-              <UniFieldInput
-                label={t("Amount")}
-                value={installmentPaymentAmount}
-                onChange={(event) => setInstallmentPaymentAmount(event.target.value)}
-                placeholder="0.00"
-                prefix={currencyIndicator}
-                type="number"
-              />
-              <UniFieldInput
-                label={t("Note")}
-                value={installmentPaymentNote}
-                onChange={(event) => setInstallmentPaymentNote(event.target.value)}
-                placeholder={t("Optional note")}
-              />
             </div>
 
             <DialogFooter>
