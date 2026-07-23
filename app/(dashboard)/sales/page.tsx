@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { FileText, ReceiptText, Settings, Trash2 } from "lucide-react"
+import { FileText, ReceiptText, Settings } from "lucide-react"
 
 import { useConfirmDialog } from "@/components/confirm-dialog"
 import DynamicTable from "@/components/DynamicTable"
@@ -14,6 +14,7 @@ import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
+import { MdDelete } from "react-icons/md"
 
 const paymentStatusColors: Record<string, string> = {
   paid: "bg-green-50 text-green-700",
@@ -221,7 +222,7 @@ export default function SalesHistoryPage() {
                 key: "delete",
                 label: t("Delete"),
                 labelText: t("Delete"),
-                icon: <Trash2 className="size-4 text-red-500" />,
+                icon: <MdDelete className="size-4 text-red-500" />,
                 onClick: () => handleDeleteOrder(record),
                 priority: 20,
               },

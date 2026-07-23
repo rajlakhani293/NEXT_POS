@@ -16,14 +16,6 @@ import {
 } from "@/components/ui/dialog"
 import { SelectItem } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { UniFieldInput } from "@/components/ui/unifield-input"
@@ -60,14 +52,6 @@ type ReturnLine = {
   note: string
 }
 
-type DuePaymentRow = {
-  id: string
-  payment_type: string
-  amount: string
-  reference_number: string
-  note: string
-}
-
 type InstallmentLineForm = {
   id: string
   due_date: string
@@ -89,6 +73,7 @@ const statusLabelKeys: Record<string, string> = {
   processing: "Processing",
   ready: "Ready",
   completed: "Completed",
+  "not-available": "Not Available",
   packed: "Packed",
   shipped: "Shipped",
   delivered: "Delivered",
@@ -108,32 +93,11 @@ const getStatusLabel = (value: any, t: (key: string) => string) => {
 const money = (value: string | number | null | undefined) =>
   Number(value || 0) || 0
 
-const emptyDuePaymentRow = (): DuePaymentRow => ({
-  id: crypto.randomUUID(),
-  payment_type: "cash-payment",
-  amount: "",
-  reference_number: "",
-  note: "",
-})
-
 const emptyInstallmentLine = (): InstallmentLineForm => ({
   id: crypto.randomUUID(),
   due_date: "",
   amount: "",
 })
-
-const buildReturnLines = (items: any[] = []): ReturnLine[] =>
-  items
-    .filter((item) => Number(item.refundable_quantity || 0) > 0)
-    .map((item) => ({
-      sale_item_id: Number(item.id),
-      product_name: item.product__name || `Item #${item.id}`,
-      refundable_quantity: Number(item.refundable_quantity || 0),
-      quantity: "",
-      unit_price: String(item.unit_price || 0),
-      condition: "unspoiled",
-      note: "",
-    }))
 
 export default function SaleDetailPage() {
   const router = useRouter()
@@ -156,41 +120,27 @@ export default function SaleDetailPage() {
   }
 
   const { hasPermission } = usePermissions()
-  const canRefundOrder = hasPermission(PERMISSIONS.special.refundOrder)
   const canVoidSale = hasPermission(PERMISSIONS.sales.void)
   const canDeleteSale = hasPermission(PERMISSIONS.sales.delete)
-  const canCollectDue = hasPermission(PERMISSIONS.payments.collectDue)
   const canUpdateSale = hasPermission(PERMISSIONS.sales.update)
   const canCreatePayment = hasPermission(PERMISSIONS.payments.create)
 
-  const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false)
-  const [isCollectDueDialogOpen, setIsCollectDueDialogOpen] = useState(false)
-  const [isInstallmentDialogOpen, setIsInstallmentDialogOpen] = useState(false)
   const [isInstallmentPayDialogOpen, setIsInstallmentPayDialogOpen] = useState(false)
+  const [isRefundProductDialogOpen, setIsRefundProductDialogOpen] = useState(false)
   const [isVoidDialogOpen, setIsVoidDialogOpen] = useState(false)
   const [voidReason, setVoidReason] = useState("")
-  const [returnType, setReturnType] = useState("refund")
-  const [refundPaymentType, setRefundPaymentType] = useState("cash-payment")
-  const [exchangeSaleId, setExchangeSaleId] = useState("")
-  const [returnNote, setReturnNote] = useState("")
+  const [refundPaymentType, setRefundPaymentType] = useState("")
   const [returnLines, setReturnLines] = useState<ReturnLine[]>([])
+  const [refundProductDraft, setRefundProductDraft] = useState<ReturnLine | null>(null)
+  const [refundProductEditIndex, setRefundProductEditIndex] = useState<number | null>(null)
   const [selectedRefundProductId, setSelectedRefundProductId] = useState("")
-  const [refundScreenAmount, setRefundScreenAmount] = useState("")
-  const [dueNote, setDueNote] = useState("")
-  const [duePayments, setDuePayments] = useState<DuePaymentRow[]>([
-    emptyDuePaymentRow(),
-  ])
-  const [quickPaymentType, setQuickPaymentType] = useState("cash-payment")
+  const [quickPaymentType, setQuickPaymentType] = useState("")
   const [quickPaymentAmount, setQuickPaymentAmount] = useState("")
-  const [quickPaymentReference, setQuickPaymentReference] = useState("")
-  const [quickPaymentNote, setQuickPaymentNote] = useState("")
   const [processingStatus, setProcessingStatus] = useState("")
   const [deliveryStatus, setDeliveryStatus] = useState("")
   const [showProcessingSelect, setShowProcessingSelect] = useState(false)
   const [showDeliverySelect, setShowDeliverySelect] = useState(false)
-  const [installmentLines, setInstallmentLines] = useState<InstallmentLineForm[]>([
-    emptyInstallmentLine(),
-  ])
+  const [installmentLines, setInstallmentLines] = useState<InstallmentLineForm[]>([])
   const [installmentTarget, setInstallmentTarget] = useState<any>(null)
   const [installmentPaymentType, setInstallmentPaymentType] = useState("cash-payment")
   const [installmentPaymentAmount, setInstallmentPaymentAmount] = useState("")
@@ -239,19 +189,6 @@ export default function SaleDetailPage() {
   const sale = saleState.data?.data
   const paymentTypeOptions = paymentTypesState.data?.data || []
   const installmentPlan = sale?.installment_plan
-  const refundableItems = useMemo(
-    () =>
-      (sale?.items || []).filter(
-        (item: any) => Number(item.refundable_quantity || 0) > 0
-      ),
-    [sale?.items]
-  )
-
-  useEffect(() => {
-    if (!isReturnDialogOpen) return
-    setReturnLines(buildReturnLines(sale?.items || []))
-  }, [isReturnDialogOpen, sale?.items])
-
   useEffect(() => {
     setProcessingStatus(sale?.process_status || "")
     setDeliveryStatus(sale?.delivery_status || "")
@@ -281,10 +218,6 @@ export default function SaleDetailPage() {
       ),
     [selectedReturnItems]
   )
-  const dueCollectedAmount = useMemo(
-    () => duePayments.reduce((sum, row) => sum + money(row.amount), 0),
-    [duePayments]
-  )
   const unpaidAmount = Math.max(money(sale?.total) - money(sale?.tendered), 0)
   const paymentLabels = useMemo(() => {
     const labels: Record<string, string> = {}
@@ -294,33 +227,24 @@ export default function SaleDetailPage() {
     })
     return labels
   }, [paymentTypeOptions])
+  const installmentRows = installmentPlan?.lines || []
+  const installmentTotal = useMemo(
+    () =>
+      [...installmentRows, ...installmentLines].reduce(
+        (sum, line: any) => sum + money(line.amount),
+        0
+      ),
+    [installmentRows, installmentLines]
+  )
+  const installmentRemaining = Math.max(money(sale?.total) - installmentTotal, 0)
 
   const resetReturnForm = () => {
-    setReturnType("refund")
-    setRefundPaymentType("cash-payment")
-    setExchangeSaleId("")
-    setReturnNote("")
+    setRefundPaymentType("")
     setSelectedRefundProductId("")
-    setRefundScreenAmount("")
     setReturnLines([])
   }
 
-  const resetCollectDueForm = () => {
-    setDueNote("")
-    setDuePayments([
-      {
-        ...emptyDuePaymentRow(),
-        amount: sale?.due_amount ? String(sale.due_amount) : "",
-      },
-    ])
-  }
-
-  const openReturnDialog = () => {
-    resetReturnForm()
-    setIsReturnDialogOpen(true)
-  }
-
-  const addRefundProduct = () => {
+  const openRefundProductDialog = () => {
     if (!selectedRefundProductId) {
       showToast.error(t("Please select a product before proceeding."))
       return
@@ -340,29 +264,63 @@ export default function SaleDetailPage() {
       showToast.error(t("Not enough quantity to proceed."))
       return
     }
-    setReturnLines((current) => [
-      ...current,
-      {
-        sale_item_id: Number(item.id),
-        product_name: item.product__name || `Item #${item.id}`,
-        refundable_quantity: remaining,
-        quantity: String(remaining),
-        unit_price: String(item.unit_price || 0),
-        condition: "unspoiled",
-        note: "",
-      },
-    ])
+    setRefundProductDraft({
+      sale_item_id: Number(item.id),
+      product_name: item.product__name || `Item #${item.id}`,
+      refundable_quantity: remaining,
+      quantity: String(remaining),
+      unit_price: String(item.unit_price || 0),
+      condition: "unspoiled",
+      note: "",
+    })
+    setRefundProductEditIndex(null)
+    setIsRefundProductDialogOpen(true)
     setSelectedRefundProductId("")
+  }
+
+  const openEditRefundProductDialog = (line: ReturnLine, index: number) => {
+    setRefundProductDraft({ ...line })
+    setRefundProductEditIndex(index)
+    setIsRefundProductDialogOpen(true)
+  }
+
+  const saveRefundProductDraft = () => {
+    if (!refundProductDraft) return
+    if (money(refundProductDraft.unit_price) < 0) {
+      showToast.error(t("Please provide a valid value"))
+      return
+    }
+    const line = {
+      ...refundProductDraft,
+      quantity: refundProductDraft.quantity || String(refundProductDraft.refundable_quantity),
+      note: refundProductDraft.note || "",
+      condition: refundProductDraft.condition || "unspoiled",
+    }
+    setReturnLines((current) => {
+      if (refundProductEditIndex === null) return [...current, line]
+      return current.map((item, index) =>
+        index === refundProductEditIndex ? line : item
+      )
+    })
+    setIsRefundProductDialogOpen(false)
+    setRefundProductDraft(null)
+    setRefundProductEditIndex(null)
   }
 
   const removeRefundProduct = (index: number) => {
     setReturnLines((current) => current.filter((_, lineIndex) => lineIndex !== index))
   }
 
-  const openCollectDueDialog = () => {
-    resetCollectDueForm()
-    getPaymentTypesDropdown()
-    setIsCollectDueDialogOpen(true)
+  const updateReturnLineByIndex = (
+    index: number,
+    field: keyof Omit<ReturnLine, "sale_item_id" | "product_name" | "refundable_quantity">,
+    value: string
+  ) => {
+    setReturnLines((current) =>
+      current.map((line, lineIndex) =>
+        lineIndex === index ? { ...line, [field]: value } : line
+      )
+    )
   }
 
   const updateReturnLine = (
@@ -395,39 +353,29 @@ export default function SaleDetailPage() {
       return
     }
 
-    if ((returnType === "refund" || returnType === "exchange") && !refundPaymentType) {
+    if (!refundPaymentType) {
       showToast.error(t("Choose refund payment type."))
-      return
-    }
-    if (returnType === "exchange" && !exchangeSaleId) {
-      showToast.error(t("Enter exchange sale id."))
       return
     }
 
     const payLoad: any = {
-      return_type: returnType,
-      payment_type:
-        returnType === "refund" || returnType === "exchange"
-          ? refundPaymentType
-          : undefined,
-      exchange_sale_id:
-        returnType === "exchange" && exchangeSaleId
-          ? Number(exchangeSaleId)
-          : undefined,
-      note: returnNote,
-      total: String(money(refundScreenAmount) || estimatedReturnTotal),
+      return_type: "refund",
+      payment_type: refundPaymentType,
+      note: "",
+      total: String(estimatedReturnTotal),
       items: selectedReturnItems.map((line) => ({
         sale_item_id: line.sale_item_id,
         quantity: String(line.quantity),
         unit_price: String(line.unit_price),
         condition: line.condition,
         note: line.note,
+        description: line.note,
       })),
     }
 
     const response = await createSaleReturn({ id, payLoad }).unwrap()
     showToast.success(response?.message || t("Return processed successfully."))
-    setIsReturnDialogOpen(false)
+    resetReturnForm()
     await getSaleById({ id })
   }
 
@@ -457,53 +405,6 @@ export default function SaleDetailPage() {
     const response = await deleteSales({ ids: [id] }).unwrap()
     showToast.success(response?.message || t("The order has been deleted."))
     router.push("/sales")
-  }
-
-  const updateDuePaymentRow = (
-    rowId: string,
-    field: keyof Omit<DuePaymentRow, "id">,
-    value: string
-  ) => {
-    setDuePayments((current) =>
-      current.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
-    )
-  }
-
-  const addDuePaymentRow = () => {
-    setDuePayments((current) => [...current, emptyDuePaymentRow()])
-  }
-
-  const removeDuePaymentRow = (rowId: string) => {
-    setDuePayments((current) =>
-      current.length === 1 ? current : current.filter((row) => row.id !== rowId)
-    )
-  }
-
-  const handleCollectDue = async () => {
-    const payments = duePayments
-      .filter((row) => money(row.amount) > 0)
-      .map((row) => ({
-        payment_type: row.payment_type,
-        amount: String(money(row.amount)),
-        reference_number: row.reference_number,
-        note: row.note,
-      }))
-
-    if (!payments.length) {
-      showToast.error(t("Enter at least one due payment."))
-      return
-    }
-
-    const response = await collectSaleDue({
-      id,
-      payLoad: {
-        payments,
-        note: dueNote,
-      },
-    }).unwrap()
-    showToast.success(response?.message || t("Due collected successfully."))
-    setIsCollectDueDialogOpen(false)
-    await getSaleById({ id })
   }
 
   const handleUpdateProcessing = async (value: string) => {
@@ -579,17 +480,15 @@ export default function SaleDetailPage() {
           {
             payment_type: quickPaymentType,
             amount: String(value),
-            reference_number: quickPaymentReference,
-            note: quickPaymentNote,
+            reference_number: "",
+            note: "",
           },
         ],
-        note: quickPaymentNote,
+        note: "",
       },
     }).unwrap()
     showToast.success(response?.message || t("Payment saved successfully."))
     setQuickPaymentAmount("")
-    setQuickPaymentReference("")
-    setQuickPaymentNote("")
     await getSaleById({ id })
   }
 
@@ -608,14 +507,7 @@ export default function SaleDetailPage() {
   }
 
   const removeInstallmentLine = (rowId: string) => {
-    setInstallmentLines((current) =>
-      current.length === 1 ? current : current.filter((row) => row.id !== rowId)
-    )
-  }
-
-  const openInstallmentDialog = () => {
-    setInstallmentLines([emptyInstallmentLine()])
-    setIsInstallmentDialogOpen(true)
+    setInstallmentLines((current) => current.filter((row) => row.id !== rowId))
   }
 
   const openInstallmentPayDialog = (line: any) => {
@@ -651,7 +543,7 @@ export default function SaleDetailPage() {
       },
     }).unwrap()
     showToast.success(response?.message || t("Installments saved successfully."))
-    setIsInstallmentDialogOpen(false)
+    setInstallmentLines([])
     await getSaleById({ id })
   }
 
@@ -760,16 +652,10 @@ export default function SaleDetailPage() {
     "refunded",
   ].includes(paymentStatus)
   const canShowInstallmentsTab =
-    ["partially_paid", "unpaid"].includes(paymentStatus) &&
-    Boolean(sale.support_instalments)
+    ["partially_paid", "unpaid"].includes(paymentStatus)
   const canShowVoidAction =
     canVoidSale && ["paid", "partially_paid", "unpaid"].includes(paymentStatus)
   const canShowDeleteAction = canDeleteSale && paymentStatus === "hold"
-  const canShowCollectDueAction =
-    canCollectDue && canShowPaymentsTab && Number(sale.due_amount || 0) > 0
-  const canShowRefundAction =
-    canRefundOrder && canShowRefundTab && refundableItems.length > 0
-
   return (
     <DashboardPage padding="none">
       <div className="flex h-full min-h-0 flex-col gap-4 overflow-auto">
@@ -894,10 +780,11 @@ export default function SaleDetailPage() {
                       ) : (
                         <div className="flex items-center gap-2">
                           <UniFieldSelect
-                            value={deliveryStatus || "pending"}
+                            value={deliveryStatus}
                             onValueChange={setDeliveryStatus}
                             containerClassName="w-40"
                           >
+                            <SelectItem value="not-available">{t("Not Available")}</SelectItem>
                             <SelectItem value="pending">{t("Pending")}</SelectItem>
                             <SelectItem value="packed">{t("Packed")}</SelectItem>
                             <SelectItem value="shipped">{t("Shipped")}</SelectItem>
@@ -939,10 +826,11 @@ export default function SaleDetailPage() {
                       ) : (
                         <div className="flex items-center gap-2">
                           <UniFieldSelect
-                            value={processingStatus || "pending"}
+                            value={processingStatus}
                             onValueChange={setProcessingStatus}
                             containerClassName="w-40"
                           >
+                            <SelectItem value="not-available">{t("Not Available")}</SelectItem>
                             <SelectItem value="pending">{t("Pending")}</SelectItem>
                             <SelectItem value="processing">{t("Processing")}</SelectItem>
                             <SelectItem value="ready">{t("Ready")}</SelectItem>
@@ -1083,10 +971,13 @@ export default function SaleDetailPage() {
                     ) : (
                       <div className="space-y-3">
                         <UniFieldSelect
-                          label={t("Payment Type")}
-                          value={quickPaymentType}
-                          onValueChange={setQuickPaymentType}
+                          label={t("Select Payment")}
+                          value={quickPaymentType || "none"}
+                          onValueChange={(value) =>
+                            setQuickPaymentType(value === "none" ? "" : value)
+                          }
                         >
+                          <SelectItem value="none">{t("Choose option")}</SelectItem>
                           {paymentTypeOptions.map((payment: any) => (
                             <SelectItem
                               key={payment.value || payment.identifier}
@@ -1096,6 +987,14 @@ export default function SaleDetailPage() {
                             </SelectItem>
                           ))}
                         </UniFieldSelect>
+                        <p className="-mt-2 text-xs font-medium text-slate-500">
+                          {t("choose the payment type.")}
+                        </p>
+                        <div className="flex h-12 items-center justify-end border border-gray-200 bg-white px-3">
+                          <span className="font-semibold text-slate-700">
+                            {formatMoney(quickPaymentAmount)}
+                          </span>
+                        </div>
                         <UniFieldInput
                           label={t("Amount")}
                           value={quickPaymentAmount}
@@ -1104,31 +1003,13 @@ export default function SaleDetailPage() {
                           prefix={currencyIndicator}
                           type="number"
                         />
-                        <UniFieldInput
-                          label={t("Reference number")}
-                          value={quickPaymentReference}
-                          onChange={(event) => setQuickPaymentReference(event.target.value)}
-                          placeholder={t("Reference number")}
-                        />
-                        <UniFieldInput
-                          label={t("Payment note")}
-                          value={quickPaymentNote}
-                          onChange={(event) => setQuickPaymentNote(event.target.value)}
-                          placeholder={t("Payment note")}
-                        />
-                        <div className="flex items-center justify-between border border-gray-200 bg-white px-3 py-2">
-                          <span className="font-semibold text-slate-700">{t("Screen")}</span>
-                          <span className="font-semibold text-slate-700">
-                            {formatMoney(quickPaymentAmount)}
-                          </span>
-                        </div>
                         <Button
                           type="button"
+                          className="w-full"
                           onClick={handleQuickPayment}
                           disabled={collectDueState.isLoading}
-                          className="w-full"
                         >
-                          {collectDueState.isLoading ? t("Saving...") : t("Submit Payment")}
+                          {collectDueState.isLoading ? t("Saving...") : t("Enter")}
                         </Button>
                       </div>
                     )}
@@ -1175,14 +1056,6 @@ export default function SaleDetailPage() {
                     )}
                   </section>
                 </div>
-
-                {canShowCollectDueAction ? (
-                  <div className="flex justify-end">
-                    <Button variant="outline" onClick={openCollectDueDialog}>
-                      {t("Advanced Payment")}
-                    </Button>
-                  </div>
-                ) : null}
               </TabsContent>
             ) : null}
 
@@ -1215,7 +1088,7 @@ export default function SaleDetailPage() {
                             ))}
                         </UniFieldSelect>
                         <div className="flex items-end">
-                          <Button type="button" variant="outline" onClick={addRefundProduct}>
+                          <Button type="button" variant="outline" onClick={openRefundProductDialog}>
                             {t("Add Product")}
                           </Button>
                         </div>
@@ -1230,21 +1103,22 @@ export default function SaleDetailPage() {
                         returnLines.map((line, index) => (
                           <div
                             key={`${line.sale_item_id}-${index}`}
-                            className="grid gap-3 border border-gray-200 bg-white p-3 md:grid-cols-[1fr_120px_150px_44px]"
+                            className="grid gap-3 border border-gray-200 bg-white p-3 md:grid-cols-[1fr_130px_96px_44px_44px]"
                           >
                             <div>
                               <p className="font-semibold text-slate-900">
                                 {line.product_name}
                               </p>
                               <p className="text-sm text-slate-500">
-                                {t("Available")}: {line.refundable_quantity}
+                                {t("Available")}: {line.refundable_quantity} ·{" "}
+                                {getStatusLabel(line.condition, t)}
                               </p>
                             </div>
                             <UniFieldInput
                               value={line.quantity}
                               onChange={(event) =>
-                                updateReturnLine(
-                                  line.sale_item_id,
+                                updateReturnLineByIndex(
+                                  index,
                                   "quantity",
                                   event.target.value
                                 )
@@ -1254,15 +1128,18 @@ export default function SaleDetailPage() {
                               min={0}
                               max={line.refundable_quantity}
                             />
-                            <UniFieldSelect
-                              value={line.condition}
-                              onValueChange={(value) =>
-                                updateReturnLine(line.sale_item_id, "condition", value)
-                              }
+                            <div className="flex items-center justify-end font-semibold text-slate-900">
+                              {formatMoney(money(line.quantity) * money(line.unit_price))}
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => openEditRefundProductDialog(line, index)}
                             >
-                              <SelectItem value="unspoiled">{t("Unspoiled")}</SelectItem>
-                              <SelectItem value="damaged">{t("Damaged")}</SelectItem>
-                            </UniFieldSelect>
+                              <span className="sr-only">{t("Edit")}</span>
+                              ...
+                            </Button>
                             <Button
                               type="button"
                               variant="ghost"
@@ -1271,32 +1148,6 @@ export default function SaleDetailPage() {
                             >
                               <Trash2 className="size-4" />
                             </Button>
-                            <div className="md:col-span-4 grid gap-3 md:grid-cols-2">
-                              <UniFieldInput
-                                value={line.unit_price}
-                                onChange={(event) =>
-                                  updateReturnLine(
-                                    line.sale_item_id,
-                                    "unit_price",
-                                    event.target.value
-                                  )
-                                }
-                                placeholder="0"
-                                type="number"
-                                prefix={currencyIndicator}
-                              />
-                              <UniFieldInput
-                                value={line.note}
-                                onChange={(event) =>
-                                  updateReturnLine(
-                                    line.sale_item_id,
-                                    "note",
-                                    event.target.value
-                                  )
-                                }
-                                placeholder={t("Item note")}
-                              />
-                            </div>
                           </div>
                         ))
                       ) : (
@@ -1322,9 +1173,12 @@ export default function SaleDetailPage() {
                       </div>
                       <UniFieldSelect
                         label={t("Payment Gateway")}
-                        value={refundPaymentType}
-                        onValueChange={setRefundPaymentType}
+                        value={refundPaymentType || "none"}
+                        onValueChange={(value) =>
+                          setRefundPaymentType(value === "none" ? "" : value)
+                        }
                       >
+                        <SelectItem value="none">{t("Choose option")}</SelectItem>
                         {paymentTypeOptions.map((payment: any) => (
                           <SelectItem
                             key={payment.value || payment.identifier}
@@ -1336,22 +1190,8 @@ export default function SaleDetailPage() {
                       </UniFieldSelect>
                       <div className="flex items-center justify-between border border-gray-200 bg-white p-3 font-semibold">
                         <span>{t("Screen")}</span>
-                        <span>{formatMoney(refundScreenAmount || estimatedReturnTotal)}</span>
+                        <span>{formatMoney(estimatedReturnTotal)}</span>
                       </div>
-                      <UniFieldInput
-                        label={t("Amount")}
-                        value={refundScreenAmount}
-                        onChange={(event) => setRefundScreenAmount(event.target.value)}
-                        placeholder="0.00"
-                        prefix={currencyIndicator}
-                        type="number"
-                      />
-                      <UniFieldInput
-                        label={t("Note")}
-                        value={returnNote}
-                        onChange={(event) => setReturnNote(event.target.value)}
-                        placeholder={t("Return note")}
-                      />
                       <Button
                         type="button"
                         onClick={handleSubmitReturn}
@@ -1368,149 +1208,160 @@ export default function SaleDetailPage() {
 
             {canShowInstallmentsTab ? (
               <TabsContent value="installments" className="space-y-4 px-6 py-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900">{t("Instalments")}</h2>
-                    <p className="text-sm text-slate-500">
-                      {t("Payment schedule and installment collections for this sale.")}
-                    </p>
-                  </div>
-                  {canUpdateSale && Number(sale.due_amount || 0) > 0 ? (
-                    <Button type="button" variant="outline" onClick={openInstallmentDialog}>
-                      {installmentPlan ? t("Update Instalments") : t("Create Instalments")}
+                <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
+                  {t("Instalments")}
+                </h2>
+                <div className="flex items-center justify-between border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
+                  <span>
+                    {t("Total")} : {formatMoney(sale.total)} ({t("Remaining")} :{" "}
+                    {formatMoney(installmentRemaining)})
+                  </span>
+                  <span>
+                    {t("Instalments")}: {formatMoney(installmentTotal)}
+                  </span>
+                  {canUpdateSale ? (
+                    <Button type="button" size="sm" onClick={addInstallmentLine}>
+                      {t("Add Instalment")}
                     </Button>
                   ) : null}
                 </div>
-                <div className="overflow-x-auto rounded-2xl border border-gray-200">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("Due Date")}</TableHead>
-                        <TableHead>{t("Amount")}</TableHead>
-                        <TableHead>{t("Paid")}</TableHead>
-                        <TableHead>{t("Remaining")}</TableHead>
-                        <TableHead>{t("Status")}</TableHead>
-                        <TableHead>{t("Action")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {installmentPlan?.lines?.length ? (
-                        installmentPlan.lines.map((line: any) => (
-                          <TableRow key={line.id}>
-                            <TableCell className="min-w-40">
-                              {line.paid ? (
-                                line.due_date || line.date
-                              ) : (
-                                <UniFieldInput
-                                  type="date"
-                                  value={installmentDrafts[String(line.id)]?.due_date || ""}
-                                  onChange={(event) =>
-                                    setInstallmentDrafts((current) => ({
-                                      ...current,
-                                      [String(line.id)]: {
-                                        due_date: event.target.value,
-                                        amount:
-                                          current[String(line.id)]?.amount ||
-                                          String(line.amount || ""),
-                                      },
-                                    }))
-                                  }
-                                />
-                              )}
-                            </TableCell>
-                            <TableCell className="min-w-36">
-                              {line.paid ? (
-                                formatMoney(line.amount)
-                              ) : (
-                                <UniFieldInput
-                                  value={installmentDrafts[String(line.id)]?.amount || ""}
-                                  onChange={(event) =>
-                                    setInstallmentDrafts((current) => ({
-                                      ...current,
-                                      [String(line.id)]: {
-                                        due_date:
-                                          current[String(line.id)]?.due_date ||
-                                          line.due_date ||
-                                          line.date ||
-                                          "",
-                                        amount: event.target.value,
-                                      },
-                                    }))
-                                  }
-                                  type="number"
-                                  prefix={currencyIndicator}
-                                />
-                              )}
-                            </TableCell>
-                            <TableCell>{formatMoney(line.paid_amount)}</TableCell>
-                            <TableCell>
-                              {formatMoney(money(line.amount) - money(line.paid_amount))}
-                            </TableCell>
-                            <TableCell className="capitalize">
-                              {getStatusLabel(line.installment_status, t)}
-                            </TableCell>
-                            <TableCell>
-                              {canCreatePayment &&
-                                money(line.amount) > money(line.paid_amount) ? (
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => openInstallmentPayDialog(line)}
-                                  >
-                                    {t("Pay")}
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    size="icon"
-                                    variant="outline"
-                                    onClick={() => handleUpdateInstallment(line)}
-                                    disabled={updateInstallmentState.isLoading}
-                                  >
-                                    <Save className="size-4" />
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    size="icon"
-                                    variant="outline"
-                                    onClick={() => handleDeleteInstallment(line)}
-                                    disabled={deleteInstallmentState.isLoading}
-                                  >
-                                    <Trash2 className="size-4" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    if (!line.payment_id) {
-                                      showToast.error(t("This instalment doesn't have any payment attached."))
-                                      return
-                                    }
-                                    router.push(`/sales/${sale.id}/receipt?payment=${line.payment_id}`)
-                                  }}
-                                >
-                                  {t("Receipt")}
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={6}
-                            className="py-10 text-center text-sm text-slate-500"
-                          >
-                            {t("No installments created for this sale.")}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                <div className="space-y-3">
+                  {installmentRows.map((line: any) => {
+                    const isPaid = Boolean(line.paid) || money(line.paid_amount) >= money(line.amount)
+                    return (
+                      <div
+                        key={line.id}
+                        className="grid gap-3 border border-gray-200 bg-white p-3 md:grid-cols-[1fr_1fr_auto]"
+                      >
+                        <UniFieldInput
+                          label={t("Date")}
+                          type="date"
+                          value={installmentDrafts[String(line.id)]?.due_date || ""}
+                          onChange={(event) =>
+                            setInstallmentDrafts((current) => ({
+                              ...current,
+                              [String(line.id)]: {
+                                due_date: event.target.value,
+                                amount:
+                                  current[String(line.id)]?.amount || String(line.amount || ""),
+                              },
+                            }))
+                          }
+                          disabled={isPaid}
+                        />
+                        <UniFieldInput
+                          label={t("Amount")}
+                          value={installmentDrafts[String(line.id)]?.amount || ""}
+                          onChange={(event) =>
+                            setInstallmentDrafts((current) => ({
+                              ...current,
+                              [String(line.id)]: {
+                                due_date:
+                                  current[String(line.id)]?.due_date ||
+                                  line.due_date ||
+                                  line.date ||
+                                  "",
+                                amount: event.target.value,
+                              },
+                            }))
+                          }
+                          type="number"
+                          prefix={currencyIndicator}
+                          disabled={isPaid}
+                        />
+                        <div className="flex items-end gap-2">
+                          {!isPaid && canCreatePayment ? (
+                            <Button type="button" variant="outline" onClick={() => openInstallmentPayDialog(line)}>
+                              {t("Pay")}
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                if (!line.payment_id) {
+                                  showToast.error(t("This instalment doesn't have any payment attached."))
+                                  return
+                                }
+                                router.push(`/sales/${sale.id}/receipt?payment=${line.payment_id}`)
+                              }}
+                            >
+                              {t("Receipt")}
+                            </Button>
+                          )}
+                          {!isPaid && canUpdateSale ? (
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="outline"
+                              onClick={() => handleUpdateInstallment(line)}
+                              disabled={updateInstallmentState.isLoading}
+                            >
+                              <Save className="size-4" />
+                            </Button>
+                          ) : null}
+                          {!isPaid && canUpdateSale ? (
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="outline"
+                              onClick={() => handleDeleteInstallment(line)}
+                              disabled={deleteInstallmentState.isLoading}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {installmentLines.map((line) => (
+                    <div
+                      key={line.id}
+                      className="grid gap-3 border border-gray-200 bg-white p-3 md:grid-cols-[1fr_1fr_auto]"
+                    >
+                      <UniFieldInput
+                        label={t("Date")}
+                        type="date"
+                        value={line.due_date}
+                        onChange={(event) =>
+                          updateInstallmentLine(line.id, "due_date", event.target.value)
+                        }
+                      />
+                      <UniFieldInput
+                        label={t("Amount")}
+                        value={line.amount}
+                        onChange={(event) =>
+                          updateInstallmentLine(line.id, "amount", event.target.value)
+                        }
+                        placeholder="0.00"
+                        prefix={currencyIndicator}
+                        type="number"
+                      />
+                      <div className="flex items-end gap-2">
+                        <Button
+                          type="button"
+                          onClick={() => handleCreateInstallments()}
+                          disabled={createInstallmentsState.isLoading}
+                        >
+                          {createInstallmentsState.isLoading ? t("Saving...") : t("Create")}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="outline"
+                          onClick={() => removeInstallmentLine(line.id)}
+                        >
+                          <X className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {!installmentRows.length && !installmentLines.length ? (
+                    <div className="border border-dashed border-gray-200 p-10 text-center text-sm font-semibold text-slate-500">
+                      {t("No installments created for this sale.")}
+                    </div>
+                  ) : null}
                 </div>
               </TabsContent>
             ) : null}
@@ -1548,6 +1399,80 @@ export default function SaleDetailPage() {
           </div>
         </div>
 
+        <Dialog
+          open={isRefundProductDialogOpen}
+          onOpenChange={(open) => {
+            setIsRefundProductDialogOpen(open)
+            if (!open) {
+              setRefundProductDraft(null)
+              setRefundProductEditIndex(null)
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{t("Products")}</DialogTitle>
+            </DialogHeader>
+            {refundProductDraft ? (
+              <div className="space-y-4">
+                <UniFieldInput
+                  label={t("Unit Price")}
+                  value={refundProductDraft.unit_price}
+                  onChange={(event) =>
+                    setRefundProductDraft((current) =>
+                      current ? { ...current, unit_price: event.target.value } : current
+                    )
+                  }
+                  placeholder="0"
+                  prefix={currencyIndicator}
+                  type="number"
+                />
+                <p className="-mt-3 text-xs font-medium text-slate-500">
+                  {t("Define what is the unit price of the product.")}
+                </p>
+                <UniFieldSelect
+                  label={t("Condition")}
+                  value={refundProductDraft.condition || "unspoiled"}
+                  onValueChange={(value) =>
+                    setRefundProductDraft((current) =>
+                      current ? { ...current, condition: value } : current
+                    )
+                  }
+                >
+                  <SelectItem value="unspoiled">{t("Unspoiled")}</SelectItem>
+                  <SelectItem value="damaged">{t("Damaged")}</SelectItem>
+                </UniFieldSelect>
+                <p className="-mt-3 text-xs font-medium text-slate-500">
+                  {t("Determine in which condition the product is returned.")}
+                </p>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">
+                    {t("Other Observations")}
+                  </label>
+                  <Textarea
+                    value={refundProductDraft.note}
+                    onChange={(event) =>
+                      setRefundProductDraft((current) =>
+                        current ? { ...current, note: event.target.value } : current
+                      )
+                    }
+                    rows={8}
+                    placeholder={t("Describe in details the condition of the returned product.")}
+                  />
+                  <p className="text-xs font-medium text-slate-500">
+                    {t("Describe in details the condition of the returned product.")}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+            <DialogFooter>
+              <Button type="button" onClick={saveRefundProductDraft}>
+                {t("Add Product")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={isVoidDialogOpen} onOpenChange={setIsVoidDialogOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
@@ -1577,410 +1502,6 @@ export default function SaleDetailPage() {
                 disabled={voidSaleState.isLoading}
               >
                 {voidSaleState.isLoading ? t("Voiding...") : t("Void")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}>
-          <DialogContent className="max-w-5xl">
-            <DialogHeader>
-              <DialogTitle>{t("Refund & Return")}</DialogTitle>
-              <DialogDescription>
-                {t("Choose refund, credit note or exchange and enter return quantities.")}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <UniFieldSelect
-                label={t("Return Type")}
-                value={returnType}
-                onValueChange={setReturnType}
-              >
-                <SelectItem value="refund">{t("Refund")}</SelectItem>
-                <SelectItem value="credit_note">{t("Credit Note")}</SelectItem>
-                <SelectItem value="exchange">{t("Exchange")}</SelectItem>
-              </UniFieldSelect>
-
-              {returnType === "refund" || returnType === "exchange" ? (
-                <UniFieldSelect
-                  label={returnType === "exchange" ? t("Difference Refund Type") : t("Refund Payment Type")}
-                  value={refundPaymentType}
-                  onValueChange={setRefundPaymentType}
-                  placeholder={t("Choose payment type")}
-                >
-                  {paymentTypeOptions.map((payment: any) => (
-                    <SelectItem
-                      key={payment.value || payment.identifier}
-                      value={payment.value || payment.identifier}
-                    >
-                      {payment.label}
-                    </SelectItem>
-                  ))}
-                </UniFieldSelect>
-              ) : null}
-
-              {returnType === "exchange" ? (
-                <UniFieldInput
-                  label={t("Exchange Sale ID")}
-                  value={exchangeSaleId}
-                  onChange={(event) => setExchangeSaleId(event.target.value)}
-                  placeholder={t("Linked sale id")}
-                  type="number"
-                />
-              ) : null}
-
-              <UniFieldInput
-                label={t("Note")}
-                value={returnNote}
-                onChange={(event) => setReturnNote(event.target.value)}
-                placeholder={t("Return note")}
-              />
-            </div>
-
-            <div className="max-h-[420px] overflow-auto rounded-2xl border border-gray-100">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("Product")}</TableHead>
-                    <TableHead>{t("Available")}</TableHead>
-                    <TableHead>{t("Return Qty")}</TableHead>
-                    <TableHead>{t("Unit Price")}</TableHead>
-                    <TableHead>{t("Condition")}</TableHead>
-                    <TableHead>{t("Note")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {returnLines.length ? (
-                    returnLines.map((line) => (
-                      <TableRow key={line.sale_item_id}>
-                        <TableCell className="font-semibold text-slate-900">
-                          {line.product_name}
-                        </TableCell>
-                        <TableCell>{line.refundable_quantity}</TableCell>
-                        <TableCell className="min-w-32">
-                          <div className="flex items-center gap-2">
-                            <UniFieldInput
-                              value={line.quantity}
-                              onChange={(event) =>
-                                updateReturnLine(
-                                  line.sale_item_id,
-                                  "quantity",
-                                  event.target.value
-                                )
-                              }
-                              placeholder="0"
-                              type="number"
-                              min={0}
-                              max={line.refundable_quantity}
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                updateReturnLine(
-                                  line.sale_item_id,
-                                  "quantity",
-                                  String(line.refundable_quantity)
-                                )
-                              }
-                            >
-                              {t("Max")}
-                            </Button>
-                          </div>
-                        </TableCell>
-                        <TableCell className="min-w-36">
-                          <UniFieldInput
-                            value={line.unit_price}
-                            onChange={(event) =>
-                              updateReturnLine(
-                                line.sale_item_id,
-                                "unit_price",
-                                event.target.value
-                              )
-                            }
-                            placeholder="0"
-                            type="number"
-                            prefix={currencyIndicator}
-                          />
-                        </TableCell>
-                        <TableCell className="min-w-36">
-                          <UniFieldSelect
-                            value={line.condition}
-                            onValueChange={(value) =>
-                              updateReturnLine(line.sale_item_id, "condition", value)
-                            }
-                          >
-                            <SelectItem value="unspoiled">{t("Unspoiled")}</SelectItem>
-                            <SelectItem value="damaged">{t("Damaged")}</SelectItem>
-                          </UniFieldSelect>
-                        </TableCell>
-                        <TableCell className="min-w-48">
-                          <UniFieldInput
-                            value={line.note}
-                            onChange={(event) =>
-                              updateReturnLine(
-                                line.sale_item_id,
-                                "note",
-                                event.target.value
-                              )
-                            }
-                            placeholder={t("Item note")}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="py-10 text-center text-sm text-slate-500"
-                      >
-                        {t("No refundable items remaining.")}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {t("Selected Items")}: {selectedReturnItems.length}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {t("Estimated return total without tax split preview.")}
-                </p>
-              </div>
-              <p className="text-lg font-bold text-slate-900">
-                {formatMoney(estimatedReturnTotal)}
-              </p>
-            </div>
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsReturnDialogOpen(false)}
-              >
-                {t("Cancel")}
-              </Button>
-              <Button
-                onClick={handleSubmitReturn}
-                disabled={createReturnState.isLoading || !returnLines.length}
-              >
-                {createReturnState.isLoading ? t("Processing...") : t("Submit Return")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog
-          open={isCollectDueDialogOpen}
-          onOpenChange={setIsCollectDueDialogOpen}
-        >
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>{t("Collect Due")}</DialogTitle>
-              <DialogDescription>
-                {t("Add one or more payments to reduce the remaining due amount.")}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500">{t("Remaining Due")}</span>
-                <span className="font-semibold text-slate-900">
-                  {formatMoney(sale.due_amount)}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center justify-between text-sm">
-                <span className="text-slate-500">{t("Entered Payment")}</span>
-                <span className="font-semibold text-slate-900">
-                  {formatMoney(dueCollectedAmount)}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-900">{t("Payments")}</p>
-                <Button type="button" variant="outline" size="sm" onClick={addDuePaymentRow}>
-                  {t("Add Payment")}
-                </Button>
-              </div>
-
-              {duePayments.map((row, index) => (
-                <div
-                  key={row.id}
-                  className="space-y-3 rounded-xl border border-gray-100 bg-gray-50 p-3"
-                >
-                  <div className="grid gap-3 md:grid-cols-[1fr_140px_44px]">
-                    <UniFieldSelect
-                      label={index === 0 ? t("Payment Type") : undefined}
-                      value={row.payment_type}
-                      onValueChange={(value) =>
-                        updateDuePaymentRow(row.id, "payment_type", value)
-                      }
-                    >
-                      {paymentTypeOptions.map((payment: any) => (
-                        <SelectItem
-                          key={payment.value || payment.identifier}
-                          value={payment.value || payment.identifier}
-                        >
-                          {payment.label}
-                        </SelectItem>
-                      ))}
-                    </UniFieldSelect>
-                    <UniFieldInput
-                      label={index === 0 ? t("Amount") : undefined}
-                      value={row.amount}
-                      onChange={(event) =>
-                        updateDuePaymentRow(row.id, "amount", event.target.value)
-                      }
-                      placeholder="0.00"
-                      prefix={currencyIndicator}
-                      type="number"
-                    />
-                    <div className="flex items-end">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="text-red-500 hover:text-red-600"
-                        onClick={() => removeDuePaymentRow(row.id)}
-                      >
-                        <span className="sr-only">{t("Remove payment")}</span>
-                        x
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <UniFieldInput
-                      value={row.reference_number}
-                      onChange={(event) =>
-                        updateDuePaymentRow(
-                          row.id,
-                          "reference_number",
-                          event.target.value
-                        )
-                      }
-                      placeholder={t("Reference number")}
-                    />
-                    <UniFieldInput
-                      value={row.note}
-                      onChange={(event) =>
-                        updateDuePaymentRow(row.id, "note", event.target.value)
-                      }
-                      placeholder={t("Payment note")}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <UniFieldInput
-              label={t("Collection Note")}
-              value={dueNote}
-              onChange={(event) => setDueNote(event.target.value)}
-              placeholder={t("Optional note")}
-            />
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsCollectDueDialogOpen(false)}
-              >
-                {t("Cancel")}
-              </Button>
-              <Button onClick={handleCollectDue} disabled={collectDueState.isLoading}>
-                {collectDueState.isLoading ? t("Collecting...") : t("Collect Due")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog
-          open={isInstallmentDialogOpen}
-          onOpenChange={setIsInstallmentDialogOpen}
-        >
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>{t("Save Instalments")}</DialogTitle>
-              <DialogDescription>
-                {t("Create payment schedule lines for the current due amount.")}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500">{t("Current Due")}</span>
-                <span className="font-semibold text-slate-900">
-                  {formatMoney(sale.due_amount)}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-900">{t("Installment Lines")}</p>
-                <Button type="button" variant="outline" size="sm" onClick={addInstallmentLine}>
-                  {t("Add Line")}
-                </Button>
-              </div>
-
-              {installmentLines.map((line, index) => (
-                <div
-                  key={line.id}
-                  className="grid gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3 md:grid-cols-[1fr_1fr_44px]"
-                >
-                  <UniFieldInput
-                    label={index === 0 ? t("Due Date") : undefined}
-                    type="date"
-                    value={line.due_date}
-                    onChange={(event) =>
-                      updateInstallmentLine(line.id, "due_date", event.target.value)
-                    }
-                  />
-                  <UniFieldInput
-                    label={index === 0 ? t("Amount") : undefined}
-                    value={line.amount}
-                    onChange={(event) =>
-                      updateInstallmentLine(line.id, "amount", event.target.value)
-                    }
-                    placeholder="0.00"
-                    prefix={currencyIndicator}
-                    type="number"
-                  />
-                  <div className="flex items-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-500 hover:text-red-600"
-                      onClick={() => removeInstallmentLine(line.id)}
-                    >
-                      <span className="sr-only">{t("Remove installment line")}</span>
-                      x
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsInstallmentDialogOpen(false)}
-              >
-                {t("Cancel")}
-              </Button>
-              <Button
-                onClick={handleCreateInstallments}
-                disabled={createInstallmentsState.isLoading}
-              >
-                {createInstallmentsState.isLoading ? t("Saving...") : t("Save Instalments")}
               </Button>
             </DialogFooter>
           </DialogContent>
