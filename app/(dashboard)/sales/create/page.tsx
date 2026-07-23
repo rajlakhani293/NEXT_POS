@@ -142,7 +142,7 @@ const parseCouponCodes = (value: string) =>
 
 const emptyPaymentRow = (): PaymentRow => ({
   id: crypto.randomUUID(),
-  payment_type: "cash-payment",
+  payment_type: "",
   amount: "",
   reference_number: "",
   note: "",
@@ -791,7 +791,7 @@ export default function SalesPage() {
   useEffect(() => {
     if (activePaymentType || !paymentTypeOptions.length) return
     const firstPayment = paymentTypeOptions[0]
-    setActivePaymentType(firstPayment.value || firstPayment.identifier || "cash-payment")
+    setActivePaymentType(firstPayment.value || firstPayment.identifier || "")
   }, [activePaymentType, paymentTypeOptions])
 
   const drillIntoCategory = useCallback((category: POSCategory) => {
@@ -2038,6 +2038,10 @@ export default function SalesPage() {
   }
 
   const addPaymentFromPopup = (amount: number) => {
+    if (!activePaymentType) {
+      showToast.error(t("Please select a payment gateway before proceeding."))
+      return
+    }
     if (!amount || amount <= 0) {
       showToast.error(t("Please provide a valid payment amount."))
       return
@@ -2067,7 +2071,9 @@ export default function SalesPage() {
     setPaymentAmountInput("")
     const firstPayment = paymentTypeOptions[0]
     if (firstPayment) {
-      setActivePaymentType(firstPayment.value || firstPayment.identifier || "cash-payment")
+      setActivePaymentType(firstPayment.value || firstPayment.identifier || "")
+    } else {
+      setActivePaymentType("")
     }
   }
 
@@ -2091,6 +2097,10 @@ export default function SalesPage() {
   }
 
   const makeFullPaymentFromPopup = () => {
+    if (!activePaymentType) {
+      showToast.error(t("Please select a payment gateway before proceeding."))
+      return
+    }
     const remaining = Math.max(subtotal - totalPaid, 0)
     if (!remaining) {
       handleCompleteSale()
@@ -2220,7 +2230,7 @@ export default function SalesPage() {
     continueCheckout()
     const firstPayment = paymentTypeOptions[0]
     if (!activePaymentType && firstPayment) {
-      setActivePaymentType(firstPayment.value || firstPayment.identifier || "cash-payment")
+      setActivePaymentType(firstPayment.value || firstPayment.identifier || "")
     }
   }
 

@@ -765,5 +765,14 @@
   "Payment Method": "Método de pago",
   "Before submitting the payment, choose the payment type used for that order.": "Antes de enviar el pago, elija el tipo de pago utilizado para ese pedido.",
   "Due Date": "Fecha de vencimiento",
-  "Pay Instalment": "Pagar cuota"
+  "Pay Instalment": "Pagar cuota",
+  "Payment List": "Lista de pagos",
+  "No Payment added.": "No se agregó ningún pago.",
+  "Submit Payment": "Enviar pago",
+  "Full Payment": "Pago completo",
+  "Confirm Full Payment": "Confirmar pago completo",
+  "Initial Payment": "Pago inicial",
+  "The request was canceled": "La solicitud fue cancelada",
+  "Add Payment": "Agregar pago",
+  "Partially paid orders are disabled.": "Los pedidos parcialmente pagados están desactivados."
 }

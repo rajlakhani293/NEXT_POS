@@ -765,5 +765,14 @@
   "Payment Method": "طريقة الدفع",
   "Before submitting the payment, choose the payment type used for that order.": "قبل إرسال الدفعة، اختر نوع الدفع المستخدم لهذا الطلب.",
   "Due Date": "تاريخ الاستحقاق",
-  "Pay Instalment": "دفع القسط"
+  "Pay Instalment": "دفع القسط",
+  "Payment List": "قائمة المدفوعات",
+  "No Payment added.": "لم تتم إضافة أي دفعة.",
+  "Submit Payment": "إرسال الدفع",
+  "Full Payment": "الدفع الكامل",
+  "Confirm Full Payment": "تأكيد الدفع الكامل",
+  "Initial Payment": "الدفعة الأولية",
+  "The request was canceled": "تم إلغاء الطلب",
+  "Add Payment": "إضافة دفعة",
+  "Partially paid orders are disabled.": "تم تعطيل الطلبات المدفوعة جزئيًا."
 }

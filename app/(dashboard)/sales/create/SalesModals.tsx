@@ -752,12 +752,11 @@ export default function SalesModals({
                   variant="outline"
                   onClick={
                     totalPaid > 0
-                      ? () => handleCompleteSale({ paymentStatus: "unpaid" })
+                      ? () => handleCompleteSale({ paymentStatus: "partially_paid" })
                       : openLayawayDialog
                   }
-                  disabled={
-                    isCreatingSale
-                  }
+                  disabled={isCreatingSale || !ordersAllowPartial}
+                  title={!ordersAllowPartial ? t("Partially paid orders are disabled.") : undefined}
                 >
                   {totalPaid === 0
                     ? `${t("Layaway")} - ${formatMoney(minimumLayawayPayment)}`
