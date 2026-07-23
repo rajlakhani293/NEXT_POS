@@ -2620,12 +2620,12 @@ export default function SalesPage() {
                   <div className="grid h-16 shrink-0 grid-cols-4 overflow-hidden border-t border-slate-200 text-sm font-bold">
                     <Button
                       type="button"
-                      variant="ghost"
-                      onClick={openCartDiscountDialog}
-                      className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-none border-r bg-white px-2 py-2 text-slate-700 hover:bg-slate-100 h-auto"
+                      disabled={!cartItems.length || isCreatingSale}
+                      onClick={handleOpenPaymentDialog}
+                      className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-none border-r bg-emerald-600 px-2 py-2 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 h-auto hover:text-white"
                     >
-                      <Percent className="size-5" />
-                      {t("Discount")}
+                      <CreditCard className="size-5" />
+                      {isCreatingSale ? t("Completing") : t("Pay")}
                     </Button>
                     <Button
                       type="button"
@@ -2638,12 +2638,12 @@ export default function SalesPage() {
                     </Button>
                     <Button
                       type="button"
-                      disabled={!cartItems.length || isCreatingSale}
-                      onClick={handleOpenPaymentDialog}
-                      className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-none border-r bg-emerald-600 px-2 py-2 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 h-auto hover:text-white"
+                      variant="ghost"
+                      onClick={openCartDiscountDialog}
+                      className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-none border-r bg-orange-600 px-2 py-2 text-white hover:bg-orange-700 h-auto"
                     >
-                      <CreditCard className="size-5" />
-                      {isCreatingSale ? t("Completing") : t("Pay")}
+                      <Percent className="size-5" />
+                      {t("Discount")}
                     </Button>
                     <Button
                       type="button"

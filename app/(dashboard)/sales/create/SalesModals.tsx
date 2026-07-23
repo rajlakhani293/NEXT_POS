@@ -15,7 +15,9 @@ import {
   Lock,
 } from "lucide-react"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { ButtonGroup } from "@/components/ui/button-group"
 import CustomModal from "@/components/ui/customModal"
 import { SelectItem } from "@/components/ui/select"
@@ -1922,16 +1924,14 @@ export default function SalesModals({
             {(["billing", "shipping"] as const).map((type) => (
               <TabsContent key={type} value={type} className="mt-5">
                 <div className="space-y-4">
-                  <label className="flex items-center gap-2 text-sm font-semibold">
-                    <input
-                      type="checkbox"
+                  <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
+                    <Checkbox
                       checked={Boolean(shippingInfo[`use_customer_${type}`])}
-                      onChange={(event) => {
-                        const checked = event.target.checked
+                      onCheckedChange={(checked) => {
                         if (checked && !fillCustomerAddress(type)) return
                         setShippingInfo((current: any) => ({
                           ...current,
-                          [`use_customer_${type}`]: checked,
+                          [`use_customer_${type}`]: Boolean(checked),
                         }))
                       }}
                     />
@@ -1964,10 +1964,10 @@ export default function SalesModals({
         open={isCustomerSelectOpen}
         onOpenChange={setIsCustomerSelectOpen}
         title={t("Customer List")}
-        className="w-[94vw] !max-w-[860px]"
+        className="w-[94vw] !max-w-[520px]"
         showFooter={false}
       >
-        <div className="flex min-h-[460px] flex-col p-2">
+        <div className="flex h-[460px] flex-col p-2">
           <div className="border-b pb-3">
             <UniFieldInput
               value={customerSearchTerm}
@@ -1977,42 +1977,67 @@ export default function SalesModals({
           </div>
           <div className="flex-auto overflow-y-auto pt-3">
             {filteredCustomers.length ? (
-              <ul className="space-y-1">
+              <div className="flex flex-col gap-1.5">
                 {filteredCustomers.map((customer: any) => (
-                  <li key={customer.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const selectedId = String(customer.id)
-                        setCustomerId(selectedId)
-                        setIsCustomerSelectOpen(false)
-                        setCustomerSearchTerm("")
-                        onCustomerSelected?.(selectedId)
-                      }}
-                      className="flex w-full cursor-pointer items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-3 text-left transition hover:border-slate-300 hover:bg-slate-50"
-                    >
+                  <button
+                    key={customer.id}
+                    type="button"
+                    onClick={() => {
+                      const selectedId = String(customer.id)
+                      setCustomerId(selectedId)
+                      setIsCustomerSelectOpen(false)
+                      setCustomerSearchTerm("")
+                      onCustomerSelected?.(selectedId)
+                    }}
+                    className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-card px-3 py-2 text-left shadow-xs transition-all duration-150 hover:border-slate-300 hover:bg-accent hover:shadow-sm"
+                  >
+                    {/* Left — Avatar initial + name/group */}
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600 group-hover:bg-slate-200">
+                        {customerDisplayName(customer).charAt(0).toUpperCase()}
+                      </div>
                       <div className="min-w-0">
-                        <h4 className="truncate font-semibold text-slate-900">
+                        <p className="truncate text-xs font-semibold text-foreground">
                           {customerDisplayName(customer)}
-                        </h4>
-                        <p className="text-xs font-medium text-muted-foreground">
+                        </p>
+                        <Badge
+                          variant="secondary"
+                          className="rounded px-1 py-0 text-[9px] font-medium leading-4"
+                        >
                           {customerGroupName(customer)}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Right — purchases & owed stats */}
+                    <div className="flex shrink-0 items-center gap-3">
+                      <div className="text-right">
+                        <p className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+                          {t("Purchases")}
+                        </p>
+                        <p className="text-xs font-semibold text-foreground">
+                          {formatMoney(customer.purchases_amount || customer.total_sales || 0)}
                         </p>
                       </div>
-                      <div className="shrink-0 text-right text-xs font-semibold">
-                        <div className="text-muted-foreground">{t("purchases")}</div>
-                        <div className="text-sm text-slate-900">
-                          {formatMoney(customer.purchases_amount || customer.total_sales || 0)}
-                        </div>
-                        <div className="mt-1 text-muted-foreground">{t("Owed")}</div>
-                        <div className={money(customer.owed_amount) > 0 ? "text-red-600" : "text-muted-foreground"}>
+                      <div className="h-6 w-px bg-border" />
+                      <div className="text-right">
+                        <p className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+                          {t("Owed")}
+                        </p>
+                        <p
+                          className={
+                            money(customer.owed_amount) > 0
+                              ? "text-xs font-semibold text-destructive"
+                              : "text-xs font-semibold text-muted-foreground"
+                          }
+                        >
                           {formatMoney(customer.owed_amount || customer.account_amount || 0)}
-                        </div>
+                        </p>
                       </div>
-                    </button>
-                  </li>
+                    </div>
+                  </button>
                 ))}
-              </ul>
+              </div>
             ) : (
               <p className="p-4 text-center text-sm text-muted-foreground">
                 {t("No customers found.")}
