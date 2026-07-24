@@ -774,5 +774,12 @@
   "Initial Payment": "Pago inicial",
   "The request was canceled": "La solicitud fue cancelada",
   "Add Payment": "Agregar pago",
+  "Refund Shipping": "Reembolsar envío",
+  "Please provide a valid payment amount.": "Proporcione un importe de pago válido.",
+  "The refund will be made on the current order.": "El reembolso se realizará en el pedido actual.",
+  "No Order Instalment has been registered": "No se ha registrado ninguna cuota del pedido",
+  "Status": "Estado",
+  "Actions": "Acciones",
+  "New": "Nuevo",
   "Partially paid orders are disabled.": "Los pedidos parcialmente pagados están desactivados."
 }

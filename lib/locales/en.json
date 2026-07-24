@@ -974,5 +974,12 @@
   "Initial Payment": "Initial Payment",
   "The request was canceled": "The request was canceled",
   "Add Payment": "Add Payment",
+  "Refund Shipping": "Refund Shipping",
+  "Please provide a valid payment amount.": "Please provide a valid payment amount.",
+  "The refund will be made on the current order.": "The refund will be made on the current order.",
+  "No Order Instalment has been registered": "No Order Instalment has been registered",
+  "Status": "Status",
+  "Actions": "Actions",
+  "New": "New",
   "Partially paid orders are disabled.": "Partially paid orders are disabled."
 }

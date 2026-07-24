@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, Banknote, Printer, ReceiptText, Save, Trash2, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useConfirmDialog } from "@/components/confirm-dialog"
 import {
   Dialog,
@@ -147,6 +148,7 @@ export default function SaleDetailPage() {
   const { t } = useTranslation()
   const { confirm, confirmDialog } = useConfirmDialog()
   const posOptions = usePosOptions()
+  const ordersAllowPartial = posOptions.orders_allow_partial
   const currencyIndicator =
     posOptions.currency_preferred === "iso"
       ? posOptions.currency_iso
@@ -170,6 +172,8 @@ export default function SaleDetailPage() {
   const [isVoidDialogOpen, setIsVoidDialogOpen] = useState(false)
   const [voidReason, setVoidReason] = useState("")
   const [refundPaymentType, setRefundPaymentType] = useState("")
+  const [refundShipping, setRefundShipping] = useState(false)
+  const [refundScreenAmount, setRefundScreenAmount] = useState("")
   const [returnLines, setReturnLines] = useState<ReturnLine[]>([])
   const [refundProductDraft, setRefundProductDraft] = useState<ReturnLine | null>(null)
   const [refundProductEditIndex, setRefundProductEditIndex] = useState<number | null>(null)
@@ -253,9 +257,13 @@ export default function SaleDetailPage() {
       selectedReturnItems.reduce(
         (sum, line) => sum + money(line.quantity) * money(line.unit_price),
         0
-      ),
-    [selectedReturnItems]
+      ) + (refundShipping ? money(sale?.shipping) : 0),
+    [refundShipping, sale?.shipping, selectedReturnItems]
   )
+
+  useEffect(() => {
+    setRefundScreenAmount(estimatedReturnTotal > 0 ? String(estimatedReturnTotal) : "")
+  }, [estimatedReturnTotal])
   const paidAmount = resolvePaidAmount(sale)
   const unpaidAmount = resolveUnpaidAmount(sale, paidAmount)
   const paymentLabels = useMemo(() => {
@@ -279,6 +287,8 @@ export default function SaleDetailPage() {
 
   const resetReturnForm = () => {
     setRefundPaymentType("")
+    setRefundShipping(false)
+    setRefundScreenAmount("")
     setSelectedRefundProductId("")
     setReturnLines([])
   }
@@ -396,12 +406,25 @@ export default function SaleDetailPage() {
       showToast.error(t("Choose refund payment type."))
       return
     }
+    if (money(refundScreenAmount) <= 0) {
+      showToast.error(t("Please provide a valid payment amount."))
+      return
+    }
+
+    const ok = await confirm({
+      title: t("Confirm Your Action"),
+      description: t("The refund will be made on the current order."),
+      confirmLabel: t("Proceed"),
+      cancelLabel: t("Cancel"),
+    })
+    if (!ok) return
 
     const payLoad: any = {
       return_type: "refund",
       payment_type: refundPaymentType,
       note: "",
-      total: String(estimatedReturnTotal),
+      total: String(money(refundScreenAmount)),
+      refund_shipping: refundShipping,
       items: selectedReturnItems.map((line) => ({
         sale_item_id: line.sale_item_id,
         quantity: String(line.quantity),
@@ -1125,6 +1148,21 @@ export default function SaleDetailPage() {
                           </Button>
                         </div>
                       </div>
+                      {money(sale.shipping) > 0 ? (
+                        <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3">
+                          <Checkbox
+                            id="refund-shipping"
+                            checked={refundShipping}
+                            onCheckedChange={(checked) => setRefundShipping(Boolean(checked))}
+                          />
+                          <label
+                            htmlFor="refund-shipping"
+                            className="text-sm font-semibold text-slate-700"
+                          >
+                            {t("Refund Shipping")}
+                          </label>
+                        </div>
+                      ) : null}
                     </div>
 
                     <h3 className="border-b border-gray-900 py-1 text-base font-semibold text-slate-700">
@@ -1220,10 +1258,14 @@ export default function SaleDetailPage() {
                           </SelectItem>
                         ))}
                       </UniFieldSelect>
-                      <div className="flex items-center justify-between border border-gray-200 bg-white p-3 font-semibold">
-                        <span>{t("Screen")}</span>
-                        <span>{formatMoney(estimatedReturnTotal)}</span>
-                      </div>
+                      <UniFieldInput
+                        label={t("Screen")}
+                        value={refundScreenAmount}
+                        onChange={(event) => setRefundScreenAmount(event.target.value)}
+                        placeholder="0.00"
+                        prefix={currencyIndicator}
+                        type="number"
+                      />
                       <Button
                         type="button"
                         onClick={handleSubmitReturn}
@@ -1239,151 +1281,12 @@ export default function SaleDetailPage() {
             ) : null}
 
             {canShowInstallmentsTab ? (
-              <TabsContent value="installments" className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-6">
-                <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
-                  {t("Instalments")}
-                </h2>
-                <div className="space-y-3">
-                  {installmentRows.map((line: any) => {
-                    const isPaid = Boolean(line.paid) || money(line.paid_amount) >= money(line.amount)
-                    return (
-                      <div
-                        key={line.id}
-                        className={cn(
-                          "grid gap-3 border bg-white p-3 md:grid-cols-[1fr_1fr_auto]",
-                          isPaid ? "border-green-200 bg-green-50/40" : "border-blue-200 bg-blue-50/30"
-                        )}
-                      >
-                        <DatePicker
-                          label={t("Date")}
-                          value={parseStringToDate(installmentDrafts[String(line.id)]?.due_date)}
-                          onChange={(date) =>
-                            setInstallmentDrafts((current) => ({
-                              ...current,
-                              [String(line.id)]: {
-                                due_date: formatDateToString(date),
-                                amount:
-                                  current[String(line.id)]?.amount || String(line.amount || ""),
-                              },
-                            }))
-                          }
-                          disabled={isPaid}
-                        />
-                        <UniFieldInput
-                          label={t("Amount")}
-                          value={installmentDrafts[String(line.id)]?.amount || ""}
-                          onChange={(event) =>
-                            setInstallmentDrafts((current) => ({
-                              ...current,
-                              [String(line.id)]: {
-                                due_date:
-                                  current[String(line.id)]?.due_date ||
-                                  line.due_date ||
-                                  line.date ||
-                                  "",
-                                amount: event.target.value,
-                              },
-                            }))
-                          }
-                          type="number"
-                          prefix={currencyIndicator}
-                          disabled={isPaid}
-                        />
-                        <div className="flex items-end gap-2">
-                          {!isPaid && canCreatePayment ? (
-                            <Button type="button" variant="outline" onClick={() => openInstallmentPayDialog(line)}>
-                              <Banknote className="size-4" />
-                              {t("Pay")}
-                            </Button>
-                          ) : (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => {
-                                if (!line.payment_id) {
-                                  showToast.error(t("This instalment doesn't have any payment attached."))
-                                  return
-                                }
-                                router.push(`/sales/${sale.id}/receipt?payment=${line.payment_id}`)
-                              }}
-                            >
-                              <Printer className="size-4" />
-                              {t("Receipt")}
-                            </Button>
-                          )}
-                          {!isPaid && canUpdateSale ? (
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="outline"
-                              onClick={() => handleUpdateInstallment(line)}
-                              disabled={updateInstallmentState.isLoading}
-                            >
-                              <Save className="size-4" />
-                            </Button>
-                          ) : null}
-                          {!isPaid && canUpdateSale ? (
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="outline"
-                              onClick={() => handleDeleteInstallment(line)}
-                              disabled={deleteInstallmentState.isLoading}
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          ) : null}
-                        </div>
-                      </div>
-                    )
-                  })}
-                  {installmentLines.map((line) => (
-                    <div
-                      key={line.id}
-                      className="grid gap-3 border border-blue-200 bg-blue-50/30 p-3 md:grid-cols-[1fr_1fr_auto]"
-                    >
-                      <DatePicker
-                        label={t("Date")}
-                        value={parseStringToDate(line.due_date)}
-                        onChange={(date) =>
-                          updateInstallmentLine(line.id, "due_date", formatDateToString(date))
-                        }
-                      />
-                      <UniFieldInput
-                        label={t("Amount")}
-                        value={line.amount}
-                        onChange={(event) =>
-                          updateInstallmentLine(line.id, "amount", event.target.value)
-                        }
-                        placeholder="0.00"
-                        prefix={currencyIndicator}
-                        type="number"
-                      />
-                      <div className="flex items-end gap-2">
-                        <Button
-                          type="button"
-                          onClick={() => handleCreateInstallments()}
-                          disabled={createInstallmentsState.isLoading}
-                        >
-                          {createInstallmentsState.isLoading ? t("Saving...") : t("Create")}
-                        </Button>
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="outline"
-                          onClick={() => removeInstallmentLine(line.id)}
-                        >
-                          <X className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  {!installmentRows.length && !installmentLines.length ? (
-                    <div className="border border-dashed border-gray-200 p-10 text-center text-sm font-semibold text-slate-500">
-                      {t("No installments created for this sale.")}
-                    </div>
-                  ) : null}
-                  <div className="flex items-center justify-between border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
+              <TabsContent value="installments" className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+                <section className="space-y-4">
+                  <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
+                    {t("Instalments")}
+                  </h2>
+                  <div className="flex flex-wrap items-center justify-between gap-3 border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
                     <span>
                       {t("Total")} : {formatMoney(sale.total)} ({t("Remaining")} :{" "}
                       {formatMoney(installmentRemaining)})
@@ -1393,18 +1296,177 @@ export default function SaleDetailPage() {
                         {t("Instalments")}: {formatMoney(installmentTotal)}
                       </span>
                       {canUpdateSale ? (
-                        <Button type="button" size="sm" onClick={addInstallmentLine}>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={addInstallmentLine}
+                          disabled={!ordersAllowPartial}
+                          title={!ordersAllowPartial ? t("Partially paid orders are disabled.") : undefined}
+                        >
                           {t("Add Instalment")}
                         </Button>
                       ) : null}
                     </div>
                   </div>
-                </div>
+
+                  <div className="overflow-hidden border border-gray-200 bg-white">
+                    <div className="grid grid-cols-[1fr_1fr_120px_180px] border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-bold uppercase text-slate-500">
+                      <span>{t("Date")}</span>
+                      <span>{t("Amount")}</span>
+                      <span>{t("Status")}</span>
+                      <span className="text-right">{t("Actions")}</span>
+                    </div>
+                    {installmentRows.map((line: any) => {
+                      const isPaid = Boolean(line.paid) || money(line.paid_amount) >= money(line.amount)
+                      return (
+                        <div
+                          key={line.id}
+                          className="grid grid-cols-[1fr_1fr_120px_180px] items-end gap-3 border-b border-gray-100 px-3 py-3 last:border-b-0"
+                        >
+                          <DatePicker
+                            label={t("Date")}
+                            value={parseStringToDate(installmentDrafts[String(line.id)]?.due_date)}
+                            onChange={(date) =>
+                              setInstallmentDrafts((current) => ({
+                                ...current,
+                                [String(line.id)]: {
+                                  due_date: formatDateToString(date),
+                                  amount:
+                                    current[String(line.id)]?.amount || String(line.amount || ""),
+                                },
+                              }))
+                            }
+                            disabled={isPaid}
+                          />
+                          <UniFieldInput
+                            label={t("Amount")}
+                            value={installmentDrafts[String(line.id)]?.amount || ""}
+                            onChange={(event) =>
+                              setInstallmentDrafts((current) => ({
+                                ...current,
+                                [String(line.id)]: {
+                                  due_date:
+                                    current[String(line.id)]?.due_date ||
+                                    line.due_date ||
+                                    line.date ||
+                                    "",
+                                  amount: event.target.value,
+                                },
+                              }))
+                            }
+                            type="number"
+                            prefix={currencyIndicator}
+                            disabled={isPaid}
+                          />
+                          <div className="pb-2 text-sm font-semibold text-slate-700">
+                            {isPaid ? t("Paid") : t("Unpaid")}
+                          </div>
+                          <div className="flex justify-end gap-2 pb-1">
+                            {!isPaid && canCreatePayment ? (
+                              <Button type="button" size="sm" variant="outline" onClick={() => openInstallmentPayDialog(line)}>
+                                <Banknote className="size-4" />
+                                {t("Pay")}
+                              </Button>
+                            ) : (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  if (!line.payment_id) {
+                                    showToast.error(t("This instalment doesn't have any payment attached."))
+                                    return
+                                  }
+                                  router.push(`/sales/${sale.id}/receipt?payment=${line.payment_id}`)
+                                }}
+                              >
+                                <Printer className="size-4" />
+                                {t("Receipt")}
+                              </Button>
+                            )}
+                            {!isPaid && canUpdateSale ? (
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                onClick={() => handleUpdateInstallment(line)}
+                                disabled={updateInstallmentState.isLoading}
+                              >
+                                <Save className="size-4" />
+                              </Button>
+                            ) : null}
+                            {!isPaid && canUpdateSale ? (
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                onClick={() => handleDeleteInstallment(line)}
+                                disabled={deleteInstallmentState.isLoading}
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            ) : null}
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {installmentLines.map((line) => (
+                      <div
+                        key={line.id}
+                        className="grid grid-cols-[1fr_1fr_120px_180px] items-end gap-3 border-b border-gray-100 bg-blue-50/40 px-3 py-3 last:border-b-0"
+                      >
+                        <DatePicker
+                          label={t("Date")}
+                          value={parseStringToDate(line.due_date)}
+                          onChange={(date) =>
+                            updateInstallmentLine(line.id, "due_date", formatDateToString(date))
+                          }
+                        />
+                        <UniFieldInput
+                          label={t("Amount")}
+                          value={line.amount}
+                          onChange={(event) =>
+                            updateInstallmentLine(line.id, "amount", event.target.value)
+                          }
+                          placeholder="0.00"
+                          prefix={currencyIndicator}
+                          type="number"
+                        />
+                        <div className="pb-2 text-sm font-semibold text-slate-700">
+                          {t("New")}
+                        </div>
+                        <div className="flex justify-end gap-2 pb-1">
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => handleCreateInstallments()}
+                            disabled={createInstallmentsState.isLoading || !ordersAllowPartial}
+                          >
+                            {createInstallmentsState.isLoading ? t("Saving...") : t("Create")}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="outline"
+                            onClick={() => removeInstallmentLine(line.id)}
+                          >
+                            <X className="size-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    {!installmentRows.length && !installmentLines.length ? (
+                      <div className="p-10 text-center text-sm font-semibold text-slate-500">
+                        {t("No Order Instalment has been registered")}
+                      </div>
+                    ) : null}
+                  </div>
+                </section>
               </TabsContent>
             ) : null}
           </Tabs>
 
-          <div className="mt-auto flex items-center justify-between border-t border-gray-100 px-6 py-3">
+          <div className="sticky bottom-0 z-10 mt-auto flex shrink-0 items-center justify-between border-t border-gray-100 bg-white px-6 py-3">
             <div className="flex items-center gap-2">
               {canShowVoidAction ? (
                 <Button

@@ -201,14 +201,15 @@ export function SiteHeader({
       <header className="sticky top-0 z-50 flex w-full items-center border-b bg-white">
         <div className="flex h-(--header-height) w-full items-center justify-between gap-3 px-3">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <Image
+            {/* <Image
               src="/next.svg"
               alt="Next.js"
               width={100}
               height={100}
               loading="eager"
               className="w-24"
-            />
+            /> */}
+            <div className="text-xl font-bold">nSquare</div>
 
             <div className="hidden h-7 w-px bg-slate-200 sm:block" />
 

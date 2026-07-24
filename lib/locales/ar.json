@@ -774,5 +774,12 @@
   "Initial Payment": "الدفعة الأولية",
   "The request was canceled": "تم إلغاء الطلب",
   "Add Payment": "إضافة دفعة",
+  "Refund Shipping": "استرداد الشحن",
+  "Please provide a valid payment amount.": "يرجى إدخال مبلغ دفع صالح.",
+  "The refund will be made on the current order.": "سيتم تنفيذ الاسترداد على الطلب الحالي.",
+  "No Order Instalment has been registered": "لم يتم تسجيل أي قسط للطلب",
+  "Status": "الحالة",
+  "Actions": "الإجراءات",
+  "New": "جديد",
   "Partially paid orders are disabled.": "تم تعطيل الطلبات المدفوعة جزئيًا."
 }
