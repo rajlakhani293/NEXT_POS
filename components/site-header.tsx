@@ -228,7 +228,7 @@ export function SiteHeader({
               )}
               <div className="min-w-0">
                 <p className="truncate text-xs font-semibold text-slate-900 leading-tight">
-                  {company?.name || t("Enter your company name")}
+                  {company?.name || t("company name")}
                 </p>
                 {(company?.code || company?.phone) && (
                   <p className="truncate text-[11px] font-medium text-slate-500 leading-tight">
