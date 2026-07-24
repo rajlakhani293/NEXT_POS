@@ -72,16 +72,10 @@ function DashboardLayoutFrame({ children }: { children: React.ReactNode }) {
         className="flex h-full min-h-0 flex-col"
       >
         <SiteHeader
-          companyLogo={company?.logo}
-          companyName={company?.name}
-          companyCode={company?.code}
-          branchName={branch?.name}
-          branchCode={branch?.code}
-          branchId={branch?.id}
+          company={company}
+          branch={branch}
           branchList={branchList}
-          userName={user?.full_name}
-          userContact={user?.phone || user?.email}
-          userImage={user?.profile_image}
+          user={user}
           onLogout={logout}
         />
         <div className="flex min-h-0 flex-1 bg-[#F9F9F9]">

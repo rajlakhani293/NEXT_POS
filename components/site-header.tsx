@@ -24,17 +24,37 @@ import { settings } from "@/lib/api/settings"
 import { useAppDispatch } from "@/lib/redux/hooks"
 import { useSession } from "@/lib/redux/session-provider"
 import { showToast } from "@/lib/toast"
-import { Building2, MapPin, Globe } from "lucide-react"
+import { Building2, MapPin, Globe, ChevronDown } from "lucide-react"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { supportedLanguages } from "@/lib/i18n/languages"
 
 type SiteHeaderProps = {
-  companyLogo?: string | null
-  companyName?: string | null
-  companyCode?: string | null
-  branchName?: string | null
-  branchCode?: string | null
-  branchId?: number | null
+  company?: {
+    id?: number
+    name?: string
+    code?: string
+    logo?: string
+    logo_image?: string
+    phone?: string
+    email?: string
+    address?: string
+    city?: string
+    state?: string
+    pincode?: string
+    [key: string]: any
+  } | null
+  branch?: {
+    id?: number
+    name?: string
+    code?: string
+    phone?: string
+    email?: string
+    address?: string
+    city?: string
+    state?: string
+    pincode?: string
+    [key: string]: any
+  } | null
   branchList?: {
     id: number
     name: string
@@ -43,9 +63,15 @@ type SiteHeaderProps = {
     phone?: string
     is_head_office?: boolean
   }[]
-  userName?: string | null
-  userContact?: string | null
-  userImage?: string | null
+  user?: {
+    full_name?: string
+    name?: string
+    phone?: string
+    email?: string
+    profile_image?: string
+    avatar?: string
+    [key: string]: any
+  } | null
   onLogout?: () => void
 }
 
@@ -107,7 +133,7 @@ function BranchQuickForm({
           type: "text",
           prefix: "+91",
           inputMode: "numeric",
-          maxLength: 11,
+          prefixPadding: "pl-11",
           sanitize: formatIndianMobile,
           validate: validateIndianMobile,
         },
@@ -139,16 +165,10 @@ function BranchQuickForm({
 }
 
 export function SiteHeader({
-  companyLogo,
-  companyName,
-  companyCode,
-  branchName,
-  branchCode,
-  branchId,
+  company,
+  branch,
   branchList = [],
-  userName,
-  userContact,
-  userImage,
+  user,
   onLogout,
 }: SiteHeaderProps) {
   const { refreshSession } = useSession()
@@ -159,7 +179,7 @@ export function SiteHeader({
   const [switchBranch, switchState] = auth.useSwitchBranchMutation()
 
   const handleSwitchBranch = async (nextBranchId: number) => {
-    if (nextBranchId === branchId || switchState.isLoading) return
+    if (nextBranchId === branch?.id || switchState.isLoading) return
     const response = await switchBranch({ branch_id: nextBranchId }).unwrap()
     if (response?.data?.token) {
       Cookies.set("token", response.data.token, { expires: 1, path: "/" })
@@ -192,70 +212,72 @@ export function SiteHeader({
 
             <div className="hidden h-7 w-px bg-slate-200 sm:block" />
 
-            <button
-              type="button"
-              className="flex min-w-0 items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50"
-            >
-              {companyLogo ? (
+            {/* Company Card */}
+            <div className="flex min-w-0 items-center gap-2.5 rounded-lg border border-slate-200/80 bg-slate-50/60 px-3 py-1 transition-all hover:bg-slate-100/70 hover:border-slate-300">
+              {company?.logo && (
                 <img
-                  src={companyLogo}
-                  alt={companyName || "Company"}
-                  className="h-8 w-8 shrink-0 rounded-full border object-contain"
+                  src={company.logo}
+                  alt={company.name || "Company"}
+                  className="h-8 w-8 shrink-0 rounded-md border border-slate-200 object-contain shadow-xs"
                 />
-              ) : (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+              )}
+              {!company?.logo && (
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
                   <Building2 className="h-4 w-4" />
                 </div>
               )}
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900">
-                  {companyName || t("Enter your company name")}
+                <p className="truncate text-xs font-semibold text-slate-900 leading-tight">
+                  {company?.name || t("Enter your company name")}
                 </p>
-                {/* <p className="truncate text-[10px] font-medium text-slate-500">
-                  {companyCode ? `${t("Company")} · ${companyCode}` : t("Company")}
-                </p> */}
+                {(company?.code || company?.phone) && (
+                  <p className="truncate text-[11px] font-medium text-slate-500 leading-tight">
+                    {[company?.code, company?.phone].filter(Boolean).join(" · ")}
+                  </p>
+                )}
               </div>
-            </button>
+            </div>
 
             <div className="hidden h-7 w-px bg-slate-200 md:block" />
 
+            {/* Branch Selector Card */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="hidden min-w-0 items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50 md:flex"
+                  className="group hidden min-w-0 items-center gap-2.5 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2.5 py-1 text-left transition-all hover:bg-slate-100/70 hover:border-slate-300 data-[state=open]:border-slate-300 data-[state=open]:bg-slate-100/70 md:flex"
                 >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
                     <MapPin className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-900">
-                      {branchName || t("Main Branch")}
+                    <p className="truncate text-xs font-semibold text-slate-900 leading-tight">
+                      {branch?.name || t("Main Branch")}
                     </p>
-                    {/* <p className="truncate text-[10px] font-medium text-slate-500">
-                      {branchCode ? `${t("Current Branch")} · ${branchCode}` : t("Current Branch")}
-                    </p> */}
+                    {(branch?.code || branch?.phone || branch?.city) && (
+                      <p className="truncate text-[11px] font-medium text-slate-500 leading-tight">
+                        {[branch?.code, branch?.phone || branch?.city].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
                   </div>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" sideOffset={10} className="w-72">
-                {/* <DropdownMenuLabel>Switch Branch</DropdownMenuLabel>
-                <DropdownMenuSeparator /> */}
                 {branchList.length ? (
-                  branchList.map((branch) => (
+                  branchList.map((item) => (
                     <DropdownMenuItem
-                      key={branch.id}
+                      key={item.id}
                       disabled={switchState.isLoading}
-                      onClick={() => handleSwitchBranch(branch.id)}
+                      onClick={() => handleSwitchBranch(item.id)}
                       className="flex items-start justify-between gap-3 cursor-pointer"
                     >
                       <div className="min-w-0">
-                        <div className="truncate font-medium">{branch.name}</div>
+                        <div className="truncate font-medium">{item.name}</div>
                         <div className="truncate text-xs text-muted-foreground">
-                          {[branch.code, branch.city].filter(Boolean).join(" · ") || t("Branch")}
+                          {[item.code, item.city, item.phone].filter(Boolean).join(" · ") || t("Branch")}
                         </div>
                       </div>
-                      {branch.id === branchId ? (
+                      {item.id === branch?.id ? (
                         <span className="text-xs font-semibold text-emerald-600">{t("Active")}</span>
                       ) : null}
                     </DropdownMenuItem>
@@ -263,7 +285,6 @@ export function SiteHeader({
                 ) : (
                   <DropdownMenuItem disabled>{t("No branches found")}</DropdownMenuItem>
                 )}
-                <DropdownMenuSeparator />
                 <Button
                   type="button"
                   variant="outline"
@@ -305,9 +326,9 @@ export function SiteHeader({
             <div className="hidden sm:block">
               <NavUser
                 user={{
-                  name: userName || "Super Admin",
-                  email: userContact || "Workspace owner",
-                  avatar: userImage || "",
+                  name: user?.full_name || user?.name || "Super Admin",
+                  email: user?.phone || user?.email || "Workspace owner",
+                  avatar: user?.profile_image || user?.avatar || "",
                 }}
                 onLogout={onLogout}
                 dropdownSide="bottom"
@@ -326,3 +347,4 @@ export function SiteHeader({
     </>
   )
 }
+
