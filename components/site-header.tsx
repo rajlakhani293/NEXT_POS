@@ -276,7 +276,7 @@ export function SiteHeader({
             </DropdownMenu>
           </div>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-2">
             <SearchForm className="w-full max-w-xs sm:w-auto" />
             <HeaderNotifications />
             <DropdownMenu>
