@@ -225,6 +225,7 @@ export function DatePicker({
   disabled,
 }: DatePickerProps) {
   const inputId = label?.toLowerCase().replace(/\s+/g, "-")
+  const safeValue = value && !Number.isNaN(value.getTime()) ? value : undefined
 
   return (
     <div className="space-y-1">
@@ -244,7 +245,7 @@ export function DatePicker({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            data-empty={!value}
+            data-empty={!safeValue}
             id={inputId}
             disabled={disabled}
             className={cn(
@@ -254,13 +255,13 @@ export function DatePicker({
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4 text-gray-900" />
-            <div className="text-gray-900">{value ? format(value, "PPP") : <span>{placeholder}</span>}</div>
+            <div className="text-gray-900">{safeValue ? format(safeValue, "PPP") : <span>{placeholder}</span>}</div>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0">
           <Calendar
             mode="single"
-            selected={value}
+            selected={safeValue}
             onSelect={onChange}
             initialFocus
             className="text-gray-900 font-semibold"

@@ -18,7 +18,7 @@ type StockAdjustmentFormProps = {
 
 const initialValues = {
   adjust_unit_id: "",
-  adjust_action: "set",
+  adjust_action: "",
   quantity: "",
   reason: "",
 }

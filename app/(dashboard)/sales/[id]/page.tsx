@@ -111,8 +111,16 @@ const normalizePaymentStatus = (value: any) =>
 
 const parseStringToDate = (str?: string) => {
   if (!str) return undefined
-  const [yyyy, mm, dd] = str.split("-").map(Number)
-  return new Date(yyyy, mm - 1, dd)
+  const value = String(str).trim()
+  const datePart = value.includes("T") ? value.split("T")[0] : value
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datePart)
+  if (match) {
+    const [, yyyy, mm, dd] = match
+    const parsed = new Date(Number(yyyy), Number(mm) - 1, Number(dd))
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed
+  }
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed
 }
 
 const formatDateToString = (date?: Date) => {
