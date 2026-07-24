@@ -222,9 +222,9 @@ export default function SaleDetailPage() {
   const [paySaleInstallment, payInstallmentState] = (
     sales as any
   ).usePaySaleInstallmentMutation()
-  const [collectSaleDue, collectDueState] = (
+  const [addSalePayment, addPaymentState] = (
     sales as any
-  ).useCollectSaleDueMutation()
+  ).useAddSalePaymentMutation()
   const [voidSale, voidSaleState] = (sales as any).useVoidSaleMutation()
   const [deleteSales, deleteSalesState] = (sales as any).useDeleteSalesMutation()
   const [getPaymentTypesDropdown, paymentTypesState] = (
@@ -241,7 +241,10 @@ export default function SaleDetailPage() {
 
   const sale = saleState.data?.data
   const paymentTypeOptions = paymentTypesState.data?.data || []
-  const installmentPlan = sale?.installment_plan
+  const installmentRows = useMemo(
+    () => sale?.installment_plan?.lines || sale?.instalments || [],
+    [sale?.installment_plan?.lines, sale?.instalments]
+  )
   useEffect(() => {
     setProcessingStatus(sale?.process_status || "")
     setDeliveryStatus(sale?.delivery_status || "")
@@ -249,14 +252,14 @@ export default function SaleDetailPage() {
 
   useEffect(() => {
     const drafts: Record<string, { due_date: string; amount: string }> = {}
-      ; (sale?.installment_plan?.lines || []).forEach((line: any) => {
+      ; installmentRows.forEach((line: any) => {
         drafts[String(line.id)] = {
           due_date: line.due_date || line.date || "",
           amount: String(line.amount || ""),
         }
       })
     setInstallmentDrafts(drafts)
-  }, [sale?.installment_plan?.lines])
+  }, [installmentRows])
 
   const selectedReturnItems = useMemo(
     () => returnLines.filter((line) => money(line.quantity) > 0),
@@ -285,7 +288,6 @@ export default function SaleDetailPage() {
     })
     return labels
   }, [paymentTypeOptions])
-  const installmentRows = installmentPlan?.lines || []
   const installmentTotal = useMemo(
     () =>
       [...installmentRows, ...installmentLines].reduce(
@@ -546,17 +548,12 @@ export default function SaleDetailPage() {
       cancelLabel: t("Cancel"),
     })
     if (!ok) return
-    const response = await collectSaleDue({
+    const response = await addSalePayment({
       id,
       payLoad: {
-        payments: [
-          {
-            payment_type: quickPaymentType,
-            amount: String(value),
-            reference_number: "",
-            note: "",
-          },
-        ],
+        payment_type: quickPaymentType,
+        amount: String(value),
+        reference_number: "",
         note: "",
       },
     }).unwrap()
@@ -1073,9 +1070,9 @@ export default function SaleDetailPage() {
                           type="button"
                           className="w-full"
                           onClick={handleQuickPayment}
-                          disabled={collectDueState.isLoading}
+                          disabled={addPaymentState.isLoading}
                         >
-                          {collectDueState.isLoading ? t("Saving...") : t("Enter")}
+                          {addPaymentState.isLoading ? t("Saving...") : t("Enter")}
                         </Button>
                       </div>
                     )}
@@ -1280,7 +1277,7 @@ export default function SaleDetailPage() {
                       <Button
                         type="button"
                         onClick={handleSubmitReturn}
-                        disabled={createReturnState.isLoading || !returnLines.length}
+                        disabled={createReturnState.isLoading || !selectedReturnItems.length}
                         className="w-full"
                       >
                         {createReturnState.isLoading ? t("Processing...") : t("Proceed")}

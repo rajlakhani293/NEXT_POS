@@ -99,6 +99,10 @@ const endpointsConfig = {
     query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
       createMutation(`${id}/collect-due`)(payLoad),
   },
+  addSalePayment: {
+    query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
+      createMutation(`${id}/payments`)(payLoad),
+  },
   voidSale: {
     query: ({ id, payLoad }: { id: number | string; payLoad: any }) =>
       createMutation(`${id}/void`)(payLoad),
