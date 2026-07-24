@@ -1784,7 +1784,7 @@ export default function SalesPage() {
       shipping_type: activeOrderType === "delivery" ? shippingInfo.shipping_type : "",
       billing: activeOrderType === "delivery" ? buildOrderAddress("billing") : null,
       shipping_address: activeOrderType === "delivery" ? buildOrderAddress("shipping") : null,
-      support_instalments: submitOptions.layaway?.support_instalments ?? false,
+      support_instalments: submitOptions.layaway?.support_instalments ?? true,
       total_instalments: submitOptions.layaway?.total_instalments ?? 0,
       final_payment_date: submitOptions.layaway?.final_payment_date ?? null,
       instalments: submitOptions.layaway?.instalments ?? [],
@@ -2007,7 +2007,7 @@ export default function SalesPage() {
     await handleCompleteSale({
       paymentStatus: "unpaid",
       layaway: {
-        support_instalments: false,
+        support_instalments: true,
         total_instalments: 0,
         final_payment_date: null,
         instalments: [],

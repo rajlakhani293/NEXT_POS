@@ -106,6 +106,9 @@ const money = (value: string | number | null | undefined) =>
 const isTruthyOption = (value: any) =>
   value === true || value === 1 || value === "1" || value === "yes" || value === "true"
 
+const normalizePaymentStatus = (value: any) =>
+  String(value || "").trim().toLowerCase().replaceAll("-", "_")
+
 const parseStringToDate = (str?: string) => {
   if (!str) return undefined
   const [yyyy, mm, dd] = str.split("-").map(Number)
@@ -199,6 +202,7 @@ export default function SaleDetailPage() {
   const [installmentTarget, setInstallmentTarget] = useState<any>(null)
   const [installmentPaymentType, setInstallmentPaymentType] = useState("")
   const [installmentDrafts, setInstallmentDrafts] = useState<Record<string, { due_date: string; amount: string }>>({})
+  const [activeOrderTab, setActiveOrderTab] = useState("details")
 
   const [getSaleById, saleState] = (sales as any).useGetSaleByIdMutation()
   const [createSaleReturn, createReturnState] = (
@@ -699,7 +703,7 @@ export default function SaleDetailPage() {
     )
   }
 
-  const paymentStatus = String(sale.payment_status || "")
+  const paymentStatus = normalizePaymentStatus(sale.payment_status)
   const canShowPaymentsTab = ![
     "order_void",
     "void",
@@ -719,6 +723,15 @@ export default function SaleDetailPage() {
   const canShowVoidAction =
     canVoidSale && ["paid", "partially_paid", "unpaid"].includes(paymentStatus)
   const canShowDeleteAction = canDeleteSale && paymentStatus === "hold"
+  const visibleOrderTabs = [
+    "details",
+    canShowPaymentsTab ? "payments" : "",
+    canShowRefundTab ? "refund" : "",
+    canShowInstallmentsTab ? "installments" : "",
+  ].filter(Boolean)
+  const selectedOrderTab = visibleOrderTabs.includes(activeOrderTab)
+    ? activeOrderTab
+    : "details"
   return (
     <DashboardPage padding="none">
       <div className="flex h-[calc(100vh-84px)] min-h-0 flex-col overflow-hidden">
@@ -756,8 +769,12 @@ export default function SaleDetailPage() {
             </div>
           </div>
 
-          <Tabs defaultValue="details" className="flex min-h-0 flex-1 flex-col gap-0">
-            <div className="border-b border-gray-100 px-6 pt-4">
+          <Tabs
+            value={selectedOrderTab}
+            onValueChange={setActiveOrderTab}
+            className="flex min-h-0 flex-1 flex-col gap-0"
+          >
+            <div className="border-b border-gray-100 px-6">
               <TabsList variant="line" className="w-full justify-start">
                 <TabsTrigger value="details">{t("Details")}</TabsTrigger>
                 {canShowPaymentsTab ? (
@@ -1027,7 +1044,7 @@ export default function SaleDetailPage() {
                     <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
                       {t("Payment")}
                     </h2>
-                    {sale.payment_status === "paid" ? (
+                    {paymentStatus === "paid" ? (
                       <div className="flex min-h-48 items-center justify-center border border-dashed border-gray-200 text-sm font-semibold text-slate-500">
                         {t("No payment possible for paid order.")}
                       </div>
