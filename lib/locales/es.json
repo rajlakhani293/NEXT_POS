@@ -781,5 +781,9 @@
   "Status": "Estado",
   "Actions": "Acciones",
   "New": "Nuevo",
+  "Would you like to delete this ?": "¿Desea eliminar esto?",
+  "The order has been correctly voided.": "El pedido se ha anulado correctamente.",
+  "Paid Order Voided": "Pedido pagado anulado",
+  "Unpaid Order Voided": "Pedido no pagado anulado",
   "Partially paid orders are disabled.": "Los pedidos parcialmente pagados están desactivados."
 }

@@ -781,5 +781,9 @@
   "Status": "الحالة",
   "Actions": "الإجراءات",
   "New": "جديد",
+  "Would you like to delete this ?": "هل تريد حذف هذا؟",
+  "The order has been correctly voided.": "تم إلغاء الطلب بنجاح.",
+  "Paid Order Voided": "تم إلغاء طلب مدفوع",
+  "Unpaid Order Voided": "تم إلغاء طلب غير مدفوع",
   "Partially paid orders are disabled.": "تم تعطيل الطلبات المدفوعة جزئيًا."
 }

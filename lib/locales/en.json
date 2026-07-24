@@ -981,5 +981,9 @@
   "Status": "Status",
   "Actions": "Actions",
   "New": "New",
+  "Would you like to delete this ?": "Would you like to delete this ?",
+  "The order has been correctly voided.": "The order has been correctly voided.",
+  "Paid Order Voided": "Paid Order Voided",
+  "Unpaid Order Voided": "Unpaid Order Voided",
   "Partially paid orders are disabled.": "Partially paid orders are disabled."
 }

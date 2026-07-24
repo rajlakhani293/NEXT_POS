@@ -145,7 +145,7 @@ export default function SalesHistoryPage() {
   const handleDeleteOrder = async (record: any) => {
     const ok = await confirm({
       title: t("Confirm Your Action"),
-      description: t("Would you like to delete this order"),
+      description: t("Would you like to delete this ?"),
       confirmLabel: t("Delete"),
       cancelLabel: t("Cancel"),
     })

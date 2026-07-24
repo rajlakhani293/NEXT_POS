@@ -451,7 +451,7 @@ export default function SaleDetailPage() {
       id,
       payLoad: { reason: voidReason, note: voidReason },
     }).unwrap()
-    showToast.success(response?.message || t("Sale voided successfully."))
+    showToast.success(response?.message || t("The order has been correctly voided."))
     setIsVoidDialogOpen(false)
     await getSaleById({ id })
   }
