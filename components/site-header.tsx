@@ -213,7 +213,7 @@ export function SiteHeader({
             <div className="hidden h-7 w-px bg-slate-200 sm:block" />
 
             {/* Company Card */}
-            <div className="flex min-w-0 items-center gap-2.5 rounded-lg border border-slate-200/80 bg-slate-50/60 px-3 py-1 transition-all hover:bg-slate-100/70 hover:border-slate-300">
+            <div className="flex min-w-0 items-center gap-2.5 rounded-sm border border-slate-200/80 bg-slate-50/60 px-3 py-1 transition-all hover:bg-slate-100/70 hover:border-slate-300">
               {company?.logo && (
                 <img
                   src={company.logo}
@@ -222,7 +222,7 @@ export function SiteHeader({
                 />
               )}
               {!company?.logo && (
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
                   <Building2 className="h-4 w-4" />
                 </div>
               )}
@@ -245,9 +245,9 @@ export function SiteHeader({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="group hidden min-w-0 items-center gap-2.5 rounded-lg border border-slate-200/80 bg-slate-50/60 px-2.5 py-1 text-left transition-all hover:bg-slate-100/70 hover:border-slate-300 data-[state=open]:border-slate-300 data-[state=open]:bg-slate-100/70 md:flex"
+                  className="group hidden min-w-0 items-center gap-2.5 rounded-sm border border-slate-200/80 bg-slate-50/60 px-3 py-1 text-left transition-all hover:bg-slate-100/70 hover:border-slate-300 data-[state=open]:border-slate-300 data-[state=open]:bg-slate-100/70 md:flex"
                 >
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
                     <MapPin className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
