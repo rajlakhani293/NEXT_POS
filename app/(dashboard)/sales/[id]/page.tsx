@@ -21,6 +21,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { DatePicker } from "@/components/date-picker"
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { usePermissions } from "@/hooks/use-permissions"
 import { payments } from "@/lib/api/payments"
@@ -94,6 +102,9 @@ const getStatusLabel = (value: any, t: (key: string) => string) => {
 
 const money = (value: string | number | null | undefined) =>
   Number(value || 0) || 0
+
+const isTruthyOption = (value: any) =>
+  value === true || value === 1 || value === "1" || value === "yes" || value === "true"
 
 const parseStringToDate = (str?: string) => {
   if (!str) return undefined
@@ -707,7 +718,7 @@ export default function SaleDetailPage() {
   ].includes(paymentStatus)
   const canShowInstallmentsTab =
     ["partially_paid", "unpaid"].includes(paymentStatus) &&
-    sale.support_instalments !== false
+    isTruthyOption(sale.support_instalments)
   const canShowVoidAction =
     canVoidSale && ["paid", "partially_paid", "unpaid"].includes(paymentStatus)
   const canShowDeleteAction = canDeleteSale && paymentStatus === "hold"
@@ -1308,159 +1319,187 @@ export default function SaleDetailPage() {
                       ) : null}
                     </div>
                   </div>
-
-                  <div className="overflow-hidden border border-gray-200 bg-white">
-                    <div className="grid grid-cols-[1fr_1fr_120px_180px] border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-bold uppercase text-slate-500">
-                      <span>{t("Date")}</span>
-                      <span>{t("Amount")}</span>
-                      <span>{t("Status")}</span>
-                      <span className="text-right">{t("Actions")}</span>
-                    </div>
-                    {installmentRows.map((line: any) => {
-                      const isPaid = Boolean(line.paid) || money(line.paid_amount) >= money(line.amount)
-                      return (
-                        <div
-                          key={line.id}
-                          className="grid grid-cols-[1fr_1fr_120px_180px] items-end gap-3 border-b border-gray-100 px-3 py-3 last:border-b-0"
-                        >
-                          <DatePicker
-                            label={t("Date")}
-                            value={parseStringToDate(installmentDrafts[String(line.id)]?.due_date)}
-                            onChange={(date) =>
-                              setInstallmentDrafts((current) => ({
-                                ...current,
-                                [String(line.id)]: {
-                                  due_date: formatDateToString(date),
-                                  amount:
-                                    current[String(line.id)]?.amount || String(line.amount || ""),
-                                },
-                              }))
-                            }
-                            disabled={isPaid}
-                          />
-                          <UniFieldInput
-                            label={t("Amount")}
-                            value={installmentDrafts[String(line.id)]?.amount || ""}
-                            onChange={(event) =>
-                              setInstallmentDrafts((current) => ({
-                                ...current,
-                                [String(line.id)]: {
-                                  due_date:
-                                    current[String(line.id)]?.due_date ||
-                                    line.due_date ||
-                                    line.date ||
-                                    "",
-                                  amount: event.target.value,
-                                },
-                              }))
-                            }
-                            type="number"
-                            prefix={currencyIndicator}
-                            disabled={isPaid}
-                          />
-                          <div className="pb-2 text-sm font-semibold text-slate-700">
-                            {isPaid ? t("Paid") : t("Unpaid")}
-                          </div>
-                          <div className="flex justify-end gap-2 pb-1">
-                            {!isPaid && canCreatePayment ? (
-                              <Button type="button" size="sm" variant="outline" onClick={() => openInstallmentPayDialog(line)}>
-                                <Banknote className="size-4" />
-                                {t("Pay")}
-                              </Button>
-                            ) : (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  if (!line.payment_id) {
-                                    showToast.error(t("This instalment doesn't have any payment attached."))
-                                    return
+                  {!installmentRows.length && !installmentLines.length ?
+                    null
+                    : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[30%]">{t("Date")}</TableHead>
+                            <TableHead className="w-[30%]">{t("Amount")}</TableHead>
+                            <TableHead className="w-[20%]">{t("Status")}</TableHead>
+                            <TableHead className="w-[20%] text-right">{t("Actions")}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {installmentRows.map((line: any) => {
+                            const isPaid =
+                              Boolean(line.paid) ||
+                              money(line.paid_amount) >= money(line.amount)
+                            return (
+                              <TableRow key={line.id}>
+                                <TableCell className="align-middle">
+                                  <DatePicker
+                                    value={parseStringToDate(
+                                      installmentDrafts[String(line.id)]?.due_date
+                                    )}
+                                    onChange={(date) =>
+                                      setInstallmentDrafts((current) => ({
+                                        ...current,
+                                        [String(line.id)]: {
+                                          due_date: formatDateToString(date),
+                                          amount:
+                                            current[String(line.id)]?.amount ||
+                                            String(line.amount || ""),
+                                        },
+                                      }))
+                                    }
+                                    disabled={isPaid}
+                                  />
+                                </TableCell>
+                                <TableCell className="align-middle">
+                                  <UniFieldInput
+                                    value={installmentDrafts[String(line.id)]?.amount || ""}
+                                    onChange={(event) =>
+                                      setInstallmentDrafts((current) => ({
+                                        ...current,
+                                        [String(line.id)]: {
+                                          due_date:
+                                            current[String(line.id)]?.due_date ||
+                                            line.due_date ||
+                                            line.date ||
+                                            "",
+                                          amount: event.target.value,
+                                        },
+                                      }))
+                                    }
+                                    type="number"
+                                    prefix={currencyIndicator}
+                                    disabled={isPaid}
+                                  />
+                                </TableCell>
+                                <TableCell className="align-middle">
+                                  <span className="text-sm font-semibold text-slate-700">
+                                    {isPaid ? t("Paid") : t("Unpaid")}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="align-middle text-right">
+                                  <div className="flex justify-end gap-2">
+                                    {!isPaid && canCreatePayment ? (
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => openInstallmentPayDialog(line)}
+                                      >
+                                        <Banknote className="size-4" />
+                                        {t("Pay")}
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          if (!line.payment_id) {
+                                            showToast.error(
+                                              t("This instalment doesn't have any payment attached.")
+                                            )
+                                            return
+                                          }
+                                          router.push(
+                                            `/sales/${sale.id}/receipt?payment=${line.payment_id}`
+                                          )
+                                        }}
+                                      >
+                                        <Printer className="size-4" />
+                                        {t("Receipt")}
+                                      </Button>
+                                    )}
+                                    {!isPaid && canUpdateSale ? (
+                                      <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="outline"
+                                        onClick={() => handleUpdateInstallment(line)}
+                                        disabled={updateInstallmentState.isLoading}
+                                      >
+                                        <Save className="size-4" />
+                                      </Button>
+                                    ) : null}
+                                    {!isPaid && canUpdateSale ? (
+                                      <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="outline"
+                                        onClick={() => handleDeleteInstallment(line)}
+                                        disabled={deleteInstallmentState.isLoading}
+                                      >
+                                        <Trash2 className="size-4" />
+                                      </Button>
+                                    ) : null}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )
+                          })}
+                          {installmentLines.map((line) => (
+                            <TableRow key={line.id} className="bg-blue-50/40">
+                              <TableCell className="align-middle">
+                                <DatePicker
+                                  value={parseStringToDate(line.due_date)}
+                                  onChange={(date) =>
+                                    updateInstallmentLine(
+                                      line.id,
+                                      "due_date",
+                                      formatDateToString(date)
+                                    )
                                   }
-                                  router.push(`/sales/${sale.id}/receipt?payment=${line.payment_id}`)
-                                }}
-                              >
-                                <Printer className="size-4" />
-                                {t("Receipt")}
-                              </Button>
-                            )}
-                            {!isPaid && canUpdateSale ? (
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="outline"
-                                onClick={() => handleUpdateInstallment(line)}
-                                disabled={updateInstallmentState.isLoading}
-                              >
-                                <Save className="size-4" />
-                              </Button>
-                            ) : null}
-                            {!isPaid && canUpdateSale ? (
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="outline"
-                                onClick={() => handleDeleteInstallment(line)}
-                                disabled={deleteInstallmentState.isLoading}
-                              >
-                                <Trash2 className="size-4" />
-                              </Button>
-                            ) : null}
-                          </div>
-                        </div>
-                      )
-                    })}
-                    {installmentLines.map((line) => (
-                      <div
-                        key={line.id}
-                        className="grid grid-cols-[1fr_1fr_120px_180px] items-end gap-3 border-b border-gray-100 bg-blue-50/40 px-3 py-3 last:border-b-0"
-                      >
-                        <DatePicker
-                          label={t("Date")}
-                          value={parseStringToDate(line.due_date)}
-                          onChange={(date) =>
-                            updateInstallmentLine(line.id, "due_date", formatDateToString(date))
-                          }
-                        />
-                        <UniFieldInput
-                          label={t("Amount")}
-                          value={line.amount}
-                          onChange={(event) =>
-                            updateInstallmentLine(line.id, "amount", event.target.value)
-                          }
-                          placeholder="0.00"
-                          prefix={currencyIndicator}
-                          type="number"
-                        />
-                        <div className="pb-2 text-sm font-semibold text-slate-700">
-                          {t("New")}
-                        </div>
-                        <div className="flex justify-end gap-2 pb-1">
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => handleCreateInstallments()}
-                            disabled={createInstallmentsState.isLoading || !ordersAllowPartial}
-                          >
-                            {createInstallmentsState.isLoading ? t("Saving...") : t("Create")}
-                          </Button>
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="outline"
-                            onClick={() => removeInstallmentLine(line.id)}
-                          >
-                            <X className="size-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    {!installmentRows.length && !installmentLines.length ? (
-                      <div className="p-10 text-center text-sm font-semibold text-slate-500">
-                        {t("No Order Instalment has been registered")}
-                      </div>
-                    ) : null}
-                  </div>
+                                />
+                              </TableCell>
+                              <TableCell className="align-middle">
+                                <UniFieldInput
+                                  value={line.amount}
+                                  onChange={(event) =>
+                                    updateInstallmentLine(line.id, "amount", event.target.value)
+                                  }
+                                  placeholder="0.00"
+                                  prefix={currencyIndicator}
+                                  type="number"
+                                />
+                              </TableCell>
+                              <TableCell className="align-middle">
+                                <span className="text-sm font-semibold text-slate-700">
+                                  {t("New")}
+                                </span>
+                              </TableCell>
+                              <TableCell className="align-middle text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => handleCreateInstallments()}
+                                    disabled={
+                                      createInstallmentsState.isLoading || !ordersAllowPartial
+                                    }
+                                  >
+                                    {createInstallmentsState.isLoading ? t("Saving...") : t("Create")}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="outline"
+                                    onClick={() => removeInstallmentLine(line.id)}
+                                  >
+                                    <X className="size-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
                 </section>
               </TabsContent>
             ) : null}
