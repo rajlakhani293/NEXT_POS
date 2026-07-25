@@ -137,9 +137,9 @@ export default function SalesHistoryPage() {
     searchTerm,
     itemsPerPage,
     triggerRefresh,
+    dateFilters
   } = useTableData({
-    getMaster: (sales as any).useGetSalesDataMutation,
-
+    getMaster: (sales as any).useGetSalesDataMutation
   })
 
   const handleDeleteOrder = async (record: any) => {
@@ -182,6 +182,7 @@ export default function SalesHistoryPage() {
         showEdit={false}
         showDelete={false}
         deleteMutation={deleteSales}
+        // dateFilters={dateFilters}
         triggerRefresh={triggerRefresh}
         rowActions={(_, record) => [
           {

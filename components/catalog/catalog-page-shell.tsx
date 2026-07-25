@@ -98,7 +98,6 @@ export function CatalogPageShell({
     dateFilters,
   } = useTableData({
     getMaster: getDataHook,
-
     disableDateFilter: !showDateRange,
   })
 

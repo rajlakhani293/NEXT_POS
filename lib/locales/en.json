@@ -990,5 +990,8 @@
   "No payment is expected at the moment. If the customer want to pay early, consider adjusting instalment payments date.": "No payment is expected at the moment. If the customer want to pay early, consider adjusting instalment payments date.",
   "Update Instalment Date": "Update Instalment Date",
   "Would you like to mark that instalment as due today ? If you confirm the instalment will be marked as paid.": "Would you like to mark that instalment as due today ? If you confirm the instalment will be marked as paid.",
-  "Unable to proceed as the order is already paid.": "Unable to proceed as the order is already paid."
+  "Unable to proceed as the order is already paid.": "Unable to proceed as the order is already paid.",
+  "Instalment Remaining": "Instalment Remaining",
+  "Instalments cannot exceed the remaining amount of {amount}.": "Instalments cannot exceed the remaining amount of {amount}.",
+  "The defined amount is not valid.": "The defined amount is not valid."
 }

@@ -308,7 +308,33 @@ export default function SaleDetailPage() {
       ),
     [installmentRows, installmentLines]
   )
-  const installmentRemaining = Math.max(money(sale?.total) - installmentTotal, 0)
+  const installmentRemaining = Math.max(unpaidAmount - installmentTotal, 0)
+  const savedInstallmentTotal = useMemo(
+    () => installmentRows.reduce((sum: number, line: any) => sum + money(line.amount), 0),
+    [installmentRows]
+  )
+  const draftInstallmentTotal = useMemo(
+    () => installmentLines.reduce((sum, line) => sum + money(line.amount), 0),
+    [installmentLines]
+  )
+  const availableForDraftInstallment = (rowId: string) =>
+    Math.max(
+      unpaidAmount -
+        savedInstallmentTotal -
+        installmentLines
+          .filter((line) => line.id !== rowId)
+          .reduce((sum, line) => sum + money(line.amount), 0),
+      0
+    )
+  const availableForSavedInstallment = (rowId: string | number) =>
+    Math.max(
+      unpaidAmount -
+        draftInstallmentTotal -
+        installmentRows
+          .filter((line: any) => String(line.id) !== String(rowId))
+          .reduce((sum: number, line: any) => sum + money(line.amount), 0),
+      0
+    )
 
   const resetReturnForm = () => {
     setRefundPaymentType("")
@@ -577,7 +603,7 @@ export default function SaleDetailPage() {
   const addInstallmentLine = () => {
     setInstallmentLines((current) => [
       ...current,
-      emptyInstallmentLine(String(Math.max(money(sale?.total) - installmentTotal, 0))),
+      emptyInstallmentLine(installmentRemaining > 0 ? String(installmentRemaining) : ""),
     ])
   }
 
@@ -602,8 +628,19 @@ export default function SaleDetailPage() {
   }
 
   const handleCreateInstallment = async (line: InstallmentLineForm) => {
-    if (!line.due_date || money(line.amount) <= 0) {
+    const amount = money(line.amount)
+    const availableAmount = availableForDraftInstallment(line.id)
+    if (!line.due_date || amount <= 0) {
       showToast.error(t("Add at least one installment line."))
+      return
+    }
+    if (amount > availableAmount) {
+      showToast.error(
+        t("Instalments cannot exceed the remaining amount of {amount}.").replace(
+          "{amount}",
+          formatMoney(availableAmount)
+        )
+      )
       return
     }
 
@@ -613,7 +650,7 @@ export default function SaleDetailPage() {
         instalment: {
           date: line.due_date,
           due_date: line.due_date,
-          amount: String(money(line.amount)),
+          amount: String(amount),
         },
       },
     }).unwrap()
@@ -626,6 +663,21 @@ export default function SaleDetailPage() {
     const draft = installmentDrafts[String(line.id)] || {
       due_date: line.due_date || line.date,
       amount: String(line.amount || ""),
+    }
+    const amount = money(draft.amount)
+    const availableAmount = availableForSavedInstallment(line.id)
+    if (amount <= 0) {
+      showToast.error(t("The defined amount is not valid."))
+      return
+    }
+    if (amount > availableAmount) {
+      showToast.error(
+        t("Instalments cannot exceed the remaining amount of {amount}.").replace(
+          "{amount}",
+          formatMoney(availableAmount)
+        )
+      )
+      return
     }
     const ok = await confirm({
       title: t("Confirm Your Action"),
@@ -640,7 +692,7 @@ export default function SaleDetailPage() {
       payLoad: {
         due_date: draft.due_date,
         date: draft.due_date,
-        amount: String(money(draft.amount)),
+        amount: String(amount),
       },
     }).unwrap()
     showToast.success(response?.message || t("Instalment updated successfully."))
@@ -1349,10 +1401,14 @@ export default function SaleDetailPage() {
                     {t("Instalments")}
                   </h2>
                   <div className="flex flex-wrap items-center justify-between gap-3 border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
-                    <span>
-                      {t("Total")} : {formatMoney(sale.total)} ({t("Remaining")} :{" "}
-                      {formatMoney(installmentRemaining)})
-                    </span>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                      <span>{t("Total")} : {formatMoney(sale.total)}</span>
+                      <span>{t("Paid")} : {formatMoney(paidAmount)}</span>
+                      <span>{t("Remaining")} : {formatMoney(unpaidAmount)}</span>
+                      <span>
+                        {t("Instalment Remaining")} : {formatMoney(installmentRemaining)}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-4">
                       <span>
                         {t("Instalments")}: {formatMoney(installmentTotal)}

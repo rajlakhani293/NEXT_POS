@@ -2985,5 +2985,7 @@
   "Coupon Code is required.": "Il codice coupon è obbligatorio.",
   "Order loaded successfully.": "Ordine caricato con successo.",
   "Sale updated successfully.": "Vendita aggiornata con successo.",
-  "Add at least one installment line.": "Aggiungi almeno una riga di rata."
+  "Add at least one installment line.": "Aggiungi almeno una riga di rata.",
+  "Instalment Remaining": "Rata rimanente",
+  "Instalments cannot exceed the remaining amount of {amount}.": "Le rate non possono superare l importo rimanente di {amount}."
 }

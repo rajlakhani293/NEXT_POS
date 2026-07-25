@@ -790,5 +790,8 @@
   "No payment is expected at the moment. If the customer want to pay early, consider adjusting instalment payments date.": "No se espera ningún pago por el momento. Si el cliente desea pagar antes, considere ajustar la fecha de pago a plazos.",
   "Update Instalment Date": "Actualizar fecha de pago",
   "Would you like to mark that instalment as due today ? If you confirm the instalment will be marked as paid.": "¿Desea marcar esa cuota como vencida hoy? Si confirma, la cuota se marcará como pagada.",
-  "Unable to proceed as the order is already paid.": "No se puede continuar porque el pedido ya está pagado."
+  "Unable to proceed as the order is already paid.": "No se puede continuar porque el pedido ya está pagado.",
+  "Instalment Remaining": "Restante de cuotas",
+  "Instalments cannot exceed the remaining amount of {amount}.": "Las cuotas no pueden superar el importe restante de {amount}.",
+  "The defined amount is not valid.": "La cantidad definida no es válida."
 }
