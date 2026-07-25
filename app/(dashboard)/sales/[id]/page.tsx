@@ -746,7 +746,6 @@ export default function SaleDetailPage() {
         <div className="flex min-h-0 flex-1 flex-col bg-white">
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-2">
             <div className="flex items-center gap-4">
-
               <Button
                 type="button"
                 variant="outline"
