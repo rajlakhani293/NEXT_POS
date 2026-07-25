@@ -25,7 +25,7 @@ import { ProviderForm } from "@/app/(dashboard)/providers/createUpdate"
 import { catalog } from "@/lib/api/catalog"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
-import { formatBusinessMoney } from "@/lib/format"
+import { formatBusinessMoney, money } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
@@ -60,8 +60,7 @@ type PurchaseFormValues = {
 
 const today = () => new Date().toISOString().slice(0, 10)
 
-const money = (value: string | number | null | undefined) =>
-  Number(value || 0) || 0
+
 
 const emptyItem = (): PurchaseItemForm => ({
   id: crypto.randomUUID(),
@@ -838,7 +837,6 @@ export default function PurchaseOrderFormPage() {
                                   <UniFieldInput
                                     type="number"
                                     min="0"
-                                    step="0.01"
                                     prefix={posOptions.currency_symbol}
                                     value={item.purchase_price}
                                     onChange={(event) => updateItem(item.id, "purchase_price", event.target.value)}

@@ -41,6 +41,7 @@ interface FormField {
   note?: string
   min?: number | string
   max?: number | string
+  step?: number | string
   maxLength?: number
   icon?: React.ReactNode
   validation?: any
@@ -447,7 +448,7 @@ const DynamicForm = <T extends Record<string, any>>({
                       prefixPadding={field.prefixPadding}
                       min={field.min != null ? String(field.min) : "0"}
                       max={field.max != null ? String(field.max) : undefined}
-                      step="0.01"
+                      step={field.step != null ? String(field.step) : undefined}
                       maxLength={field.maxLength}
                       error={errors[field.name]}
                       disabled={isFieldDisabled}

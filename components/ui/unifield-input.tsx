@@ -7,6 +7,7 @@ import { Field, FieldError, FieldLabel } from "./field"
 import { Input } from "./input"
 import { ButtonGroup } from "./button-group"
 import { X } from "lucide-react"
+import { usePosOptions } from "@/lib/options"
 
 interface UniFieldInputProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -63,6 +64,15 @@ export const UniFieldInput = React.forwardRef<
     },
     ref
   ) => {
+    const posOptions = usePosOptions()
+    const defaultStep = React.useMemo(() => {
+      if (props.type !== "number") return undefined
+      const precision = Number(posOptions.currency_precision ?? 2)
+      return (1 / Math.pow(10, precision)).toFixed(precision)
+    }, [props.type, posOptions.currency_precision])
+
+    const finalStep = props.step !== undefined ? props.step : defaultStep
+
     const inputId = id || label?.toLowerCase().replace(/\s+/g, "-")
     const hasValue = props.value !== undefined && String(props.value).length > 0
     const clearButton =
@@ -219,6 +229,7 @@ export const UniFieldInput = React.forwardRef<
                   )}
                   aria-invalid={error ? true : undefined}
                   {...props}
+                  step={finalStep}
                   value={
                     props.type === "file" ? undefined : (props.value ?? "")
                   }
@@ -247,6 +258,7 @@ export const UniFieldInput = React.forwardRef<
               )}
               aria-invalid={error ? true : undefined}
               {...props}
+              step={finalStep}
               value={props.type === "file" ? undefined : (props.value ?? "")}
               min={min}
               max={max}

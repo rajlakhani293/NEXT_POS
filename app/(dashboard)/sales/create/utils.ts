@@ -1,7 +1,7 @@
 import { CartItem, POSProduct, POSUnitQuantity, PaymentRow } from "./types"
 
-export const money = (value: string | number | null | undefined): number =>
-  Number(value || 0) || 0
+import { money } from "@/lib/format"
+export { money }
 
 export const parseCouponCodes = (value: string): string[] =>
   value

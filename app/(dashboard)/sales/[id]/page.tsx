@@ -34,7 +34,7 @@ import { usePermissions } from "@/hooks/use-permissions"
 import { payments } from "@/lib/api/payments"
 import { sales } from "@/lib/api/sales"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
-import { formatBusinessMoney } from "@/lib/format"
+import { formatBusinessMoney, money } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
@@ -100,8 +100,7 @@ const getStatusLabel = (value: any, t: (key: string) => string) => {
   return key ? t(statusLabelKeys[key] || key.replaceAll("_", " ")) : "-"
 }
 
-const money = (value: string | number | null | undefined) =>
-  Number(value || 0) || 0
+
 
 const isTruthyOption = (value: any) =>
   value === true || value === 1 || value === "1" || value === "yes" || value === "true"
@@ -1153,7 +1152,7 @@ export default function SaleDetailPage() {
                     <h2 className="border-b border-gray-900 pb-2 text-base font-semibold text-slate-700">
                       {t("Refund With Products")}
                     </h2>
-                    <div className="border border-gray-200 bg-white p-3">
+                    <div className="">
                       <div className="grid gap-3 md:grid-cols-[1fr_auto]">
                         <UniFieldSelect
                           label={t("Product")}
@@ -1175,7 +1174,7 @@ export default function SaleDetailPage() {
                             ))}
                         </UniFieldSelect>
                         <div className="flex items-end">
-                          <Button type="button" variant="outline" onClick={openRefundProductDialog}>
+                          <Button type="button" className="h-10" variant="outline" onClick={openRefundProductDialog}>
                             {t("Add Product")}
                           </Button>
                         </div>
@@ -1253,7 +1252,7 @@ export default function SaleDetailPage() {
                           </div>
                         ))
                       ) : (
-                        <div className="border border-dashed border-gray-200 p-8 text-center text-sm text-slate-500">
+                        <div className="border rounded-lg border-dashed border-gray-200 p-8 text-center text-sm text-slate-500">
                           {t("Please select a product before proceeding.")}
                         </div>
                       )}

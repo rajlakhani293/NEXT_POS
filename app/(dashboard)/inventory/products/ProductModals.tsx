@@ -388,7 +388,6 @@ export function ProductModals({
               label={t("Quantity")}
               value={conversionQuantity}
               min="0"
-              step="0.01"
               onChange={(event) => updateConversionQuantity(event.target.value)}
               addonAfter={
                 <Button

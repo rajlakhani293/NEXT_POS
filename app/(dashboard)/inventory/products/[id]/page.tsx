@@ -1270,7 +1270,6 @@ export default function ProductFormPage() {
                             placeholder={t("Enter Sale Price")}
                             type="number"
                             min="0"
-                            step="0.01"
                             prefix={currencyIndicator}
                             value={unitQuantityForm.sale_price}
                             onChange={(e) => updateUnitQuantityField("sale_price", e.target.value)}
@@ -1282,7 +1281,6 @@ export default function ProductFormPage() {
                             placeholder={t("Enter Cost Price")}
                             type="number"
                             min="0"
-                            step="0.01"
                             prefix={currencyIndicator}
                             value={unitQuantityForm.purchase_price}
                             onChange={(e) => updateUnitQuantityField("purchase_price", e.target.value)}
@@ -1314,7 +1312,6 @@ export default function ProductFormPage() {
                             placeholder={t("Which quantity should be assumed low.")}
                             type="number"
                             min="0"
-                            step="0.01"
                             value={unitQuantityForm.low_quantity}
                             onChange={(e) => updateUnitQuantityField("low_quantity", e.target.value)}
                           />

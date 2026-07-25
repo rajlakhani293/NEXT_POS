@@ -44,7 +44,7 @@ import { payments } from "@/lib/api/payments"
 import { promotions } from "@/lib/api/promotions"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
-import { formatBusinessMoney } from "@/lib/format"
+import { formatBusinessMoney, money } from "@/lib/format"
 import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { registers } from "@/lib/api/registers"
@@ -131,8 +131,7 @@ type PaymentRow = {
   note: string
 }
 
-const money = (value: string | number | null | undefined) =>
-  Number(value || 0) || 0
+
 
 const parseCouponCodes = (value: string) =>
   value
@@ -1983,7 +1982,7 @@ export default function SalesPage() {
       if (emptyIndex >= 0) {
         return current.map((row, index) =>
           index === emptyIndex
-            ? { ...row, payment_type: activePaymentType, amount: amount.toFixed(2) }
+            ? { ...row, payment_type: activePaymentType, amount: amount.toFixed(posOptions.currency_precision) }
             : row
         )
       }
@@ -1992,7 +1991,7 @@ export default function SalesPage() {
         {
           ...emptyPaymentRow(),
           payment_type: activePaymentType,
-          amount: amount.toFixed(2),
+          amount: amount.toFixed(posOptions.currency_precision),
         },
       ]
     })
@@ -2063,7 +2062,7 @@ export default function SalesPage() {
         additionalPayments: [
           {
             payment_type: activePaymentType,
-            amount: remaining.toFixed(2),
+            amount: remaining.toFixed(posOptions.currency_precision),
             note: saleNote,
           },
         ],

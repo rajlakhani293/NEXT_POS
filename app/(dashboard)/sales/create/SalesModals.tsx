@@ -26,11 +26,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UniFieldInput } from "@/components/ui/unifield-input"
 import { UniFieldSelect } from "@/components/ui/unifield-select"
 import { DatePicker } from "@/components/date-picker"
-import { formatBusinessDateTime, formatBusinessMoney } from "@/lib/format"
+import { formatBusinessDateTime, formatBusinessMoney, money } from "@/lib/format"
 import { PERMISSIONS } from "@/lib/permissions"
 
-const money = (value: string | number | null | undefined) =>
-  Number(value || 0) || 0
+
 
 const parseLocalDate = (dateStr: string) => {
   if (!dateStr) return undefined

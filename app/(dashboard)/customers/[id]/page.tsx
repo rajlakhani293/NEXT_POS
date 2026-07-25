@@ -441,7 +441,6 @@ export default function CustomerFormPage() {
                       label={t("Credit Limit")}
                       type="number"
                       min="0"
-                      step="0.01"
                       prefix={posOptions.currency_symbol}
                       placeholder={t("Enter credit limit")}
                       value={values.credit_limit_amount}

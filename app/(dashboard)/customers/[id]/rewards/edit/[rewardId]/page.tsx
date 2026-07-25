@@ -110,7 +110,6 @@ export default function CustomerRewardEditPage() {
               label={t("Points")}
               type="number"
               min="0"
-              step="0.01"
               value={values.points}
               onChange={(event) => updateField("points", event.target.value)}
             />
@@ -118,7 +117,6 @@ export default function CustomerRewardEditPage() {
               label={t("Target")}
               type="number"
               min="0"
-              step="0.01"
               value={values.target}
               onChange={(event) => updateField("target", event.target.value)}
             />

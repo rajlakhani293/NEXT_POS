@@ -207,3 +207,18 @@ export const formatBusinessMoney = (
     ? `${formattedAmount}${indicator}`
     : `${indicator}${formattedAmount}`
 }
+
+import { store } from "@/lib/redux/store"
+
+export const money = (value: string | number | null | undefined): number => {
+  const num = Number(value || 0) || 0
+  try {
+    const precision = store.getState().session.businessSettings?.settings?.currency_precision
+    if (precision !== undefined && precision !== null) {
+      return Number(num.toFixed(Number(precision)))
+    }
+  } catch (e) {
+    // Fallback
+  }
+  return Number(num.toFixed(2))
+}
