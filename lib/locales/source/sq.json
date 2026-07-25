@@ -2984,5 +2984,6 @@
   "Would you like to delete this order?": "Dëshironi ta fshini këtë porosi?",
   "Coupon Code is required.": "Kodi i kuponit është i detyrueshëm.",
   "Order loaded successfully.": "Porosia u ngarkua me sukses.",
-  "Sale updated successfully.": "Shitja u përditësua me sukses."
+  "Sale updated successfully.": "Shitja u përditësua me sukses.",
+  "Add at least one installment line.": "Shtoni të paktën një rresht kësti."
 }

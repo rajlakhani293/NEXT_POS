@@ -130,6 +130,8 @@ const formatDateToString = (date?: Date) => {
   return `${yyyy}-${mm}-${dd}`
 }
 
+const todayDateString = () => formatDateToString(new Date())
+
 const resolvePaidAmount = (sale: any) => {
   const directValue =
     sale?.tendered_amount ??
@@ -155,10 +157,10 @@ const resolveUnpaidAmount = (sale: any, paidAmount: number) => {
   return Math.max(money(sale?.total) - paidAmount, 0)
 }
 
-const emptyInstallmentLine = (): InstallmentLineForm => ({
+const emptyInstallmentLine = (amount = ""): InstallmentLineForm => ({
   id: crypto.randomUUID(),
-  due_date: "",
-  amount: "",
+  due_date: todayDateString(),
+  amount,
 })
 
 export default function SaleDetailPage() {
@@ -169,7 +171,6 @@ export default function SaleDetailPage() {
   const { t } = useTranslation()
   const { confirm, confirmDialog } = useConfirmDialog()
   const posOptions = usePosOptions()
-  const ordersAllowPartial = posOptions.orders_allow_partial
   const currencyIndicator =
     posOptions.currency_preferred === "iso"
       ? posOptions.currency_iso
@@ -574,7 +575,10 @@ export default function SaleDetailPage() {
   }
 
   const addInstallmentLine = () => {
-    setInstallmentLines((current) => [...current, emptyInstallmentLine()])
+    setInstallmentLines((current) => [
+      ...current,
+      emptyInstallmentLine(String(Math.max(money(sale?.total) - installmentTotal, 0))),
+    ])
   }
 
   const updateInstallmentLine = (
@@ -597,11 +601,8 @@ export default function SaleDetailPage() {
     setIsInstallmentPayDialogOpen(true)
   }
 
-  const handleCreateInstallments = async () => {
-    const lines = installmentLines.filter(
-      (row) => row.due_date && money(row.amount) > 0
-    )
-    if (!lines.length) {
+  const handleCreateInstallment = async (line: InstallmentLineForm) => {
+    if (!line.due_date || money(line.amount) <= 0) {
       showToast.error(t("Add at least one installment line."))
       return
     }
@@ -609,16 +610,15 @@ export default function SaleDetailPage() {
     const response = await createSaleInstallments({
       id,
       payLoad: {
-        total_installments: lines.length,
-        total_amount: String(sale?.due_amount || 0),
-        lines: lines.map((line) => ({
+        instalment: {
+          date: line.due_date,
           due_date: line.due_date,
           amount: String(money(line.amount)),
-        })),
+        },
       },
     }).unwrap()
-    showToast.success(response?.message || t("Installments saved successfully."))
-    setInstallmentLines([])
+    showToast.success(response?.message || t("The instalment has been created."))
+    setInstallmentLines((current) => current.filter((row) => row.id !== line.id))
     await getSaleById({ id })
   }
 
@@ -671,17 +671,48 @@ export default function SaleDetailPage() {
       return
     }
 
-    const response = await paySaleInstallment({
-      id,
-      installmentId: installmentTarget.id,
-      payLoad: {
-        payment_type: installmentPaymentType,
-      },
-    }).unwrap()
-    showToast.success(response?.message || t("Installment paid successfully."))
-    setIsInstallmentPayDialogOpen(false)
-    setInstallmentTarget(null)
-    await getSaleById({ id })
+    const payCurrentInstallment = async () =>
+      paySaleInstallment({
+        id,
+        installmentId: installmentTarget.id,
+        payLoad: {
+          payment_type: installmentPaymentType,
+        },
+      }).unwrap()
+
+    try {
+      const response = await payCurrentInstallment()
+      showToast.success(response?.message || t("Installment paid successfully."))
+      setIsInstallmentPayDialogOpen(false)
+      setInstallmentTarget(null)
+      await getSaleById({ id })
+    } catch (error: any) {
+      const message = String(error?.data?.message || error?.message || "")
+      if (!message.includes("No payment is expected at the moment")) return
+
+      const ok = await confirm({
+        title: t("Update Instalment Date"),
+        description: t("Would you like to mark that instalment as due today ? If you confirm the instalment will be marked as paid."),
+        confirmLabel: t("Confirm"),
+        cancelLabel: t("Cancel"),
+      })
+      if (!ok) return
+
+      await updateSaleInstallment({
+        id,
+        installmentId: installmentTarget.id,
+        payLoad: {
+          due_date: todayDateString(),
+          date: todayDateString(),
+          amount: String(money(installmentTarget.amount)),
+        },
+      }).unwrap()
+      const response = await payCurrentInstallment()
+      showToast.success(response?.message || t("Installment paid successfully."))
+      setIsInstallmentPayDialogOpen(false)
+      setInstallmentTarget(null)
+      await getSaleById({ id })
+    }
   }
 
   if (saleState.isLoading && !sale) {
@@ -1331,8 +1362,6 @@ export default function SaleDetailPage() {
                           type="button"
                           size="sm"
                           onClick={addInstallmentLine}
-                          disabled={!ordersAllowPartial}
-                          title={!ordersAllowPartial ? t("Partially paid orders are disabled.") : undefined}
                         >
                           {t("Add Instalment")}
                         </Button>
@@ -1498,10 +1527,8 @@ export default function SaleDetailPage() {
                                   <Button
                                     type="button"
                                     size="sm"
-                                    onClick={() => handleCreateInstallments()}
-                                    disabled={
-                                      createInstallmentsState.isLoading || !ordersAllowPartial
-                                    }
+                                    onClick={() => handleCreateInstallment(line)}
+                                    disabled={createInstallmentsState.isLoading}
                                   >
                                     {createInstallmentsState.isLoading ? t("Saving...") : t("Create")}
                                   </Button>

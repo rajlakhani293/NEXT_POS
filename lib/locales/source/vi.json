@@ -2983,5 +2983,6 @@
   "Would you like to delete this order?": "Bạn có muốn xóa đơn hàng này không?",
   "Coupon Code is required.": "Mã phiếu giảm giá là bắt buộc.",
   "Order loaded successfully.": "Đơn hàng đã được tải thành công.",
-  "Sale updated successfully.": "Bán hàng đã được cập nhật thành công."
+  "Sale updated successfully.": "Bán hàng đã được cập nhật thành công.",
+  "Add at least one installment line.": "Thêm ít nhất một dòng trả góp."
 }

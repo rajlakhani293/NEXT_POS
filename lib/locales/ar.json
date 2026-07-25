@@ -784,5 +784,11 @@
   "The order has been correctly voided.": "تم إلغاء الطلب بنجاح.",
   "Paid Order Voided": "تم إلغاء طلب مدفوع",
   "Unpaid Order Voided": "تم إلغاء طلب غير مدفوع",
-  "Partially paid orders are disabled.": "تم تعطيل الطلبات المدفوعة جزئيًا."
+  "Partially paid orders are disabled.": "تم تعطيل الطلبات المدفوعة جزئيًا.",
+  "Add at least one installment line.": "أضف سطر قسط واحد على الأقل.",
+  "The instalment has been created.": "تم إنشاء القسط.",
+  "No payment is expected at the moment. If the customer want to pay early, consider adjusting instalment payments date.": "لا يوجد دفع متوقع في الوقت الحالي. إذا أراد العميل الدفع مبكرًا، ففكر في تعديل تاريخ سداد الأقساط.",
+  "Update Instalment Date": "تحديث تاريخ القسط",
+  "Would you like to mark that instalment as due today ? If you confirm the instalment will be marked as paid.": "هل ترغب في تحديد موعد استحقاق هذا القسط اليوم؟ إذا أكدت، فسيتم وضع علامة على القسط كمدفوع.",
+  "Unable to proceed as the order is already paid.": "لا يمكن المتابعة لأن الطلب مدفوع بالفعل."
 }

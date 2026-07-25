@@ -2984,5 +2984,6 @@
   "Would you like to delete this order?": "Voulez-vous supprimer cette commande ?",
   "Coupon Code is required.": "Le code du coupon est obligatoire.",
   "Order loaded successfully.": "Commande chargée avec succès.",
-  "Sale updated successfully.": "Vente mise à jour avec succès."
+  "Sale updated successfully.": "Vente mise à jour avec succès.",
+  "Add at least one installment line.": "Ajoutez au moins une ligne de versement."
 }

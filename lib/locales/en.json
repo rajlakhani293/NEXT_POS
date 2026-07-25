@@ -984,5 +984,11 @@
   "The order has been correctly voided.": "The order has been correctly voided.",
   "Paid Order Voided": "Paid Order Voided",
   "Unpaid Order Voided": "Unpaid Order Voided",
-  "Partially paid orders are disabled.": "Partially paid orders are disabled."
+  "Partially paid orders are disabled.": "Partially paid orders are disabled.",
+  "Add at least one installment line.": "Add at least one installment line.",
+  "The instalment has been created.": "The instalment has been created.",
+  "No payment is expected at the moment. If the customer want to pay early, consider adjusting instalment payments date.": "No payment is expected at the moment. If the customer want to pay early, consider adjusting instalment payments date.",
+  "Update Instalment Date": "Update Instalment Date",
+  "Would you like to mark that instalment as due today ? If you confirm the instalment will be marked as paid.": "Would you like to mark that instalment as due today ? If you confirm the instalment will be marked as paid.",
+  "Unable to proceed as the order is already paid.": "Unable to proceed as the order is already paid."
 }

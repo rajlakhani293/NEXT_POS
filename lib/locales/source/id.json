@@ -2986,5 +2986,6 @@
   "Would you like to delete this order?": "Apakah Anda ingin menghapus pesanan ini?",
   "Coupon Code is required.": "Kode kupon wajib diisi.",
   "Order loaded successfully.": "Pesanan berhasil dimuat.",
-  "Sale updated successfully.": "Penjualan berhasil diperbarui."
+  "Sale updated successfully.": "Penjualan berhasil diperbarui.",
+  "Add at least one installment line.": "Tambahkan setidaknya satu baris cicilan."
 }

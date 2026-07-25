@@ -2984,5 +2984,6 @@
   "Would you like to delete this order?": "هل تريد حذف هذا الطلب؟",
   "Coupon Code is required.": "رمز القسيمة مطلوب.",
   "Order loaded successfully.": "تم تحميل الطلب بنجاح.",
-  "Sale updated successfully.": "تم تحديث البيع بنجاح."
+  "Sale updated successfully.": "تم تحديث البيع بنجاح.",
+  "Add at least one installment line.": "أضف سطر قسط واحد على الأقل."
 }

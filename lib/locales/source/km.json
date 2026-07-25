@@ -2984,5 +2984,6 @@
   "Would you like to delete this order?": "តើអ្នកចង់លុបការបញ្ជាទិញនេះទេ?",
   "Coupon Code is required.": "ត្រូវការកូដគូប៉ុង។",
   "Order loaded successfully.": "បានផ្ទុកការបញ្ជាទិញដោយជោគជ័យ។",
-  "Sale updated successfully.": "បានធ្វើបច្ចុប្បន្នភាពការលក់ដោយជោគជ័យ។"
+  "Sale updated successfully.": "បានធ្វើបច្ចុប្បន្នភាពការលក់ដោយជោគជ័យ។",
+  "Add at least one installment line.": "សូមបន្ថែមជួរបង់រំលស់យ៉ាងហោចណាស់មួយ។"
 }

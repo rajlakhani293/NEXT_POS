@@ -2984,5 +2984,6 @@
   "Would you like to delete this order?": "¿Desea eliminar este pedido?",
   "Coupon Code is required.": "El código del cupón es obligatorio.",
   "Order loaded successfully.": "Pedido cargado correctamente.",
-  "Sale updated successfully.": "Venta actualizada correctamente."
+  "Sale updated successfully.": "Venta actualizada correctamente.",
+  "Add at least one installment line.": "Agregue al menos una línea de cuota."
 }

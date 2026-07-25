@@ -2984,5 +2984,6 @@
   "Would you like to delete this order?": "Would you like to delete this order?",
   "Coupon Code is required.": "Coupon Code is required.",
   "Order loaded successfully.": "Order loaded successfully.",
-  "Sale updated successfully.": "Sale updated successfully."
+  "Sale updated successfully.": "Sale updated successfully.",
+  "Add at least one installment line.": "Add at least one installment line."
 }

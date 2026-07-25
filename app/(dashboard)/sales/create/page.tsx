@@ -596,6 +596,8 @@ export default function SalesPage() {
     : enabledOrderTypes.some((type) => type.value === orderType)
       ? orderType
       : ""
+  const shippingFee = activeOrderType === "delivery" ? money(shippingInfo.shipping || 0) : 0
+  const orderTotal = subtotal + shippingFee
 
   const couponCodes = useMemo(() => parseCouponCodes(couponInput), [couponInput])
   const totalPaid = useMemo(
@@ -603,10 +605,10 @@ export default function SalesPage() {
       paymentsRows.reduce((sum, row) => sum + money(row.amount), 0),
     [paymentsRows]
   )
-  const dueAmount = Math.max(subtotal - totalPaid, 0)
-  const changeAmount = Math.max(totalPaid - subtotal, 0)
+  const dueAmount = Math.max(orderTotal - totalPaid, 0)
+  const changeAmount = Math.max(totalPaid - orderTotal, 0)
   const estimatedPaymentStatus =
-    totalPaid >= subtotal && subtotal > 0
+    totalPaid >= orderTotal && orderTotal > 0
       ? "paid"
       : totalPaid > 0
         ? "partially_paid"
@@ -1691,12 +1693,12 @@ export default function SalesPage() {
     }
     const requestedPaymentStatus = submitOptions.paymentStatus || estimatedPaymentStatus
     if (
-      totalPaid < subtotal &&
+      totalPaid < orderTotal &&
       requestedPaymentStatus !== "unpaid" &&
       ordersAllowUnpaid === false &&
       ordersAllowPartial === false
     ) {
-      showToast.error(`${t("Unpaid or partially paid orders are not allowed.")} ${t("Total paid")} (${formatMoney(totalPaid)}) ${t("is less than subtotal")} (${formatMoney(subtotal)}).`)
+      showToast.error(`${t("Unpaid or partially paid orders are not allowed.")} ${t("Total paid")} (${formatMoney(totalPaid)}) ${t("is less than subtotal")} (${formatMoney(orderTotal)}).`)
       return
     }
     if (requestedPaymentStatus === "unpaid" && !ordersAllowUnpaid) {
@@ -1786,8 +1788,8 @@ export default function SalesPage() {
 
   const minimumLayawayPayment = useMemo(() => {
     const percent = money(selectedCustomer?.group?.minimal_credit_payment || selectedCustomer?.minimal_credit_payment || 0)
-    return money((subtotal * percent) / 100)
-  }, [selectedCustomer, subtotal])
+    return money((orderTotal * percent) / 100)
+  }, [selectedCustomer, orderTotal])
 
   const openLayawayDialog = () => {
     setLayawayCount(String(layawayLines.length || 0))
@@ -1906,7 +1908,7 @@ export default function SalesPage() {
       return
     }
     const totalInstalments = parsed.reduce((sum, line) => sum + line.amount, 0)
-    if (money(totalInstalments) < money(subtotal)) {
+    if (money(totalInstalments) < money(orderTotal)) {
       showToast.error(t("Total instalments must be equal to the order total."))
       return
     }
@@ -2032,7 +2034,7 @@ export default function SalesPage() {
       showToast.error(t("Please select a payment gateway before proceeding."))
       return
     }
-    const remaining = Math.max(subtotal - totalPaid, 0)
+    const remaining = Math.max(orderTotal - totalPaid, 0)
     if (!remaining) {
       handleCompleteSale()
       return
@@ -2045,12 +2047,12 @@ export default function SalesPage() {
       showToast.error(t("Please select a payment gateway before proceeding."))
       return
     }
-    const remaining = Math.max(subtotal - totalPaid, 0)
+    const remaining = Math.max(orderTotal - totalPaid, 0)
     const proceed = await confirm({
       title: t("Confirm Full Payment"),
       description: t("A full payment will be made using {paymentType} for {total}")
         .replace("{paymentType}", activePaymentLabel)
-        .replace("{total}", formatMoney(subtotal)),
+        .replace("{total}", formatMoney(orderTotal)),
     })
     if (!proceed) return
 
@@ -2538,9 +2540,25 @@ export default function SalesPage() {
                           </Button>
                         </div>
                       ) : null}
+                      {activeOrderType === "delivery" ? (
+                        <div className="flex items-center justify-between py-1 text-slate-600">
+                          <span>{t("Shipping")}</span>
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto p-0"
+                            onClick={() => {
+                              setShippingBillingTab("general")
+                              setIsShippingBillingOpen(true)
+                            }}
+                          >
+                            {formatMoney(shippingFee)}
+                          </Button>
+                        </div>
+                      ) : null}
                       <div className="mt-1 flex items-center justify-between border-t border-slate-200 pt-2 text-xl font-bold text-slate-950">
                         <span>{t("Total")}</span>
-                        <span>{formatMoney(subtotal)}</span>
+                        <span>{formatMoney(orderTotal)}</span>
                       </div>
                     </div>
 
@@ -2866,7 +2884,7 @@ export default function SalesPage() {
           setActivePaymentType={setActivePaymentType}
           paymentsRows={paymentsRows}
           removePaymentRow={removePaymentRow}
-          subtotal={subtotal}
+          subtotal={orderTotal}
           cartDiscount={cartDiscount}
           totalPaid={totalPaid}
           changeAmount={changeAmount}

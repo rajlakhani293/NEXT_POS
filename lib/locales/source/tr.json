@@ -2984,5 +2984,6 @@
   "Would you like to delete this order?": "Bu siparişi silmek ister misiniz?",
   "Coupon Code is required.": "Kupon kodu gereklidir.",
   "Order loaded successfully.": "Sipariş başarıyla yüklendi.",
-  "Sale updated successfully.": "Satış başarıyla güncellendi."
+  "Sale updated successfully.": "Satış başarıyla güncellendi.",
+  "Add at least one installment line.": "En az bir taksit satırı ekleyin."
 }
