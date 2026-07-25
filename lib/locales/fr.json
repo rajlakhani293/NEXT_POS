@@ -282,7 +282,6 @@
   "Invalid activation token.": "Jeton d'activation invalide.",
   "No activation is needed for this account.": "Aucune activation n'est nécessaire pour ce compte.",
   "The expiration token has expired.": "Le jeton d'expiration a expiré.",
-  "Assigned Orders": "Commandes assignees",
   "Taxes List": "Liste des taxes",
   "Add a new tax": "Ajouter une nouvelle taxe",
   "Parent": "Parent",

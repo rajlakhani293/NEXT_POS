@@ -99,7 +99,6 @@ export const PERMISSIONS = {
     update: "sales_update",
     delete: "sales_delete",
     void: "sales_void",
-    deliver: "pos.deliver.orders",
   },
   returns: {
     view: "returns_view",

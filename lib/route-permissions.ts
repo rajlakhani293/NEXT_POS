@@ -11,7 +11,6 @@ export type ResolvedRoutePermission = Omit<RoutePermission, "path">
 export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/dashboard", permission: PERMISSIONS.dashboard.view },
   { path: "/sales/create", permission: PERMISSIONS.sales.create },
-  { path: "/sales/assigned", permission: PERMISSIONS.sales.deliver },
   { path: "/sales/instalments", permission: PERMISSIONS.payments.collectDue },
   { path: "/sales/payment-types", permission: PERMISSIONS.payments.view },
   { path: "/sales", permission: PERMISSIONS.sales.view },

@@ -2759,7 +2759,6 @@
   "You're not allowed to use this coupon it has reached the maximum usage allowed.": "You're not allowed to use this coupon it has reached the maximum usage allowed.",
   "%s migrations were purged": "%s migrations were purged",
   "%s — %s": "%s — %s",
-  "Assigned Orders": "Assigned Orders",
   "Create Expense": "Create Expense",
   "Transaction History": "Transaction History",
   "The module \"%s\" has been disabled as it's not compatible with the current version of POS %s, but requires %s. ": "The module \"%s\" has been disabled as it's not compatible with the current version of POS %s, but requires %s. ",
