@@ -1,8 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { Eye } from "lucide-react"
-
 import DynamicTable from "@/components/DynamicTable"
 import { PermissionGuard } from "@/components/permission-guard"
 import { useTableData } from "@/hooks/useTableData"
@@ -14,7 +11,6 @@ import { PERMISSIONS } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
 
 export default function SaleInstalmentsPage() {
-  const router = useRouter()
   const { t } = useTranslation()
   const posOptions = usePosOptions()
   const formatMoney = (value: any) => formatBusinessMoney(value, posOptions)
@@ -85,15 +81,7 @@ export default function SaleInstalmentsPage() {
           isLoading={isLoading}
           selectedDateRange={selectedDateRange}
           dateFilters={dateFilters}
-          rowActions={(_, record) => [
-            {
-              key: "view-order",
-              label: t("View Order"),
-              labelText: t("View Order"),
-              icon: <Eye className="size-4" />,
-              onClick: () => router.push(`/sales/${record.order_id}`),
-            },
-          ]}
+          showEdit={false}
         />
       </div>
     </PermissionGuard>
