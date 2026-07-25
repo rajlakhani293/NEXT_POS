@@ -1778,16 +1778,11 @@ export default function SalesPage() {
     const response = activeSaleId
       ? await editSale({ id: activeSaleId, payLoad }).unwrap()
       : await createSale(payLoad).unwrap()
-    const sale = response?.data
     showToast.success(response?.message || (activeSaleId ? t("Sale updated successfully.") : t("Sale created successfully.")))
     playPosAudio(posOptions.pos_complete_sale_audio)
     resetSaleForm()
     setIsPaymentDialogOpen(false)
     await loadShift()
-    if (sale?.id) {
-      const paymentStatus = sale.payment_status || requestedPaymentStatus
-      router.push(shouldOpenReceipt(paymentStatus) ? getPrintedDocumentUrl(sale.id) : `/sales/${sale.id}`)
-    }
   }
 
   const minimumLayawayPayment = useMemo(() => {
@@ -2047,6 +2042,11 @@ export default function SalesPage() {
   }
 
   const confirmFullPaymentFromPopup = async () => {
+    if (!activePaymentType) {
+      showToast.error(t("Please select a payment gateway before proceeding."))
+      return
+    }
+    const remaining = Math.max(subtotal - totalPaid, 0)
     const proceed = await confirm({
       title: t("Confirm Full Payment"),
       description: t("A full payment will be made using {paymentType} for {total}")
@@ -2054,7 +2054,21 @@ export default function SalesPage() {
         .replace("{total}", formatMoney(subtotal)),
     })
     if (!proceed) return
-    makeFullPaymentFromPopup()
+
+    if (remaining <= 0) {
+      await handleCompleteSale()
+    } else {
+      await handleCompleteSale({
+        paymentStatus: "paid",
+        additionalPayments: [
+          {
+            payment_type: activePaymentType,
+            amount: remaining.toFixed(2),
+            note: saleNote,
+          },
+        ],
+      })
+    }
   }
 
   const customerAddressValue = (type: "shipping" | "billing", field: string) => {
