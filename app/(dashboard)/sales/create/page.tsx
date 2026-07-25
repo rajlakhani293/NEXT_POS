@@ -351,63 +351,33 @@ export default function SalesPage() {
   const [cartDiscountType, setCartDiscountType] = useState<"flat" | "percentage">("flat")
 
 
-  const [getCurrentShift, { isLoading: isCheckingShift }] = (
-    registers as any
-  ).useGetCurrentShiftMutation()
-  const [openShift, { isLoading: isOpeningShift }] = (
-    registers as any
-  ).useOpenShiftMutation()
-  const [closeShift, { isLoading: isClosingShift }] = (
-    registers as any
-  ).useCloseShiftMutation()
-  const [cashIn, { isLoading: isCashingIn }] = (
-    registers as any
-  ).useCashInMutation()
-  const [cashOut, { isLoading: isCashingOut }] = (
-    registers as any
-  ).useCashOutMutation()
-  const [getRegisterSessionHistory, registerHistoryState] = (
-    registers as any
-  ).useGetRegisterSessionHistoryMutation()
-  const [
-    getRegistersDropdown,
-    { data: registersDropdownData, isLoading: isRegistersLoading },
-  ] = (registers as any).useGetRegistersDropdownMutation()
-  const [getCustomersDropdown, { data: customersData, isLoading: isCustomersLoading }] =
-    (customers as any).useGetCustomersDropdownMutation()
+  const [getCurrentShift, { isLoading: isCheckingShift }] = (registers as any).useGetCurrentShiftMutation()
+  const [openShift, { isLoading: isOpeningShift }] = (registers as any).useOpenShiftMutation()
+  const [closeShift, { isLoading: isClosingShift }] = (registers as any).useCloseShiftMutation()
+  const [cashIn, { isLoading: isCashingIn }] = (registers as any).useCashInMutation()
+  const [cashOut, { isLoading: isCashingOut }] = (registers as any).useCashOutMutation()
+  const [getRegisterSessionHistory, registerHistoryState] = (registers as any).useGetRegisterSessionHistoryMutation()
+  const [getRegistersDropdown, { data: registersDropdownData, isLoading: isRegistersLoading }] = (registers as any).useGetRegistersDropdownMutation()
+  const [getCustomersDropdown, { data: customersData, isLoading: isCustomersLoading }] = (customers as any).useGetCustomersDropdownMutation()
   const [getCustomerDetailsById] = (customers as any).useGetCustomerByIdMutation()
-  const [loadCustomerCouponForPos, loadCustomerCouponState] = (
-    customers as any
-  ).useLoadCustomerCouponForPosMutation()
-  const [getPaymentTypesDropdown, { data: paymentTypesData, isLoading: isPaymentTypesLoading }] =
-    (payments as any).useGetPaymentTypesDropdownMutation()
-  const [getCouponsDropdown, { data: couponsData, isLoading: isCouponsLoading }] =
-    (promotions as any).useGetCouponsDropdownMutation()
+  const [loadCustomerCouponForPos, loadCustomerCouponState] = (customers as any).useLoadCustomerCouponForPosMutation()
+  const [getPaymentTypesDropdown, { data: paymentTypesData, isLoading: isPaymentTypesLoading }] = (payments as any).useGetPaymentTypesDropdownMutation()
+  const [getCouponsDropdown, { data: couponsData, isLoading: isCouponsLoading }] = (promotions as any).useGetCouponsDropdownMutation()
   const [getPOSGrid] = (catalog as any).useGetPOSGridMutation()
   const [getPOSGridByCategory] = (catalog as any).useGetPOSGridByCategoryMutation()
   const [getTaxGroupsDropdown, { data: taxGroupsData }] = (catalog as any).useGetTaxGroupsDropdownMutation()
   const [getProductsData, productSearchState] = (catalog as any).useGetProductsDataMutation()
   const [getProductById] = (catalog as any).useGetProductByIdMutation()
   const [getProductUnitQuantitiesData] = (catalog as any).useGetProductUnitQuantitiesMutation()
-  const [getCustomerRewardBalance, rewardBalanceState] = (
-    rewards as any
-  ).useGetCustomerRewardBalanceMutation()
-  const [redeemCustomerReward, redeemRewardState] = (
-    rewards as any
-  ).useRedeemCustomerRewardMutation()
-  const [createSale, { isLoading: isCreatingSale }] = (
-    sales as any
-  ).useCreateSaleMutation()
+  const [getCustomerRewardBalance, rewardBalanceState] = (rewards as any).useGetCustomerRewardBalanceMutation()
+  const [redeemCustomerReward, redeemRewardState] = (rewards as any).useRedeemCustomerRewardMutation()
+  const [createSale, { isLoading: isCreatingSale }] = (sales as any).useCreateSaleMutation()
   const [editSale] = (sales as any).useEditSaleMutation()
   const [getSalesData] = (sales as any).useGetSalesDataMutation()
   const [getSaleById] = (sales as any).useGetSaleByIdMutation()
   const [voidSale] = (sales as any).useVoidSaleMutation()
-  const [holdSale, { isLoading: isHoldingSale }] = (
-    sales as any
-  ).useHoldSaleMutation()
-  const [getHeldSalesData, heldSalesState] = (
-    sales as any
-  ).useGetHeldSalesDataMutation()
+  const [holdSale, { isLoading: isHoldingSale }] = (sales as any).useHoldSaleMutation()
+  const [getHeldSalesData, heldSalesState] = (sales as any).useGetHeldSalesDataMutation()
   const [getHeldSaleById] = (sales as any).useGetHeldSaleByIdMutation()
   const [deleteHeldSale] = (sales as any).useDeleteHeldSaleMutation()
 
@@ -1068,7 +1038,6 @@ export default function SalesPage() {
     if (!search) return
     const response = await getProductsData({
       page: 1,
-      limit: 20,
       search,
     }).unwrap()
     const products = response?.data?.items || response?.data || []
@@ -1114,22 +1083,6 @@ export default function SalesPage() {
     }, 500)
     return () => window.clearTimeout(searchTimer)
   }, [barcode])
-
-  const updateQuantity = (lineId: string, delta: number) => {
-    setCartItems((items) =>
-      items.map((item) =>
-        item.line_id === lineId
-          ? { ...item, qty: Math.max(item.qty + delta, 0) }
-          : item
-      )
-    )
-    setCartQuantityDrafts((current) => {
-      const next = { ...current }
-      delete next[lineId]
-      return next
-    })
-    setInvalidQuantityLineId((current) => (current === lineId ? null : current))
-  }
 
   const removeItem = (lineId: string) => {
     setCartItems((items) => items.filter((item) => item.line_id !== lineId))
@@ -1365,7 +1318,6 @@ export default function SalesPage() {
     if (tab === "hold") {
       const response = await getHeldSalesData({
         page: 1,
-        limit: 20,
         search: search || undefined,
       }).unwrap()
       setPendingOrders(response?.data?.items || [])
@@ -1374,7 +1326,6 @@ export default function SalesPage() {
 
     const response = await getSalesData({
       page: 1,
-      limit: 20,
       search: search || undefined,
       filter: { payment_status: tab },
     }).unwrap()
@@ -2022,20 +1973,6 @@ export default function SalesPage() {
     isCustomersLoading ||
     isPaymentTypesLoading ||
     isCouponsLoading
-
-  const updatePaymentRow = (
-    rowId: string,
-    field: keyof Omit<PaymentRow, "id">,
-    value: string
-  ) => {
-    setPaymentsRows((current) =>
-      current.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
-    )
-  }
-
-  const addPaymentRow = () => {
-    setPaymentsRows((current) => [...current, emptyPaymentRow()])
-  }
 
   const addPaymentFromPopup = (amount: number) => {
     if (!activePaymentType) {
