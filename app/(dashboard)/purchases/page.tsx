@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { CheckCircle2Icon, EditIcon, FileTextIcon, RefreshCwIcon, Trash2Icon } from "lucide-react"
+import { CheckCircle2Icon, EditIcon, FileTextIcon, RefreshCwIcon } from "lucide-react"
 
 import { useConfirmDialog } from "@/components/confirm-dialog"
 import DynamicTable from "@/components/DynamicTable"
@@ -14,6 +14,7 @@ import { usePosOptions } from "@/lib/options"
 import { PERMISSIONS } from "@/lib/permissions"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
+import { MdDelete } from "react-icons/md"
 
 const workflowLabels: Record<string, string> = {
   draft: "Draft",
@@ -227,7 +228,7 @@ export default function PurchaseOrdersPage() {
                 key: "delete",
                 label: t("Delete"),
                 labelText: t("Delete"),
-                icon: <Trash2Icon className="size-4 text-red-500" />,
+                icon: <MdDelete className="size-4 text-red-500" />,
                 priority: 5,
                 onClick: async () => {
                   const ok = await confirm({

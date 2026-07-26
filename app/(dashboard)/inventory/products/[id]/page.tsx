@@ -50,7 +50,7 @@ type ProductFormValues = {
   selling_price: string
   mrp: string
   wholesale_price: string
-  is_tax_inclusive: boolean
+  tax_type: "inclusive" | "exclusive" | ""
   opening_stock: string
   min_stock: string
   max_stock: string
@@ -98,7 +98,7 @@ const initialValues: ProductFormValues = {
   selling_price: "",
   mrp: "",
   wholesale_price: "",
-  is_tax_inclusive: false,
+  tax_type: "",
   opening_stock: "",
   min_stock: "",
   max_stock: "",
@@ -277,7 +277,7 @@ function buildProductFormData(
   appendIfPresent(formData, "barcode_type", values.barcode_type)
   appendIfPresent(formData, "weight", values.weight || "0")
   appendIfPresent(formData, "category_id", values.category_id)
-  appendIfPresent(formData, "tax_group_id", values.tax_group_id)
+  formData.append("tax_group_id", values.tax_group_id)
   appendIfPresent(formData, "unit_id", values.unit_id)
   appendIfPresent(formData, "unit_group_id", values.unit_group_id)
 
@@ -296,11 +296,7 @@ function buildProductFormData(
         ? "grouped"
         : "materialized"
   )
-  appendIfPresent(
-    formData,
-    "tax_type",
-    values.is_tax_inclusive ? "inclusive" : "exclusive"
-  )
+  formData.append("tax_type", values.tax_type)
   appendIfPresent(formData, "description", values.description)
   appendIfPresent(formData, "purchase_price", values.purchase_price || "0")
   appendIfPresent(formData, "selling_price", values.selling_price || "0")
@@ -315,7 +311,7 @@ function buildProductFormData(
     }
   }
 
-  formData.append("is_tax_inclusive", String(Boolean(values.is_tax_inclusive)))
+  formData.append("is_tax_inclusive", String(values.tax_type === "inclusive"))
   formData.append(
     "track_stock",
     String(values.product_type === "product" && Boolean(values.track_stock))
@@ -508,7 +504,7 @@ export default function ProductFormPage() {
         selling_price: formString(primaryUnitQuantity?.sale_price_edit ?? primaryUnitQuantity?.sale_price),
         wholesale_price: formString(primaryUnitQuantity?.wholesale_price_edit ?? primaryUnitQuantity?.wholesale_price),
         min_stock: formString(primaryUnitQuantity?.low_quantity),
-        is_tax_inclusive: record.tax_type === "inclusive",
+        tax_type: (record.tax_type === "inclusive" || record.tax_type === "exclusive") ? record.tax_type : "",
         barcode_type: record.barcode_type || "code128",
         pinned: Boolean(record.pinned),
         accurate_tracking: Boolean(record.accurate_tracking),
@@ -660,15 +656,20 @@ export default function ProductFormPage() {
     }
     if (!formData.unit_group_id) nextErrors.unit_group_id = t("Unit Group is required")
     if (!formData.category_id) nextErrors.category_id = t("Category is required")
-    if (formData.is_tax_inclusive && !formData.tax_group_id) {
+    if (formData.tax_type === "inclusive" && !formData.tax_group_id) {
       nextErrors.tax_group_id = t("Tax is required when inclusive of tax")
+    } else if (formData.tax_type === "exclusive" && !formData.tax_group_id) {
+      nextErrors.tax_group_id = t("Tax is required when exclusive of tax")
+    }
+    if (formData.tax_group_id && !formData.tax_type) {
+      nextErrors.tax_type = t("Tax Type is required when Tax Group is selected")
     }
     setErrors(nextErrors)
     if (nextErrors.name || nextErrors.category_id || nextErrors.barcode) {
       setActiveTab("identification")
     } else if (nextErrors.unit_id || nextErrors.unit_group_id) {
       setActiveTab("units")
-    } else if (nextErrors.tax_group_id) {
+    } else if (nextErrors.tax_group_id || nextErrors.tax_type) {
       setActiveTab("taxes")
     }
     return Object.keys(nextErrors).length === 0
@@ -679,7 +680,7 @@ export default function ProductFormPage() {
       return Boolean(errors.name || errors.category_id || errors.barcode)
     }
     if (tab === "units") return Boolean(errors.unit_id || errors.unit_group_id)
-    if (tab === "taxes") return Boolean(errors.tax_group_id)
+    if (tab === "taxes") return Boolean(errors.tax_group_id || errors.tax_type)
     return false
   }
 
@@ -1396,8 +1397,11 @@ export default function ProductFormPage() {
 
                     <UniFieldSelect
                       label={t("Tax Type")}
-                      value={formData.is_tax_inclusive ? "inclusive" : "exclusive"}
-                      onValueChange={(value) => updateField("is_tax_inclusive", value === "inclusive")}
+                      value={formData.tax_type}
+                      placeholder={t("Select Tax Type")}
+                      error={errors.tax_type}
+                      allowClear
+                      onValueChange={(value) => updateField("tax_type", value)}
                     >
                       <SelectItem value="inclusive">{t("Inclusive")}</SelectItem>
                       <SelectItem value="exclusive">{t("Exclusive")}</SelectItem>
