@@ -71,6 +71,8 @@ export default function CustomersPage() {
     searchTerm,
     itemsPerPage,
     triggerRefresh,
+    selectedDateRange,
+    dateFilters,
   } = useTableData({
     getMaster: (customers as any).useGetCustomersDataMutation,
   })
@@ -113,6 +115,8 @@ export default function CustomersPage() {
         showDelete={canDelete}
         deleteMutation={deleteCustomer}
         showDateRange
+        selectedDateRange={selectedDateRange}
+        dateFilters={dateFilters}
         showStatus={canUpdate}
         statusChangeMutation={({ ids, status }: any) =>
           updateCustomerStatus({ payLoad: { ids, status } })

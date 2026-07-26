@@ -56,6 +56,9 @@ export default function TransactionHistoryPage() {
         columns={buildColumns(t, formatMoney, formatDate)}
         tableTitle={t("Transactions History List")}
         showSearch
+        showDateRange
+        selectedDateRange={table.selectedDateRange}
+        dateFilters={table.dateFilters}
         searchTerm={table.searchTerm}
         currentPage={table.currentPage}
         itemsPerPage={table.itemsPerPage}
@@ -89,7 +92,6 @@ export default function TransactionHistoryPage() {
             ]
             : []
         }
-        showDateRange
         showEdit={false}
       />
     </PermissionGuard>

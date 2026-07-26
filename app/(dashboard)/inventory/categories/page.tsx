@@ -69,6 +69,8 @@ export default function CategoriesPage() {
     searchTerm,
     itemsPerPage,
     triggerRefresh,
+    selectedDateRange,
+    dateFilters,
   } = useTableData({
     getMaster: (catalog as any).useGetCategoriesDataMutation,
 
@@ -125,6 +127,8 @@ export default function CategoriesPage() {
           sortConfig={sortConfig}
           onSort={handleSort}
           showDateRange
+          selectedDateRange={selectedDateRange}
+          dateFilters={dateFilters}
           sortableFields={sortableFields}
           isLoading={isLoading}
           setAddEntityOpen={canCreate ? handleAdd : undefined}

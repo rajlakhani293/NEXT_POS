@@ -76,6 +76,8 @@ export default function ProductsPage() {
     searchTerm,
     itemsPerPage,
     triggerRefresh,
+    selectedDateRange,
+    dateFilters,
   } = useTableData({
     getMaster: (catalog as any).useGetProductsDataMutation,
   })
@@ -159,6 +161,8 @@ export default function ProductsPage() {
         sortableFields={sortableFields}
         isLoading={isLoading}
         showDateRange
+        selectedDateRange={selectedDateRange}
+        dateFilters={dateFilters}
         setAddEntityOpen={
           canCreate ? () => router.push("/inventory/products/create") : undefined
         }

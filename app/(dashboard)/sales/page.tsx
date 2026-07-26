@@ -137,7 +137,8 @@ export default function SalesHistoryPage() {
     searchTerm,
     itemsPerPage,
     triggerRefresh,
-    dateFilters
+    dateFilters,
+    selectedDateRange,
   } = useTableData({
     getMaster: (sales as any).useGetSalesDataMutation
   })
@@ -166,6 +167,8 @@ export default function SalesHistoryPage() {
         title={canCreateSale ? t("Add a new order") : undefined}
         showSearch
         showDateRange
+        selectedDateRange={selectedDateRange}
+        dateFilters={dateFilters}
         searchTerm={searchTerm}
         currentPage={currentPage}
         itemsPerPage={itemsPerPage}

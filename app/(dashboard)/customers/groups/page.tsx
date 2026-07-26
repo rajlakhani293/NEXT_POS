@@ -60,6 +60,8 @@ export default function CustomerGroupsPage() {
     searchTerm,
     itemsPerPage,
     triggerRefresh,
+    selectedDateRange,
+    dateFilters,
   } = useTableData({
     getMaster: (customers as any).useGetCustomerGroupsDataMutation,
 
@@ -126,6 +128,8 @@ export default function CustomerGroupsPage() {
         setAddEntityOpen={canCreate ? handleAdd : undefined}
         showEdit={canUpdate}
         showDateRange
+        selectedDateRange={selectedDateRange}
+        dateFilters={dateFilters}
         onEdit={handleEdit}
         showDelete={canDelete}
         deleteMutation={deleteCustomerGroup}

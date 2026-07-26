@@ -54,6 +54,9 @@ export default function TransactionsPage() {
         columns={buildColumns(t, formatMoney, formatDate)}
         tableTitle={t("Transactions List")}
         showSearch
+        showDateRange
+        selectedDateRange={table.selectedDateRange}
+        dateFilters={table.dateFilters}
         searchTerm={table.searchTerm}
         currentPage={table.currentPage}
         itemsPerPage={table.itemsPerPage}
@@ -95,7 +98,6 @@ export default function TransactionsPage() {
             },
           },
         ].filter((action) => action.key !== "trigger" || canUpdate)}
-        showDateRange
         secondaryActionButton={
           canCreate ? <Button onClick={() => router.push("/accounting/transactions/create")}>
             <Plus className="size-4" />

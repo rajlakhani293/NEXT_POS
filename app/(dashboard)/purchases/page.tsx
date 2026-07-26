@@ -128,6 +128,8 @@ export default function PurchaseOrdersPage() {
     searchTerm,
     itemsPerPage,
     triggerRefresh,
+    selectedDateRange,
+    dateFilters,
   } = useTableData({
     getMaster: (purchases as any).useGetPurchaseOrdersDataMutation,
 
@@ -142,6 +144,8 @@ export default function PurchaseOrdersPage() {
         title={canCreate ? t("Add a new procurement") : undefined}
         showSearch
         showDateRange
+        selectedDateRange={selectedDateRange}
+        dateFilters={dateFilters}
         searchTerm={searchTerm}
         currentPage={currentPage}
         itemsPerPage={itemsPerPage}
