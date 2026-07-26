@@ -190,6 +190,9 @@ const mediaImageUrl = (record?: MediaRecord | null) =>
     ""
   )
 
+const formString = (value: any) =>
+  value === undefined || value === null || value === "" ? "" : String(value)
+
 const productUnitQuantityToForm = (record: any): ProductUnitQuantityFormValues => ({
   id: record.id,
   unit_id: record.unit_id ? String(record.unit_id) : "",
@@ -197,13 +200,13 @@ const productUnitQuantityToForm = (record: any): ProductUnitQuantityFormValues =
     ? String(record.convert_unit_id)
     : "",
   barcode: record.barcode || "",
-  quantity: record.quantity ? String(record.quantity) : "1",
-  sale_price: record.sale_price ? String(record.sale_price) : "",
-  wholesale_price: record.wholesale_price ? String(record.wholesale_price) : "",
-  purchase_price: record.cogs ? String(record.cogs) : "",
+  quantity: formString(record.quantity) || "1",
+  sale_price: formString(record.sale_price_edit ?? record.sale_price),
+  wholesale_price: formString(record.wholesale_price_edit ?? record.wholesale_price),
+  purchase_price: formString(record.cogs),
   is_weighable: Boolean(record.is_weighable),
   stock_alert_enabled: Boolean(record.stock_alert_enabled),
-  low_quantity: record.low_quantity ? String(record.low_quantity) : "",
+  low_quantity: formString(record.low_quantity),
   visible: record.visible !== false,
   preview_url: record.preview_url || "",
   scale_plu: record.scale_plu || "",
@@ -501,18 +504,10 @@ export default function ProductFormPage() {
         unit_id: primaryUnitQuantity?.unit_id
           ? String(primaryUnitQuantity.unit_id)
           : "",
-        purchase_price: primaryUnitQuantity?.cogs
-          ? String(primaryUnitQuantity.cogs)
-          : "",
-        selling_price: primaryUnitQuantity?.sale_price
-          ? String(primaryUnitQuantity.sale_price)
-          : "",
-        wholesale_price: primaryUnitQuantity?.wholesale_price
-          ? String(primaryUnitQuantity.wholesale_price)
-          : "",
-        min_stock: primaryUnitQuantity?.low_quantity
-          ? String(primaryUnitQuantity.low_quantity)
-          : "",
+        purchase_price: formString(primaryUnitQuantity?.cogs),
+        selling_price: formString(primaryUnitQuantity?.sale_price_edit ?? primaryUnitQuantity?.sale_price),
+        wholesale_price: formString(primaryUnitQuantity?.wholesale_price_edit ?? primaryUnitQuantity?.wholesale_price),
+        min_stock: formString(primaryUnitQuantity?.low_quantity),
         is_tax_inclusive: record.tax_type === "inclusive",
         barcode_type: record.barcode_type || "code128",
         pinned: Boolean(record.pinned),
