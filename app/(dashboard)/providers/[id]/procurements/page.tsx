@@ -113,7 +113,7 @@ export default function ProviderProcurementsPage() {
                 label: t("View"),
                 labelText: t("View"),
                 icon: <ReceiptText className="size-4" />,
-                onClick: () => router.push(`/purchases/orders/${record.id}`),
+                onClick: () => router.push(`/purchases/${record.id}`),
               },
             ]}
           />

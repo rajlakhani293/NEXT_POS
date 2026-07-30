@@ -75,7 +75,7 @@ export default function ProcurementProductsPage() {
         showEdit={canUpdate}
         onEdit={handleEdit}
         hideActions={!canUpdate}
-        onRowClick={(row) => router.push(`/purchases/orders/${row.purchase_order_id}`)}
+        onRowClick={(row) => router.push(`/purchases/${row.purchase_order_id}`)}
       />
 
       <ProcurementProductForm
