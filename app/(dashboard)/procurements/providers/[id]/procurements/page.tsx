@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, ReceiptText } from "lucide-react"
-
+import { ArrowLeft } from "lucide-react"
 import DynamicTable from "@/components/DynamicTable"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { Button } from "@/components/ui/button"
@@ -102,20 +101,12 @@ export default function ProviderProcurementsPage() {
                 setSearchTerm(String(payload || ""))
               }
             }}
+            showEdit={false}
             currentPage={page}
             itemsPerPage={10}
             totalItems={totalItems}
             onPageChange={setPage}
             isLoading={procurementsState.isLoading}
-            rowActions={(_, record) => [
-              {
-                key: "receipt",
-                label: t("View"),
-                labelText: t("View"),
-                icon: <ReceiptText className="size-4" />,
-                onClick: () => router.push(`/procurements/${record.id}`),
-              },
-            ]}
           />
         </div>
       </div>

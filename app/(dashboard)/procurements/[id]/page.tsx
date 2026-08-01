@@ -635,7 +635,7 @@ export default function PurchaseOrderFormPage() {
 
               <div className="flex-none">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList variant="line" className="-mb-px w-full justify-start overflow-x-auto">
+                  <TabsList variant="line" className="-mb-px w-full justify-start">
                     {(["details", "products"] as const).map((tab) => (
                       <TabsTrigger
                         key={tab}
