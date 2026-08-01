@@ -147,7 +147,7 @@ export default function CouponFormPage() {
     return Object.keys(nextErrors).length === 0
   }
 
-  const goBack = () => router.push("/coupons")
+  const goBack = () => router.push("/promotions/coupons")
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()

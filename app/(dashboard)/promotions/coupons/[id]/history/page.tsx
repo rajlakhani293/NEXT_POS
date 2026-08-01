@@ -116,7 +116,7 @@ export default function CouponOrderHistoryPage() {
               variant="outline"
               size="icon"
               className="h-9 w-9"
-              onClick={() => router.push("/coupons")}
+              onClick={() => router.push("/promotions/coupons")}
             >
               <ArrowLeft className="size-4" />
             </Button>

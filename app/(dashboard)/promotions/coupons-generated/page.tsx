@@ -69,7 +69,7 @@ export default function GeneratedCustomerCouponsPage() {
         sortableFields={sortableFields}
         isLoading={isLoading}
         showEdit={canUpdate}
-        onEdit={(record: any) => router.push(`/coupons-generated/${record.id}`)}
+        onEdit={(record: any) => router.push(`/promotions/coupons-generated/${record.id}`)}
         hideActions={!canUpdate}
       />
     </div>

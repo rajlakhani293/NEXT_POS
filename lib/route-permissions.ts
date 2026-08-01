@@ -16,10 +16,10 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/sales", permission: PERMISSIONS.sales.view },
   { path: "/customers/groups", permission: PERMISSIONS.customers.view },
   { path: "/customers", permission: PERMISSIONS.customers.view },
-  { path: "/rewards-system/create", permission: PERMISSIONS.rewards.create },
-  { path: "/rewards-system", permission: PERMISSIONS.rewards.view },
-  { path: "/coupons/create", permission: PERMISSIONS.promotions.create },
-  { path: "/coupons", permission: PERMISSIONS.promotions.view },
+  { path: "/promotions/rewards/create", permission: PERMISSIONS.rewards.create },
+  { path: "/promotions/rewards", permission: PERMISSIONS.rewards.view },
+  { path: "/promotions/coupons/create", permission: PERMISSIONS.promotions.create },
+  { path: "/promotions/coupons", permission: PERMISSIONS.promotions.view },
   { path: "/procurements/providers", permission: PERMISSIONS.providers.view },
   { path: "/procurements/create", permission: PERMISSIONS.purchases.create },
   { path: "/procurements/products", permission: PERMISSIONS.purchases.view },
@@ -98,17 +98,17 @@ export function resolveRoutePermission(
     return { permission: PERMISSIONS.customers.update }
   }
 
-  const couponEditMatch = pathname.match(/^\/coupons\/([^/]+)$/)
+  const couponEditMatch = pathname.match(/^\/promotions\/coupons\/([^/]+)$/)
   if (couponEditMatch && couponEditMatch[1] !== "create") {
     return { permission: PERMISSIONS.promotions.update }
   }
 
-  const couponHistoryMatch = pathname.match(/^\/coupons\/([^/]+)\/history$/)
+  const couponHistoryMatch = pathname.match(/^\/promotions\/coupons\/([^/]+)\/history$/)
   if (couponHistoryMatch) {
     return { permission: PERMISSIONS.promotions.view }
   }
 
-  const rewardSystemEditMatch = pathname.match(/^\/rewards-system\/([^/]+)$/)
+  const rewardSystemEditMatch = pathname.match(/^\/promotions\/rewards\/([^/]+)$/)
   if (rewardSystemEditMatch && rewardSystemEditMatch[1] !== "create") {
     return { permission: PERMISSIONS.rewards.update }
   }

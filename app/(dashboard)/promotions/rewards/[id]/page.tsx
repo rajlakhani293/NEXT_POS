@@ -148,7 +148,7 @@ export default function RewardSystemFormPage() {
     return Object.keys(nextErrors).length === 0
   }
 
-  const goBack = () => router.push("/rewards-system")
+  const goBack = () => router.push("/promotions/rewards")
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()

@@ -51,16 +51,16 @@ export default function RewardSystemsPage() {
   })
 
   const handleAdd = (open: boolean) => {
-    if (open) router.push("/rewards-system/create")
+    if (open) router.push("/promotions/rewards/create")
   }
 
   const handleEdit = (record: any) => {
-    router.push(`/rewards-system/${record.id}`)
+    router.push(`/promotions/rewards/${record.id}`)
   }
 
   useEffect(() => {
     if (searchParams.get("create") === "1" && canCreate) {
-      router.replace("/rewards-system/create")
+      router.replace("/promotions/rewards/create")
     }
   }, [canCreate, router, searchParams])
 

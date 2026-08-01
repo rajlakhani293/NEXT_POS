@@ -147,16 +147,23 @@ const mainNavSections: DashboardNavSection[] = [
     ],
   },
   {
-    title: "Reward Systems",
-    url: "/rewards-system",
-    icon: <GiftIcon />,
-    permission: PERMISSIONS.rewards.view,
-  },
-  {
-    title: "List Coupons",
-    url: "/coupons",
+    title: "Promotions",
+    url: "/promotions/rewards",
     icon: <TicketPercentIcon />,
-    permission: PERMISSIONS.promotions.view,
+    permission: [PERMISSIONS.rewards.view, PERMISSIONS.promotions.view],
+    permissionMatch: "any",
+    items: [
+      {
+        title: "Rewards",
+        url: "/promotions/rewards",
+        permission: PERMISSIONS.rewards.view,
+      },
+      {
+        title: "Coupons",
+        url: "/promotions/coupons",
+        permission: PERMISSIONS.promotions.view,
+      },
+    ],
   },
   {
     title: "Inventory",

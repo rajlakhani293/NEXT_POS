@@ -75,11 +75,11 @@ export default function CouponsPage() {
   })
 
   const handleAdd = (open: boolean) => {
-    if (open) router.push("/coupons/create")
+    if (open) router.push("/promotions/coupons/create")
   }
 
   const handleEdit = (record: any) => {
-    router.push(`/coupons/${record.id}`)
+    router.push(`/promotions/coupons/${record.id}`)
   }
 
   const rowActions = (_: string, record: any) => [
@@ -91,14 +91,14 @@ export default function CouponsPage() {
       priority: 1.5,
       onClick: (event?: React.MouseEvent<HTMLButtonElement>) => {
         event?.stopPropagation()
-        router.push(`/coupons/${record.id}/history`)
+        router.push(`/promotions/coupons/${record.id}/history`)
       },
     },
   ]
 
   useEffect(() => {
     if (searchParams.get("create") === "1" && canCreate) {
-      router.replace("/coupons/create")
+      router.replace("/promotions/coupons/create")
     }
   }, [canCreate, router, searchParams])
 

@@ -99,7 +99,7 @@ export default function CustomerCouponsHistoryPage() {
             onPageChange={setCouponsPage}
             isLoading={couponsState.isLoading}
             showEdit
-            onEdit={(record: any) => router.push(`/coupons-generated/${record.id}`)}
+            onEdit={(record: any) => router.push(`/promotions/coupons-generated/${record.id}`)}
             rowActions={(_rowId, record: any) => [
               {
                 key: "usage-history",

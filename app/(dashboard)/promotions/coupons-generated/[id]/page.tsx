@@ -61,7 +61,7 @@ export default function GeneratedCustomerCouponFormPage() {
     setValues((current) => ({ ...current, [name]: value }))
   }
 
-  const goBack = () => router.push("/coupons-generated")
+  const goBack = () => router.push("/promotions/coupons-generated")
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
