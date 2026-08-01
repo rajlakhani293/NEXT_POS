@@ -157,7 +157,7 @@ export default function PurchaseOrdersPage() {
         sortableFields={sortableFields}
         isLoading={isLoading}
         setAddEntityOpen={
-          canCreate ? () => router.push("/purchases/create") : undefined
+          canCreate ? () => router.push("/procurements/create") : undefined
         }
         showEdit={false}
         showDelete={false}
@@ -174,7 +174,7 @@ export default function PurchaseOrdersPage() {
                 labelText: t("Edit"),
                 icon: <EditIcon className="size-4" />,
                 priority: 1,
-                onClick: () => router.push(`/purchases/${record.id}`),
+                onClick: () => router.push(`/procurements/${record.id}`),
               },
             ]
             : []),
@@ -184,7 +184,7 @@ export default function PurchaseOrdersPage() {
             labelText: t("Invoice"),
             icon: <FileTextIcon className="size-4" />,
             priority: 2,
-            onClick: () => router.push(`/purchases/${record.id}/invoice`),
+            onClick: () => router.push(`/procurements/${record.id}/invoice`),
           },
           ...(canMarkPaid && record.payment_status !== "paid"
             ? [

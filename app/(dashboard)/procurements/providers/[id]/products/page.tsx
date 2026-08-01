@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, ReceiptText } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 import DynamicTable from "@/components/DynamicTable"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
@@ -17,17 +17,18 @@ const buildColumns = (
   formatMoney: (value: any) => string,
   formatDate: (value: any) => string
 ) => [
-    { key: "name", title: t("Name") },
-    { key: "delivery_status", title: t("Delivery") },
-    { key: "payment_status", title: t("Payment") },
-    { key: "tax_value", title: t("Tax"), render: (value: any) => formatMoney(value) },
-    { key: "total_items", title: t("Items") },
-    { key: "value", title: t("Value"), render: (value: any) => formatMoney(value) },
-    { key: "user_username", title: t("By") },
-    { key: "created_at", title: t("Created At"), render: formatDate },
-  ]
+  { key: "name", title: t("Name") },
+  { key: "purchase_price", title: t("Purchase Price"), render: (value: any) => formatMoney(value) },
+  { key: "quantity", title: t("Quantity") },
+  { key: "tax_group_name", title: t("Tax Group") },
+  { key: "barcode", title: t("Barcode") },
+  { key: "expiration_date", title: t("Expiration Date"), render: formatDate },
+  { key: "tax_type", title: t("Tax Type") },
+  { key: "tax_value", title: t("Tax Value"), render: (value: any) => formatMoney(value) },
+  { key: "total_purchase_price", title: t("Total Price"), render: (value: any) => formatMoney(value) },
+]
 
-export default function ProviderProcurementsPage() {
+export default function ProviderProductsPage() {
   const params = useParams()
   const router = useRouter()
   const { t } = useTranslation()
@@ -41,9 +42,9 @@ export default function ProviderProcurementsPage() {
   const [totalItems, setTotalItems] = useState(0)
   const [page, setPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState("")
-  const [getProviderProcurements, procurementsState] = (
+  const [getProviderProducts, productsState] = (
     purchases as any
-  ).useGetProviderProcurementsMutation()
+  ).useGetProviderProductsMutation()
 
   const loadRows = async (nextPage = page, search = searchTerm, force = false) => {
     if (!id) return
@@ -51,7 +52,7 @@ export default function ProviderProcurementsPage() {
     if (!force && lastRequestRef.current === requestKey) return
     lastRequestRef.current = requestKey
 
-    const response = await getProviderProcurements({
+    const response = await getProviderProducts({
       id,
       payLoad: { page: nextPage, limit: 10, search },
     }).unwrap()
@@ -74,16 +75,16 @@ export default function ProviderProcurementsPage() {
               variant="outline"
               size="icon"
               className="h-9 w-9"
-              onClick={() => router.push("/providers")}
+              onClick={() => router.push("/procurements/providers")}
             >
               <ArrowLeft className="size-4" />
             </Button>
             <div>
               <h1 className="text-xl font-bold text-gray-900">
-                {t("Provider Procurements")}
+                {t("Provider Products")}
               </h1>
               <p className="text-xs font-medium text-gray-500">
-                {t("List of all procurements and purchase orders history for this provider.")}
+                {t("List of all products supplied by this provider.")}
               </p>
             </div>
           </div>
@@ -93,7 +94,7 @@ export default function ProviderProcurementsPage() {
           <DynamicTable
             data={rows}
             columns={columns}
-            tableTitle={t("Provider Procurements List")}
+            tableTitle={t("Provider Products List")}
             showSearch
             searchTerm={searchTerm}
             onFilterChange={(action, payload) => {
@@ -106,16 +107,8 @@ export default function ProviderProcurementsPage() {
             itemsPerPage={10}
             totalItems={totalItems}
             onPageChange={setPage}
-            isLoading={procurementsState.isLoading}
-            rowActions={(_, record) => [
-              {
-                key: "receipt",
-                label: t("View"),
-                labelText: t("View"),
-                icon: <ReceiptText className="size-4" />,
-                onClick: () => router.push(`/purchases/${record.id}`),
-              },
-            ]}
+            isLoading={productsState.isLoading}
+            hideActions
           />
         </div>
       </div>

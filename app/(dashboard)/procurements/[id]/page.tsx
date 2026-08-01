@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ProviderForm } from "@/app/(dashboard)/providers/createUpdate"
+import { ProviderForm } from "@/app/(dashboard)/procurements/providers/createUpdate"
 import { catalog } from "@/lib/api/catalog"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
@@ -509,7 +509,7 @@ export default function PurchaseOrderFormPage() {
     )
   }
 
-  const goBack = () => router.push("/purchases")
+  const goBack = () => router.push("/procurements")
 
   const buildProductPayload = (item: PurchaseItemForm) => {
     const line = computeLine(item)

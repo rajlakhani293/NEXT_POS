@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import DynamicTable from "@/components/DynamicTable"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useTableData } from "@/hooks/useTableData"
-import { ProcurementProductForm } from "@/app/(dashboard)/purchases/products/createUpdate"
+import { ProcurementProductForm } from "@/app/(dashboard)/procurements/products/createUpdate"
 import { purchases } from "@/lib/api/purchases"
 import { useTranslation } from "@/lib/contexts/TranslationContext"
 import { formatBusinessDate, formatBusinessMoney } from "@/lib/format"
@@ -75,7 +75,7 @@ export default function ProcurementProductsPage() {
         showEdit={canUpdate}
         onEdit={handleEdit}
         hideActions={!canUpdate}
-        onRowClick={(row) => router.push(`/purchases/${row.purchase_order_id}`)}
+        onRowClick={(row) => router.push(`/procurements/${row.purchase_order_id}`)}
       />
 
       <ProcurementProductForm

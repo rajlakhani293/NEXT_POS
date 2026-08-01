@@ -20,10 +20,10 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
   { path: "/rewards-system", permission: PERMISSIONS.rewards.view },
   { path: "/coupons/create", permission: PERMISSIONS.promotions.create },
   { path: "/coupons", permission: PERMISSIONS.promotions.view },
-  { path: "/providers", permission: PERMISSIONS.providers.view },
-  { path: "/purchases/create", permission: PERMISSIONS.purchases.create },
-  { path: "/purchases/products", permission: PERMISSIONS.purchases.view },
-  { path: "/purchases", permission: PERMISSIONS.purchases.view },
+  { path: "/procurements/providers", permission: PERMISSIONS.providers.view },
+  { path: "/procurements/create", permission: PERMISSIONS.purchases.create },
+  { path: "/procurements/products", permission: PERMISSIONS.purchases.view },
+  { path: "/procurements", permission: PERMISSIONS.purchases.view },
   {
     path: "/accounting/transactions/create",
     permission: [PERMISSIONS.expenses.create, PERMISSIONS.expenses.update],
@@ -113,7 +113,7 @@ export function resolveRoutePermission(
     return { permission: PERMISSIONS.rewards.update }
   }
 
-  const purchaseOrderEditMatch = pathname.match(/^\/purchases\/orders\/([^/]+)$/)
+  const purchaseOrderEditMatch = pathname.match(/^\/procurements\/orders\/([^/]+)$/)
   if (purchaseOrderEditMatch && purchaseOrderEditMatch[1] !== "create") {
     return {
       permission: [

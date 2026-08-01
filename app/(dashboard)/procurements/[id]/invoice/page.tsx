@@ -65,7 +65,7 @@ export default function PurchaseInvoicePage() {
           <p className="text-sm font-medium text-gray-600">
             {t("Procurement invoice not found.")}
           </p>
-          <Button variant="outline" onClick={() => router.push("/purchases")}>
+          <Button variant="outline" onClick={() => router.push("/procurements")}>
             {t("Return to Procurements")}
           </Button>
         </div>
@@ -83,7 +83,7 @@ export default function PurchaseInvoicePage() {
               variant="outline"
               size="icon"
               className="h-9 w-9"
-              onClick={() => router.push("/purchases")}
+              onClick={() => router.push("/procurements")}
             >
               <ArrowLeft className="size-4" />
             </Button>

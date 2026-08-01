@@ -280,7 +280,7 @@ export default function DashboardPage() {
             <div className="mt-4 grid gap-2">
               <QuickLink href="/sales/create" icon={ShoppingCart} title={t("Start Billing")} helper={t("Open POS screen and create a new sale.")} />
               <QuickLink href="/sales" icon={ReceiptText} title={t("Sales History")} helper={t("Review billed orders, dues and refunds.")} />
-              <QuickLink href="/purchases" icon={PackageCheck} title={t("Purchases")} helper={t("Create purchase orders and receive stock.")} />
+              <QuickLink href="/procurements" icon={PackageCheck} title={t("Purchases")} helper={t("Create purchase orders and receive stock.")} />
               <QuickLink href="/reports" icon={BarChart3} title={t("Reports")} helper={t("Open sales, stock and accounting reports.")} />
             </div>
           </section>

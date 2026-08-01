@@ -115,14 +115,14 @@ export default function ProvidersPage() {
               label: t("See Procurements"),
               labelText: t("See Procurements"),
               icon: <Boxes className="size-4" />,
-              onClick: () => router.push(`/providers/${record.id}/procurements`),
+              onClick: () => router.push(`/procurements/providers/${record.id}/procurements`),
             },
             {
               key: "products",
               label: t("See Products"),
               labelText: t("See Products"),
               icon: <PackageSearch className="size-4" />,
-              onClick: () => router.push(`/providers/${record.id}/products`),
+              onClick: () => router.push(`/procurements/providers/${record.id}/products`),
             },
           ]}
         />

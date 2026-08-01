@@ -110,10 +110,23 @@ const mainNavSections: DashboardNavSection[] = [
     ],
   },
   {
-    title: "Procurements",
-    url: "/purchases",
+    title: "Purchases",
+    url: "/procurements",
     icon: <TruckIcon />,
-    permission: PERMISSIONS.purchases.view,
+    permission: [PERMISSIONS.purchases.view, PERMISSIONS.providers.view],
+    permissionMatch: "any",
+    items: [
+      {
+        title: "Procurements",
+        url: "/procurements",
+        permission: PERMISSIONS.purchases.view,
+      },
+      {
+        title: "Providers",
+        url: "/procurements/providers",
+        permission: PERMISSIONS.providers.view,
+      },
+    ],
   },
   {
     title: "Customers",
@@ -188,12 +201,7 @@ const mainNavSections: DashboardNavSection[] = [
       },
     ],
   },
-  {
-    title: "Providers",
-    url: "/providers",
-    icon: <FactoryIcon />,
-    permission: PERMISSIONS.providers.view,
-  },
+
   {
     title: "Medias",
     url: "/medias",
