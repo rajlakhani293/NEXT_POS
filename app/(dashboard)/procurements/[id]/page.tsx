@@ -58,7 +58,15 @@ type PurchaseFormValues = {
   description: string
 }
 
-const today = () => new Date().toISOString().slice(0, 10)
+const formatLocalDate = (date?: Date | null): string => {
+  if (!date) return ""
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+const today = () => formatLocalDate(new Date())
 
 
 
@@ -673,13 +681,13 @@ export default function PurchaseOrderFormPage() {
                       <DatePicker
                         label={t("Delivery Time")}
                         value={formData.delivery_time ? new Date(formData.delivery_time + "T00:00:00") : undefined}
-                        onChange={(date) => updateField("delivery_time", date ? date.toISOString().slice(0, 10) : "")}
+                        onChange={(date) => updateField("delivery_time", formatLocalDate(date))}
                       />
                       <DatePicker
                         label={t("Invoice Date")}
                         required
                         value={formData.invoice_date ? new Date(formData.invoice_date + "T00:00:00") : undefined}
-                        onChange={(date) => updateField("invoice_date", date ? date.toISOString().slice(0, 10) : "")}
+                        onChange={(date) => updateField("invoice_date", formatLocalDate(date))}
                         error={errors.invoice_date}
                       />
                       <UniFieldSelect
@@ -1027,7 +1035,7 @@ export default function PurchaseOrderFormPage() {
                         <DatePicker
                           label={t("Expiration Date")}
                           value={optionDraft.expiration_date ? new Date(optionDraft.expiration_date + "T00:00:00") : undefined}
-                          onChange={(date) => setOptionDraft((current) => ({ ...current, expiration_date: date ? date.toISOString().slice(0, 10) : "" }))}
+                          onChange={(date) => setOptionDraft((current) => ({ ...current, expiration_date: formatLocalDate(date) }))}
                         />
                         <UniFieldSelect
                           label={t("Tax Type")}
