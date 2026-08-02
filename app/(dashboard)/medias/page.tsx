@@ -459,7 +459,7 @@ export default function MediasPage() {
           {/* Toolbar & Filters (Line Tabs) */}
           <section className="bg-white px-5 shrink-0 z-10">
             <Tabs value={filter} onValueChange={(value) => setFilter(value as FilterType)}>
-              <TabsList variant="line" className="-mb-px w-full justify-start overflow-x-auto">
+              <TabsList variant="line" className="-mb-px w-full justify-start">
                 {filterTags.map((tag) => (
                   <TabsTrigger key={tag.value} value={tag.value}>
                     {tag.label}
